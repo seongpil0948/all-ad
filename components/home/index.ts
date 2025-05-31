@@ -5,3 +5,6 @@ export { FAQSection } from "./FAQSection";
 export { DashboardPreview } from "./DashboardPreview";
 export { AnimatedBackground } from "./AnimatedBackground";
 export { PricingSection } from "./PricingSection";
+export { FeaturesSection } from "./FeaturesSection";
+export { PlatformsSection } from "./PlatformsSection";
+export { HeroButtons } from "./HeroButtons";
