@@ -1,7 +1,5 @@
 import { registerOTel } from "@vercel/otel";
 
-import { traceLogsExporter } from "./infrastructure/monitoring/exporters/trace-logs-exporter";
-
 export function register() {
   registerOTel({
     serviceName: "all-ad-platform",
@@ -17,7 +15,5 @@ export function register() {
         ],
       },
     },
-    // Custom exporter for logs
-    traceExporter: traceLogsExporter,
   });
 }
