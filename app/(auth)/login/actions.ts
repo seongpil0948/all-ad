@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
+import { AuthError } from "@supabase/supabase-js";
 
 export type ActionState = {
   errors?: {
@@ -70,14 +71,6 @@ export async function signup(
     };
   }
 
-  if (!password || password.length < 6) {
-    return {
-      errors: {
-        password: "비밀번호는 최소 6자 이상이어야 합니다.",
-      },
-    };
-  }
-
   const { error } = await supabase.auth.signUp({
     email,
     password,
@@ -87,14 +80,13 @@ export async function signup(
   });
 
   if (error) {
-    return {
-      errors: {
-        general:
-          error.message === "User already registered"
-            ? "이미 등록된 이메일입니다."
-            : "회원가입 중 오류가 발생했습니다. 다시 시도해주세요.",
-      },
-    };
+    if (error instanceof AuthError) {
+      return {
+        errors: {
+          general: error.message,
+        },
+      };
+    }
   }
 
   return {
