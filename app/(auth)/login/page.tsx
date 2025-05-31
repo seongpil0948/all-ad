@@ -40,7 +40,7 @@ export default function LoginPage() {
         </CardHeader>
         <CardBody className="px-6 py-4">
           <Form action={currentAction} validationErrors={currentState.errors}>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 items-center w-full min-w-sm mx-auto">
               <Input
                 isRequired
                 errorMessage={currentState.errors?.email}
