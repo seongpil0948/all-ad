@@ -1,0 +1,72 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { FaChartLine, FaUsers, FaBullseye, FaClock } from "react-icons/fa";
+
+interface StatItemProps {
+  icon: React.ReactNode;
+  value: string;
+  label: string;
+  suffix?: string;
+}
+
+const StatItem = ({ icon, value, label, suffix = "" }: StatItemProps) => {
+  return (
+    <motion.div
+      className="text-center"
+      initial={{ opacity: 0, scale: 0.8 }}
+      transition={{ duration: 0.5 }}
+      viewport={{ once: true }}
+      whileInView={{ opacity: 1, scale: 1 }}
+    >
+      <div className="inline-flex items-center justify-center w-12 h-12 mb-4 text-primary">
+        {icon}
+      </div>
+      <div className="text-3xl lg:text-4xl font-bold text-foreground mb-2">
+        {value}
+        {suffix && <span className="text-2xl lg:text-3xl">{suffix}</span>}
+      </div>
+      <p className="text-default-500">{label}</p>
+    </motion.div>
+  );
+};
+
+export const StatsSection = () => {
+  const stats = [
+    {
+      icon: <FaChartLine className="w-full h-full" />,
+      value: "42",
+      suffix: "%",
+      label: "평균 ROI 증가",
+    },
+    {
+      icon: <FaUsers className="w-full h-full" />,
+      value: "1,200",
+      suffix: "+",
+      label: "활성 사용자",
+    },
+    {
+      icon: <FaBullseye className="w-full h-full" />,
+      value: "85",
+      suffix: "%",
+      label: "캠페인 성공률",
+    },
+    {
+      icon: <FaClock className="w-full h-full" />,
+      value: "24/7",
+      label: "실시간 모니터링",
+    },
+  ];
+
+  return (
+    <section className="px-6 py-20 bg-gradient-to-br from-primary/5 to-secondary/5">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+          {stats.map((stat, index) => (
+            <StatItem key={index} {...stat} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};

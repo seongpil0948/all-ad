@@ -21,6 +21,15 @@ import { useEffect } from "react";
 
 import { title, subtitle } from "@/components/primitives";
 import log from "@/utils/logger";
+import {
+  StatsSection,
+  TestimonialsSection,
+  IntegrationProcessSection,
+  FAQSection,
+  DashboardPreview,
+  AnimatedBackground,
+  PricingSection,
+} from "@/components/home";
 
 export default function Home() {
   const router = useRouter();
@@ -129,10 +138,8 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* Background decoration */}
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-100 to-pink-100 dark:from-violet-900/20 dark:to-pink-900/20 opacity-50" />
-        </div>
+        {/* Animated background */}
+        <AnimatedBackground />
       </section>
 
       {/* Features Section */}
@@ -215,6 +222,12 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Statistics Section */}
+      <StatsSection />
+
+      {/* Integration Process Section */}
+      <IntegrationProcessSection />
+
       {/* Dashboard Preview */}
       <section className="px-6 py-20">
         <div className="max-w-7xl mx-auto">
@@ -238,16 +251,23 @@ export default function Home() {
             viewport={{ once: true }}
             whileInView={{ opacity: 1, y: 0 }}
           >
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden shadow-xl">
               <CardBody className="p-0">
-                <div className="aspect-video bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
-                  <p className="text-xl text-default-500">대시보드 미리보기</p>
-                </div>
+                <DashboardPreview />
               </CardBody>
             </Card>
           </motion.div>
         </div>
       </section>
+
+      {/* Testimonials Section */}
+      <TestimonialsSection />
+
+      {/* Pricing Section */}
+      <PricingSection />
+
+      {/* FAQ Section */}
+      <FAQSection />
 
       {/* CTA Section */}
       <section className="px-6 py-20 bg-gradient-to-r from-primary to-secondary">
