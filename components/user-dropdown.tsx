@@ -23,6 +23,7 @@ import {
 import { createClient } from "@/utils/supabase/client";
 import { getProfile } from "@/utils/profile";
 import { Profile } from "@/types/database.types";
+import log from "@/utils/logger";
 
 interface UserDropdownProps {
   user: User;
@@ -49,7 +50,10 @@ export function UserDropdown({ user }: UserDropdownProps) {
       router.push("/");
       router.refresh();
     } catch (error) {
-      console.error("Error signing out:", error);
+      log.error("Error signing out", error as Error, {
+        module: "UserDropdown",
+        userId: user.id,
+      });
     }
   };
 

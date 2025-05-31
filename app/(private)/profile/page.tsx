@@ -11,6 +11,7 @@ import { createClient } from "@/utils/supabase/client";
 import { getProfile, updateProfile } from "@/utils/profile";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { Profile } from "@/types/database.types";
+import log from "@/utils/logger";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -83,7 +84,11 @@ export default function ProfilePage() {
       setProfile(updatedProfile);
       alert("프로필이 업데이트되었습니다.");
     } catch (error) {
-      console.error("Error updating profile:", error);
+      log.error("Error updating profile", error as Error, {
+        module: "ProfilePage",
+        userId: user.id,
+        action: "updateProfile",
+      });
       alert("프로필 업데이트 중 오류가 발생했습니다.");
     } finally {
       setSaving(false);
@@ -100,7 +105,11 @@ export default function ProfilePage() {
 
       setProfile(updatedProfile);
     } catch (error) {
-      console.error("Error updating avatar:", error);
+      log.error("Error updating avatar", error as Error, {
+        module: "ProfilePage",
+        userId: user.id,
+        action: "updateAvatar",
+      });
       alert("아바타 업데이트 중 오류가 발생했습니다.");
     }
   };
@@ -115,7 +124,11 @@ export default function ProfilePage() {
 
       setProfile(updatedProfile);
     } catch (error) {
-      console.error("Error deleting avatar:", error);
+      log.error("Error deleting avatar", error as Error, {
+        module: "ProfilePage",
+        userId: user.id,
+        action: "deleteAvatar",
+      });
       alert("아바타 삭제 중 오류가 발생했습니다.");
     }
   };

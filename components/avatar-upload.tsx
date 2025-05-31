@@ -7,6 +7,7 @@ import { Button } from "@heroui/button";
 import { Spinner } from "@heroui/spinner";
 
 import { uploadAvatar, deleteAvatar } from "@/utils/profile";
+import log from "@/utils/logger";
 
 interface AvatarUploadProps {
   userId: string;
@@ -52,7 +53,12 @@ export function AvatarUpload({
 
       onUploadComplete(url);
     } catch (error) {
-      console.error("Error uploading avatar:", error);
+      log.error("Error uploading avatar", error as Error, {
+        module: "AvatarUpload",
+        userId,
+        fileSize: file.size,
+        fileType: file.type,
+      });
       alert("아바타 업로드 중 오류가 발생했습니다.");
     } finally {
       setUploading(false);
@@ -69,7 +75,11 @@ export function AvatarUpload({
       await deleteAvatar(currentAvatarUrl);
       onDeleteComplete();
     } catch (error) {
-      console.error("Error deleting avatar:", error);
+      log.error("Error deleting avatar", error as Error, {
+        module: "AvatarUpload",
+        userId,
+        avatarUrl: currentAvatarUrl,
+      });
       alert("아바타 삭제 중 오류가 발생했습니다.");
     } finally {
       setDeleting(false);

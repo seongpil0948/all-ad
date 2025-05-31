@@ -17,11 +17,31 @@ import {
 } from "react-icons/fa";
 import { SiNaver, SiKakao } from "react-icons/si";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 import { title, subtitle } from "@/components/primitives";
+import log from "@/utils/logger";
 
 export default function Home() {
   const router = useRouter();
+
+  // Log page load
+  useEffect(() => {
+    log.info("Home page loaded", {
+      module: "HomePage",
+      timestamp: new Date().toISOString(),
+    });
+  }, []);
+
+  const handleNavigation = (path: string, action: string) => {
+    log.info("Navigation initiated", {
+      module: "HomePage",
+      action,
+      targetPath: path,
+      fromPath: "/",
+    });
+    router.push(path);
+  };
 
   const features = [
     {
@@ -95,14 +115,14 @@ export default function Home() {
               color="primary"
               size="lg"
               variant="shadow"
-              onPress={() => router.push("/login")}
+              onPress={() => handleNavigation("/login", "start-free")}
             >
               무료로 시작하기
             </Button>
             <Button
               size="lg"
               variant="bordered"
-              onPress={() => router.push("/demo")}
+              onPress={() => handleNavigation("/demo", "view-demo")}
             >
               데모 보기
             </Button>
@@ -248,7 +268,7 @@ export default function Home() {
               className="bg-white text-primary font-semibold"
               size="lg"
               variant="solid"
-              onPress={() => router.push("/login")}
+              onPress={() => handleNavigation("/login", "start-trial")}
             >
               무료 체험 시작하기
             </Button>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 
 import { createClient } from "@/utils/supabase/client";
+import log from "@/utils/logger";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -20,7 +21,10 @@ export function useAuth() {
 
         setUser(user);
       } catch (error) {
-        console.error("Error getting user:", error);
+        log.error("Error getting user", error as Error, {
+          module: "useAuth",
+          hook: "useAuth",
+        });
       } finally {
         setLoading(false);
       }

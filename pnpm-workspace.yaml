@@ -1,5 +1,6 @@
 onlyBuiltDependencies:
   - '@heroui/shared-utils'
   - '@tailwindcss/oxide'
+  - protobufjs
   - sharp
   - unrs-resolver

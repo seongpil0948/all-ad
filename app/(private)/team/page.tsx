@@ -2,14 +2,22 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
 import { Card, CardBody } from "@heroui/card";
 import { Button } from "@heroui/button";
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@heroui/table";
+import {
+  Table,
+  TableHeader,
+  TableColumn,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "@heroui/table";
 import { Chip } from "@heroui/chip";
 import { User } from "@heroui/user";
 import { Spinner } from "@heroui/spinner";
 import { FiUserPlus } from "react-icons/fi";
+
+import { createClient } from "@/utils/supabase/client";
 
 interface TeamMember {
   id: string;
@@ -53,13 +61,16 @@ export default function TeamPage() {
   useEffect(() => {
     const checkAuth = async () => {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
         router.push("/login");
+
         return;
       }
-      
+
       setLoading(false);
     };
 
@@ -122,7 +133,7 @@ export default function TeamPage() {
             <Button size="sm" variant="light">
               편집
             </Button>
-            <Button size="sm" color="danger" variant="light">
+            <Button color="danger" size="sm" variant="light">
               제거
             </Button>
           </div>
@@ -146,31 +157,24 @@ export default function TeamPage() {
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">팀 관리</h1>
-        <Button 
-          color="primary" 
-          startContent={<FiUserPlus />}
-        >
+        <Button color="primary" startContent={<FiUserPlus />}>
           팀원 초대
         </Button>
       </div>
 
       <Card>
         <CardBody className="p-0">
-          <Table aria-label="팀 멤버 테이블" removeWrapper>
+          <Table removeWrapper aria-label="팀 멤버 테이블">
             <TableHeader columns={columns}>
               {(column) => (
-                <TableColumn key={column.key}>
-                  {column.label}
-                </TableColumn>
+                <TableColumn key={column.key}>{column.label}</TableColumn>
               )}
             </TableHeader>
             <TableBody items={teamMembers}>
               {(item) => (
                 <TableRow key={item.id}>
                   {(columnKey) => (
-                    <TableCell>
-                      {renderCell(item, columnKey)}
-                    </TableCell>
+                    <TableCell>{renderCell(item, columnKey)}</TableCell>
                   )}
                 </TableRow>
               )}
