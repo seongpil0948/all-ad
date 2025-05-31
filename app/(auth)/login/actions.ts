@@ -49,7 +49,10 @@ export async function login(
     };
   }
 
+  // Revalidate all paths to ensure the navbar updates
   revalidatePath("/", "layout");
+  revalidatePath("/dashboard");
+  
   redirect("/dashboard");
 }
 
