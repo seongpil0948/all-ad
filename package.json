@@ -22,6 +22,8 @@
     "@heroui/theme": "2.4.16-beta.2",
     "@react-aria/ssr": "3.9.8",
     "@react-aria/visually-hidden": "3.8.23",
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.49.8",
     "clsx": "2.1.1",
     "framer-motion": "12.15.0",
     "intl-messageformat": "10.7.16",
