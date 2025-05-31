@@ -2,9 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { AuthError } from "@supabase/supabase-js";
 
 import { createClient } from "@/utils/supabase/server";
-import { AuthError } from "@supabase/supabase-js";
 
 export type ActionState = {
   errors?: {
@@ -17,7 +17,7 @@ export type ActionState = {
 
 export async function login(
   prevState: ActionState,
-  formData: FormData
+  formData: FormData,
 ): Promise<ActionState> {
   const supabase = await createClient();
 
@@ -55,7 +55,7 @@ export async function login(
 
 export async function signup(
   prevState: ActionState,
-  formData: FormData
+  formData: FormData,
 ): Promise<ActionState> {
   const supabase = await createClient();
 
