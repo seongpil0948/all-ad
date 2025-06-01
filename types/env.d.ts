@@ -10,15 +10,6 @@ declare global {
       NEXT_PUBLIC_SUPABASE_ANON_KEY: string;
       SUPABASE_SERVICE_ROLE_KEY: string;
 
-      // OpenTelemetry
-      OTEL_EXPORTER_OTLP_ENDPOINT?: string;
-      OTEL_API_KEY?: string;
-      NEXT_OTEL_VERBOSE?: "1" | "0";
-
-      // Logging
-      LOG_ENDPOINT?: string;
-      LOG_LEVEL?: "trace" | "debug" | "info" | "warn" | "error";
-
       // Service
       SERVICE_VERSION?: string;
 

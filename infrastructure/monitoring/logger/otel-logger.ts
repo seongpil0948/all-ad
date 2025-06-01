@@ -21,7 +21,7 @@ export class OpenTelemetryLogger implements ILogger {
     level: LogLevel,
     message: string,
     context?: LogContext,
-    error?: Error,
+    error?: Error
   ): LogEntry {
     const activeSpan = trace.getActiveSpan();
     const spanContext = activeSpan?.spanContext();
@@ -71,9 +71,6 @@ export class OpenTelemetryLogger implements ILogger {
     if (this.isDevelopment) {
       this.consoleOutput(entry);
     }
-
-    // Send to external logging service (Vercel, Datadog, etc.)
-    this.sendToExternalService(entry);
   }
 
   private consoleOutput(entry: LogEntry): void {
@@ -100,33 +97,9 @@ export class OpenTelemetryLogger implements ILogger {
           prefix,
           entry.message,
           entry.error?.stack || "",
-          contextStr,
+          contextStr
         );
         break;
-    }
-  }
-
-  private async sendToExternalService(entry: LogEntry): Promise<void> {
-    // Implementation for sending logs to external service
-    // This could be Vercel logs, Datadog, CloudWatch, etc.
-    try {
-      if (process.env.VERCEL) {
-        // Vercel automatically captures console logs
-        return;
-      }
-
-      // Custom implementation for other services
-      if (process.env.LOG_ENDPOINT) {
-        await fetch(process.env.LOG_ENDPOINT, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(entry),
-        }).catch(() => {
-          // Fail silently to not affect application performance
-        });
-      }
-    } catch (_error) {
-      console.error("Failed to send log to external service", _error, entry);
     }
   }
 
