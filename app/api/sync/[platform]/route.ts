@@ -70,7 +70,6 @@ export async function POST(
 
     // Create platform service
     const platformService = platformServiceFactory.createService(platformType);
-    // Create new instance for each request
     const dbService = new PlatformDatabaseService();
 
     // Set credentials
