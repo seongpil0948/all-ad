@@ -1,0 +1,17 @@
+-- Add foreign key relationship between team_members and profiles
+ALTER TABLE public.team_members
+  ADD CONSTRAINT team_members_user_id_profiles_fkey 
+  FOREIGN KEY (user_id) 
+  REFERENCES public.profiles(id) 
+  ON DELETE CASCADE;
+
+-- Create policy to allow team members to view other team members' profiles
+CREATE POLICY "Team members can view team members profiles" ON public.profiles
+  FOR SELECT USING (
+    id IN (
+      SELECT tm2.user_id 
+      FROM public.team_members tm1
+      JOIN public.team_members tm2 ON tm1.team_id = tm2.team_id
+      WHERE tm1.user_id = auth.uid()
+    )
+  );

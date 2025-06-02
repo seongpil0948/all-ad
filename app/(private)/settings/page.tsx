@@ -1,51 +1,47 @@
-"use client";
+export const dynamic = 'force-dynamic'
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Divider } from "@heroui/divider";
 import { Switch } from "@heroui/switch";
+import { redirect } from "next/navigation";
 
-import { createClient } from "@/utils/supabase/client";
+import {
+  getTeamCredentials,
+  savePlatformCredentials,
+  deletePlatformCredentials,
+  togglePlatformCredentials,
+} from "./actions";
 
-export default function SettingsPage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
+import { createClient } from "@/utils/supabase/server";
+import { PlatformCredentialsManager } from "@/components/platform/PlatformCredentialsManager";
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
 
-      if (!user) {
-        router.push("/login");
+export default async function SettingsPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-        return;
-      }
-
-      setLoading(false);
-    };
-
-    checkAuth();
-  }, [router]);
-
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-center">
-          <div>로딩 중...</div>
-        </div>
-      </div>
-    );
+  if (!user) {
+    redirect("/login");
   }
+
+  const credentials = await getTeamCredentials();
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-8">설정</h1>
 
       <div className="space-y-6">
+        {/* Platform Credentials Section */}
+        <PlatformCredentialsManager
+          credentials={credentials}
+          onDelete={deletePlatformCredentials}
+          onSave={savePlatformCredentials}
+          onToggle={togglePlatformCredentials}
+        />
+
+        {/* Notification Settings */}
         <Card>
           <CardHeader className="flex gap-3">
             <div className="flex flex-col">
@@ -78,6 +74,7 @@ export default function SettingsPage() {
           </CardBody>
         </Card>
 
+        {/* Security Settings */}
         <Card>
           <CardHeader className="flex gap-3">
             <div className="flex flex-col">
@@ -110,6 +107,7 @@ export default function SettingsPage() {
           </CardBody>
         </Card>
 
+        {/* Data & Privacy Settings */}
         <Card>
           <CardHeader className="flex gap-3">
             <div className="flex flex-col">

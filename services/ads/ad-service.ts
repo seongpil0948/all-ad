@@ -6,7 +6,7 @@ export interface IAdPlatformAdapter {
   fetchCampaigns(accountId: string): Promise<Campaign[]>;
   fetchAdPerformance(
     campaignId: string,
-    dateRange: DateRange
+    dateRange: DateRange,
   ): Promise<AdPerformance>;
   createCampaign(campaign: CreateCampaignDto): Promise<Campaign>;
 }
@@ -80,7 +80,7 @@ export class AdService {
 
       try {
         const campaignPromises = platforms.map((platform) =>
-          this.fetchCampaignsByPlatform(platform, accountId)
+          this.fetchCampaignsByPlatform(platform, accountId),
         );
 
         const results = await Promise.allSettled(campaignPromises);
@@ -98,7 +98,7 @@ export class AdService {
                 method: "fetchAllCampaigns",
                 platform: platforms[index],
                 accountId,
-              }
+              },
             );
           }
         });
@@ -125,7 +125,7 @@ export class AdService {
   // Fetch campaigns from specific platform
   private async fetchCampaignsByPlatform(
     platform: string,
-    accountId: string
+    accountId: string,
   ): Promise<Campaign[]> {
     const adapter = this.adapters.get(platform);
 
@@ -175,14 +175,14 @@ export class AdService {
           span.end();
           throw error;
         }
-      }
+      },
     );
   }
 
   // Get aggregated performance data
   async getAggregatedPerformance(
     campaignIds: string[],
-    dateRange: DateRange
+    dateRange: DateRange,
   ): Promise<AdPerformance[]> {
     return log.span("AdService.getAggregatedPerformance", async () => {
       log.info("Fetching aggregated performance data", {
@@ -214,7 +214,7 @@ export class AdService {
 
         try {
           const platformPerformance = await Promise.all(
-            ids.map((id) => adapter.fetchAdPerformance(id, dateRange))
+            ids.map((id) => adapter.fetchAdPerformance(id, dateRange)),
           );
 
           performanceData.push(...platformPerformance);
@@ -227,7 +227,7 @@ export class AdService {
               method: "getAggregatedPerformance",
               platform,
               campaignIds: ids,
-            }
+            },
           );
         }
       }
@@ -247,7 +247,7 @@ export class AdService {
 
   // Helper methods
   private getCampaignCountByPlatform(
-    campaigns: Campaign[]
+    campaigns: Campaign[],
   ): Record<string, number> {
     return campaigns.reduce(
       (acc, campaign) => {
@@ -255,12 +255,12 @@ export class AdService {
 
         return acc;
       },
-      {} as Record<string, number>
+      {} as Record<string, number>,
     );
   }
 
   private groupCampaignsByPlatform(
-    campaignIds: string[]
+    campaignIds: string[],
   ): Map<string, string[]> {
     // This is a simplified implementation
     // In real scenario, you would look up the platform for each campaign ID
@@ -299,7 +299,7 @@ export class AdService {
         totalClicks: 0,
         totalConversions: 0,
         totalSpend: 0,
-      }
+      },
     );
 
     return {

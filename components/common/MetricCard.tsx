@@ -1,5 +1,5 @@
 import { Card, CardBody } from "@heroui/card";
-import { cn } from "@heroui/system";
+import { cn } from "@heroui/theme";
 
 interface MetricCardProps {
   label: string;

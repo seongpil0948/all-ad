@@ -21,7 +21,7 @@ export class OpenTelemetryLogger implements ILogger {
     level: LogLevel,
     message: string,
     context?: LogContext,
-    error?: Error
+    error?: Error,
   ): LogEntry {
     const activeSpan = trace.getActiveSpan();
     const spanContext = activeSpan?.spanContext();
@@ -97,7 +97,7 @@ export class OpenTelemetryLogger implements ILogger {
           prefix,
           entry.message,
           entry.error?.stack || "",
-          contextStr
+          contextStr,
         );
         break;
     }
