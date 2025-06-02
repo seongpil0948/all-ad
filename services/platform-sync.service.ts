@@ -123,7 +123,10 @@ export class PlatformSyncService {
       }
 
       // Update sync time
-      await this._dbService.updateCampaignSyncTime(teamId, platform);
+      const dbService = new PlatformDatabaseService();
+
+      await dbService.updateCampaignSyncTime(teamId, platform);
+
       return true;
     } catch (error) {
       Logger.error(`Platform sync error for ${platform}:`, error as Error);

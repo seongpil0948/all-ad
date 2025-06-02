@@ -65,7 +65,6 @@ export async function signup(
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
-  // Validation
   if (!email || !email.includes("@")) {
     return {
       errors: {

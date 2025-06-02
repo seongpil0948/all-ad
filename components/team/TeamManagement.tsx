@@ -408,7 +408,6 @@ export function TeamManagement() {
         </CardBody>
       </Card>
 
-      {/* 팀원 초대 모달 */}
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalContent>
           <ModalHeader>팀원 초대</ModalHeader>
@@ -420,26 +419,37 @@ export function TeamManagement() {
                 startContent={<FaUser className="text-default-400" />}
                 type="email"
                 value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
+                onValueChange={(e) => setInviteEmail(e)}
               />
 
               <Select
+                items={Object.entries(roleConfig)
+                  .filter(([role]) => role !== "master")
+                  .map(([role, config]) => ({
+                    key: role,
+                    label: config.label,
+                    description: config.description,
+                    icon: config.icon,
+                  }))}
                 label="권한"
                 selectedKeys={[inviteRole]}
                 onChange={(e) => setInviteRole(e.target.value as UserRole)}
               >
-                {Object.entries(roleConfig)
-                  .filter(([role]) => role !== "master")
-                  .map(([role, config]) => (
-                    <SelectItem key={role}>
+                {(item) => (
+                  <SelectItem key={item.key} textValue={item.label}>
+                    <div className="flex gap-2 items-center">
+                      {createElement(item.icon, {
+                        className: "w-4 h-4 flex-shrink-0",
+                      })}
                       <div className="flex flex-col">
-                        <span>{config.label}</span>
-                        <span className="text-xs text-default-500">
-                          {config.description}
+                        <span className="text-small">{item.label}</span>
+                        <span className="text-tiny text-default-400">
+                          {item.description}
                         </span>
                       </div>
-                    </SelectItem>
-                  ))}
+                    </div>
+                  </SelectItem>
+                )}
               </Select>
             </div>
           </ModalBody>

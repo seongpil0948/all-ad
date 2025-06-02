@@ -236,7 +236,6 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         teamId: currentTeam.id,
       });
 
-      // First, check if user with email exists
       const { data: existingUser, error: userError } = await supabase
         .from("profiles")
         .select("id")
@@ -244,11 +243,11 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         .single();
 
       if (userError) {
-        logger.error(`User not found ${email}`);
-        throw new Error("User with this email does not exist");
+        logger.error(`Error in fetching user for ${email}`, userError);
+        throw userError;
       }
 
-      // Check if already a member
+      logger.debug(`Found existing user ${existingUser.id}`);
       const { data: existingMember } = await supabase
         .from("team_members")
         .select("id")
@@ -260,7 +259,6 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         throw new Error("User is already a team member");
       }
 
-      // Add team member
       const { error } = await supabase.from("team_members").insert({
         team_id: currentTeam.id,
         user_id: existingUser.id,
