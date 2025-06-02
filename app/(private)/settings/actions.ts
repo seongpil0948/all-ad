@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/utils/supabase/server";
-import { platformDB } from "@/services/platform-database.service";
+import { PlatformDatabaseService } from "@/services/platform-database.service";
 import { platformServiceFactory } from "@/services/platforms/platform-service-factory";
 import { PlatformType } from "@/types/platform";
 
@@ -21,7 +21,8 @@ export async function savePlatformCredentials(
   }
 
   // Get user's team
-  const team = await platformDB.getUserTeam(user.id);
+  const dbService = new PlatformDatabaseService();
+  const team = await dbService.getUserTeam(user.id);
 
   if (!team) {
     throw new Error("User has no team");
@@ -38,7 +39,7 @@ export async function savePlatformCredentials(
   }
 
   // Save credentials
-  const success = await platformDB.savePlatformCredentials(
+  const success = await dbService.savePlatformCredentials(
     team.id,
     platform,
     credentials,
@@ -63,13 +64,14 @@ export async function deletePlatformCredentials(platform: PlatformType) {
   }
 
   // Get user's team
-  const team = await platformDB.getUserTeam(user.id);
+  const dbService = new PlatformDatabaseService();
+  const team = await dbService.getUserTeam(user.id);
 
   if (!team) {
     throw new Error("User has no team");
   }
 
-  const success = await platformDB.deletePlatformCredentials(team.id, platform);
+  const success = await dbService.deletePlatformCredentials(team.id, platform);
 
   if (!success) {
     throw new Error("Failed to delete credentials");
@@ -92,7 +94,8 @@ export async function togglePlatformCredentials(
   }
 
   // Get user's team
-  const team = await platformDB.getUserTeam(user.id);
+  const dbService = new PlatformDatabaseService();
+  const team = await dbService.getUserTeam(user.id);
 
   if (!team) {
     throw new Error("User has no team");
@@ -123,11 +126,12 @@ export async function getTeamCredentials() {
   }
 
   // Get user's team
-  const team = await platformDB.getUserTeam(user.id);
+  const dbService = new PlatformDatabaseService();
+  const team = await dbService.getUserTeam(user.id);
 
   if (!team) {
     return [];
   }
 
-  return await platformDB.getTeamCredentials(team.id);
+  return await dbService.getTeamCredentials(team.id);
 }

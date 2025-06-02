@@ -6,12 +6,10 @@ import { PlatformDatabaseService } from "@/services/platform-database.service";
 import { PlatformType } from "@/types/database.types";
 import log from "@/utils/logger";
 
-
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ platform: string }> },
 ) {
-  
   try {
     const { platform } = await params;
     const supabase = await createClient();
@@ -72,6 +70,7 @@ export async function POST(
 
     // Create platform service
     const platformService = platformServiceFactory.createService(platformType);
+    // Create new instance for each request
     const dbService = new PlatformDatabaseService();
 
     // Set credentials

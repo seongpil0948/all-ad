@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic'
-
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Divider } from "@heroui/divider";
 import { Switch } from "@heroui/switch";
@@ -15,6 +13,9 @@ import {
 import { createClient } from "@/utils/supabase/server";
 import { PlatformCredentialsManager } from "@/components/platform/PlatformCredentialsManager";
 
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function SettingsPage() {
   const supabase = await createClient();

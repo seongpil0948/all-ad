@@ -1,5 +1,5 @@
 import { platformServiceFactory } from "./platforms/platform-service-factory";
-import { platformDB } from "./platform-database.service";
+import { PlatformDatabaseService } from "./platform-database.service";
 
 import { PlatformType } from "@/types/platform";
 import { Logger } from "@/utils/logger";
@@ -123,7 +123,9 @@ export class PlatformSyncService {
       }
 
       // Update sync time
-      await platformDB.updateCampaignSyncTime(teamId, platform);
+      const dbService = new PlatformDatabaseService();
+
+      await dbService.updateCampaignSyncTime(teamId, platform);
 
       return true;
     } catch (error) {
@@ -246,9 +248,10 @@ export class PlatformSyncService {
     campaigns: PlatformCampaign[],
   ): Promise<DBCampaign[]> {
     const savedCampaigns: DBCampaign[] = [];
+    const dbService = new PlatformDatabaseService();
 
     for (const campaign of campaigns) {
-      const savedCampaign = await platformDB.upsertCampaign({
+      const savedCampaign = await dbService.upsertCampaign({
         team_id: teamId,
         platform,
         platform_campaign_id: campaign.platform_campaign_id,
@@ -271,8 +274,10 @@ export class PlatformSyncService {
     campaignId: string,
     metrics: CampaignMetrics[],
   ): Promise<void> {
+    const dbService = new PlatformDatabaseService();
+
     for (const metric of metrics) {
-      await platformDB.upsertCampaignMetrics({
+      await dbService.upsertCampaignMetrics({
         campaign_id: campaignId,
         date: metric.date,
         impressions: metric.impressions,
@@ -306,6 +311,3 @@ export class PlatformSyncService {
     return true;
   }
 }
-
-// Export singleton instance
-export const platformSync = new PlatformSyncService();
