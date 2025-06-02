@@ -1,20 +1,12 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-
 import { createClient } from "@/utils/supabase/server";
 import { Campaign, CampaignMetric, Team } from "@/types/database.types";
 import { Logger } from "@/utils/logger";
 
 export class PlatformDatabaseService {
-  private supabase: Promise<SupabaseClient>;
-
-  constructor() {
-    this.supabase = createClient();
-  }
-
   async upsertCampaign(
     campaign: Omit<Campaign, "id" | "created_at" | "updated_at">,
   ): Promise<Campaign | null> {
-    const client = await this.supabase;
+    const client = await createClient();
     const { data, error } = await client
       .from("campaigns")
       .upsert(
@@ -41,7 +33,7 @@ export class PlatformDatabaseService {
   async upsertCampaignMetrics(
     metrics: Omit<CampaignMetric, "id" | "created_at">,
   ): Promise<CampaignMetric | null> {
-    const client = await this.supabase;
+    const client = await createClient();
     const { data, error } = await client
       .from("campaign_metrics")
       .upsert(metrics, {
@@ -66,7 +58,7 @@ export class PlatformDatabaseService {
       isActive?: boolean;
     },
   ): Promise<Campaign[]> {
-    const client = await this.supabase;
+    const client = await createClient();
     let query = client.from("campaigns").select("*").eq("team_id", teamId);
 
     if (filters?.platform) {
@@ -97,7 +89,7 @@ export class PlatformDatabaseService {
       endDate: string;
     },
   ): Promise<CampaignMetric[]> {
-    const client = await this.supabase;
+    const client = await createClient();
     let query = client
       .from("campaign_metrics")
       .select("*")
@@ -124,7 +116,7 @@ export class PlatformDatabaseService {
     teamId: string,
     platform: string,
   ): Promise<void> {
-    const client = await this.supabase;
+    const client = await createClient();
     const { error } = await client
       .from("platform_credentials")
       .update({ synced_at: new Date().toISOString() })
@@ -137,7 +129,7 @@ export class PlatformDatabaseService {
   }
 
   async getUserTeam(userId: string): Promise<Team | null> {
-    const client = await this.supabase;
+    const client = await createClient();
 
     // First, check if user is a master of any team
     const { data: masterTeam, error: masterError } = await client
@@ -208,7 +200,7 @@ export class PlatformDatabaseService {
     credentials: Record<string, any>,
     userId: string,
   ): Promise<boolean> {
-    const client = await this.supabase;
+    const client = await createClient();
     const { error } = await client.from("platform_credentials").upsert(
       {
         team_id: teamId,
@@ -236,7 +228,7 @@ export class PlatformDatabaseService {
     teamId: string,
     platform: string,
   ): Promise<boolean> {
-    const client = await this.supabase;
+    const client = await createClient();
     const { error } = await client
       .from("platform_credentials")
       .delete()
@@ -253,7 +245,7 @@ export class PlatformDatabaseService {
   }
 
   async getTeamCredentials(teamId: string) {
-    const client = await this.supabase;
+    const client = await createClient();
     const { data, error } = await client
       .from("platform_credentials")
       .select("*")
@@ -269,6 +261,3 @@ export class PlatformDatabaseService {
     return data || [];
   }
 }
-
-// Export singleton instance
-export const platformDB = new PlatformDatabaseService();
