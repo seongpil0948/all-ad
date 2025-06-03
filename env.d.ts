@@ -28,6 +28,9 @@ declare global {
 
       // Logging
       LOG_LEVEL?: "debug" | "info" | "warn" | "error";
+
+      REDIS_URL?: string;
+      RESEND_API_KEY?: string;
     }
   }
 }

@@ -61,8 +61,14 @@ export default function IntegratedTabsClient() {
               credentials={credentials
                 .filter((c) => c.created_by !== undefined)
                 .map((c) => ({
-                  ...c,
-                  created_by: c.created_by || "",
+                  id: c.id,
+                  teamId: c.team_id,
+                  platform: c.platform,
+                  credentials: c.credentials,
+                  isActive: c.is_active,
+                  createdAt: c.created_at,
+                  updatedAt: c.updated_at,
+                  lastSyncAt: c.synced_at || null,
                 }))}
               onDelete={async (platform) => {
                 const credential = credentials.find(

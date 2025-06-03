@@ -27,7 +27,7 @@ export class PlatformManager {
       const connection = await adapter.connect(credentials);
 
       // Store connection in database
-      const supabase = createClient();
+      const supabase = await createClient();
       const { error } = await supabase.from("platform_connections").insert({
         user_id: userId,
         platform_type: type,
@@ -68,7 +68,7 @@ export class PlatformManager {
       await adapter.disconnect(connectionId);
 
       // Remove from database
-      const supabase = createClient();
+      const supabase = await createClient();
       const { error } = await supabase
         .from("platform_connections")
         .delete()
@@ -102,11 +102,11 @@ export class PlatformManager {
 
       if (result.success) {
         // Update last sync time
-        const supabase = createClient();
+        const supabase = await createClient();
 
         await supabase
           .from("platform_connections")
-          .update({ last_synced_at: result.syncedAt })
+          .update({ last_synced_at: result.timestamp })
           .eq("id", connectionId);
 
         // Fetch and store campaigns
@@ -125,8 +125,10 @@ export class PlatformManager {
 
       return {
         success: false,
-        syncedAt: new Date(),
+        timestamp: new Date(),
         error: error.message,
+        platform: type,
+        syncType: "full",
       };
     }
   }
@@ -141,7 +143,7 @@ export class PlatformManager {
     },
   ): Promise<Campaign[]> {
     try {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       let query = supabase.from("campaigns").select("*").eq("user_id", userId);
 
@@ -177,7 +179,7 @@ export class PlatformManager {
       logger.info("Updating campaign status", { userId, campaignId, status });
 
       // Get campaign details
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data: campaign, error } = await supabase
         .from("campaigns")
         .select("*")
@@ -212,7 +214,7 @@ export class PlatformManager {
 
   // Helper: Get connection details
   private static async getConnection(connectionId: string): Promise<any> {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("platform_connections")
       .select("*")
@@ -233,14 +235,14 @@ export class PlatformManager {
     userId: string,
     campaigns: Campaign[],
   ): Promise<void> {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Upsert campaigns
     const campaignsToStore = campaigns.map((campaign) => ({
-      id: `${campaign.platformType}_${campaign.id}`,
+      id: `${campaign.platform}_${campaign.platformCampaignId}`,
       user_id: userId,
-      platform_type: campaign.platformType,
-      platform_campaign_id: campaign.id,
+      platform_type: campaign.platform,
+      platform_campaign_id: campaign.platformCampaignId,
       account_id: campaign.accountId,
       name: campaign.name,
       status: campaign.status,
@@ -248,7 +250,7 @@ export class PlatformManager {
       budget_type: campaign.budgetType,
       start_date: campaign.startDate,
       end_date: campaign.endDate,
-      objective: campaign.objective,
+      // objective: campaign.objective, // Not in Campaign type
       metrics: campaign.metrics,
       updated_at: new Date(),
     }));
@@ -270,7 +272,7 @@ export class PlatformManager {
     type: PlatformType,
     _connectionId: string,
   ): Promise<void> {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Delete campaigns
     await supabase
@@ -286,9 +288,9 @@ export class PlatformManager {
   // Get OAuth URL for platform
   static getOAuthUrl(type: PlatformType, state: string): string {
     switch (type) {
-      case PlatformType.GOOGLE:
+      case "google":
         return (new GoogleAdsAdapter() as any).getAuthUrl(state);
-      case PlatformType.META:
+      case "facebook":
         return (new MetaAdsAdapter() as any).getAuthUrl(state);
       default:
         throw new Error(`OAuth not supported for platform: ${type}`);

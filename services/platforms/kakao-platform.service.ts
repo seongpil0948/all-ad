@@ -1,16 +1,20 @@
 import { BasePlatformService } from "./base-platform.service";
 
-import { Campaign, CampaignMetrics, KakaoCredentials } from "@/types/platform";
+import {
+  Campaign,
+  CampaignMetrics,
+  KakaoCredentials,
+  PlatformType,
+} from "@/types";
 import { Logger } from "@/utils/logger";
 
 export class KakaoPlatformService extends BasePlatformService {
-  platform = "kakao" as const;
+  platform: PlatformType = "kakao";
 
   async validateCredentials(): Promise<boolean> {
-    const { access_token, ad_account_id } = this
-      .credentials as KakaoCredentials;
+    const { accessToken, accountId } = this.credentials as KakaoCredentials;
 
-    if (!access_token || !ad_account_id) {
+    if (!accessToken || !accountId) {
       return false;
     }
 

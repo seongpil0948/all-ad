@@ -87,6 +87,11 @@ export function TeamManagement() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [invitationLink, setInvitationLink] = useState<string | null>(null);
+  const {
+    isOpen: isLinkModalOpen,
+    onOpen: onLinkModalOpen,
+    onClose: onLinkModalClose,
+  } = useDisclosure();
 
   // Clear messages after 3 seconds
   useEffect(() => {
@@ -140,6 +145,7 @@ export function TeamManagement() {
         onClose();
         setInviteEmail("");
         setInviteRole("viewer");
+        onLinkModalOpen(); // Open the link modal
       } else {
         throw new Error("Failed to create invitation");
       }
@@ -597,6 +603,41 @@ export function TeamManagement() {
             </Button>
             <Button color="primary" onPress={handleInvite}>
               초대
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Invitation Link Modal */}
+      <Modal isOpen={isLinkModalOpen} onClose={onLinkModalClose}>
+        <ModalContent>
+          <ModalHeader>초대 링크가 생성되었습니다</ModalHeader>
+          <ModalBody>
+            <div className="space-y-4">
+              <p className="text-sm text-default-600">
+                아래 링크를 복사하여 초대하려는 사용자에게 전달해주세요.
+              </p>
+              <div className="p-3 bg-default-100 rounded-lg">
+                <code className="text-xs break-all">{invitationLink}</code>
+              </div>
+              <Button
+                fullWidth
+                color="primary"
+                variant="flat"
+                onPress={() => {
+                  if (invitationLink) {
+                    navigator.clipboard.writeText(invitationLink);
+                    setSuccessMessage("링크가 클립보드에 복사되었습니다.");
+                  }
+                }}
+              >
+                링크 복사
+              </Button>
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="light" onPress={onLinkModalClose}>
+              닫기
             </Button>
           </ModalFooter>
         </ModalContent>

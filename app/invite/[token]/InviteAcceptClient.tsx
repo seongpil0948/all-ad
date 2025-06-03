@@ -80,7 +80,7 @@ export default function InviteAcceptClient({
         router.push("/dashboard");
       }, 2000);
     } catch (err) {
-      logger.error("Error accepting invitation", err);
+      logger.error("Error accepting invitation", err as Error);
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoading(false);

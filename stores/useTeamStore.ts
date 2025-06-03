@@ -309,14 +309,152 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
       // Check if invitation already exists
       const { data: existingInvitation } = await supabase
         .from("team_invitations")
-        .select("id, status")
+        .select("id, status, token")
         .eq("team_id", currentTeam.id)
         .eq("email", email)
-        .eq("status", "pending")
         .maybeSingle();
 
       if (existingInvitation) {
-        throw new Error("An invitation is already pending for this email");
+        if (existingInvitation.status === "pending") {
+          // Return existing invitation link and resend email
+          const invitationLink = `${window.location.origin}/invite/${existingInvitation.token}`;
+
+          logger.info("Returning existing pending invitation", {
+            email,
+            link: invitationLink,
+          });
+
+          // Resend invitation email
+          try {
+            const inviterProfile = await supabase
+              .from("profiles")
+              .select("full_name, email")
+              .eq("id", user.id)
+              .single();
+
+            const teamData = await supabase
+              .from("teams")
+              .select("name")
+              .eq("id", currentTeam.id)
+              .single();
+
+            const emailResponse = await fetch("/api/team/invite", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                email,
+                inviterName:
+                  inviterProfile.data?.full_name ||
+                  inviterProfile.data?.email ||
+                  "A team member",
+                teamName: teamData.data?.name || "the team",
+                invitationLink,
+              }),
+            });
+
+            if (!emailResponse.ok) {
+              logger.error(
+                "Failed to resend invitation email",
+                new Error(`HTTP ${emailResponse.status}`),
+              );
+            } else {
+              logger.info("Invitation email resent successfully", { email });
+            }
+          } catch (emailError) {
+            logger.error(
+              "Error resending invitation email",
+              emailError as Error,
+            );
+          }
+
+          return invitationLink;
+        } else if (existingInvitation.status === "accepted") {
+          throw new Error(
+            "User has already accepted an invitation to this team",
+          );
+        } else {
+          // For expired or cancelled invitations, update the existing one
+          const { data: updatedInvitation, error: updateError } = await supabase
+            .from("team_invitations")
+            .update({
+              status: "pending",
+              invited_by: user.id,
+              role: role,
+              expires_at: new Date(
+                Date.now() + 7 * 24 * 60 * 60 * 1000,
+              ).toISOString(), // 7 days from now
+            })
+            .eq("id", existingInvitation.id)
+            .select("token")
+            .single();
+
+          if (updateError) {
+            logger.error("Failed to update invitation", updateError);
+            throw new Error("Failed to update invitation. Please try again.");
+          }
+
+          logger.info("Updated existing invitation", {
+            status: existingInvitation.status,
+            newStatus: "pending",
+          });
+
+          // Return the updated invitation link
+          const invitationLink = `${window.location.origin}/invite/${updatedInvitation.token}`;
+
+          // Send invitation email
+          try {
+            const inviterProfile = await supabase
+              .from("profiles")
+              .select("full_name, email")
+              .eq("id", user.id)
+              .single();
+
+            const teamData = await supabase
+              .from("teams")
+              .select("name")
+              .eq("id", currentTeam.id)
+              .single();
+
+            const emailResponse = await fetch("/api/team/invite", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                email,
+                inviterName:
+                  inviterProfile.data?.full_name ||
+                  inviterProfile.data?.email ||
+                  "A team member",
+                teamName: teamData.data?.name || "the team",
+                invitationLink,
+              }),
+            });
+
+            if (!emailResponse.ok) {
+              logger.error(
+                "Failed to send invitation email for updated invitation",
+                new Error(`HTTP ${emailResponse.status}`),
+              );
+            } else {
+              logger.info("Invitation email sent for updated invitation", {
+                email,
+              });
+            }
+          } catch (emailError) {
+            logger.error(
+              "Error sending invitation email for updated invitation",
+              emailError as Error,
+            );
+          }
+
+          // Refresh invitations list
+          await get().fetchTeamInvitations();
+
+          return invitationLink;
+        }
       }
 
       // Check if user exists in the system
@@ -365,12 +503,36 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
 
       if (inviteError) {
         logger.error("Failed to create invitation", inviteError);
-        throw new Error("Failed to create invitation");
+
+        // Check if it's a duplicate key error
+        if (
+          inviteError.code === "23505" &&
+          inviteError.message?.includes("team_invitations_team_id_email_key")
+        ) {
+          throw new Error(
+            "An invitation already exists for this email. Please try again.",
+          );
+        }
+
+        throw new Error(inviteError.message || "Failed to create invitation");
       }
 
       logger.info("Team invitation created successfully", {
         email,
         token: invitation.token,
+        fullToken: invitation.token, // Log full token for debugging
+      });
+
+      // Verify the invitation was actually created
+      const { data: verifyInvite } = await supabase
+        .from("team_invitations")
+        .select("id, token, email, status")
+        .eq("token", invitation.token)
+        .single();
+
+      logger.info("Verification of created invitation", {
+        exists: !!verifyInvite,
+        invitationData: verifyInvite,
       });
 
       // Generate invitation link
@@ -409,15 +571,17 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         });
 
         if (!emailResponse.ok) {
-          logger.error("Failed to send invitation email", {
-            status: emailResponse.status,
-          });
+          logger.error(
+            "Failed to send invitation email",
+            new Error(`HTTP ${emailResponse.status}`),
+            { status: emailResponse.status },
+          );
           // Don't throw error - invitation is still created even if email fails
         } else {
           logger.info("Invitation email sent successfully", { email });
         }
       } catch (emailError) {
-        logger.error("Error sending invitation email", emailError);
+        logger.error("Error sending invitation email", emailError as Error);
         // Don't throw error - invitation is still created even if email fails
       }
 

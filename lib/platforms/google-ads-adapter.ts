@@ -42,7 +42,7 @@ interface GoogleAdsMetrics {
 }
 
 export class GoogleAdsAdapter extends BasePlatformAdapter {
-  type = PlatformType.GOOGLE;
+  type: PlatformType = "google";
   private config: GoogleAdsConfig;
 
   constructor() {
@@ -69,14 +69,14 @@ export class GoogleAdsAdapter extends BasePlatformAdapter {
       // For now, return mock connection
       const connection: PlatformConnection = {
         id: `google_${Date.now()}`,
-        platformType: PlatformType.GOOGLE,
+        platformType: "google",
         accountId: "mock-account-id",
         accountName: "Mock Google Ads Account",
         accessToken: "mock-access-token",
         refreshToken: "mock-refresh-token",
         expiresAt: new Date(Date.now() + 3600 * 1000), // 1 hour
         metadata: {
-          customerId: credentials.customerId,
+          customerId: (credentials as any).customerId || "",
         },
       };
 
@@ -181,7 +181,7 @@ export class GoogleAdsAdapter extends BasePlatformAdapter {
       // Validate connection
       this.validateConnection({
         id: connectionId,
-        platformType: PlatformType.GOOGLE,
+        platformType: "google",
         accountId: "mock-account-id",
         accountName: "Mock Account",
       });
@@ -195,8 +195,10 @@ export class GoogleAdsAdapter extends BasePlatformAdapter {
       // Mock sync result
       const result: SyncResult = {
         success: true,
-        syncedAt: new Date(),
-        dataCount: {
+        timestamp: new Date(),
+        platform: "google",
+        syncType: "full",
+        details: {
           campaigns: 15,
           adGroups: 45,
           ads: 120,
@@ -211,7 +213,9 @@ export class GoogleAdsAdapter extends BasePlatformAdapter {
 
       return {
         success: false,
-        syncedAt: new Date(),
+        timestamp: new Date(),
+        platform: "google",
+        syncType: "full",
         error: error.message,
       };
     }
@@ -238,22 +242,26 @@ export class GoogleAdsAdapter extends BasePlatformAdapter {
     metrics: GoogleAdsMetrics,
   ): Campaign {
     const campaign: Campaign = {
-      id: googleCampaign.id,
-      platformType: PlatformType.GOOGLE,
+      id: `google_${googleCampaign.id}`,
+      teamId: "", // Will be set by the caller
+      platform: "google",
+      platformCampaignId: googleCampaign.id,
       accountId: "mock-account-id",
       name: googleCampaign.name,
       status: this.mapStatus(googleCampaign.status),
       budget: parseInt(googleCampaign.campaignBudget.amountMicros) / 1000000,
       budgetType: "daily",
-      objective: googleCampaign.advertisingChannelType,
+      isActive: googleCampaign.status === "ENABLED",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       metrics: this.transformMetrics(metrics),
     };
 
     if (googleCampaign.startDate) {
-      campaign.startDate = this.parseGoogleDate(googleCampaign.startDate);
+      campaign.startDate = googleCampaign.startDate;
     }
     if (googleCampaign.endDate) {
-      campaign.endDate = this.parseGoogleDate(googleCampaign.endDate);
+      campaign.endDate = googleCampaign.endDate;
     }
 
     return campaign;
@@ -262,18 +270,18 @@ export class GoogleAdsAdapter extends BasePlatformAdapter {
   private transformMetrics(googleMetrics: GoogleAdsMetrics): CampaignMetrics {
     const impressions = parseInt(googleMetrics.impressions);
     const clicks = parseInt(googleMetrics.clicks);
-    const spend = parseInt(googleMetrics.costMicros) / 1000000;
+    const cost = parseInt(googleMetrics.costMicros) / 1000000;
     const conversions = parseFloat(googleMetrics.conversions);
 
     return {
       impressions,
       clicks,
-      spend,
+      cost,
       conversions,
       ctr: parseFloat(googleMetrics.ctr),
-      cpc: spend / clicks,
-      cpm: (spend / impressions) * 1000,
-      roas: conversions > 0 ? (conversions * 50000) / spend : 0, // Assuming 50k KRW per conversion
+      cpc: cost / clicks,
+      cpm: (cost / impressions) * 1000,
+      roas: conversions > 0 ? (conversions * 50000) / cost : 0, // Assuming 50k KRW per conversion
     };
   }
 

@@ -37,13 +37,22 @@ export class Logger {
   // Error level - error messages
   static error(
     message: string,
-    error?: Error | string,
+    error?: Error | string | unknown,
     context?: LogContext,
   ): void {
-    if (typeof error === "string") {
-      logger.error(message, new Error(error), this.getContext(context));
-    } else {
+    if (error instanceof Error) {
       logger.error(message, error, this.getContext(context));
+    } else if (typeof error === "string") {
+      logger.error(message, new Error(error), this.getContext(context));
+    } else if (error !== undefined) {
+      const serializedError = JSON.stringify(error, null, 2);
+      logger.error(
+        `${message}: ${serializedError}`,
+        undefined,
+        this.getContext(context),
+      );
+    } else {
+      logger.error(message, undefined, this.getContext(context));
     }
   }
 

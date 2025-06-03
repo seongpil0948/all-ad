@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { PlatformDatabaseService } from "@/services/platform-database.service";
 import { platformServiceFactory } from "@/services/platforms/platform-service-factory";
-import { PlatformType } from "@/types/platform";
+import { PlatformType } from "@/types";
 
 export async function savePlatformCredentials(
   platform: PlatformType,

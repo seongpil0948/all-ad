@@ -48,7 +48,7 @@ interface MetaAdsInsights {
 }
 
 export class MetaAdsAdapter extends BasePlatformAdapter {
-  type = PlatformType.META;
+  type: PlatformType = "facebook";
   private config: MetaAdsConfig;
 
   constructor() {
@@ -73,15 +73,15 @@ export class MetaAdsAdapter extends BasePlatformAdapter {
 
       const connection: PlatformConnection = {
         id: `meta_${Date.now()}`,
-        platformType: PlatformType.META,
+        platformType: "facebook",
         accountId: "act_mock_account_id",
         accountName: "Mock Meta Ads Account",
         accessToken: "mock-access-token",
         refreshToken: "mock-refresh-token",
         expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 days
         metadata: {
-          businessId: credentials.businessId,
-          pixelId: credentials.pixelId,
+          businessId: (credentials as any).businessId || "",
+          pixelId: (credentials as any).pixelId || "",
         },
       };
 
@@ -197,7 +197,7 @@ export class MetaAdsAdapter extends BasePlatformAdapter {
       // Validate connection
       this.validateConnection({
         id: connectionId,
-        platformType: PlatformType.META,
+        platformType: "facebook",
         accountId: "act_mock_account_id",
         accountName: "Mock Account",
       });
@@ -217,8 +217,10 @@ export class MetaAdsAdapter extends BasePlatformAdapter {
 
       const result: SyncResult = {
         success: true,
-        syncedAt: new Date(),
-        dataCount: {
+        timestamp: new Date(),
+        platform: "facebook",
+        syncType: "full",
+        details: {
           campaigns: 12,
           adGroups: 35, // Ad Sets in Meta
           ads: 98,
@@ -233,8 +235,10 @@ export class MetaAdsAdapter extends BasePlatformAdapter {
 
       return {
         success: false,
-        syncedAt: new Date(),
+        timestamp: new Date(),
         error: error.message,
+        platform: "facebook",
+        syncType: "full",
       };
     }
   }
@@ -272,8 +276,10 @@ export class MetaAdsAdapter extends BasePlatformAdapter {
     insights: MetaAdsInsights,
   ): Campaign {
     const campaign: Campaign = {
-      id: metaCampaign.id,
-      platformType: PlatformType.META,
+      id: `meta_${metaCampaign.id}`,
+      teamId: "", // Will be set by the caller
+      platform: "facebook",
+      platformCampaignId: metaCampaign.id,
       accountId: "act_mock_account_id",
       name: metaCampaign.name,
       status: this.mapStatus(metaCampaign.status),
@@ -283,15 +289,17 @@ export class MetaAdsAdapter extends BasePlatformAdapter {
           ? parseFloat(metaCampaign.lifetime_budget)
           : undefined,
       budgetType: metaCampaign.daily_budget ? "daily" : "lifetime",
-      objective: metaCampaign.objective,
+      isActive: metaCampaign.status === "ACTIVE",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       metrics: this.transformMetrics(insights),
     };
 
     if (metaCampaign.start_time) {
-      campaign.startDate = new Date(metaCampaign.start_time);
+      campaign.startDate = new Date(metaCampaign.start_time).toISOString();
     }
     if (metaCampaign.stop_time) {
-      campaign.endDate = new Date(metaCampaign.stop_time);
+      campaign.endDate = new Date(metaCampaign.stop_time).toISOString();
     }
 
     return campaign;
@@ -300,7 +308,7 @@ export class MetaAdsAdapter extends BasePlatformAdapter {
   private transformMetrics(metaInsights: MetaAdsInsights): CampaignMetrics {
     const impressions = parseInt(metaInsights.impressions);
     const clicks = parseInt(metaInsights.clicks);
-    const spend = parseFloat(metaInsights.spend);
+    const cost = parseFloat(metaInsights.spend);
     const conversions = metaInsights.conversions
       ? parseFloat(metaInsights.conversions)
       : 0;
@@ -308,7 +316,7 @@ export class MetaAdsAdapter extends BasePlatformAdapter {
     return {
       impressions,
       clicks,
-      spend,
+      cost,
       conversions,
       ctr: parseFloat(metaInsights.ctr),
       cpc: parseFloat(metaInsights.cpc),
@@ -316,7 +324,7 @@ export class MetaAdsAdapter extends BasePlatformAdapter {
       roas: metaInsights.purchase_roas?.[0]
         ? parseFloat(metaInsights.purchase_roas[0].value)
         : conversions > 0
-          ? (conversions * 50000) / spend
+          ? (conversions * 50000) / cost
           : 0,
     };
   }

@@ -62,6 +62,7 @@ export interface PlatformCredential {
   created_at: string;
   updated_at: string;
   synced_at?: string | null;
+  last_sync_at?: string | null;
 }
 
 export interface Campaign {

@@ -1,13 +1,14 @@
 // Dashboard and report type definitions
+import { PlatformType } from "./base.types";
 
 export interface DashboardFilter {
-  dateRange: DateRange;
+  dateRange: DashboardDateRange;
   platforms?: PlatformType[];
   accounts?: string[];
   campaigns?: string[];
 }
 
-export interface DateRange {
+export interface DashboardDateRange {
   start: Date;
   end: Date;
   preset?:
@@ -34,7 +35,7 @@ export interface DashboardMetrics {
 export interface PlatformSummary {
   platform: PlatformType;
   metrics: DashboardMetrics;
-  topCampaigns: CampaignSummary[];
+  topCampaigns: DashboardCampaignSummary[];
   syncStatus: {
     lastSynced: Date;
     nextSync?: Date;
@@ -43,7 +44,7 @@ export interface PlatformSummary {
   };
 }
 
-export interface CampaignSummary {
+export interface DashboardCampaignSummary {
   id: string;
   name: string;
   status: string;

@@ -1,12 +1,9 @@
-// Platform-related type definitions
+// Platform-specific types that extend base types
+import { PlatformType } from "./base.types";
+import { Campaign } from "./campaign.types";
+import { SyncResult } from "./sync.types";
 
-export enum PlatformType {
-  GOOGLE = "google",
-  META = "meta",
-  COUPANG = "coupang",
-  NAVER = "naver", // For V2.0
-}
-
+// Platform status enum
 export enum PlatformStatus {
   CONNECTED = "connected",
   DISCONNECTED = "disconnected",
@@ -14,6 +11,7 @@ export enum PlatformStatus {
   SYNCING = "syncing",
 }
 
+// Platform interface
 export interface Platform {
   id: string;
   type: PlatformType;
@@ -26,8 +24,6 @@ export interface Platform {
   accountName?: string;
 }
 
-export type PlatformCredential = Record<string, any>;
-
 // Base interface for platform adapters
 export interface PlatformAdapter {
   type: PlatformType;
@@ -38,6 +34,7 @@ export interface PlatformAdapter {
   getCampaigns(accountId: string): Promise<Campaign[]>;
 }
 
+// Platform connection interface
 export interface PlatformConnection {
   id: string;
   platformType: PlatformType;
@@ -49,48 +46,13 @@ export interface PlatformConnection {
   metadata?: Record<string, any>;
 }
 
-export interface SyncResult {
-  success: boolean;
-  syncedAt: Date;
-  dataCount?: {
-    campaigns?: number;
-    adGroups?: number;
-    ads?: number;
-  };
-  error?: string;
-}
-
+// Ad account interface
 export interface AdAccount {
   id: string;
   name: string;
   currency: string;
   timezone: string;
   status: "active" | "paused" | "suspended";
-}
-
-export interface Campaign {
-  id: string;
-  platformType: PlatformType;
-  accountId: string;
-  name: string;
-  status: "active" | "paused" | "removed";
-  budget?: number;
-  budgetType?: "daily" | "lifetime";
-  startDate?: Date;
-  endDate?: Date;
-  objective?: string;
-  metrics?: CampaignMetrics;
-}
-
-export interface CampaignMetrics {
-  impressions: number;
-  clicks: number;
-  spend: number;
-  conversions?: number;
-  ctr?: number; // Click-through rate
-  cpc?: number; // Cost per click
-  cpm?: number; // Cost per mille
-  roas?: number; // Return on ad spend
 }
 
 // OAuth credentials type
@@ -108,3 +70,35 @@ export interface ApiCredentials {
   accountId?: string;
   customerId?: string;
 }
+
+// Platform-specific display config
+export const PLATFORM_CONFIG: Record<
+  PlatformType,
+  { name: string; icon: string; color: string }
+> = {
+  google: {
+    name: "Google Ads",
+    icon: "google",
+    color: "#4285F4",
+  },
+  facebook: {
+    name: "Meta Ads",
+    icon: "facebook",
+    color: "#1877F2",
+  },
+  kakao: {
+    name: "Kakao Moment",
+    icon: "kakao",
+    color: "#FEE500",
+  },
+  naver: {
+    name: "Naver Ads",
+    icon: "naver",
+    color: "#03C75A",
+  },
+  coupang: {
+    name: "Coupang Ads",
+    icon: "coupang",
+    color: "#FF5A5F",
+  },
+};

@@ -18,7 +18,7 @@ import {
 import { Tooltip } from "@heroui/tooltip";
 import { SortDescriptor } from "@react-types/shared";
 
-import { Campaign } from "@/types/platform";
+import { Campaign } from "@/types";
 
 interface CampaignTableProps {
   campaigns: Campaign[];
@@ -92,7 +92,7 @@ export function CampaignTable({
     await onUpdateBudget(
       campaign.id,
       campaign.platform,
-      campaign.platform_campaign_id,
+      campaign.platformCampaignId,
       budgetValue,
     );
     setEditingBudget(null);
@@ -107,7 +107,7 @@ export function CampaignTable({
     await onUpdateStatus(
       campaign.id,
       campaign.platform,
-      campaign.platform_campaign_id,
+      campaign.platformCampaignId,
       isActive,
     );
   };
@@ -260,15 +260,15 @@ export function CampaignTable({
             </TableCell>
             <TableCell>
               <Switch
-                isSelected={campaign.is_active}
+                isSelected={campaign.isActive}
                 onValueChange={(isActive) =>
                   handleStatusChange(campaign, isActive)
                 }
               />
             </TableCell>
             <TableCell>
-              {campaign.synced_at
-                ? new Date(campaign.synced_at).toLocaleString()
+              {campaign.updatedAt
+                ? new Date(campaign.updatedAt).toLocaleString()
                 : "동기화 필요"}
             </TableCell>
           </TableRow>

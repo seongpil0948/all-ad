@@ -42,7 +42,7 @@ interface CoupangAdsReport {
 }
 
 export class CoupangAdsAdapter extends BasePlatformAdapter {
-  type = PlatformType.COUPANG;
+  type: PlatformType = "coupang";
   private config: CoupangAdsConfig;
 
   constructor() {
@@ -69,7 +69,7 @@ export class CoupangAdsAdapter extends BasePlatformAdapter {
 
       const connection: PlatformConnection = {
         id: `coupang_${Date.now()}`,
-        platformType: PlatformType.COUPANG,
+        platformType: "coupang",
         accountId: credentials.accountId || "default",
         accountName: "Coupang Ads Account",
         metadata: {
@@ -182,7 +182,7 @@ export class CoupangAdsAdapter extends BasePlatformAdapter {
       // Validate connection
       this.validateConnection({
         id: connectionId,
-        platformType: PlatformType.COUPANG,
+        platformType: "coupang",
         accountId: "coupang_seller_12345",
         accountName: "Coupang Account",
       });
@@ -196,8 +196,10 @@ export class CoupangAdsAdapter extends BasePlatformAdapter {
 
       const result: SyncResult = {
         success: true,
-        syncedAt: new Date(),
-        dataCount: {
+        timestamp: new Date(),
+        platform: "coupang",
+        syncType: "full",
+        details: {
           campaigns: 8,
           adGroups: 25, // Product groups
           ads: 150, // Individual products/keywords
@@ -208,12 +210,14 @@ export class CoupangAdsAdapter extends BasePlatformAdapter {
 
       return result;
     } catch (error: any) {
-      logger.error("Coupang Ads sync failed", error);
+      logger.error("Coupang Ads sync failed", error as Error);
 
       return {
         success: false,
-        syncedAt: new Date(),
+        timestamp: new Date(),
         error: error.message,
+        platform: "coupang",
+        syncType: "full",
       };
     }
   }
@@ -265,20 +269,24 @@ export class CoupangAdsAdapter extends BasePlatformAdapter {
     report: CoupangAdsReport,
   ): Campaign {
     const campaign: Campaign = {
-      id: coupangCampaign.campaignId,
-      platformType: PlatformType.COUPANG,
+      id: `coupang_${coupangCampaign.campaignId}`,
+      teamId: "", // Will be set by the caller
+      platform: "coupang",
+      platformCampaignId: coupangCampaign.campaignId,
       accountId: "coupang_seller_12345",
       name: coupangCampaign.campaignName,
       status: this.mapStatus(coupangCampaign.campaignStatus),
       budget: coupangCampaign.dailyBudget,
       budgetType: "daily",
-      objective: coupangCampaign.campaignType,
-      startDate: new Date(coupangCampaign.startDate),
+      startDate: coupangCampaign.startDate,
+      isActive: coupangCampaign.campaignStatus === "ACTIVE",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       metrics: this.transformMetrics(report),
     };
 
     if (coupangCampaign.endDate) {
-      campaign.endDate = new Date(coupangCampaign.endDate);
+      campaign.endDate = coupangCampaign.endDate;
     }
 
     return campaign;
@@ -290,7 +298,7 @@ export class CoupangAdsAdapter extends BasePlatformAdapter {
     return {
       impressions: report.impressions,
       clicks: report.clicks,
-      spend: report.cost,
+      cost: report.cost,
       conversions: report.conversions,
       ctr:
         report.impressions > 0 ? (report.clicks / report.impressions) * 100 : 0,
@@ -374,7 +382,7 @@ export class CoupangAdsAdapter extends BasePlatformAdapter {
 
       return result.success;
     } catch (error) {
-      logger.error("Failed to update campaign budget", error);
+      logger.error("Failed to update campaign budget", error as Error);
 
       return false;
     }

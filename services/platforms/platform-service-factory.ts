@@ -8,7 +8,7 @@ import { KakaoPlatformService } from "./kakao-platform.service";
 import { NaverPlatformService } from "./naver-platform.service";
 import { CoupangPlatformService } from "./coupang-platform.service";
 
-import { PlatformType } from "@/types/platform";
+import { PlatformType } from "@/types";
 
 export class PlatformServiceFactoryImpl implements PlatformServiceFactory {
   private static instance: PlatformServiceFactoryImpl;
@@ -28,11 +28,14 @@ export class PlatformServiceFactoryImpl implements PlatformServiceFactory {
   }
 
   private registerServices(): void {
-    this.services.set("facebook", new FacebookPlatformService());
-    this.services.set("google", new GooglePlatformService());
-    this.services.set("kakao", new KakaoPlatformService());
-    this.services.set("naver", new NaverPlatformService());
-    this.services.set("coupang", new CoupangPlatformService());
+    this.services.set(
+      "facebook" as PlatformType,
+      new FacebookPlatformService(),
+    );
+    this.services.set("google" as PlatformType, new GooglePlatformService());
+    this.services.set("kakao" as PlatformType, new KakaoPlatformService());
+    this.services.set("naver" as PlatformType, new NaverPlatformService());
+    this.services.set("coupang" as PlatformType, new CoupangPlatformService());
   }
 
   createService(platform: PlatformType): PlatformService {

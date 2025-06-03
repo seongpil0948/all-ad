@@ -38,55 +38,68 @@ export async function inviteTeamMemberAction(email: string, role: UserRole) {
       throw new Error("No team found");
     }
 
-    if (userRole !== "master" && userRole !== "editor") {
+    if (userRole !== "master" && userRole !== "team_mate") {
       throw new Error("Insufficient permissions to invite members");
     }
 
-    // Check if user with email exists
-    const { data: existingUser, error: userError } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("email", email)
-      .single();
-
-    if (userError) {
-      throw new Error("User with this email does not exist");
-    }
-
-    // Check if already a member
+    // Check if user with this email is already a member
     const { data: existingMember } = await supabase
       .from("team_members")
-      .select("id")
+      .select("profiles!inner(email)")
       .eq("team_id", teamId)
-      .eq("user_id", existingUser.id)
+      .eq("profiles.email", email)
       .maybeSingle();
 
     if (existingMember) {
       throw new Error("User is already a team member");
     }
 
-    // Add team member
-    const { error } = await supabase.from("team_members").insert({
-      team_id: teamId,
-      user_id: existingUser.id,
-      role,
-      invited_by: user.id,
-    });
+    // Check if there's already a pending invitation
+    const { data: existingInvite } = await supabase
+      .from("team_invitations")
+      .select("id")
+      .eq("team_id", teamId)
+      .eq("email", email)
+      .eq("status", "pending")
+      .maybeSingle();
+
+    if (existingInvite) {
+      throw new Error("An invitation has already been sent to this email");
+    }
+
+    // Create invitation
+    const { data: invitation, error } = await supabase
+      .from("team_invitations")
+      .insert({
+        team_id: teamId,
+        email,
+        role: role === "master" ? "viewer" : role, // Can't invite as master
+        invited_by: user.id,
+      })
+      .select("token")
+      .single();
 
     if (error) {
-      logger.error("Failed to add team member", error);
+      logger.error("Failed to create invitation", error);
       throw error;
     }
 
-    logger.info("Team member invited successfully", {
+    const inviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/invite/${invitation.token}`;
+
+    logger.info("Team invitation created successfully", {
       email,
       role,
       teamId,
+      token: invitation.token,
     });
 
     revalidatePath("/team");
 
-    return { success: true, message: `${email}님이 팀에 초대되었습니다.` };
+    return {
+      success: true,
+      message: `초대 링크가 생성되었습니다.`,
+      inviteUrl,
+    };
   } catch (error) {
     logger.error(
       "Error in inviteTeamMemberAction",

@@ -45,6 +45,7 @@ export function AuthForm({
         <div className="flex flex-col gap-4 items-center w-full min-w-sm mx-auto">
           <Input
             isRequired
+            autoComplete="email"
             defaultValue={defaultEmail}
             errorMessage={currentState.errors?.email}
             isInvalid={!!currentState.errors?.email}
@@ -57,6 +58,7 @@ export function AuthForm({
           />
           <Input
             isRequired
+            autoComplete="current-password"
             errorMessage={currentState.errors?.password}
             isInvalid={!!currentState.errors?.password}
             label="비밀번호"

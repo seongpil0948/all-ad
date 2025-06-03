@@ -108,7 +108,6 @@ export default defineConfig([
           trailingComma: "all",
         },
       ],
-      
 
       "@typescript-eslint/no-unused-vars": [
         "warn",

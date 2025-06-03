@@ -1,19 +1,21 @@
 import { BasePlatformService } from "./base-platform.service";
 
-import { Campaign, CampaignMetrics, NaverCredentials } from "@/types/platform";
+import {
+  Campaign,
+  CampaignMetrics,
+  NaverCredentials,
+  PlatformType,
+} from "@/types";
 import { Logger } from "@/utils/logger";
 
 export class NaverPlatformService extends BasePlatformService {
-  platform = "naver" as const;
+  platform: PlatformType = "naver";
 
   async validateCredentials(): Promise<boolean> {
-    const {
-      access_token: api_key,
-      secret_key,
-      customer_id,
-    } = this.credentials as NaverCredentials;
+    const { apiKey, apiSecret, customerId } = this
+      .credentials as NaverCredentials;
 
-    if (!api_key || !secret_key || !customer_id) {
+    if (!apiKey || !apiSecret || !customerId) {
       return false;
     }
 

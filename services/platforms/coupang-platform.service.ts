@@ -4,17 +4,18 @@ import {
   Campaign,
   CampaignMetrics,
   CoupangCredentials,
-} from "@/types/platform";
+  PlatformType,
+} from "@/types";
 import { Logger } from "@/utils/logger";
 
 export class CoupangPlatformService extends BasePlatformService {
-  platform = "coupang" as const;
+  platform: PlatformType = "coupang";
 
   async validateCredentials(): Promise<boolean> {
-    const { access_key, secret_key, vendor_id } = this
+    const { accessKey, secretKey, vendorId } = this
       .credentials as CoupangCredentials;
 
-    if (!access_key || !secret_key || !vendor_id) {
+    if (!accessKey || !secretKey || !vendorId) {
       return false;
     }
 

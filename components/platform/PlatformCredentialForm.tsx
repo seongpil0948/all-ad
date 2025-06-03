@@ -3,7 +3,7 @@
 import { Input } from "@heroui/input";
 import { Form } from "@heroui/form";
 
-import { PlatformType } from "@/types/database.types";
+import { PlatformType } from "@/types";
 
 interface PlatformCredentialFormProps {
   platform: PlatformType;

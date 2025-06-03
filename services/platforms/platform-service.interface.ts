@@ -1,4 +1,4 @@
-import { Campaign, CampaignMetrics, PlatformType } from "@/types/platform";
+import { Campaign, CampaignMetrics, PlatformType } from "@/types";
 
 // Common interface for all platform services
 export interface PlatformService {

@@ -23,7 +23,7 @@ import { SiNaver } from "react-icons/si";
 
 import { PlatformCredentialForm } from "./PlatformCredentialForm";
 
-import { PlatformCredential, PlatformType } from "@/types/database.types";
+import { PlatformCredential, PlatformType } from "@/types";
 
 interface PlatformCredentialsManagerProps {
   credentials: PlatformCredential[];
@@ -145,7 +145,7 @@ export function PlatformCredentialsManager({
                 <div className="flex items-center gap-2">
                   {credential && (
                     <Switch
-                      isSelected={credential.is_active}
+                      isSelected={credential.isActive}
                       onValueChange={(isActive) =>
                         handleToggle(platform, isActive)
                       }

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { AuthError } from "@supabase/supabase-js";
 
 import { createClient } from "@/utils/supabase/server";
+import log from "@/utils/logger";
 
 export type ActionState = {
   errors?: {
@@ -80,16 +81,18 @@ export async function signup(
     };
   }
 
-  const { error, data } = await supabase.auth.signUp({
+  const options = {
     email,
     password,
-    options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
-      data: inviteToken ? { invitation_token: inviteToken } : undefined,
-    },
-  });
+    emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+    data: inviteToken ? { invitation_token: inviteToken } : undefined,
+  };
+
+  console.log("Signup attempt with:", options);
+  const { error, data } = await supabase.auth.signUp(options);
 
   if (error) {
+    log.error("Signup error", error);
     if (error instanceof AuthError) {
       return {
         errors: {

@@ -1,28 +1,26 @@
 import { BasePlatformService } from "./base-platform.service";
 
-import { Campaign, CampaignMetrics, PlatformType } from "@/types/platform";
+import {
+  Campaign,
+  CampaignMetrics,
+  PlatformType,
+  FacebookCredentials,
+} from "@/types";
 import { Logger } from "@/utils/logger";
-
-// TODO: Add proper types for Facebook API
-type FacebookCredentials = Record<string, any> & {
-  access_token: string;
-  ad_account_id: string;
-};
 export class FacebookPlatformService extends BasePlatformService {
-  platform = PlatformType.META as const;
+  platform: PlatformType = "facebook";
 
   async validateCredentials(): Promise<boolean> {
-    const { access_token, ad_account_id } = this
-      .credentials as FacebookCredentials;
+    const { accessToken, accountId } = this.credentials as FacebookCredentials;
 
-    if (!access_token || !ad_account_id) {
+    if (!accessToken || !accountId) {
       return false;
     }
 
     try {
       // Validate token by making a simple API call
       const response = await fetch(
-        `https://graph.facebook.com/v18.0/me?access_token=${access_token}`
+        `https://graph.facebook.com/v18.0/me?access_token=${accessToken}`,
       );
 
       return response.ok;
@@ -34,12 +32,11 @@ export class FacebookPlatformService extends BasePlatformService {
   }
 
   async fetchCampaigns(): Promise<Campaign[]> {
-    const { access_token, ad_account_id } = this
-      .credentials as FacebookCredentials;
+    const { accessToken, accountId } = this.credentials as FacebookCredentials;
 
     try {
       const response = await fetch(
-        `https://graph.facebook.com/v18.0/act_${ad_account_id}/campaigns?fields=id,name,status,daily_budget,lifetime_budget&access_token=${access_token}`
+        `https://graph.facebook.com/v18.0/act_${accountId}/campaigns?fields=id,name,status,daily_budget,lifetime_budget&access_token=${accessToken}`,
       );
 
       if (!response.ok) {
@@ -66,16 +63,16 @@ export class FacebookPlatformService extends BasePlatformService {
   async fetchCampaignMetrics(
     campaignId: string,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
   ): Promise<CampaignMetrics[]> {
-    const { access_token } = this.credentials as FacebookCredentials;
+    const { accessToken } = this.credentials as FacebookCredentials;
 
     try {
       const insights = await fetch(
         `https://graph.facebook.com/v18.0/${campaignId}/insights?` +
           `fields=impressions,clicks,conversions,spend,revenue&` +
           `time_range={'since':'${this.formatDate(startDate)}','until':'${this.formatDate(endDate)}'}&` +
-          `access_token=${access_token}`
+          `access_token=${accessToken}`,
       );
 
       if (!insights.ok) {
@@ -102,9 +99,9 @@ export class FacebookPlatformService extends BasePlatformService {
 
   async updateCampaignBudget(
     campaignId: string,
-    budget: number
+    budget: number,
   ): Promise<boolean> {
-    const { access_token } = this.credentials as FacebookCredentials;
+    const { accessToken } = this.credentials as FacebookCredentials;
 
     try {
       const response = await fetch(
@@ -116,9 +113,9 @@ export class FacebookPlatformService extends BasePlatformService {
           },
           body: JSON.stringify({
             daily_budget: budget * 100, // Facebook uses cents
-            access_token,
+            access_token: accessToken,
           }),
-        }
+        },
       );
 
       return response.ok;
@@ -131,9 +128,9 @@ export class FacebookPlatformService extends BasePlatformService {
 
   async updateCampaignStatus(
     campaignId: string,
-    isActive: boolean
+    isActive: boolean,
   ): Promise<boolean> {
-    const { access_token } = this.credentials as FacebookCredentials;
+    const { accessToken } = this.credentials as FacebookCredentials;
 
     try {
       const response = await fetch(
@@ -145,9 +142,9 @@ export class FacebookPlatformService extends BasePlatformService {
           },
           body: JSON.stringify({
             status: isActive ? "ACTIVE" : "PAUSED",
-            access_token,
+            access_token: accessToken,
           }),
-        }
+        },
       );
 
       return response.ok;

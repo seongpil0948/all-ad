@@ -13,7 +13,7 @@ import {
 } from "@heroui/modal";
 import { Select, SelectItem } from "@heroui/select";
 
-import { UserRole } from "@/types/platform";
+import { UserRole } from "@/types";
 
 interface InviteTeamMemberModalProps {
   isOpen: boolean;
@@ -22,9 +22,13 @@ interface InviteTeamMemberModalProps {
 }
 
 const roleOptions = [
-  { value: "viewer", label: "뷰어", description: "캠페인 조회만 가능" },
-  { value: "editor", label: "에디터", description: "캠페인 수정 가능" },
-  { value: "master", label: "마스터", description: "모든 권한" },
+  { value: UserRole.VIEWER, label: "뷰어", description: "캠페인 조회만 가능" },
+  {
+    value: UserRole.TEAM_MATE,
+    label: "팀메이트",
+    description: "캠페인 수정 가능",
+  },
+  { value: UserRole.MASTER, label: "마스터", description: "모든 권한" },
 ];
 
 export function InviteTeamMemberModal({
@@ -33,7 +37,7 @@ export function InviteTeamMemberModal({
   onInvite,
 }: InviteTeamMemberModalProps) {
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<UserRole>("viewer");
+  const [role, setRole] = useState<UserRole>(UserRole.VIEWER);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -50,7 +54,7 @@ export function InviteTeamMemberModal({
     try {
       await onInvite(email, role);
       setEmail("");
-      setRole("viewer");
+      setRole(UserRole.VIEWER);
       onOpenChange(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "초대에 실패했습니다");

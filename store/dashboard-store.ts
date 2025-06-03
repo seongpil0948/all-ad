@@ -7,7 +7,7 @@ import {
   DashboardFilter,
   DashboardMetrics,
   PlatformSummary,
-  DateRange,
+  DashboardDateRange,
   PlatformType,
 } from "@/types";
 import logger from "@/utils/logger";
@@ -32,7 +32,7 @@ interface DashboardState {
 }
 
 // Helper function to get date range
-const getDateRange = (preset: string): DateRange => {
+const getDateRange = (preset: string): DashboardDateRange => {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
@@ -154,8 +154,8 @@ export const useDashboardStore = create<DashboardState>()(
         setError(null);
 
         const params = new URLSearchParams({
-          startDate: filter.dateRange.start.toISOString(),
-          endDate: filter.dateRange.end.toISOString(),
+          start: filter.dateRange.start.toISOString(),
+          end: filter.dateRange.end.toISOString(),
           ...(filter.platforms && { platforms: filter.platforms.join(",") }),
           ...(filter.accounts && { accounts: filter.accounts.join(",") }),
           ...(filter.campaigns && { campaigns: filter.campaigns.join(",") }),

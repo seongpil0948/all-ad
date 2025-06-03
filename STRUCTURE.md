@@ -146,9 +146,21 @@ all-ad/
 ├── services/                     # 비즈니스 로직 서비스
 │   ├── ads/                      # 광고 서비스
 │   │   └── ad-service.ts
+│   ├── google-ads/               # Google Ads 통합 서비스 ✅ (새로 구현)
+│   │   ├── core/                 # 핵심 모듈
+│   │   │   └── google-ads-client.ts      # Google Ads API 클라이언트
+│   │   ├── campaign/             # 캠페인 관리
+│   │   │   └── campaign-control.service.ts   # 캠페인 제어 (ON/OFF, 예산)
+│   │   ├── label/                # 라벨 관리
+│   │   │   └── label-management.service.ts   # 라벨 CRUD
+│   │   ├── sync/                 # 동기화
+│   │   │   └── sync-strategy.service.ts      # 증분/전체 동기화
+│   │   └── google-ads-integration.service.ts # 통합 인터페이스
+│   ├── scheduler/                # 스케줄러 서비스 ✅ (새로 구현)
+│   │   └── google-ads-scheduler.ts       # 동기화 스케줄링
 │   ├── platforms/                # 플랫폼별 서비스 ✅ (이미 구현)
 │   │   ├── base-platform.service.ts      # 기본 플랫폼 인터페이스
-│   │   ├── google-platform.service.ts    # Google Ads
+│   │   ├── google-platform.service.ts    # Google Ads ✅ (google-ads-api 통합)
 │   │   ├── facebook-platform.service.ts  # Facebook Ads
 │   │   ├── naver-platform.service.ts     # Naver Ads
 │   │   ├── kakao-platform.service.ts     # Kakao Ads
@@ -192,7 +204,8 @@ all-ad/
 ├── types/                    # TypeScript 타입 정의
 │   ├── auth.types.ts        # 인증 타입
 │   ├── database.types.ts    # 데이터베이스 타입
-│   ├── platform.ts          # 플랫폼 타입
+│   ├── platform.ts          # 플랫폼 타입 ✅ (GoogleCredentials 추가)
+│   ├── google-ads.types.ts  # Google Ads 타입 ✅ (새로 추가)
 │   ├── env.d.ts            # 환경 변수 타입
 │   └── index.ts            # 타입 내보내기
 │
@@ -212,7 +225,21 @@ all-ad/
 │   └── migrations/       # 데이터베이스 마이그레이션
 │       ├── 001_create_profiles.sql
 │       ├── 002_fix_storage_policies.sql
-│       └── 003_create_platform_auth_and_campaigns.sql
+│       ├── 003_create_platform_auth_and_campaigns.sql
+│       ├── 004_create_team_rpc_function.sql
+│       ├── 004a_fix_team_members_rls_recursion.sql
+│       ├── 005a_create_team_members_profiles_function.sql
+│       ├── 005b_fix_all_rls_recursion.sql
+│       ├── 006_fix_team_creation.sql
+│       ├── 008_auto_accept_invitation_on_signup.sql
+│       ├── 009a_fix_user_role_enum_safe.sql
+│       ├── 009b_recreate_policies_and_tables.sql
+│       ├── 010_fix_team_creation_syntax.sql  # ✅ NEW: 팀 생성 시 SQL 문법 오류 수정
+│       ├── 011_add_missing_columns.sql        # ✅ NEW: 누락된 컬럼 추가
+│       ├── 012_fix_all_enums_and_functions.sql # ✅ NEW: 모든 enum 및 함수 종합 수정
+│       ├── 013_fix_team_members_rls_recursion.sql # ✅ NEW: RLS 무한 재귀 문제 해결
+│       ├── 014_ensure_team_functions_exist.sql # ✅ NEW: 팀 관련 함수 생성 확인
+│       └── 015_create_accept_invitation_function.sql # ✅ NEW: 초대 수락/거절 함수 생성
 │
 ├── styles/              # 스타일
 │   └── globals.css     # 전역 스타일
@@ -228,13 +255,40 @@ all-ad/
 
 ## 주요 리팩토링 내용 (2024-01-08)
 
-### 1. 무한 API 호출 문제 해결
+### Google Ads API 통합 구현 (2024-01-08)
 
-- **문제**: TeamManagement 컴포넌트에서 useEffect의 dependency로 함수가 포함되어 무한 렌더링 발생
-- **해결**:
-  - 초기화 상태 플래그 추가 (`isInitialized`)
-  - useCallback 훅 사용으로 함수 재생성 방지
-  - dependency 최적화
+1. **google-ads-api 패키지 활용**
+
+   - 공식 Google Ads API 클라이언트 라이브러리 사용
+   - OAuth 2.0 인증 구현
+   - MCC(Manager Customer Center) 계정 지원
+
+2. **모듈화된 서비스 아키텍처**
+
+   - **GoogleAdsClient**: 핵심 API 클라이언트
+   - **CampaignControlService**: 캠페인 ON/OFF, 예산 관리
+   - **LabelManagementService**: 라벨 기반 캠페인 그룹 관리
+   - **GoogleAdsSyncService**: 증분/전체 동기화 전략
+   - **GoogleAdsIntegrationService**: 통합 인터페이스
+
+3. **핵심 기능 구현**
+
+   - 캠페인 상태 제어 (ON/OFF) - 최우선 기능
+   - 캠페인 예산 업데이트
+   - 라벨 기반 일괄 캠페인 관리
+   - 증분 동기화 (시간당 1회)
+   - 전체 동기화 (일 1회)
+   - Bull 큐를 통한 비동기 처리
+
+4. **타입 안전성 강화**
+
+   - `google-ads.types.ts` 추가
+   - 모든 Google Ads 관련 타입 정의
+   - 플랫폼 공통 타입과의 매핑
+
+5. **기존 서비스 통합**
+   - `google-platform.service.ts`가 새로운 통합 서비스 활용
+   - 기존 인터페이스 유지하면서 내부 구현 개선
 
 ### 2. Server Components 도입
 

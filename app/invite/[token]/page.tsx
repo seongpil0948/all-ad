@@ -15,20 +15,57 @@ interface InvitePageProps {
 async function getInvitationDetails(token: string) {
   const supabase = await createClient();
 
-  const { data: invitation, error } = await supabase
-    .from("team_invitations")
-    .select(
-      `
-      *,
-      teams(name),
-      profiles!invited_by(full_name, email)
-    `
-    )
-    .eq("token", token)
-    .single();
+  logger.info("Fetching invitation details", { token });
 
-  return { invitation, error };
+  // First, let's debug all tokens to see what's actually in the database
+  const { data: debugTokens, error: debugError } = await supabase.rpc(
+    "debug_get_all_invitation_tokens",
+  );
+
+  logger.info("Debug: All invitation tokens", {
+    tokens: debugTokens,
+    error: debugError,
+  });
+
+  // Use RPC function to get invitation by token
+  const { data: rpcResult, error: rpcError } = await supabase.rpc(
+    "get_invitation_by_token",
+    { invitation_token: token },
+  );
+
+  if (rpcError) {
+    logger.error("RPC error fetching invitation", {
+      token,
+      error: rpcError.message,
+      code: rpcError.code,
+    });
+    return { invitation: null, error: rpcError };
+  }
+
+  if (!rpcResult || !rpcResult.invitation) {
+    logger.error("No invitation found with RPC", { token, rpcResult });
+    return { invitation: null, error: new Error("Invitation not found") };
+  }
+
+  // Transform the RPC result to match expected format
+  const invitation = {
+    ...rpcResult.invitation,
+    teams: rpcResult.team,
+    profiles: rpcResult.inviter,
+  };
+
+  logger.info("Successfully fetched invitation via RPC", {
+    id: invitation.id,
+    email: invitation.email,
+    status: invitation.status,
+  });
+
+  return { invitation, error: null };
 }
+
+// Disable caching for this page to ensure fresh data
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function InvitePage({ params }: InvitePageProps) {
   const { token } = await params;

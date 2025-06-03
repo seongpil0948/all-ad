@@ -4,7 +4,6 @@ import {
   Navbar as HeroUINavbar,
   NavbarContent,
   NavbarMenu,
-  NavbarMenuToggle,
   NavbarBrand,
   NavbarItem,
   NavbarMenuItem,
@@ -23,6 +22,22 @@ import { useAuth } from "@/hooks/use-auth";
 
 export const Navbar = () => {
   const { user, loading } = useAuth();
+
+  const UserOrLogin = () =>
+    loading ? (
+      <Skeleton className="flex rounded-full w-10 h-10" />
+    ) : user ? (
+      <UserDropdown user={user} />
+    ) : (
+      <>
+        <Button as={NextLink} href="/login" variant="light">
+          로그인
+        </Button>
+        <Button as={NextLink} color="primary" href="/login" variant="flat">
+          무료 체험
+        </Button>
+      </>
+    );
 
   return (
     <HeroUINavbar maxWidth="xl" position="sticky">
@@ -54,41 +69,15 @@ export const Navbar = () => {
         className="hidden sm:flex basis-1/5 sm:basis-full"
         justify="end"
       >
-        <NavbarItem className="hidden sm:flex gap-2">
+        <NavbarItem className="hidden sm:flex gap-3">
           <ThemeSwitch />
-        </NavbarItem>
-        <NavbarItem className="hidden md:flex gap-2">
-          {loading ? (
-            <Skeleton className="flex rounded-full w-10 h-10" />
-          ) : user ? (
-            <UserDropdown user={user} />
-          ) : (
-            <>
-              <Button as={NextLink} href="/login" variant="light">
-                로그인
-              </Button>
-              <Button
-                as={NextLink}
-                color="primary"
-                href="/login"
-                variant="flat"
-              >
-                무료 체험
-              </Button>
-            </>
-          )}
+          <UserOrLogin />
         </NavbarItem>
       </NavbarContent>
 
       <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
         <ThemeSwitch />
-        {loading ? (
-          <Skeleton className="flex rounded-full w-8 h-8" />
-        ) : user ? (
-          <UserDropdown user={user} />
-        ) : (
-          <NavbarMenuToggle />
-        )}
+        <UserOrLogin />
       </NavbarContent>
 
       <NavbarMenu>
@@ -106,7 +95,7 @@ export const Navbar = () => {
               </Link>
             </NavbarMenuItem>
           ))}
-          {!user && (
+          {!user ? (
             <NavbarMenuItem>
               <Button
                 as={NextLink}
@@ -118,6 +107,8 @@ export const Navbar = () => {
                 로그인
               </Button>
             </NavbarMenuItem>
+          ) : (
+            <UserDropdown user={user} />
           )}
         </div>
       </NavbarMenu>

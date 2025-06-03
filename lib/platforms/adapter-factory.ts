@@ -19,13 +19,13 @@ export class PlatformAdapterFactory {
     let adapter: PlatformAdapter;
 
     switch (type) {
-      case PlatformType.GOOGLE:
+      case "google":
         adapter = new GoogleAdsAdapter();
         break;
-      case PlatformType.META:
+      case "facebook":
         adapter = new MetaAdsAdapter();
         break;
-      case PlatformType.COUPANG:
+      case "coupang":
         adapter = new CoupangAdsAdapter();
         break;
       default:
@@ -42,7 +42,7 @@ export class PlatformAdapterFactory {
   }
 
   static getSupportedPlatforms(): PlatformType[] {
-    return [PlatformType.GOOGLE, PlatformType.META, PlatformType.COUPANG];
+    return ["google", "facebook", "coupang"];
   }
 
   static isPlatformSupported(type: string): boolean {

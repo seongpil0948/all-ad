@@ -1,0 +1,25 @@
+{
+  "cookies": [
+    {
+      "name": "traderAccessToken",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOnsiaWQiOiJlc3NlbyIsIm5hbWUiOiLshJzsnYDsg4EiLCJlbXBObyI6IjIwMjIwMzMiLCJlbWFpbCI6ImVzc2VvQGlkc3RydXN0LmNvbSIsImNtcE5hbWUiOiJpZHNUcnVzdCIsImRlcHROYW1lIjoiRey7pOuouOyKpO2MgCIsInBvc05hbWUiOiItIiwiam9iTmFtZSI6Iu2MgOyepeuMgO2WiSJ9LCJyb2xlIjoiQSIsImV4cCI6MTc0MTY4MDc3NSwiaWF0IjoxNzQxNTk0Mzc1fQ.gg7-KulvqdWxOJhwxb1-xW_opdpTG3IO5U_EDZTWhxI",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "http://localhost:3000",
+      "localStorage": [
+        {
+          "name": "auth-storage",
+          "value": "{\"state\":{\"currentUser\":{\"accessToken\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOnsiaWQiOiJlc3NlbyIsIm5hbWUiOiLshJzsnYDsg4EiLCJlbXBObyI6IjIwMjIwMzMiLCJlbWFpbCI6ImVzc2VvQGlkc3RydXN0LmNvbSIsImNtcE5hbWUiOiJpZHNUcnVzdCIsImRlcHROYW1lIjoiRey7pOuouOyKpO2MgCIsInBvc05hbWUiOiItIiwiam9iTmFtZSI6Iu2MgOyepeuMgO2WiSJ9LCJyb2xlIjoiQSIsImV4cCI6MTc0MTY4MDc3NSwiaWF0IjoxNzQxNTk0Mzc1fQ.gg7-KulvqdWxOJhwxb1-xW_opdpTG3IO5U_EDZTWhxI\",\"user\":{\"id\":\"esseo\",\"name\":\"서은상\",\"empNo\":\"2022033\",\"email\":\"esseo@idstrust.com\",\"cmpName\":\"idsTrust\",\"deptName\":\"E커머스팀\",\"posName\":\"-\",\"jobName\":\"팀장대행\"}}},\"version\":0}"
+        }
+      ]
+    }
+  ]
+}
