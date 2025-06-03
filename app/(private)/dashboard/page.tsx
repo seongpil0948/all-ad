@@ -6,7 +6,7 @@ import { createClient } from "@/utils/supabase/server";
 import { CampaignDashboard } from "@/components/dashboard/CampaignDashboard";
 import { SyncButton } from "@/components/dashboard/SyncButton";
 import { PageHeader } from "@/components/common";
-import logger from "@/utils/logger";
+import log from "@/utils/logger";
 
 async function getCampaignData(supabase: any, teamId: string) {
   const { data: campaigns, error } = await supabase
@@ -23,7 +23,7 @@ async function getCampaignData(supabase: any, teamId: string) {
     .order("created_at", { ascending: false });
 
   if (error) {
-    logger.error("Error fetching campaigns:", error);
+    log.error("Error fetching campaigns:", error);
 
     return [];
   }

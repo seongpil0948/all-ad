@@ -16,6 +16,7 @@ This is a Next.js 15 multi-tenant advertising platform that integrates multiple 
 - 기존 코드를 먼저 숙지하고 작업해줘 login 이 있는데 signin 경로에 또 생성하는 등 하지좀 말아줘
 - icon 은 모두 react-icons 를 사용해줘
 - log는 utils/logger.ts 를 이용하면돼 console.log 말고
+- import는 반드시 `import log from "@/utils/logger"` 형식으로 통일해줘
 
 [기술 스택]
 Next.js(15 App router) , Zustand, Hero UI
@@ -38,7 +39,9 @@ Next.js(15 App router) , Zustand, Hero UI
 데이터 베이스 타입들은 supabase gen types typescript --linked > types/supabase.types.ts(readonly file) 로 관리되고 있어
 
 [store 사용]
-다음와 같이 slice - store 패턴을 사용하여 여러 슬라이스 들을 재사용 할 수 있어야해
+
+- 모든 store는 `/stores` 폴더에 위치해야해 (store 폴더 아님)
+- 다음와 같이 slice - store 패턴을 사용하여 여러 슬라이스 들을 재사용 할 수 있어야해
 
 export const createLogDataSlice: StateCreator<
 LogDataSlice,

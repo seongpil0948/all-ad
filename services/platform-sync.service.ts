@@ -1,7 +1,7 @@
 import { platformServiceFactory } from "./platforms/platform-service-factory";
 import { PlatformDatabaseService } from "./platform-database.service";
 
-import logger from "@/utils/logger";
+import log from "@/utils/logger";
 import { Campaign as DBCampaign, PlatformType } from "@/types/database.types";
 import { createClient } from "@/utils/supabase/server";
 
@@ -65,7 +65,7 @@ export class PlatformSyncService {
         >,
       };
     } catch (error) {
-      logger.error("Sync all platforms error:", error as Error);
+      log.error("Sync all platforms error:", error as Error);
 
       return {
         success: false,
@@ -130,7 +130,7 @@ export class PlatformSyncService {
               await this.saveCampaignMetrics(savedCampaign.id, metrics);
             }
           } catch (error) {
-            logger.error(
+            log.error(
               `Failed to sync metrics for campaign ${platformCampaign.platform_campaign_id}:`,
               error as Error,
             );
@@ -145,7 +145,7 @@ export class PlatformSyncService {
 
       return true;
     } catch (error) {
-      logger.error(`Platform sync error for ${platform}:`, error as Error);
+      log.error(`Platform sync error for ${platform}:`, error as Error);
       throw error;
     }
   }
@@ -189,7 +189,7 @@ export class PlatformSyncService {
 
       return dbSuccess;
     } catch (error) {
-      logger.error("Update campaign budget error:", error as Error);
+      log.error("Update campaign budget error:", error as Error);
 
       return false;
     }
@@ -234,7 +234,7 @@ export class PlatformSyncService {
 
       return dbSuccess;
     } catch (error) {
-      logger.error("Update campaign status error:", error as Error);
+      log.error("Update campaign status error:", error as Error);
 
       return false;
     }
@@ -250,7 +250,7 @@ export class PlatformSyncService {
       .eq("is_active", true);
 
     if (error) {
-      logger.error("Error fetching team credentials:", error);
+      log.error("Error fetching team credentials:", error);
 
       return [];
     }
@@ -319,7 +319,7 @@ export class PlatformSyncService {
       .eq("id", campaignId);
 
     if (error) {
-      logger.error("Error updating campaign settings:", error);
+      log.error("Error updating campaign settings:", error);
 
       return false;
     }

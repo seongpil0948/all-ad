@@ -4,7 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { OAuthManager } from "@/lib/oauth/oauth-manager";
 import { getOAuthConfigWithCredentials } from "@/lib/oauth/platform-configs";
 import { getRedisClient } from "@/lib/redis";
-import { Logger } from "@/utils/logger";
+import log from "@/utils/logger";
 
 // This endpoint can be called by Supabase cron job or Vercel cron
 // The endpoint is protected by Supabase's service role key
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
         const tokenData = await redis.get(tokenKey);
 
         if (!tokenData) {
-          Logger.warn(
+          log.warn(
             `No token data found for ${credential.platform}:${credential.user_id}`,
           );
           continue;
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
           );
 
           if (!oauthConfig || !tokens.refresh_token) {
-            Logger.warn(
+            log.warn(
               `Cannot refresh token for ${credential.platform}: missing config or refresh token`,
             );
             continue;
@@ -88,11 +88,11 @@ export async function GET(request: NextRequest) {
               status: "refreshed",
             });
 
-            Logger.info(
+            log.info(
               `Successfully refreshed token for ${credential.platform}:${credential.account_id}`,
             );
           } catch (error) {
-            Logger.error(
+            log.error(
               `Failed to refresh token for ${credential.platform}:${credential.account_id}:`,
               error,
             );
@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
           });
         }
       } catch (error) {
-        Logger.error(
+        log.error(
           `Error processing credential ${credential.id}:`,
           error as Error,
         );
@@ -139,7 +139,7 @@ export async function GET(request: NextRequest) {
       results: refreshResults,
     });
   } catch (error) {
-    Logger.error("Token refresh cron job failed:", error as Error);
+    log.error("Token refresh cron job failed:", error as Error);
 
     return NextResponse.json(
       { error: "Internal server error" },

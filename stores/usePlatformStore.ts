@@ -64,7 +64,7 @@ export const usePlatformStore = create<PlatformState>()((set, get) => ({
         .eq("user_id", user.id)
         .single();
 
-      if (!teamMember) throw new Error("No team found");
+      if (!teamMember || !teamMember.team_id) throw new Error("No team found");
 
       const { data, error } = await supabase
         .from("platform_credentials")
@@ -73,7 +73,10 @@ export const usePlatformStore = create<PlatformState>()((set, get) => ({
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      set({ credentials: data || [], isLoading: false });
+      set({
+        credentials: (data || []) as PlatformCredential[],
+        isLoading: false,
+      });
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false });
     }

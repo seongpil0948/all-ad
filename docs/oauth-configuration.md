@@ -20,6 +20,7 @@ All-AD supports two methods for connecting advertising platforms:
 ### Setup Steps
 
 1. **Create OAuth 2.0 Credentials**
+
    - Go to [Google Cloud Console](https://console.cloud.google.com)
    - Navigate to APIs & Services > Credentials
    - Create OAuth 2.0 Client ID (Web application)
@@ -30,10 +31,12 @@ All-AD supports two methods for connecting advertising platforms:
      ```
 
 2. **Enable Google Ads API**
+
    - In Google Cloud Console, go to APIs & Services > Library
    - Search for "Google Ads API" and enable it
 
 3. **Get Developer Token**
+
    - Visit [Google Ads API Center](https://ads.google.com/aw/apicenter)
    - Apply for a developer token if you don't have one
 
@@ -63,11 +66,13 @@ If OAuth fails, you can generate a refresh token manually:
 ### Setup Steps
 
 1. **Create Facebook App**
+
    - Go to [Facebook Developers](https://developers.facebook.com)
    - Create a new app (Business type)
    - Add Marketing API product
 
 2. **Configure OAuth Settings**
+
    - In your app settings, go to Facebook Login > Settings
    - Add the following redirect URI:
      ```
@@ -101,11 +106,13 @@ If OAuth fails, you can generate an access token manually:
 ### Setup Steps
 
 1. **Create Kakao App**
+
    - Go to [Kakao Developers](https://developers.kakao.com)
    - Create a new application
    - Enable Kakao Login
 
 2. **Configure OAuth Settings**
+
    - In app settings, go to Platform > Web
    - Add your domain
    - In Kakao Login > Redirect URI, add:
@@ -115,6 +122,7 @@ If OAuth fails, you can generate an access token manually:
      ```
 
 3. **Enable Client Secret**
+
    - Go to Security settings
    - Generate and enable Client Secret
 
@@ -131,6 +139,7 @@ If OAuth fails, you can generate an access token manually:
 This error occurs when the redirect URI in your OAuth app doesn't match the one used by All-AD.
 
 **Solution:**
+
 1. Check the exact redirect URI shown in the error message
 2. Add this exact URI to your OAuth app settings
 3. Make sure there are no trailing slashes or protocol mismatches
@@ -140,6 +149,7 @@ This error occurs when the redirect URI in your OAuth app doesn't match the one 
 This error occurs when the client ID or secret is incorrect.
 
 **Solution:**
+
 1. Double-check your client ID and secret
 2. Make sure you're using the correct app/project
 3. Regenerate credentials if necessary
@@ -149,6 +159,7 @@ This error occurs when the client ID or secret is incorrect.
 If automatic token refresh fails, the platform credential will be marked as inactive.
 
 **Solution:**
+
 1. Check the Supabase logs for specific error messages
 2. Verify that the refresh token hasn't been revoked
 3. Re-authenticate through the OAuth flow
@@ -165,6 +176,7 @@ If automatic token refresh fails, the platform credential will be marked as inac
 ## Token Storage
 
 All tokens are stored securely:
+
 - Access tokens and refresh tokens are stored in Redis
 - OAuth credentials (client_id, client_secret) are stored encrypted in PostgreSQL
 - Tokens are automatically refreshed 30 minutes before expiry
@@ -173,6 +185,7 @@ All tokens are stored securely:
 ## API Rate Limits
 
 Be aware of platform-specific rate limits:
+
 - **Google Ads**: 15,000 requests per day
 - **Facebook**: 200 calls per hour per user
 - **Kakao**: 5-second intervals for reports

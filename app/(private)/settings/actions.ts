@@ -73,7 +73,8 @@ export async function savePlatformCredentials(
       await manager.storeTokens(user.id, accountId, {
         access_token: manual_refresh_token || "",
         refresh_token: manual_refresh_token || "",
-        expires_at: Date.now() + 365 * 24 * 60 * 60 * 1000, // 1 year expiry for manual tokens
+        expires_in: Date.now() + 365 * 24 * 60 * 60 * 1000, // 1 year expiry for manual tokens
+        refresh_token_expires_in: Date.now() + 365 * 24 * 60 * 60 * 1000, // 1 year expiry for manual tokens
         scope: "",
         token_type: "Bearer",
       });

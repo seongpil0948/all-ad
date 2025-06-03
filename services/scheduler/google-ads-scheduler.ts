@@ -5,24 +5,24 @@ import { GoogleAdsClient } from "../google-ads/core/google-ads-client";
 
 import { createClient } from "@/utils/supabase/server";
 import { GoogleAdsCredentials } from "@/types";
-import { Logger } from "@/utils/logger";
+import log from "@/utils/logger";
 
 export class GoogleAdsScheduler {
   private syncJobs: Map<string, cron.ScheduledTask> = new Map();
 
   // 스케줄러 시작
   async startScheduledSync(): Promise<void> {
-    Logger.info("Google Ads 스케줄러 시작");
+    log.info("Google Ads 스케줄러 시작");
 
     // 매시간 정각에 증분 동기화 실행
     const incrementalJob = cron.schedule("0 * * * *", async () => {
-      Logger.info("Google Ads 증분 동기화 시작");
+      log.info("Google Ads 증분 동기화 시작");
       await this.runScheduledSync("INCREMENTAL");
     });
 
     // 매일 새벽 2시에 전체 동기화 실행
     const fullSyncJob = cron.schedule("0 2 * * *", async () => {
-      Logger.info("Google Ads 전체 동기화 시작");
+      log.info("Google Ads 전체 동기화 시작");
       await this.runScheduledSync("FULL");
     });
 
@@ -34,16 +34,16 @@ export class GoogleAdsScheduler {
     this.syncJobs.set("incremental", incrementalJob);
     this.syncJobs.set("full", fullSyncJob);
 
-    Logger.info("Google Ads 스케줄러 작업 등록 완료");
+    log.info("Google Ads 스케줄러 작업 등록 완료");
   }
 
   // 스케줄러 중지
   stopScheduledSync(): void {
-    Logger.info("Google Ads 스케줄러 중지");
+    log.info("Google Ads 스케줄러 중지");
 
     for (const [jobName, job] of Array.from(this.syncJobs.entries())) {
       job.stop();
-      Logger.info(`스케줄 작업 중지: ${jobName}`);
+      log.info(`스케줄 작업 중지: ${jobName}`);
     }
 
     this.syncJobs.clear();
@@ -56,7 +56,7 @@ export class GoogleAdsScheduler {
     try {
       const accounts = await this.getActiveGoogleAdsAccounts();
 
-      Logger.info(`${syncType} 동기화 대상 계정 수: ${accounts.length}`);
+      log.info(`${syncType} 동기화 대상 계정 수: ${accounts.length}`);
 
       for (const account of accounts) {
         try {
@@ -83,12 +83,12 @@ export class GoogleAdsScheduler {
             syncType,
           );
 
-          Logger.info(`동기화 스케줄링 완료: ${account.account_name}`, {
+          log.info(`동기화 스케줄링 완료: ${account.account_name}`, {
             accountId: account.customer_id,
             syncType,
           });
         } catch (error) {
-          Logger.error(
+          log.error(
             `계정 동기화 스케줄링 실패: ${account.account_name}`,
             error as Error,
             {
@@ -99,7 +99,7 @@ export class GoogleAdsScheduler {
         }
       }
     } catch (error) {
-      Logger.error("스케줄된 동기화 실행 실패", error as Error, { syncType });
+      log.error("스케줄된 동기화 실행 실패", error as Error, { syncType });
     }
   }
 
@@ -125,7 +125,7 @@ export class GoogleAdsScheduler {
       .eq("is_active", true);
 
     if (error) {
-      Logger.error("Google Ads 계정 조회 실패", error);
+      log.error("Google Ads 계정 조회 실패", error);
       throw error;
     }
 
@@ -137,7 +137,7 @@ export class GoogleAdsScheduler {
     accountId: string,
     syncType: "FULL" | "INCREMENTAL",
   ): Promise<void> {
-    Logger.info("수동 동기화 트리거", { accountId, syncType });
+    log.info("수동 동기화 트리거", { accountId, syncType });
 
     const supabase = await createClient();
 

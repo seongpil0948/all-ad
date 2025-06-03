@@ -11,7 +11,7 @@ import {
   SyncResult,
 } from "@/types";
 import { createClient } from "@/utils/supabase/server";
-import logger from "@/utils/logger";
+import log from "@/utils/logger";
 
 export class PlatformManager {
   // Connect to a platform
@@ -21,7 +21,7 @@ export class PlatformManager {
     credentials: any,
   ): Promise<PlatformConnection> {
     try {
-      logger.info("Connecting platform", { userId, type });
+      log.info("Connecting platform", { userId, type });
 
       const adapter = PlatformAdapterFactory.getAdapter(type);
       const connection = await adapter.connect(credentials);
@@ -40,7 +40,7 @@ export class PlatformManager {
       });
 
       if (error) {
-        logger.error("Failed to store platform connection", error);
+        log.error("Failed to store platform connection", error);
         throw new Error("Failed to save platform connection");
       }
 
@@ -49,7 +49,7 @@ export class PlatformManager {
 
       return connection;
     } catch (error: any) {
-      logger.error("Failed to connect platform", error);
+      log.error("Failed to connect platform", error);
       throw error;
     }
   }
@@ -61,7 +61,7 @@ export class PlatformManager {
     connectionId: string,
   ): Promise<void> {
     try {
-      logger.info("Disconnecting platform", { userId, type, connectionId });
+      log.info("Disconnecting platform", { userId, type, connectionId });
 
       const adapter = PlatformAdapterFactory.getAdapter(type);
 
@@ -76,14 +76,14 @@ export class PlatformManager {
         .eq("id", connectionId);
 
       if (error) {
-        logger.error("Failed to remove platform connection", error);
+        log.error("Failed to remove platform connection", error);
         throw new Error("Failed to remove platform connection");
       }
 
       // Clean up related data
       await this.cleanupPlatformData(userId, type, connectionId);
     } catch (error: any) {
-      logger.error("Failed to disconnect platform", error);
+      log.error("Failed to disconnect platform", error);
       throw error;
     }
   }
@@ -95,7 +95,7 @@ export class PlatformManager {
     connectionId: string,
   ): Promise<SyncResult> {
     try {
-      logger.info("Syncing platform data", { userId, type, connectionId });
+      log.info("Syncing platform data", { userId, type, connectionId });
 
       const adapter = PlatformAdapterFactory.getAdapter(type);
       const result = await adapter.syncData(connectionId);
@@ -121,7 +121,7 @@ export class PlatformManager {
 
       return result;
     } catch (error: any) {
-      logger.error("Failed to sync platform data", error);
+      log.error("Failed to sync platform data", error);
 
       return {
         success: false,
@@ -158,13 +158,13 @@ export class PlatformManager {
       const { data, error } = await query;
 
       if (error) {
-        logger.error("Failed to fetch campaigns", error);
+        log.error("Failed to fetch campaigns", error);
         throw new Error("Failed to fetch campaigns");
       }
 
       return data || [];
     } catch (error: any) {
-      logger.error("Failed to get campaigns", error);
+      log.error("Failed to get campaigns", error);
       throw error;
     }
   }
@@ -176,7 +176,7 @@ export class PlatformManager {
     status: "active" | "paused",
   ): Promise<void> {
     try {
-      logger.info("Updating campaign status", { userId, campaignId, status });
+      log.info("Updating campaign status", { userId, campaignId, status });
 
       // Get campaign details
       const supabase = await createClient();
@@ -205,9 +205,9 @@ export class PlatformManager {
         throw updateError;
       }
 
-      logger.info("Campaign status updated", { campaignId, status });
+      log.info("Campaign status updated", { campaignId, status });
     } catch (error: any) {
-      logger.error("Failed to update campaign status", error);
+      log.error("Failed to update campaign status", error);
       throw error;
     }
   }
@@ -222,7 +222,7 @@ export class PlatformManager {
       .single();
 
     if (error) {
-      logger.error("Failed to get connection", error);
+      log.error("Failed to get connection", error);
 
       return null;
     }
@@ -262,7 +262,7 @@ export class PlatformManager {
       });
 
     if (error) {
-      logger.error("Failed to store campaigns", error);
+      log.error("Failed to store campaigns", error);
     }
   }
 

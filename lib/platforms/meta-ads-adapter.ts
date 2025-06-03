@@ -11,7 +11,7 @@ import {
   CampaignMetrics,
   OAuthCredentials,
 } from "@/types";
-import logger from "@/utils/logger";
+import log from "@/utils/logger";
 
 interface MetaAdsConfig {
   appId: string;
@@ -63,7 +63,7 @@ export class MetaAdsAdapter extends BasePlatformAdapter {
 
   async connect(credentials: OAuthCredentials): Promise<PlatformConnection> {
     try {
-      logger.info("Connecting to Meta Ads", { appId: this.config.appId });
+      log.info("Connecting to Meta Ads", { appId: this.config.appId });
 
       // In a real implementation:
       // 1. Exchange code for access token
@@ -85,7 +85,7 @@ export class MetaAdsAdapter extends BasePlatformAdapter {
         },
       };
 
-      logger.info("Meta Ads connected successfully", {
+      log.info("Meta Ads connected successfully", {
         connectionId: connection.id,
       });
 
@@ -97,14 +97,14 @@ export class MetaAdsAdapter extends BasePlatformAdapter {
 
   async disconnect(connectionId: string): Promise<void> {
     try {
-      logger.info("Disconnecting Meta Ads", { connectionId });
+      log.info("Disconnecting Meta Ads", { connectionId });
 
       // In a real implementation:
       // 1. Revoke app permissions
       // 2. Clean up stored tokens
       // 3. Remove associated data
 
-      logger.info("Meta Ads disconnected successfully", { connectionId });
+      log.info("Meta Ads disconnected successfully", { connectionId });
     } catch (error) {
       return this.handleApiError(error);
     }
@@ -112,7 +112,7 @@ export class MetaAdsAdapter extends BasePlatformAdapter {
 
   async getAccounts(connectionId: string): Promise<AdAccount[]> {
     try {
-      logger.info("Fetching Meta Ads accounts", { connectionId });
+      log.info("Fetching Meta Ads accounts", { connectionId });
 
       // Mock implementation
       // In reality, would call GET /me/adaccounts
@@ -141,7 +141,7 @@ export class MetaAdsAdapter extends BasePlatformAdapter {
 
   async getCampaigns(accountId: string): Promise<Campaign[]> {
     try {
-      logger.info("Fetching Meta Ads campaigns", { accountId });
+      log.info("Fetching Meta Ads campaigns", { accountId });
 
       // Mock implementation
       // In reality, would call GET /{ad-account-id}/campaigns with insights
@@ -192,7 +192,7 @@ export class MetaAdsAdapter extends BasePlatformAdapter {
 
   async syncData(connectionId: string): Promise<SyncResult> {
     try {
-      logger.info("Syncing Meta Ads data", { connectionId });
+      log.info("Syncing Meta Ads data", { connectionId });
 
       // Validate connection
       this.validateConnection({
@@ -227,11 +227,11 @@ export class MetaAdsAdapter extends BasePlatformAdapter {
         },
       };
 
-      logger.info("Meta Ads sync completed", result);
+      log.info("Meta Ads sync completed", result);
 
       return result;
     } catch (error: any) {
-      logger.error("Meta Ads sync failed", error);
+      log.error("Meta Ads sync failed", error);
 
       return {
         success: false,
@@ -351,7 +351,7 @@ export class MetaAdsAdapter extends BasePlatformAdapter {
     // In real implementation, would send batch request to:
     // POST https://graph.facebook.com/v18.0/?batch=[...]&access_token=...
 
-    logger.info("Executing batch request", { requestCount: requests.length });
+    log.info("Executing batch request", { requestCount: requests.length });
 
     // Mock batch response
     return requests.map(() => ({

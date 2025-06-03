@@ -3,7 +3,7 @@ import { TeamDataProvider } from "./TeamDataProvider";
 import { TeamManagement } from "@/components/team/TeamManagement";
 import { PageHeader } from "@/components/common";
 import { createClient } from "@/utils/supabase/server";
-import logger from "@/utils/logger";
+import log from "@/utils/logger";
 
 export default async function TeamPage() {
   const supabase = await createClient();
@@ -77,7 +77,7 @@ export default async function TeamPage() {
       }
     }
   } catch (error) {
-    logger.error(`Error fetching team data: ${JSON.stringify(error)}`);
+    log.error(`Error fetching team data: ${JSON.stringify(error)}`);
   }
 
   return (

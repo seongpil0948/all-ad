@@ -11,7 +11,7 @@ import {
   CampaignMetrics,
   OAuthCredentials,
 } from "@/types";
-import logger from "@/utils/logger";
+import log from "@/utils/logger";
 
 interface GoogleAdsConfig {
   clientId: string;
@@ -57,7 +57,7 @@ export class GoogleAdsAdapter extends BasePlatformAdapter {
 
   async connect(credentials: OAuthCredentials): Promise<PlatformConnection> {
     try {
-      logger.info("Connecting to Google Ads", {
+      log.info("Connecting to Google Ads", {
         clientId: credentials.clientId,
       });
 
@@ -80,7 +80,7 @@ export class GoogleAdsAdapter extends BasePlatformAdapter {
         },
       };
 
-      logger.info("Google Ads connected successfully", {
+      log.info("Google Ads connected successfully", {
         connectionId: connection.id,
       });
 
@@ -92,14 +92,14 @@ export class GoogleAdsAdapter extends BasePlatformAdapter {
 
   async disconnect(connectionId: string): Promise<void> {
     try {
-      logger.info("Disconnecting Google Ads", { connectionId });
+      log.info("Disconnecting Google Ads", { connectionId });
 
       // In a real implementation:
       // 1. Revoke OAuth tokens
       // 2. Clean up stored credentials
       // 3. Remove associated data
 
-      logger.info("Google Ads disconnected successfully", { connectionId });
+      log.info("Google Ads disconnected successfully", { connectionId });
     } catch (error) {
       return this.handleApiError(error);
     }
@@ -107,7 +107,7 @@ export class GoogleAdsAdapter extends BasePlatformAdapter {
 
   async getAccounts(connectionId: string): Promise<AdAccount[]> {
     try {
-      logger.info("Fetching Google Ads accounts", { connectionId });
+      log.info("Fetching Google Ads accounts", { connectionId });
 
       // Mock implementation
       // In reality, would call Google Ads API CustomerService
@@ -136,7 +136,7 @@ export class GoogleAdsAdapter extends BasePlatformAdapter {
 
   async getCampaigns(accountId: string): Promise<Campaign[]> {
     try {
-      logger.info("Fetching Google Ads campaigns", { accountId });
+      log.info("Fetching Google Ads campaigns", { accountId });
 
       // Mock implementation
       // In reality, would use Google Ads Query Language (GAQL)
@@ -176,7 +176,7 @@ export class GoogleAdsAdapter extends BasePlatformAdapter {
 
   async syncData(connectionId: string): Promise<SyncResult> {
     try {
-      logger.info("Syncing Google Ads data", { connectionId });
+      log.info("Syncing Google Ads data", { connectionId });
 
       // Validate connection
       this.validateConnection({
@@ -205,11 +205,11 @@ export class GoogleAdsAdapter extends BasePlatformAdapter {
         },
       };
 
-      logger.info("Google Ads sync completed", result);
+      log.info("Google Ads sync completed", result);
 
       return result;
     } catch (error: any) {
-      logger.error("Google Ads sync failed", error);
+      log.error("Google Ads sync failed", error);
 
       return {
         success: false,

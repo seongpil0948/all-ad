@@ -145,6 +145,7 @@ export function PlatformCredentialsManager({
         if (credentials.manual_refresh_token) {
           // Save credentials with manual refresh token
           const { manual_refresh_token, ...oauthCredentials } = credentials;
+
           await onSave(selectedPlatform, {
             ...oauthCredentials,
             refresh_token: manual_refresh_token,

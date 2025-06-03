@@ -1,6 +1,6 @@
 import { GoogleAdsClient } from "../core/google-ads-client";
 
-import { Logger } from "@/utils/logger";
+import log from "@/utils/logger";
 import { GoogleAdsLabel } from "@/types/google-ads.types";
 
 export class LabelManagementService {
@@ -35,11 +35,11 @@ export class LabelManagementService {
         operations,
       );
 
-      Logger.info("라벨 생성 성공", { customerId, labelName: labelData.name });
+      log.info("라벨 생성 성공", { customerId, labelName: labelData.name });
 
       return response;
     } catch (error) {
-      Logger.error("라벨 생성 실패", error as Error, {
+      log.error("라벨 생성 실패", error as Error, {
         customerId,
         labelData,
       });
@@ -68,7 +68,7 @@ export class LabelManagementService {
         operations,
       );
 
-      Logger.info("캠페인에 라벨 할당 성공", {
+      log.info("캠페인에 라벨 할당 성공", {
         customerId,
         labelId,
         campaignCount: campaignIds.length,
@@ -76,7 +76,7 @@ export class LabelManagementService {
 
       return response;
     } catch (error) {
-      Logger.error("캠페인에 라벨 할당 실패", error as Error, {
+      log.error("캠페인에 라벨 할당 실패", error as Error, {
         customerId,
         labelId,
         campaignIds,
@@ -104,7 +104,7 @@ export class LabelManagementService {
     try {
       const results = await this.googleAdsClient.query(customerId, query);
 
-      Logger.info("라벨로 캠페인 조회 성공", {
+      log.info("라벨로 캠페인 조회 성공", {
         customerId,
         labelId,
         count: results.length,
@@ -112,7 +112,7 @@ export class LabelManagementService {
 
       return results;
     } catch (error) {
-      Logger.error("라벨로 캠페인 조회 실패", error as Error, {
+      log.error("라벨로 캠페인 조회 실패", error as Error, {
         customerId,
         labelId,
       });
@@ -144,7 +144,7 @@ export class LabelManagementService {
         backgroundColor: result["label.text_label.background_color"],
       }));
     } catch (error) {
-      Logger.error("라벨 목록 조회 실패", error as Error, { customerId });
+      log.error("라벨 목록 조회 실패", error as Error, { customerId });
       throw error;
     }
   }
@@ -167,7 +167,7 @@ export class LabelManagementService {
         operations,
       );
 
-      Logger.info("캠페인에서 라벨 제거 성공", {
+      log.info("캠페인에서 라벨 제거 성공", {
         customerId,
         labelId,
         campaignCount: campaignIds.length,
@@ -175,7 +175,7 @@ export class LabelManagementService {
 
       return response;
     } catch (error) {
-      Logger.error("캠페인에서 라벨 제거 실패", error as Error, {
+      log.error("캠페인에서 라벨 제거 실패", error as Error, {
         customerId,
         labelId,
         campaignIds,
@@ -234,11 +234,11 @@ export class LabelManagementService {
         operations,
       );
 
-      Logger.info("라벨 업데이트 성공", { customerId, labelId, updates });
+      log.info("라벨 업데이트 성공", { customerId, labelId, updates });
 
       return response;
     } catch (error) {
-      Logger.error("라벨 업데이트 실패", error as Error, {
+      log.error("라벨 업데이트 실패", error as Error, {
         customerId,
         labelId,
         updates,
@@ -263,11 +263,11 @@ export class LabelManagementService {
         operations,
       );
 
-      Logger.info("라벨 삭제 성공", { customerId, labelId });
+      log.info("라벨 삭제 성공", { customerId, labelId });
 
       return response;
     } catch (error) {
-      Logger.error("라벨 삭제 실패", error as Error, { customerId, labelId });
+      log.error("라벨 삭제 실패", error as Error, { customerId, labelId });
       throw error;
     }
   }

@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   Dropdown,
   DropdownTrigger,
@@ -10,7 +9,6 @@ import {
 } from "@heroui/dropdown";
 import { Avatar } from "@heroui/avatar";
 import { useRouter } from "next/navigation";
-import { User } from "@supabase/supabase-js";
 import {
   FiLogOut,
   FiSettings,
@@ -20,40 +18,23 @@ import {
   FiUsers,
 } from "react-icons/fi";
 
-import { createClient } from "@/utils/supabase/client";
-import { getProfile } from "@/utils/profile";
-import { Profile } from "@/types/database.types";
-import log from "@/utils/logger";
+import { useAuth } from "@/hooks/use-auth";
+import { useAuthStore } from "@/stores/useAuthStore";
 
-interface UserDropdownProps {
-  user: User;
-}
-
-export function UserDropdown({ user }: UserDropdownProps) {
+export function UserDropdown() {
   const router = useRouter();
-  const supabase = createClient();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const { user, profile } = useAuth();
+  const logout = useAuthStore((state) => state.logout);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      const userProfile = await getProfile(user.id);
-
-      setProfile(userProfile);
-    };
-
-    fetchProfile();
-  }, [user.id]);
+  if (!user) return null;
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
+      await logout();
       router.push("/");
       router.refresh();
     } catch (error) {
-      log.error("Error signing out", error as Error, {
-        module: "UserDropdown",
-        userId: user.id,
-      });
+      // Error is handled in the store
     }
   };
 

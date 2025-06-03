@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import InviteAcceptClient from "./InviteAcceptClient";
 
 import { createClient } from "@/utils/supabase/server";
-import logger from "@/utils/logger";
+import log from "@/utils/logger";
 
 interface InvitePageProps {
   params: Promise<{
@@ -15,14 +15,14 @@ interface InvitePageProps {
 async function getInvitationDetails(token: string) {
   const supabase = await createClient();
 
-  logger.info("Fetching invitation details", { token });
+  log.info("Fetching invitation details", { token });
 
   // First, let's debug all tokens to see what's actually in the database
   const { data: debugTokens, error: debugError } = await supabase.rpc(
     "debug_get_all_invitation_tokens",
   );
 
-  logger.info("Debug: All invitation tokens", {
+  log.info("Debug: All invitation tokens", {
     tokens: debugTokens,
     error: debugError,
   });
@@ -34,7 +34,7 @@ async function getInvitationDetails(token: string) {
   );
 
   if (rpcError) {
-    logger.error("RPC error fetching invitation", {
+    log.error("RPC error fetching invitation", {
       token,
       error: rpcError.message,
       code: rpcError.code,
@@ -44,7 +44,7 @@ async function getInvitationDetails(token: string) {
   }
 
   if (!rpcResult || !rpcResult.invitation) {
-    logger.error("No invitation found with RPC", { token, rpcResult });
+    log.error("No invitation found with RPC", { token, rpcResult });
 
     return { invitation: null, error: new Error("Invitation not found") };
   }
@@ -56,7 +56,7 @@ async function getInvitationDetails(token: string) {
     profiles: rpcResult.inviter,
   };
 
-  logger.info("Successfully fetched invitation via RPC", {
+  log.info("Successfully fetched invitation via RPC", {
     id: invitation.id,
     email: invitation.email,
     status: invitation.status,
@@ -82,7 +82,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
   const { invitation, error } = await getInvitationDetails(token);
 
   if (error || !invitation) {
-    logger.error("Invalid invitation token: " + token, error || undefined);
+    log.error("Invalid invitation token: " + token, error || undefined);
     notFound();
   }
 

@@ -8,7 +8,7 @@ import { Chip } from "@heroui/chip";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
 import { createClient } from "@/utils/supabase/client";
-import logger from "@/utils/logger";
+import log from "@/utils/logger";
 
 interface InviteAcceptClientProps {
   token: string;
@@ -52,26 +52,29 @@ export default function InviteAcceptClient({
     try {
       const supabase = createClient();
 
-      logger.info("Accepting invitation", { token });
+      log.info("Accepting invitation", { token });
 
       // Call the RPC function to accept invitation
-      const { data, error: acceptError } = await supabase.rpc(
+      const { data, error: acceptError } = (await supabase.rpc(
         "accept_team_invitation",
         {
           invitation_token: token,
         },
-      );
+      )) as {
+        data: { success: boolean; error?: string; team_id?: string } | null;
+        error: any;
+      };
 
       if (acceptError) {
-        logger.error("Failed to accept invitation", acceptError);
+        log.error("Failed to accept invitation", acceptError);
         throw new Error(acceptError.message);
       }
 
-      if (!data.success) {
-        throw new Error(data.error || "Failed to accept invitation");
+      if (!data || !data.success) {
+        throw new Error(data?.error || "Failed to accept invitation");
       }
 
-      logger.info("Invitation accepted successfully", { teamId: data.team_id });
+      log.info("Invitation accepted successfully", { teamId: data.team_id });
 
       setSuccess(true);
 
@@ -80,7 +83,7 @@ export default function InviteAcceptClient({
         router.push("/dashboard");
       }, 2000);
     } catch (err) {
-      logger.error("Error accepting invitation", err as Error);
+      log.error("Error accepting invitation", err as Error);
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoading(false);

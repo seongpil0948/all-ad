@@ -7,7 +7,7 @@ import {
   TeamInvitation,
   UserRole,
 } from "@/types/database.types";
-import logger from "@/utils/logger";
+import log from "@/utils/logger";
 
 interface TeamState {
   currentTeam: Team | null;
@@ -63,7 +63,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
 
       if (!user) throw new Error("No user logged in");
 
-      logger.info("Fetching team for user", { userId: user.id });
+      log.info("Fetching team for user", { userId: user.id });
 
       // First, try to get team where user is master
       const { data: masterTeam, error: masterError } = await supabase
@@ -73,11 +73,11 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         .maybeSingle();
 
       if (masterError) {
-        logger.error("Error fetching master team", masterError);
+        log.error("Error fetching master team", masterError);
       }
 
       if (masterTeam) {
-        logger.info("User is master of team", { teamId: masterTeam.id });
+        log.info("User is master of team", { teamId: masterTeam.id });
         set({
           currentTeam: masterTeam,
           userRole: "master",
@@ -95,11 +95,11 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         .maybeSingle();
 
       if (memberError) {
-        logger.error("Error fetching team membership", memberError);
+        log.error("Error fetching team membership", memberError);
       }
 
       if (!membership) {
-        logger.info("No team found for user, creating new team");
+        log.info("No team found for user, creating new team");
 
         // No team found, create one using RPC function
         const { data: newTeamId, error: createError } = await supabase.rpc(
@@ -108,7 +108,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         );
 
         if (createError) {
-          logger.error("Failed to create team", createError);
+          log.error("Failed to create team", createError);
           throw new Error(`Failed to create team: ${createError.message}`);
         }
 
@@ -116,7 +116,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
           throw new Error("Failed to create team: No team ID returned");
         }
 
-        logger.info("Team created successfully", { teamId: newTeamId });
+        log.info("Team created successfully", { teamId: newTeamId });
 
         // Fetch the newly created team
         const { data: newTeam, error: fetchError } = await supabase
@@ -126,7 +126,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
           .single();
 
         if (fetchError) {
-          logger.error("Failed to fetch new team", fetchError);
+          log.error("Failed to fetch new team", fetchError);
           throw new Error(`Failed to fetch new team: ${fetchError.message}`);
         }
 
@@ -140,7 +140,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
       }
 
       // User is a member of a team
-      logger.info("User is member of team", {
+      log.info("User is member of team", {
         teamId: membership.team_id,
         role: membership.role,
       });
@@ -151,7 +151,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         isLoading: false,
       });
     } catch (error) {
-      logger.error(`Error in fetchCurrentTeam: ${JSON.stringify(error)}`);
+      log.error(`Error in fetchCurrentTeam: ${JSON.stringify(error)}`);
       set({ error: (error as Error).message, isLoading: false });
     }
   },
@@ -161,7 +161,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
     const { currentTeam } = get();
 
     if (!currentTeam) {
-      logger.warn("No team selected when fetching team members");
+      log.warn("No team selected when fetching team members");
       set({ teamMembers: [], isLoading: false });
 
       return;
@@ -170,21 +170,33 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      logger.info("Fetching team members", { teamId: currentTeam.id });
+      log.info("Fetching team members", { teamId: currentTeam.id });
 
-      const { data, error } = await supabase.rpc(
-        "get_team_members_with_profiles",
-        {
-          team_id_param: currentTeam.id,
-        },
-      );
+      // Fetch team members with profiles using join
+      const { data, error } = await supabase
+        .from("team_members")
+        .select(
+          `
+          *,
+          profiles!team_members_user_id_fkey (
+            id,
+            full_name,
+            email,
+            avatar_url,
+            created_at,
+            updated_at
+          )
+        `,
+        )
+        .eq("team_id", currentTeam.id)
+        .order("created_at", { ascending: true });
 
       if (error) {
-        logger.error("Error fetching team members", error);
+        log.error("Error fetching team members", error);
         throw error;
       }
 
-      // Transform RPC result to match TeamMemberWithProfile type
+      // Transform result to match TeamMemberWithProfile type
       const transformedData =
         data?.map((member: any) => ({
           id: member.id,
@@ -193,23 +205,16 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
           role: member.role,
           invited_by: member.invited_by,
           joined_at: member.joined_at,
-          profiles: member.profile_id
-            ? {
-                id: member.profile_id,
-                email: member.email,
-                full_name: member.full_name,
-                avatar_url: member.avatar_url,
-              }
-            : null,
+          profiles: member.profiles || null,
         })) || [];
 
-      logger.info("Team members fetched", { count: transformedData.length });
+      log.info("Team members fetched", { count: transformedData.length });
       set({
         teamMembers: transformedData as TeamMemberWithProfile[],
         isLoading: false,
       });
     } catch (error) {
-      logger.error(`Error in fetchTeamMembers ${error}`);
+      log.error(`Error in fetchTeamMembers ${error}`);
       set({ error: (error as Error).message, isLoading: false });
     }
   },
@@ -219,7 +224,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
     const { currentTeam } = get();
 
     if (!currentTeam) {
-      logger.warn("No team selected when fetching invitations");
+      log.warn("No team selected when fetching invitations");
       set({ teamInvitations: [], isLoading: false });
 
       return;
@@ -228,7 +233,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      logger.info("Fetching team invitations", { teamId: currentTeam.id });
+      log.info("Fetching team invitations", { teamId: currentTeam.id });
 
       const { data, error } = await supabase
         .from("team_invitations")
@@ -238,17 +243,23 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         .order("created_at", { ascending: false });
 
       if (error) {
-        logger.error("Error fetching team invitations", error);
+        log.error("Error fetching team invitations", error);
         throw error;
       }
 
-      logger.info("Team invitations fetched", { count: data?.length || 0 });
+      log.info("Team invitations fetched", { count: data?.length || 0 });
+      
+      // Filter out any invitations with 'master' role to match TeamInvitation type
+      const validInvitations = (data || []).filter(
+        (inv) => inv.role !== "master"
+      ) as TeamInvitation[];
+      
       set({
-        teamInvitations: data || [],
+        teamInvitations: validInvitations,
         isLoading: false,
       });
     } catch (error) {
-      logger.error(`Error in fetchTeamInvitations ${error}`);
+      log.error(`Error in fetchTeamInvitations ${error}`);
       set({ error: (error as Error).message, isLoading: false });
     }
   },
@@ -278,7 +289,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
 
       if (!user) throw new Error("No user logged in");
 
-      logger.info("Inviting team member", {
+      log.info("Inviting team member", {
         email,
         role,
         teamId: currentTeam.id,
@@ -291,7 +302,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
       );
 
       if (limitError) {
-        logger.error("Error checking team member limit", limitError);
+        log.error("Error checking team member limit", limitError);
         throw new Error("Failed to check team member limit");
       }
 
@@ -319,7 +330,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
           // Return existing invitation link and resend email
           const invitationLink = `${window.location.origin}/invite/${existingInvitation.token}`;
 
-          logger.info("Returning existing pending invitation", {
+          log.info("Returning existing pending invitation", {
             email,
             link: invitationLink,
           });
@@ -355,18 +366,15 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
             });
 
             if (!emailResponse.ok) {
-              logger.error(
+              log.error(
                 "Failed to resend invitation email",
                 new Error(`HTTP ${emailResponse.status}`),
               );
             } else {
-              logger.info("Invitation email resent successfully", { email });
+              log.info("Invitation email resent successfully", { email });
             }
           } catch (emailError) {
-            logger.error(
-              "Error resending invitation email",
-              emailError as Error,
-            );
+            log.error("Error resending invitation email", emailError as Error);
           }
 
           return invitationLink;
@@ -391,11 +399,11 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
             .single();
 
           if (updateError) {
-            logger.error("Failed to update invitation", updateError);
+            log.error("Failed to update invitation", updateError);
             throw new Error("Failed to update invitation. Please try again.");
           }
 
-          logger.info("Updated existing invitation", {
+          log.info("Updated existing invitation", {
             status: existingInvitation.status,
             newStatus: "pending",
           });
@@ -434,17 +442,17 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
             });
 
             if (!emailResponse.ok) {
-              logger.error(
+              log.error(
                 "Failed to send invitation email for updated invitation",
                 new Error(`HTTP ${emailResponse.status}`),
               );
             } else {
-              logger.info("Invitation email sent for updated invitation", {
+              log.info("Invitation email sent for updated invitation", {
                 email,
               });
             }
           } catch (emailError) {
-            logger.error(
+            log.error(
               "Error sending invitation email for updated invitation",
               emailError as Error,
             );
@@ -502,7 +510,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         .single();
 
       if (inviteError) {
-        logger.error("Failed to create invitation", inviteError);
+        log.error("Failed to create invitation", inviteError);
 
         // Check if it's a duplicate key error
         if (
@@ -517,7 +525,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         throw new Error(inviteError.message || "Failed to create invitation");
       }
 
-      logger.info("Team invitation created successfully", {
+      log.info("Team invitation created successfully", {
         email,
         token: invitation.token,
         fullToken: invitation.token, // Log full token for debugging
@@ -530,7 +538,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         .eq("token", invitation.token)
         .single();
 
-      logger.info("Verification of created invitation", {
+      log.info("Verification of created invitation", {
         exists: !!verifyInvite,
         invitationData: verifyInvite,
       });
@@ -538,7 +546,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
       // Generate invitation link
       const invitationLink = `${window.location.origin}/invite/${invitation.token}`;
 
-      logger.info("Invitation link:", { link: invitationLink });
+      log.info("Invitation link:", { link: invitationLink });
 
       // Send invitation email
       try {
@@ -571,17 +579,17 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         });
 
         if (!emailResponse.ok) {
-          logger.error(
+          log.error(
             "Failed to send invitation email",
             new Error(`HTTP ${emailResponse.status}`),
             { status: emailResponse.status },
           );
           // Don't throw error - invitation is still created even if email fails
         } else {
-          logger.info("Invitation email sent successfully", { email });
+          log.info("Invitation email sent successfully", { email });
         }
       } catch (emailError) {
-        logger.error("Error sending invitation email", emailError as Error);
+        log.error("Error sending invitation email", emailError as Error);
         // Don't throw error - invitation is still created even if email fails
       }
 
@@ -592,7 +600,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
 
       return invitationLink;
     } catch (error) {
-      logger.error("Error in inviteTeamMember", error as Error);
+      log.error("Error in inviteTeamMember", error as Error);
       set({ error: (error as Error).message, isLoading: false });
 
       return null;
@@ -612,7 +620,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      logger.info("Updating team member role", { memberId, role });
+      log.info("Updating team member role", { memberId, role });
 
       const { error } = await supabase
         .from("team_members")
@@ -620,14 +628,14 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         .eq("id", memberId);
 
       if (error) {
-        logger.error("Failed to update team member role", error);
+        log.error("Failed to update team member role", error);
         throw error;
       }
 
       await get().fetchTeamMembers();
       set({ isLoading: false });
     } catch (error) {
-      logger.error("Error in updateTeamMemberRole", error as Error);
+      log.error("Error in updateTeamMemberRole", error as Error);
       set({ error: (error as Error).message, isLoading: false });
     }
   },
@@ -645,7 +653,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      logger.info("Removing team member", { memberId });
+      log.info("Removing team member", { memberId });
 
       const { error } = await supabase
         .from("team_members")
@@ -653,14 +661,14 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         .eq("id", memberId);
 
       if (error) {
-        logger.error("Failed to remove team member", error);
+        log.error("Failed to remove team member", error);
         throw error;
       }
 
       await get().fetchTeamMembers();
       set({ isLoading: false });
     } catch (error) {
-      logger.error("Error in removeTeamMember", error as Error);
+      log.error("Error in removeTeamMember", error as Error);
       set({ error: (error as Error).message, isLoading: false });
     }
   },
@@ -678,7 +686,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      logger.info("Cancelling invitation", { invitationId });
+      log.info("Cancelling invitation", { invitationId });
 
       const { error } = await supabase
         .from("team_invitations")
@@ -687,14 +695,14 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         .eq("team_id", currentTeam.id);
 
       if (error) {
-        logger.error("Failed to cancel invitation", error);
+        log.error("Failed to cancel invitation", error);
         throw error;
       }
 
       await get().fetchTeamInvitations();
       set({ isLoading: false });
     } catch (error) {
-      logger.error("Error in cancelInvitation", error as Error);
+      log.error("Error in cancelInvitation", error as Error);
       set({ error: (error as Error).message, isLoading: false });
     }
   },

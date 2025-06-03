@@ -6,7 +6,7 @@ import {
   KakaoCredentials,
   PlatformType,
 } from "@/types";
-import { Logger } from "@/utils/logger";
+import log from "@/utils/logger";
 
 export class KakaoPlatformService extends BasePlatformService {
   platform: PlatformType = "kakao";
@@ -23,14 +23,14 @@ export class KakaoPlatformService extends BasePlatformService {
       // TODO: Implement actual Kakao API validation
       return true;
     } catch (error) {
-      Logger.error("Kakao credential validation error:", error as Error);
+      log.error("Kakao credential validation error:", error as Error);
 
       return false;
     }
   }
 
   async fetchCampaigns(): Promise<Campaign[]> {
-    Logger.info("Fetching Kakao campaigns");
+    log.info("Fetching Kakao campaigns");
 
     // TODO: Implement Kakao Moment API
     return [];
@@ -41,7 +41,7 @@ export class KakaoPlatformService extends BasePlatformService {
     _startDate: Date,
     _endDate: Date,
   ): Promise<CampaignMetrics[]> {
-    Logger.info("Fetching Kakao campaign metrics");
+    log.info("Fetching Kakao campaign metrics");
 
     // TODO: Implement
     return [];
@@ -51,7 +51,7 @@ export class KakaoPlatformService extends BasePlatformService {
     _campaignId: string,
     _budget: number,
   ): Promise<boolean> {
-    Logger.info("Updating Kakao campaign budget");
+    log.info("Updating Kakao campaign budget");
 
     // TODO: Implement
     return true;
@@ -61,7 +61,7 @@ export class KakaoPlatformService extends BasePlatformService {
     _campaignId: string,
     _isActive: boolean,
   ): Promise<boolean> {
-    Logger.info("Updating Kakao campaign status");
+    log.info("Updating Kakao campaign status");
 
     // TODO: Implement
     return true;

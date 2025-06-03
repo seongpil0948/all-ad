@@ -2,7 +2,7 @@ import { GoogleAdsClient } from "../core/google-ads-client";
 import { CampaignControlService } from "../campaign/campaign-control.service";
 
 import { createClient } from "@/utils/supabase/server";
-import { Logger } from "@/utils/logger";
+import log from "@/utils/logger";
 import { SyncResult, SyncError } from "@/types/google-ads.types";
 
 export class GoogleAdsSyncService {
@@ -21,7 +21,7 @@ export class GoogleAdsSyncService {
   ): Promise<void> {
     // For now, directly perform sync without queue
     // TODO: Implement proper queue system later
-    Logger.info("동기화 작업 시작 (직접 실행)", { accountId, syncType });
+    log.info("동기화 작업 시작 (직접 실행)", { accountId, syncType });
 
     try {
       if (syncType === "INCREMENTAL") {
@@ -30,7 +30,7 @@ export class GoogleAdsSyncService {
         await this.performFullSync(accountId);
       }
     } catch (error) {
-      Logger.error("동기화 작업 실패", error as Error, {
+      log.error("동기화 작업 실패", error as Error, {
         accountId,
         syncType,
       });
@@ -101,11 +101,11 @@ export class GoogleAdsSyncService {
         completedAt: new Date().toISOString(),
       };
 
-      Logger.info("증분 동기화 완료", result);
+      log.info("증분 동기화 완료", result);
 
       return result;
     } catch (error) {
-      Logger.error("증분 동기화 실패", error as Error, { accountId });
+      log.error("증분 동기화 실패", error as Error, { accountId });
       throw error;
     }
   }
@@ -158,11 +158,11 @@ export class GoogleAdsSyncService {
         completedAt: new Date().toISOString(),
       };
 
-      Logger.info("전체 동기화 완료", result);
+      log.info("전체 동기화 완료", result);
 
       return result;
     } catch (error) {
-      Logger.error("전체 동기화 실패", error as Error, { accountId });
+      log.error("전체 동기화 실패", error as Error, { accountId });
       throw error;
     }
   }
@@ -201,7 +201,7 @@ export class GoogleAdsSyncService {
 
       return results;
     } catch (error) {
-      Logger.error("변경된 캠페인 조회 실패", error as Error, {
+      log.error("변경된 캠페인 조회 실패", error as Error, {
         accountId,
         since,
       });
@@ -262,7 +262,7 @@ export class GoogleAdsSyncService {
         throw error;
       }
     } catch (error) {
-      Logger.error("캠페인 데이터 업데이트 실패", error as Error, {
+      log.error("캠페인 데이터 업데이트 실패", error as Error, {
         accountId,
         campaignId: campaignData.id,
       });

@@ -170,7 +170,7 @@ all-ad/
 │   ├── platform-database.service.ts      # DB 서비스
 │   └── platform-sync.service.ts          # 동기화 서비스
 │
-├── stores/                       # Zustand 상태 관리 ✅ (개선됨)
+├── stores/                       # Zustand 상태 관리 ✅ (통합 및 개선됨)
 │   ├── useAuthStore.ts          # 인증 상태
 │   ├── useCampaignStore.ts      # 캠페인 상태 (setCampaigns, setStats 추가)
 │   ├── usePlatformStore.ts      # 플랫폼 상태
@@ -281,6 +281,27 @@ all-ad/
     ├── middleware.ts    # Next.js 미들웨어
     └── instrumentation.ts # OpenTelemetry 설정
 ```
+
+## 주요 리팩토링 내용 (2025-01-06)
+
+### 프로젝트 구조 정리 (2025-01-06)
+
+1. **Store 폴더 통합**
+
+   - `/store`와 `/stores` 폴더가 중복되어 있던 문제 해결
+   - 모든 상태 관리 파일을 `/stores` 폴더로 통합
+   - 사용되지 않던 `/store` 폴더 제거
+
+2. **Logger Import 통일**
+
+   - 모든 파일에서 `import log from "@/utils/logger"` 형식으로 통일
+   - 기존의 `import { Logger } from "@/utils/logger"` 패턴을 모두 변경
+   - `Logger.info()` → `log.info()` 형식으로 사용법 통일
+
+3. **코드 정리 효과**
+   - 중복 코드 제거로 프로젝트 구조 단순화
+   - import 방식 통일로 일관성 향상
+   - 유지보수성 개선
 
 ## 주요 리팩토링 내용 (2025-01-06)
 

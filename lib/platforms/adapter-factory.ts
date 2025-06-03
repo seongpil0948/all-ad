@@ -5,7 +5,7 @@ import { MetaAdsAdapter } from "./meta-ads-adapter";
 import { CoupangAdsAdapter } from "./coupang-ads-adapter";
 
 import { PlatformType, PlatformAdapter } from "@/types";
-import logger from "@/utils/logger";
+import log from "@/utils/logger";
 
 export class PlatformAdapterFactory {
   private static adapters: Map<PlatformType, PlatformAdapter> = new Map();
@@ -29,14 +29,14 @@ export class PlatformAdapterFactory {
         adapter = new CoupangAdsAdapter();
         break;
       default:
-        logger.error(`Unsupported platform type: ${type}`);
+        log.error(`Unsupported platform type: ${type}`);
         throw new Error(`Platform ${type} is not supported`);
     }
 
     // Store adapter instance
     this.adapters.set(type, adapter);
 
-    logger.info(`Created adapter for platform: ${type}`);
+    log.info(`Created adapter for platform: ${type}`);
 
     return adapter;
   }

@@ -13,7 +13,7 @@ import {
   CampaignMetrics,
   ApiCredentials,
 } from "@/types";
-import logger from "@/utils/logger";
+import log from "@/utils/logger";
 
 interface CoupangAdsConfig {
   apiUrl: string;
@@ -55,7 +55,7 @@ export class CoupangAdsAdapter extends BasePlatformAdapter {
 
   async connect(credentials: ApiCredentials): Promise<PlatformConnection> {
     try {
-      logger.info("Connecting to Coupang Ads");
+      log.info("Connecting to Coupang Ads");
 
       // Validate API credentials
       if (!credentials.apiKey || !credentials.apiSecret) {
@@ -79,7 +79,7 @@ export class CoupangAdsAdapter extends BasePlatformAdapter {
         },
       };
 
-      logger.info("Coupang Ads connected successfully", {
+      log.info("Coupang Ads connected successfully", {
         connectionId: connection.id,
       });
 
@@ -91,14 +91,14 @@ export class CoupangAdsAdapter extends BasePlatformAdapter {
 
   async disconnect(connectionId: string): Promise<void> {
     try {
-      logger.info("Disconnecting Coupang Ads", { connectionId });
+      log.info("Disconnecting Coupang Ads", { connectionId });
 
       // In a real implementation:
       // 1. Clean up stored credentials
       // 2. Remove associated data
       // 3. Invalidate any cached tokens
 
-      logger.info("Coupang Ads disconnected successfully", { connectionId });
+      log.info("Coupang Ads disconnected successfully", { connectionId });
     } catch (error) {
       return this.handleApiError(error);
     }
@@ -106,7 +106,7 @@ export class CoupangAdsAdapter extends BasePlatformAdapter {
 
   async getAccounts(connectionId: string): Promise<AdAccount[]> {
     try {
-      logger.info("Fetching Coupang Ads accounts", { connectionId });
+      log.info("Fetching Coupang Ads accounts", { connectionId });
 
       // Coupang typically has one account per seller
       // Mock implementation
@@ -128,7 +128,7 @@ export class CoupangAdsAdapter extends BasePlatformAdapter {
 
   async getCampaigns(accountId: string): Promise<Campaign[]> {
     try {
-      logger.info("Fetching Coupang Ads campaigns", { accountId });
+      log.info("Fetching Coupang Ads campaigns", { accountId });
 
       // Mock implementation
       // In reality, would call Coupang Ads API
@@ -177,7 +177,7 @@ export class CoupangAdsAdapter extends BasePlatformAdapter {
 
   async syncData(connectionId: string): Promise<SyncResult> {
     try {
-      logger.info("Syncing Coupang Ads data", { connectionId });
+      log.info("Syncing Coupang Ads data", { connectionId });
 
       // Validate connection
       this.validateConnection({
@@ -206,11 +206,11 @@ export class CoupangAdsAdapter extends BasePlatformAdapter {
         },
       };
 
-      logger.info("Coupang Ads sync completed", result);
+      log.info("Coupang Ads sync completed", result);
 
       return result;
     } catch (error: any) {
-      logger.error("Coupang Ads sync failed", error as Error);
+      log.error("Coupang Ads sync failed", error as Error);
 
       return {
         success: false,
@@ -257,7 +257,7 @@ export class CoupangAdsAdapter extends BasePlatformAdapter {
     //   "X-TIMESTAMP": timestamp,
     //   "X-SIGNATURE": signature,
     // }
-    logger.info("Making authenticated request to Coupang", { method, path });
+    log.info("Making authenticated request to Coupang", { method, path });
 
     // Mock response
     return { success: true };
@@ -332,7 +332,7 @@ export class CoupangAdsAdapter extends BasePlatformAdapter {
     startDate: Date,
     endDate: Date,
   ): Promise<any[]> {
-    logger.info("Fetching product performance", {
+    log.info("Fetching product performance", {
       campaignId,
       startDate,
       endDate,
@@ -370,7 +370,7 @@ export class CoupangAdsAdapter extends BasePlatformAdapter {
     _apiSecret: string,
   ): Promise<boolean> {
     try {
-      logger.info("Updating campaign budget", { campaignId, newBudget });
+      log.info("Updating campaign budget", { campaignId, newBudget });
 
       const result = await this.makeAuthenticatedRequest(
         "PUT",
@@ -382,7 +382,7 @@ export class CoupangAdsAdapter extends BasePlatformAdapter {
 
       return result.success;
     } catch (error) {
-      logger.error("Failed to update campaign budget", error as Error);
+      log.error("Failed to update campaign budget", error as Error);
 
       return false;
     }

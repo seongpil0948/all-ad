@@ -4,7 +4,7 @@ import { LabelManagementService } from "./label/label-management.service";
 import { GoogleAdsSyncService } from "./sync/sync-strategy.service";
 
 import { GoogleAdsApiCredentials } from "@/types/google-ads.types";
-import { Logger } from "@/utils/logger";
+import log from "@/utils/logger";
 
 // Google Ads 통합 서비스
 export class GoogleAdsIntegrationService {
@@ -30,7 +30,7 @@ export class GoogleAdsIntegrationService {
     enable: boolean,
   ): Promise<any> {
     try {
-      Logger.info("캠페인 상태 변경 시작", { accountId, campaignId, enable });
+      log.info("캠페인 상태 변경 시작", { accountId, campaignId, enable });
 
       return await this.campaignControl.toggleCampaignStatus(
         accountId,
@@ -38,7 +38,7 @@ export class GoogleAdsIntegrationService {
         enable,
       );
     } catch (error) {
-      Logger.error("캠페인 상태 변경 실패", error as Error, {
+      log.error("캠페인 상태 변경 실패", error as Error, {
         accountId,
         campaignId,
         enable,
@@ -54,7 +54,7 @@ export class GoogleAdsIntegrationService {
     enable: boolean,
   ): Promise<any> {
     try {
-      Logger.info("라벨 기반 캠페인 일괄 제어 시작", {
+      log.info("라벨 기반 캠페인 일괄 제어 시작", {
         accountId,
         labelId,
         enable,
@@ -80,7 +80,7 @@ export class GoogleAdsIntegrationService {
         );
       }
     } catch (error) {
-      Logger.error("라벨 기반 캠페인 일괄 제어 실패", error as Error, {
+      log.error("라벨 기반 캠페인 일괄 제어 실패", error as Error, {
         accountId,
         labelId,
         enable,
@@ -243,7 +243,7 @@ export class GoogleAdsIntegrationService {
 
       return true;
     } catch (error) {
-      Logger.error("Google Ads 연결 테스트 실패", error as Error, {
+      log.error("Google Ads 연결 테스트 실패", error as Error, {
         accountId,
       });
 
@@ -254,6 +254,6 @@ export class GoogleAdsIntegrationService {
   // 클린업 (리소스 정리)
   async cleanup(): Promise<void> {
     // 필요한 경우 리소스 정리 로직 추가
-    Logger.info("Google Ads 통합 서비스 정리 완료");
+    log.info("Google Ads 통합 서비스 정리 완료");
   }
 }

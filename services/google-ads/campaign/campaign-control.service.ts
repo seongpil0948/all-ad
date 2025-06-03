@@ -1,6 +1,6 @@
 import { GoogleAdsClient } from "../core/google-ads-client";
 
-import { Logger } from "@/utils/logger";
+import log from "@/utils/logger";
 import {
   CampaignStatusUpdate,
   GoogleAdsCampaign,
@@ -33,14 +33,14 @@ export class CampaignControlService {
         operations,
       );
 
-      Logger.info("캠페인 상태 업데이트 성공", {
+      log.info("캠페인 상태 업데이트 성공", {
         customerId,
         count: updates.length,
       });
 
       return response;
     } catch (error) {
-      Logger.error("캠페인 상태 업데이트 실패", error as Error, {
+      log.error("캠페인 상태 업데이트 실패", error as Error, {
         customerId,
         updates,
       });
@@ -104,7 +104,7 @@ export class CampaignControlService {
         } as GoogleAdsMetrics,
       }));
     } catch (error) {
-      Logger.error("캠페인 조회 실패", error as Error, { customerId });
+      log.error("캠페인 조회 실패", error as Error, { customerId });
       throw error;
     }
   }
@@ -186,7 +186,7 @@ export class CampaignControlService {
         date: result["segments.date"],
       }));
     } catch (error) {
-      Logger.error("캠페인 메트릭 조회 실패", error as Error, {
+      log.error("캠페인 메트릭 조회 실패", error as Error, {
         customerId,
         campaignId,
       });
@@ -241,7 +241,7 @@ export class CampaignControlService {
         operations,
       );
 
-      Logger.info("캠페인 예산 업데이트 성공", {
+      log.info("캠페인 예산 업데이트 성공", {
         customerId,
         campaignId,
         budgetAmountMicros,
@@ -249,7 +249,7 @@ export class CampaignControlService {
 
       return response;
     } catch (error) {
-      Logger.error("캠페인 예산 업데이트 실패", error as Error, {
+      log.error("캠페인 예산 업데이트 실패", error as Error, {
         customerId,
         campaignId,
       });

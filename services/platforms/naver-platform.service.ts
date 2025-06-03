@@ -6,7 +6,7 @@ import {
   NaverCredentials,
   PlatformType,
 } from "@/types";
-import { Logger } from "@/utils/logger";
+import log from "@/utils/logger";
 
 export class NaverPlatformService extends BasePlatformService {
   platform: PlatformType = "naver";
@@ -24,14 +24,14 @@ export class NaverPlatformService extends BasePlatformService {
       // TODO: Implement actual Naver API validation
       return true;
     } catch (error) {
-      Logger.error("Naver credential validation error:", error as Error);
+      log.error("Naver credential validation error:", error as Error);
 
       return false;
     }
   }
 
   async fetchCampaigns(): Promise<Campaign[]> {
-    Logger.info("Fetching Naver campaigns");
+    log.info("Fetching Naver campaigns");
 
     // TODO: Implement Naver Search Ad API
     return [];
@@ -42,7 +42,7 @@ export class NaverPlatformService extends BasePlatformService {
     _startDate: Date,
     _endDate: Date,
   ): Promise<CampaignMetrics[]> {
-    Logger.info("Fetching Naver campaign metrics");
+    log.info("Fetching Naver campaign metrics");
 
     // TODO: Implement
     return [];
@@ -52,7 +52,7 @@ export class NaverPlatformService extends BasePlatformService {
     _campaignId: string,
     _budget: number,
   ): Promise<boolean> {
-    Logger.info("Updating Naver campaign budget");
+    log.info("Updating Naver campaign budget");
 
     // TODO: Implement
     return true;
@@ -62,7 +62,7 @@ export class NaverPlatformService extends BasePlatformService {
     _campaignId: string,
     _isActive: boolean,
   ): Promise<boolean> {
-    Logger.info("Updating Naver campaign status");
+    log.info("Updating Naver campaign status");
 
     // TODO: Implement
     return true;

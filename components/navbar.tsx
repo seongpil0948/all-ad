@@ -27,7 +27,7 @@ export const Navbar = () => {
     loading ? (
       <Skeleton className="flex rounded-full w-10 h-10" />
     ) : user ? (
-      <UserDropdown user={user} />
+      <UserDropdown />
     ) : (
       <>
         <Button as={NextLink} href="/login" variant="light">
@@ -108,7 +108,7 @@ export const Navbar = () => {
               </Button>
             </NavbarMenuItem>
           ) : (
-            <UserDropdown user={user} />
+            <UserDropdown />
           )}
         </div>
       </NavbarMenu>

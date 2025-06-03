@@ -1,7 +1,7 @@
 import { GoogleAdsApi, Customer } from "google-ads-api";
 
 import { GoogleAdsApiCredentials } from "@/types/google-ads.types";
-import { Logger } from "@/utils/logger";
+import log from "@/utils/logger";
 
 // Google Ads API 클라이언트 래퍼
 export class GoogleAdsClient {
@@ -48,14 +48,14 @@ export class GoogleAdsClient {
       const customer = await this.getAuthenticatedCustomer(customerId);
       const results = await customer.query(query);
 
-      Logger.info("Google Ads 쿼리 실행 성공", {
+      log.info("Google Ads 쿼리 실행 성공", {
         customerId,
         resultCount: results.length,
       });
 
       return results as T[];
     } catch (error) {
-      Logger.error("Google Ads 쿼리 실행 실패", error as Error, {
+      log.error("Google Ads 쿼리 실행 실패", error as Error, {
         customerId,
         query,
       });
@@ -73,14 +73,14 @@ export class GoogleAdsClient {
       const customer = await this.getAuthenticatedCustomer(customerId);
       const response = await customer.mutateResources(operations, options);
 
-      Logger.info("Google Ads 변경 작업 성공", {
+      log.info("Google Ads 변경 작업 성공", {
         customerId,
         operationCount: operations.length,
       });
 
       return response;
     } catch (error) {
-      Logger.error("Google Ads 변경 작업 실패", error as Error, {
+      log.error("Google Ads 변경 작업 실패", error as Error, {
         customerId,
         operationCount: operations.length,
       });
@@ -106,11 +106,11 @@ export class GoogleAdsClient {
         }
       }
 
-      Logger.info("Google Ads 리포트 스트림 시작", { customerId });
+      log.info("Google Ads 리포트 스트림 시작", { customerId });
 
       return resultIterator();
     } catch (error) {
-      Logger.error("Google Ads 리포트 실행 실패", error as Error, {
+      log.error("Google Ads 리포트 실행 실패", error as Error, {
         customerId,
         query,
       });
@@ -174,13 +174,13 @@ export class GoogleAdsClient {
         )
         .filter(Boolean);
 
-      Logger.info("접근 가능한 고객 목록 조회 성공", {
+      log.info("접근 가능한 고객 목록 조회 성공", {
         count: accessibleCustomers.length,
       });
 
       return accessibleCustomers;
     } catch (error) {
-      Logger.error("접근 가능한 고객 목록 조회 실패", error as Error);
+      log.error("접근 가능한 고객 목록 조회 실패", error as Error);
       throw error;
     }
   }

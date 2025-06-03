@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/utils/supabase/server";
 import { UserRole } from "@/types/database.types";
-import logger from "@/utils/logger";
+import log from "@/utils/logger";
 
 export async function inviteTeamMemberAction(email: string, role: UserRole) {
   const supabase = await createClient();
@@ -80,13 +80,13 @@ export async function inviteTeamMemberAction(email: string, role: UserRole) {
       .single();
 
     if (error) {
-      logger.error("Failed to create invitation", error);
+      log.error("Failed to create invitation", error);
       throw error;
     }
 
     const inviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/invite/${invitation.token}`;
 
-    logger.info("Team invitation created successfully", {
+    log.info("Team invitation created successfully", {
       email,
       role,
       teamId,
@@ -101,7 +101,7 @@ export async function inviteTeamMemberAction(email: string, role: UserRole) {
       inviteUrl,
     };
   } catch (error) {
-    logger.error(
+    log.error(
       "Error in inviteTeamMemberAction",
       error instanceof Error ? error : new Error(String(error)),
     );
@@ -146,17 +146,17 @@ export async function updateTeamMemberRoleAction(
       .eq("id", memberId);
 
     if (error) {
-      logger.error("Failed to update team member role", error);
+      log.error("Failed to update team member role", error);
       throw error;
     }
 
-    logger.info("Team member role updated", { memberId, role });
+    log.info("Team member role updated", { memberId, role });
 
     revalidatePath("/team");
 
     return { success: true, message: "권한이 성공적으로 변경되었습니다." };
   } catch (error) {
-    logger.error(
+    log.error(
       "Error in updateTeamMemberRoleAction",
       error instanceof Error ? error : new Error(String(error)),
     );
@@ -197,17 +197,17 @@ export async function removeTeamMemberAction(memberId: string) {
       .eq("id", memberId);
 
     if (error) {
-      logger.error("Failed to remove team member", error);
+      log.error("Failed to remove team member", error);
       throw error;
     }
 
-    logger.info("Team member removed", { memberId });
+    log.info("Team member removed", { memberId });
 
     revalidatePath("/team");
 
     return { success: true, message: "팀원이 성공적으로 제거되었습니다." };
   } catch (error) {
-    logger.error(
+    log.error(
       "Error in removeTeamMemberAction",
       error instanceof Error ? error : new Error(String(error)),
     );
@@ -237,17 +237,17 @@ export async function createTeamForUserAction() {
     );
 
     if (error) {
-      logger.error("Failed to create team", error);
+      log.error("Failed to create team", error);
       throw error;
     }
 
-    logger.info("Team created successfully", { teamId: newTeamId });
+    log.info("Team created successfully", { teamId: newTeamId });
 
     revalidatePath("/team");
 
     return { success: true, teamId: newTeamId };
   } catch (error) {
-    logger.error(
+    log.error(
       "Error in createTeamForUserAction",
       error instanceof Error ? error : new Error(String(error)),
     );

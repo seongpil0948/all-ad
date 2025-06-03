@@ -6,7 +6,7 @@ import {
   CoupangCredentials,
   PlatformType,
 } from "@/types";
-import { Logger } from "@/utils/logger";
+import log from "@/utils/logger";
 
 export class CoupangPlatformService extends BasePlatformService {
   platform: PlatformType = "coupang";
@@ -24,14 +24,14 @@ export class CoupangPlatformService extends BasePlatformService {
       // TODO: Implement actual Coupang API validation
       return true;
     } catch (error) {
-      Logger.error("Coupang credential validation error:", error as Error);
+      log.error("Coupang credential validation error:", error as Error);
 
       return false;
     }
   }
 
   async fetchCampaigns(): Promise<Campaign[]> {
-    Logger.info("Fetching Coupang campaigns");
+    log.info("Fetching Coupang campaigns");
 
     // TODO: Implement Coupang Ads API
     return [];
@@ -42,7 +42,7 @@ export class CoupangPlatformService extends BasePlatformService {
     _startDate: Date,
     _endDate: Date,
   ): Promise<CampaignMetrics[]> {
-    Logger.info("Fetching Coupang campaign metrics");
+    log.info("Fetching Coupang campaign metrics");
 
     // TODO: Implement
     return [];
@@ -52,7 +52,7 @@ export class CoupangPlatformService extends BasePlatformService {
     _campaignId: string,
     _budget: number,
   ): Promise<boolean> {
-    Logger.info("Updating Coupang campaign budget");
+    log.info("Updating Coupang campaign budget");
 
     // TODO: Implement
     return true;
@@ -62,7 +62,7 @@ export class CoupangPlatformService extends BasePlatformService {
     _campaignId: string,
     _isActive: boolean,
   ): Promise<boolean> {
-    Logger.info("Updating Coupang campaign status");
+    log.info("Updating Coupang campaign status");
 
     // TODO: Implement
     return true;

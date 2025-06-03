@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { OAuthManager } from "@/lib/oauth/oauth-manager";
 import { getOAuthConfigWithCredentials } from "@/lib/oauth/platform-configs";
-import { Logger } from "@/utils/logger";
+import log from "@/utils/logger";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const error = searchParams.get("error");
 
   if (error) {
-    Logger.error("Google Ads OAuth error:", { error });
+    log.error("Google Ads OAuth error:", { error });
 
     return NextResponse.redirect(
       `${process.env.NEXT_PUBLIC_SITE_URL}/settings?error=oauth_denied`,
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
       `${process.env.NEXT_PUBLIC_SITE_URL}/settings?success=google_connected`,
     );
   } catch (error) {
-    Logger.error("Google Ads OAuth callback error:", error as Error);
+    log.error("Google Ads OAuth callback error:", error as Error);
 
     return NextResponse.redirect(
       `${process.env.NEXT_PUBLIC_SITE_URL}/settings?error=oauth_failed`,

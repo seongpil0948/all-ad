@@ -6,7 +6,7 @@ import {
   PlatformType,
   FacebookCredentials,
 } from "@/types";
-import { Logger } from "@/utils/logger";
+import log from "@/utils/logger";
 export class FacebookPlatformService extends BasePlatformService {
   platform: PlatformType = "facebook";
 
@@ -25,7 +25,7 @@ export class FacebookPlatformService extends BasePlatformService {
 
       return response.ok;
     } catch (error) {
-      Logger.error("Facebook credential validation error:", error as Error);
+      log.error("Facebook credential validation error:", error as Error);
 
       return false;
     }
@@ -55,7 +55,7 @@ export class FacebookPlatformService extends BasePlatformService {
         raw_data: campaign,
       }));
     } catch (error) {
-      Logger.error("Facebook fetch campaigns error:", error as Error);
+      log.error("Facebook fetch campaigns error:", error as Error);
       throw error;
     }
   }
@@ -92,7 +92,7 @@ export class FacebookPlatformService extends BasePlatformService {
         raw_data: metric,
       }));
     } catch (error) {
-      Logger.error("Facebook fetch metrics error:", error as Error);
+      log.error("Facebook fetch metrics error:", error as Error);
       throw error;
     }
   }
@@ -120,7 +120,7 @@ export class FacebookPlatformService extends BasePlatformService {
 
       return response.ok;
     } catch (error) {
-      Logger.error("Facebook update budget error:", error as Error);
+      log.error("Facebook update budget error:", error as Error);
 
       return false;
     }
@@ -149,7 +149,7 @@ export class FacebookPlatformService extends BasePlatformService {
 
       return response.ok;
     } catch (error) {
-      Logger.error("Facebook update status error:", error as Error);
+      log.error("Facebook update status error:", error as Error);
 
       return false;
     }

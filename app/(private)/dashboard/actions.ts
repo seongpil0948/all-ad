@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/utils/supabase/server";
 import { platformServiceFactory } from "@/services/platforms/platform-service-factory";
-import logger from "@/utils/logger";
+import log from "@/utils/logger";
 
 export async function updateCampaignBudgetAction(
   campaignId: string,
@@ -77,13 +77,13 @@ export async function updateCampaignBudgetAction(
         budget,
       );
 
-      logger.info("Campaign budget updated on platform", {
+      log.info("Campaign budget updated on platform", {
         campaignId,
         platform: campaign.platform_credentials.platform,
         budget,
       });
     } catch (platformError) {
-      logger.error(`Failed to update budget on platform ${platformError}`);
+      log.error(`Failed to update budget on platform ${platformError}`);
       // Continue even if platform update fails
     }
 
@@ -91,7 +91,7 @@ export async function updateCampaignBudgetAction(
 
     return { success: true, message: "예산이 성공적으로 업데이트되었습니다." };
   } catch (error) {
-    logger.error(`Error in updateCampaignBudgetAction ${error}`);
+    log.error(`Error in updateCampaignBudgetAction ${error}`);
 
     return {
       success: false,
@@ -170,13 +170,13 @@ export async function toggleCampaignStatusAction(campaignId: string) {
         newStatus,
       );
 
-      logger.info("Campaign status updated on platform", {
+      log.info("Campaign status updated on platform", {
         campaignId,
         platform: campaign.platform_credentials.platform,
         isActive: newStatus,
       });
     } catch (platformError) {
-      logger.error(`Failed to update status on platform ${platformError}`);
+      log.error(`Failed to update status on platform ${platformError}`);
       // Continue even if platform update fails
     }
 
@@ -187,9 +187,7 @@ export async function toggleCampaignStatusAction(campaignId: string) {
       message: `캠페인이 ${newStatus ? "활성화" : "비활성화"}되었습니다.`,
     };
   } catch (error) {
-    logger.error(
-      `Error in toggleCampaignStatusAction ${JSON.stringify(error)}`,
-    );
+    log.error(`Error in toggleCampaignStatusAction ${JSON.stringify(error)}`);
 
     return {
       success: false,
@@ -273,12 +271,12 @@ export async function syncAllCampaignsAction() {
           errors.push(`Failed to sync ${cred.platform}`);
         }
       } catch (error) {
-        logger.error(`Sync error for ${cred.platform} ${error}`);
+        log.error(`Sync error for ${cred.platform} ${error}`);
         errors.push(`Error syncing ${cred.platform}`);
       }
     }
 
-    logger.info("All campaigns synced", { totalSynced, errors });
+    log.info("All campaigns synced", { totalSynced, errors });
 
     revalidatePath("/dashboard");
 
@@ -296,7 +294,7 @@ export async function syncAllCampaignsAction() {
       synced: totalSynced,
     };
   } catch (error) {
-    logger.error(`Error in syncAllCampaignsAction ${JSON.stringify(error)}`);
+    log.error(`Error in syncAllCampaignsAction ${JSON.stringify(error)}`);
 
     return {
       success: false,

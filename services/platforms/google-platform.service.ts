@@ -8,7 +8,7 @@ import {
   PlatformType,
   GoogleAdsCredentials,
 } from "@/types";
-import { Logger } from "@/utils/logger";
+import log from "@/utils/logger";
 import { GoogleAdsApiCredentials } from "@/types/google-ads.types";
 
 export class GooglePlatformService extends BasePlatformService {
@@ -67,14 +67,14 @@ export class GooglePlatformService extends BasePlatformService {
 
       return await service.testConnection(customerId);
     } catch (error) {
-      Logger.error("Google credential validation error:", error as Error);
+      log.error("Google credential validation error:", error as Error);
 
       return false;
     }
   }
 
   async fetchCampaigns(): Promise<Campaign[]> {
-    Logger.info("Fetching Google Ads campaigns");
+    log.info("Fetching Google Ads campaigns");
 
     try {
       const { customerId } = this.credentials as GoogleAdsCredentials;
@@ -103,7 +103,7 @@ export class GooglePlatformService extends BasePlatformService {
         },
       }));
     } catch (error) {
-      Logger.error("Failed to fetch Google Ads campaigns", error as Error);
+      log.error("Failed to fetch Google Ads campaigns", error as Error);
       throw error;
     }
   }
@@ -113,7 +113,7 @@ export class GooglePlatformService extends BasePlatformService {
     startDate: Date,
     endDate: Date,
   ): Promise<CampaignMetrics[]> {
-    Logger.info("Fetching Google Ads campaign metrics", {
+    log.info("Fetching Google Ads campaign metrics", {
       campaignId,
       startDate,
       endDate,
@@ -142,7 +142,7 @@ export class GooglePlatformService extends BasePlatformService {
         date: metric.date || new Date().toISOString().split("T")[0],
       }));
     } catch (error) {
-      Logger.error("Failed to fetch campaign metrics", error as Error);
+      log.error("Failed to fetch campaign metrics", error as Error);
       throw error;
     }
   }
@@ -151,9 +151,7 @@ export class GooglePlatformService extends BasePlatformService {
     campaignId: string,
     budget: number,
   ): Promise<boolean> {
-    Logger.info(
-      `Updating Google Ads campaign ${campaignId} budget to ${budget}`,
-    );
+    log.info(`Updating Google Ads campaign ${campaignId} budget to ${budget}`);
 
     try {
       const { customerId } = this.credentials as GoogleAdsCredentials;
@@ -167,7 +165,7 @@ export class GooglePlatformService extends BasePlatformService {
 
       return true;
     } catch (error) {
-      Logger.error("Failed to update campaign budget", error as Error);
+      log.error("Failed to update campaign budget", error as Error);
 
       return false;
     }
@@ -177,7 +175,7 @@ export class GooglePlatformService extends BasePlatformService {
     campaignId: string,
     isActive: boolean,
   ): Promise<boolean> {
-    Logger.info(
+    log.info(
       `Updating Google Ads campaign ${campaignId} status to ${isActive}`,
     );
 
@@ -189,7 +187,7 @@ export class GooglePlatformService extends BasePlatformService {
 
       return true;
     } catch (error) {
-      Logger.error("Failed to update campaign status", error as Error);
+      log.error("Failed to update campaign status", error as Error);
 
       return false;
     }
@@ -202,9 +200,9 @@ export class GooglePlatformService extends BasePlatformService {
       const service = await this.getGoogleAdsService();
 
       await service.triggerSync(customerId, syncType);
-      Logger.info("Google Ads sync triggered", { syncType });
+      log.info("Google Ads sync triggered", { syncType });
     } catch (error) {
-      Logger.error("Failed to trigger sync", error as Error);
+      log.error("Failed to trigger sync", error as Error);
       throw error;
     }
   }

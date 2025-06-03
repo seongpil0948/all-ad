@@ -8,13 +8,13 @@ import {
   AdAccount,
   Campaign,
 } from "@/types";
-import logger from "@/utils/logger";
+import log from "@/utils/logger";
 
 export abstract class BasePlatformAdapter implements PlatformAdapter {
   abstract type: PlatformType;
 
   constructor() {
-    logger.info(`Initializing ${this.constructor.name}`);
+    log.info(`Initializing ${this.constructor.name}`);
   }
 
   abstract connect(credentials: any): Promise<PlatformConnection>;
@@ -25,7 +25,7 @@ export abstract class BasePlatformAdapter implements PlatformAdapter {
 
   // Common utility methods
   protected async handleApiError(error: any): Promise<never> {
-    logger.error(`API Error in ${this.constructor.name}:`, error);
+    log.error(`API Error in ${this.constructor.name}:`, error);
 
     if (error.response) {
       // API responded with error
@@ -63,7 +63,7 @@ export abstract class BasePlatformAdapter implements PlatformAdapter {
       } catch (error: any) {
         if (error.response?.status === 429 && i < retries - 1) {
           // Rate limited, wait and retry
-          logger.warn(`Rate limited, retrying in ${delay}ms...`);
+          log.warn(`Rate limited, retrying in ${delay}ms...`);
           await new Promise((resolve) => setTimeout(resolve, delay));
           delay *= 2; // Exponential backoff
         } else {

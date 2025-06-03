@@ -1,6 +1,6 @@
 import { createClient } from "redis";
 
-import { Logger } from "@/utils/logger";
+import log from "@/utils/logger";
 
 export type RedisClient = ReturnType<typeof createClient>;
 
@@ -17,11 +17,11 @@ export async function getRedisClient(): Promise<RedisClient> {
     redisClient = createClient({ url: redisUrl });
 
     redisClient.on("error", (err) => {
-      Logger.error("Redis Client Error:", err);
+      log.error("Redis Client Error:", err);
     });
 
     redisClient.on("connect", () => {
-      Logger.info("Redis Client Connected");
+      log.info("Redis Client Connected");
     });
 
     await redisClient.connect();

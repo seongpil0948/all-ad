@@ -1,6 +1,6 @@
 import { OAuthConfig } from "./oauth-client";
 
-import { Logger } from "@/utils/logger";
+import log from "@/utils/logger";
 import { setToken, getToken } from "@/lib/redis";
 import { createClient } from "@/utils/supabase/server";
 
@@ -66,7 +66,7 @@ export class OAuthManager {
 
       return tokenData;
     } catch (error) {
-      Logger.error(
+      log.error(
         `OAuth token exchange failed for ${this.platform}:`,
         error as Error,
       );
@@ -102,7 +102,7 @@ export class OAuthManager {
 
       return tokenData;
     } catch (error) {
-      Logger.error(
+      log.error(
         `OAuth token refresh failed for ${this.platform}:`,
         error as Error,
       );
@@ -159,9 +159,7 @@ export class OAuthManager {
     const tokenData = await getToken(tokenKey);
 
     if (!tokenData) {
-      Logger.error(
-        `No tokens found for ${this.platform}:${userId}:${accountId}`,
-      );
+      log.error(`No tokens found for ${this.platform}:${userId}:${accountId}`);
 
       return null;
     }
@@ -176,7 +174,7 @@ export class OAuthManager {
 
     // Token expired or about to expire, try to refresh
     if (!tokenData.refresh_token) {
-      Logger.error(
+      log.error(
         `No refresh token available for ${this.platform}:${userId}:${accountId}`,
       );
 
@@ -196,7 +194,7 @@ export class OAuthManager {
 
       return newTokenData.access_token;
     } catch (error) {
-      Logger.error(
+      log.error(
         `Failed to refresh token for ${this.platform}:${userId}:${accountId}:`,
         error as Error,
       );
