@@ -74,6 +74,9 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           get().reset();
         } else if (event === "USER_UPDATED" && session?.user) {
           set({ user: session.user });
+        } else if (event === "INITIAL_SESSION" && session?.user) {
+          set({ user: session.user });
+          await get().fetchProfile(session.user.id);
         }
       });
 

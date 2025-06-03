@@ -136,34 +136,49 @@ export type Database = {
       };
       platform_credentials: {
         Row: {
+          account_id: string | null;
+          account_name: string | null;
           created_at: string;
           created_by: string | null;
           credentials: Json;
+          data: Json | null;
           id: string;
           is_active: boolean | null;
+          last_synced_at: string | null;
           platform: Database["public"]["Enums"]["platform_type"];
           team_id: string | null;
           updated_at: string;
+          user_id: string | null;
         };
         Insert: {
+          account_id?: string | null;
+          account_name?: string | null;
           created_at?: string;
           created_by?: string | null;
           credentials: Json;
+          data?: Json | null;
           id?: string;
           is_active?: boolean | null;
+          last_synced_at?: string | null;
           platform: Database["public"]["Enums"]["platform_type"];
           team_id?: string | null;
           updated_at?: string;
+          user_id?: string | null;
         };
         Update: {
+          account_id?: string | null;
+          account_name?: string | null;
           created_at?: string;
           created_by?: string | null;
           credentials?: Json;
+          data?: Json | null;
           id?: string;
           is_active?: boolean | null;
+          last_synced_at?: string | null;
           platform?: Database["public"]["Enums"]["platform_type"];
           team_id?: string | null;
           updated_at?: string;
+          user_id?: string | null;
         };
         Relationships: [
           {
@@ -317,6 +332,10 @@ export type Database = {
         Args: { invitation_token: string };
         Returns: Json;
       };
+      can_invite_team_members: {
+        Args: { check_user_id: string; check_team_id: string };
+        Returns: boolean;
+      };
       check_team_member_limit: {
         Args: { team_id_param: string };
         Returns: boolean;
@@ -325,8 +344,59 @@ export type Database = {
         Args: { user_id: string };
         Returns: string;
       };
+      debug_get_all_invitation_tokens: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          token: string;
+          email: string;
+          status: string;
+        }[];
+      };
+      decline_team_invitation: {
+        Args: { invitation_token: string };
+        Returns: Json;
+      };
+      get_invitation_by_token: {
+        Args: { invitation_token: string };
+        Returns: Json;
+      };
+      get_team_details: {
+        Args: { team_id_param: string };
+        Returns: {
+          id: string;
+          name: string;
+          master_user_id: string;
+          created_at: string;
+          updated_at: string;
+          member_count: number;
+        }[];
+      };
+      get_team_members_with_profiles: {
+        Args: { team_id_param: string };
+        Returns: {
+          id: string;
+          team_id: string;
+          user_id: string;
+          role: Database["public"]["Enums"]["user_role"];
+          invited_by: string;
+          joined_at: string;
+          profile_id: string;
+          email: string;
+          full_name: string;
+          avatar_url: string;
+        }[];
+      };
+      is_team_master: {
+        Args: { check_team_id: string; check_user_id?: string };
+        Returns: boolean;
+      };
+      is_team_member: {
+        Args: { check_team_id: string; check_user_id?: string };
+        Returns: boolean;
+      };
     };
     Enums: {
+      invitation_status: "pending" | "accepted" | "expired" | "cancelled";
       platform_type: "facebook" | "google" | "kakao" | "naver" | "coupang";
       user_role: "master" | "viewer" | "team_mate";
     };
@@ -447,6 +517,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      invitation_status: ["pending", "accepted", "expired", "cancelled"],
       platform_type: ["facebook", "google", "kakao", "naver", "coupang"],
       user_role: ["master", "viewer", "team_mate"],
     },

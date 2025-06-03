@@ -9,16 +9,10 @@ import { PageHeader } from "@/components/common";
 import log from "@/utils/logger";
 
 async function getCampaignData(supabase: any, teamId: string) {
+  // First fetch campaigns
   const { data: campaigns, error } = await supabase
     .from("campaigns")
-    .select(
-      `
-      *,
-      platform_credentials (
-        platform
-      )
-    `,
-    )
+    .select("*")
     .eq("team_id", teamId)
     .order("created_at", { ascending: false });
 
@@ -28,7 +22,30 @@ async function getCampaignData(supabase: any, teamId: string) {
     return [];
   }
 
-  return campaigns || [];
+  if (!campaigns || campaigns.length === 0) {
+    return [];
+  }
+
+  // Then fetch platform credentials separately if needed
+  const { data: credentials } = await supabase
+    .from("platform_credentials")
+    .select("*")
+    .eq("team_id", teamId);
+
+  // Map credentials to campaigns
+  const campaignsWithCredentials = campaigns.map((campaign: any) => {
+    const credential = credentials?.find(
+      (c: any) =>
+        c.platform === campaign.platform && c.team_id === campaign.team_id,
+    );
+
+    return {
+      ...campaign,
+      platform_credentials: credential || { platform: campaign.platform },
+    };
+  });
+
+  return campaignsWithCredentials;
 }
 
 export default async function DashboardPage() {

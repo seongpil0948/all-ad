@@ -51,6 +51,19 @@ export async function login(
     };
   }
 
+  // Get the user to ensure session is established
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return {
+      errors: {
+        general: "로그인에 실패했습니다. 다시 시도해주세요.",
+      },
+    };
+  }
+
   // Revalidate all paths to ensure the navbar updates
   revalidatePath("/", "layout");
   revalidatePath("/dashboard");
@@ -88,7 +101,6 @@ export async function signup(
     data: inviteToken ? { invitation_token: inviteToken } : undefined,
   };
 
-  console.log("Signup attempt with:", options);
   const { error, data } = await supabase.auth.signUp(options);
 
   if (error) {

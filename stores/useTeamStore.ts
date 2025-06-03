@@ -248,12 +248,12 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
       }
 
       log.info("Team invitations fetched", { count: data?.length || 0 });
-      
+
       // Filter out any invitations with 'master' role to match TeamInvitation type
       const validInvitations = (data || []).filter(
-        (inv) => inv.role !== "master"
+        (inv) => inv.role !== "master",
       ) as TeamInvitation[];
-      
+
       set({
         teamInvitations: validInvitations,
         isLoading: false,
