@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { AuthError } from "@supabase/supabase-js";
 
 import { createClient } from "@/utils/supabase/server";
+import log from "@/utils/logger";
 
 export type ActionState = {
   errors?: {
@@ -23,6 +24,7 @@ export async function login(
 
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
+  const returnUrl = formData.get("returnUrl") as string;
 
   // Validation
   if (!email || !email.includes("@")) {
@@ -49,10 +51,27 @@ export async function login(
     };
   }
 
+  // Get the user to ensure session is established
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return {
+      errors: {
+        general: "로그인에 실패했습니다. 다시 시도해주세요.",
+      },
+    };
+  }
+
   // Revalidate all paths to ensure the navbar updates
   revalidatePath("/", "layout");
   revalidatePath("/dashboard");
 
+  // Redirect to returnUrl if provided and valid, otherwise to dashboard
+  if (returnUrl && returnUrl.startsWith("/")) {
+    redirect(returnUrl);
+  }
   redirect("/dashboard");
 }
 
@@ -64,8 +83,9 @@ export async function signup(
 
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
+  const returnUrl = formData.get("returnUrl") as string;
+  const inviteToken = formData.get("inviteToken") as string;
 
-  // Validation
   if (!email || !email.includes("@")) {
     return {
       errors: {
@@ -74,15 +94,17 @@ export async function signup(
     };
   }
 
-  const { error } = await supabase.auth.signUp({
+  const options = {
     email,
     password,
-    options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
-    },
-  });
+    emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+    data: inviteToken ? { invitation_token: inviteToken } : undefined,
+  };
+
+  const { error, data } = await supabase.auth.signUp(options);
 
   if (error) {
+    log.error("Signup error", error);
     if (error instanceof AuthError) {
       return {
         errors: {
@@ -90,6 +112,17 @@ export async function signup(
         },
       };
     }
+  }
+
+  // If signup is successful and user is immediately logged in
+  if (data?.user && data?.session) {
+    revalidatePath("/", "layout");
+
+    // Redirect to returnUrl if provided and valid, otherwise to dashboard
+    if (returnUrl && returnUrl.startsWith("/")) {
+      redirect(returnUrl);
+    }
+    redirect("/dashboard");
   }
 
   return {

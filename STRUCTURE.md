@@ -146,9 +146,21 @@ all-ad/
 ├── services/                     # 비즈니스 로직 서비스
 │   ├── ads/                      # 광고 서비스
 │   │   └── ad-service.ts
+│   ├── google-ads/               # Google Ads 통합 서비스 ✅ (새로 구현)
+│   │   ├── core/                 # 핵심 모듈
+│   │   │   └── google-ads-client.ts      # Google Ads API 클라이언트
+│   │   ├── campaign/             # 캠페인 관리
+│   │   │   └── campaign-control.service.ts   # 캠페인 제어 (ON/OFF, 예산)
+│   │   ├── label/                # 라벨 관리
+│   │   │   └── label-management.service.ts   # 라벨 CRUD
+│   │   ├── sync/                 # 동기화
+│   │   │   └── sync-strategy.service.ts      # 증분/전체 동기화
+│   │   └── google-ads-integration.service.ts # 통합 인터페이스
+│   ├── scheduler/                # 스케줄러 서비스 ✅ (새로 구현)
+│   │   └── google-ads-scheduler.ts       # 동기화 스케줄링
 │   ├── platforms/                # 플랫폼별 서비스 ✅ (이미 구현)
 │   │   ├── base-platform.service.ts      # 기본 플랫폼 인터페이스
-│   │   ├── google-platform.service.ts    # Google Ads
+│   │   ├── google-platform.service.ts    # Google Ads ✅ (google-ads-api 통합)
 │   │   ├── facebook-platform.service.ts  # Facebook Ads
 │   │   ├── naver-platform.service.ts     # Naver Ads
 │   │   ├── kakao-platform.service.ts     # Kakao Ads
@@ -158,7 +170,7 @@ all-ad/
 │   ├── platform-database.service.ts      # DB 서비스
 │   └── platform-sync.service.ts          # 동기화 서비스
 │
-├── stores/                       # Zustand 상태 관리 ✅ (개선됨)
+├── stores/                       # Zustand 상태 관리 ✅ (통합 및 개선됨)
 │   ├── useAuthStore.ts          # 인증 상태
 │   ├── useCampaignStore.ts      # 캠페인 상태 (setCampaigns, setStats 추가)
 │   ├── usePlatformStore.ts      # 플랫폼 상태
@@ -180,6 +192,22 @@ all-ad/
 │   ├── ads/                   # 광고 도메인
 │   └── auth/                  # 인증 도메인
 │
+├── lib/                        # 라이브러리 유틸리티
+│   ├── oauth/                 # OAuth 관련 유틸리티 ✅ (새로 추가)
+│   │   ├── oauth-manager.ts   # 서버측 OAuth 토큰 관리
+│   │   ├── oauth-client.ts    # 클라이언트측 OAuth URL 생성
+│   │   ├── platform-configs.ts # 서버측 OAuth 설정
+│   │   └── platform-configs.client.ts # 클라이언트측 OAuth 설정
+│   ├── platforms/             # 플랫폼 어댑터
+│   │   ├── adapter-factory.ts
+│   │   ├── base-adapter.ts
+│   │   ├── google-ads-adapter.ts
+│   │   ├── meta-ads-adapter.ts
+│   │   ├── coupang-ads-adapter.ts
+│   │   ├── platform-manager.ts
+│   │   └── index.ts
+│   └── redis.ts               # Redis 클라이언트 ✅ (새로 추가)
+│
 ├── utils/                     # 유틸리티 함수
 │   ├── auth-helpers/         # 인증 헬퍼
 │   ├── supabase/            # Supabase 클라이언트
@@ -192,7 +220,8 @@ all-ad/
 ├── types/                    # TypeScript 타입 정의
 │   ├── auth.types.ts        # 인증 타입
 │   ├── database.types.ts    # 데이터베이스 타입
-│   ├── platform.ts          # 플랫폼 타입
+│   ├── platform.ts          # 플랫폼 타입 ✅ (GoogleCredentials 추가)
+│   ├── google-ads.types.ts  # Google Ads 타입 ✅ (새로 추가)
 │   ├── env.d.ts            # 환경 변수 타입
 │   └── index.ts            # 타입 내보내기
 │
@@ -204,15 +233,42 @@ all-ad/
 ├── hooks/                  # 커스텀 훅
 │   └── use-auth.ts        # 인증 훅
 │
+├── docs/                   # 문서
+│   └── oauth-configuration.md # OAuth 설정 가이드 ✅ (새로 추가)
+│
 ├── config/                # 설정 파일
 │   ├── fonts.ts          # 폰트 설정
 │   └── site.ts           # 사이트 설정
 │
 ├── supabase/             # Supabase 설정
-│   └── migrations/       # 데이터베이스 마이그레이션
-│       ├── 001_create_profiles.sql
-│       ├── 002_fix_storage_policies.sql
-│       └── 003_create_platform_auth_and_campaigns.sql
+│   ├── migrations/       # 데이터베이스 마이그레이션
+│   │   ├── 001_create_profiles.sql
+│   │   ├── 002_fix_storage_policies.sql
+│   │   ├── 003_create_platform_auth_and_campaigns.sql
+│   │   ├── 004_create_team_rpc_function.sql
+│   │   ├── 004a_fix_team_members_rls_recursion.sql
+│   │   ├── 005a_create_team_members_profiles_function.sql
+│   │   ├── 005b_fix_all_rls_recursion.sql
+│   │   ├── 006_fix_team_creation.sql
+│   │   ├── 008_auto_accept_invitation_on_signup.sql
+│   │   ├── 009a_fix_user_role_enum_safe.sql
+│   │   ├── 009b_recreate_policies_and_tables.sql
+│   │   ├── 010_fix_team_creation_syntax.sql  # ✅ NEW: 팀 생성 시 SQL 문법 오류 수정
+│   │   ├── 011_add_missing_columns.sql        # ✅ NEW: 누락된 컬럼 추가
+│   │   ├── 012_fix_all_enums_and_functions.sql # ✅ NEW: 모든 enum 및 함수 종합 수정
+│   │   ├── 013_fix_team_members_rls_recursion.sql # ✅ NEW: RLS 무한 재귀 문제 해결
+│   │   ├── 014_ensure_team_functions_exist.sql # ✅ NEW: 팀 관련 함수 생성 확인
+│   │   ├── 015_create_accept_invitation_function.sql # ✅ NEW: 초대 수락/거절 함수 생성
+│   │   ├── 016_fix_invitation_token_access.sql
+│   │   ├── 017_fix_invitation_public_access.sql
+│   │   ├── 018_create_get_invitation_by_token.sql
+│   │   ├── 019_add_oauth_credentials_to_platform_credentials.sql # ✅ NEW: OAuth 인증 정보 저장을 위한 컬럼 추가
+│   │   └── 020_create_oauth_refresh_cron_job.sql # ✅ NEW: OAuth 토큰 자동 갱신 cron job
+│   └── functions/        # Supabase Edge Functions
+│       ├── resend/       # 이메일 발송 함수
+│       └── refresh-oauth-tokens/ # ✅ NEW: OAuth 토큰 갱신 함수
+│           ├── index.ts
+│           └── deno.json
 │
 ├── styles/              # 스타일
 │   └── globals.css     # 전역 스타일
@@ -226,15 +282,97 @@ all-ad/
     └── instrumentation.ts # OpenTelemetry 설정
 ```
 
+## 주요 리팩토링 내용 (2025-01-06)
+
+### 프로젝트 구조 정리 (2025-01-06)
+
+1. **Store 폴더 통합**
+
+   - `/store`와 `/stores` 폴더가 중복되어 있던 문제 해결
+   - 모든 상태 관리 파일을 `/stores` 폴더로 통합
+   - 사용되지 않던 `/store` 폴더 제거
+
+2. **Logger Import 통일**
+
+   - 모든 파일에서 `import log from "@/utils/logger"` 형식으로 통일
+   - 기존의 `import { Logger } from "@/utils/logger"` 패턴을 모두 변경
+   - `Logger.info()` → `log.info()` 형식으로 사용법 통일
+
+3. **코드 정리 효과**
+   - 중복 코드 제거로 프로젝트 구조 단순화
+   - import 방식 통일로 일관성 향상
+   - 유지보수성 개선
+
+## 주요 리팩토링 내용 (2025-01-06)
+
+### OAuth 인증 사용자 제공 방식으로 변경 (2025-01-06)
+
+1. **사용자별 OAuth 앱 지원**
+
+   - 환경 변수 대신 각 팀이 자체 OAuth 앱 생성
+   - platform_credentials 테이블에 OAuth 인증 정보 저장
+   - 각 플랫폼별 OAuth 앱 설정 가이드 제공
+
+2. **업데이트된 컴포넌트**
+
+   - `PlatformCredentialForm`: OAuth 앱 정보 입력 필드 추가 + 리디렉션 URI 표시
+   - `PlatformCredentialsManager`: OAuth 흐름 업데이트 + 수동 토큰 입력 지원
+   - OAuth 콜백 라우트들: 팀별 저장된 인증 정보 사용
+
+3. **수동 토큰 입력 옵션**
+
+   - OAuth 연동 실패 시 대체 방안으로 수동 토큰 입력 지원
+   - Google: Refresh Token 직접 입력 가능
+   - Facebook: Access Token 직접 입력 가능
+   - Kakao: Refresh Token 직접 입력 가능
+
+4. **Supabase Cron Job 통합**
+
+   - CRON_SECRET 제거하고 Supabase 내부 cron 사용
+   - Edge Function으로 토큰 자동 갱신 구현
+   - pg_cron을 통한 시간별 토큰 갱신
+
+5. **보안 개선사항**
+   - OAuth 인증 정보는 credentials 컬럼에 안전하게 저장
+   - 토큰은 Redis에 저장 (또는 DB의 data 필드)
+   - 팀별 격리된 인증 정보 관리
+
 ## 주요 리팩토링 내용 (2024-01-08)
 
-### 1. 무한 API 호출 문제 해결
+### Google Ads API 통합 구현 (2024-01-08)
 
-- **문제**: TeamManagement 컴포넌트에서 useEffect의 dependency로 함수가 포함되어 무한 렌더링 발생
-- **해결**:
-  - 초기화 상태 플래그 추가 (`isInitialized`)
-  - useCallback 훅 사용으로 함수 재생성 방지
-  - dependency 최적화
+1. **google-ads-api 패키지 활용**
+
+   - 공식 Google Ads API 클라이언트 라이브러리 사용
+   - OAuth 2.0 인증 구현
+   - MCC(Manager Customer Center) 계정 지원
+
+2. **모듈화된 서비스 아키텍처**
+
+   - **GoogleAdsClient**: 핵심 API 클라이언트
+   - **CampaignControlService**: 캠페인 ON/OFF, 예산 관리
+   - **LabelManagementService**: 라벨 기반 캠페인 그룹 관리
+   - **GoogleAdsSyncService**: 증분/전체 동기화 전략
+   - **GoogleAdsIntegrationService**: 통합 인터페이스
+
+3. **핵심 기능 구현**
+
+   - 캠페인 상태 제어 (ON/OFF) - 최우선 기능
+   - 캠페인 예산 업데이트
+   - 라벨 기반 일괄 캠페인 관리
+   - 증분 동기화 (시간당 1회)
+   - 전체 동기화 (일 1회)
+   - Bull 큐를 통한 비동기 처리
+
+4. **타입 안전성 강화**
+
+   - `google-ads.types.ts` 추가
+   - 모든 Google Ads 관련 타입 정의
+   - 플랫폼 공통 타입과의 매핑
+
+5. **기존 서비스 통합**
+   - `google-platform.service.ts`가 새로운 통합 서비스 활용
+   - 기존 인터페이스 유지하면서 내부 구현 개선
 
 ### 2. Server Components 도입
 

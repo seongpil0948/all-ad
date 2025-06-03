@@ -3,42 +3,40 @@ import { BasePlatformService } from "./base-platform.service";
 import {
   Campaign,
   CampaignMetrics,
+  PlatformType,
   FacebookCredentials,
-} from "@/types/platform";
-import { Logger } from "@/utils/logger";
-
+} from "@/types";
+import log from "@/utils/logger";
 export class FacebookPlatformService extends BasePlatformService {
-  platform = "facebook" as const;
+  platform: PlatformType = "facebook";
 
   async validateCredentials(): Promise<boolean> {
-    const { access_token, ad_account_id } = this
-      .credentials as FacebookCredentials;
+    const { accessToken, accountId } = this.credentials as FacebookCredentials;
 
-    if (!access_token || !ad_account_id) {
+    if (!accessToken || !accountId) {
       return false;
     }
 
     try {
       // Validate token by making a simple API call
       const response = await fetch(
-        `https://graph.facebook.com/v18.0/me?access_token=${access_token}`,
+        `https://graph.facebook.com/v18.0/me?access_token=${accessToken}`,
       );
 
       return response.ok;
     } catch (error) {
-      Logger.error("Facebook credential validation error:", error as Error);
+      log.error("Facebook credential validation error:", error as Error);
 
       return false;
     }
   }
 
   async fetchCampaigns(): Promise<Campaign[]> {
-    const { access_token, ad_account_id } = this
-      .credentials as FacebookCredentials;
+    const { accessToken, accountId } = this.credentials as FacebookCredentials;
 
     try {
       const response = await fetch(
-        `https://graph.facebook.com/v18.0/act_${ad_account_id}/campaigns?fields=id,name,status,daily_budget,lifetime_budget&access_token=${access_token}`,
+        `https://graph.facebook.com/v18.0/act_${accountId}/campaigns?fields=id,name,status,daily_budget,lifetime_budget&access_token=${accessToken}`,
       );
 
       if (!response.ok) {
@@ -57,7 +55,7 @@ export class FacebookPlatformService extends BasePlatformService {
         raw_data: campaign,
       }));
     } catch (error) {
-      Logger.error("Facebook fetch campaigns error:", error as Error);
+      log.error("Facebook fetch campaigns error:", error as Error);
       throw error;
     }
   }
@@ -67,14 +65,14 @@ export class FacebookPlatformService extends BasePlatformService {
     startDate: Date,
     endDate: Date,
   ): Promise<CampaignMetrics[]> {
-    const { access_token } = this.credentials as FacebookCredentials;
+    const { accessToken } = this.credentials as FacebookCredentials;
 
     try {
       const insights = await fetch(
         `https://graph.facebook.com/v18.0/${campaignId}/insights?` +
           `fields=impressions,clicks,conversions,spend,revenue&` +
           `time_range={'since':'${this.formatDate(startDate)}','until':'${this.formatDate(endDate)}'}&` +
-          `access_token=${access_token}`,
+          `access_token=${accessToken}`,
       );
 
       if (!insights.ok) {
@@ -94,7 +92,7 @@ export class FacebookPlatformService extends BasePlatformService {
         raw_data: metric,
       }));
     } catch (error) {
-      Logger.error("Facebook fetch metrics error:", error as Error);
+      log.error("Facebook fetch metrics error:", error as Error);
       throw error;
     }
   }
@@ -103,7 +101,7 @@ export class FacebookPlatformService extends BasePlatformService {
     campaignId: string,
     budget: number,
   ): Promise<boolean> {
-    const { access_token } = this.credentials as FacebookCredentials;
+    const { accessToken } = this.credentials as FacebookCredentials;
 
     try {
       const response = await fetch(
@@ -115,14 +113,14 @@ export class FacebookPlatformService extends BasePlatformService {
           },
           body: JSON.stringify({
             daily_budget: budget * 100, // Facebook uses cents
-            access_token,
+            access_token: accessToken,
           }),
         },
       );
 
       return response.ok;
     } catch (error) {
-      Logger.error("Facebook update budget error:", error as Error);
+      log.error("Facebook update budget error:", error as Error);
 
       return false;
     }
@@ -132,7 +130,7 @@ export class FacebookPlatformService extends BasePlatformService {
     campaignId: string,
     isActive: boolean,
   ): Promise<boolean> {
-    const { access_token } = this.credentials as FacebookCredentials;
+    const { accessToken } = this.credentials as FacebookCredentials;
 
     try {
       const response = await fetch(
@@ -144,14 +142,14 @@ export class FacebookPlatformService extends BasePlatformService {
           },
           body: JSON.stringify({
             status: isActive ? "ACTIVE" : "PAUSED",
-            access_token,
+            access_token: accessToken,
           }),
         },
       );
 
       return response.ok;
     } catch (error) {
-      Logger.error("Facebook update status error:", error as Error);
+      log.error("Facebook update status error:", error as Error);
 
       return false;
     }

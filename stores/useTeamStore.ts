@@ -1,12 +1,18 @@
 import { create } from "zustand";
 
 import { createClient } from "@/utils/supabase/client";
-import { Team, TeamMemberWithProfile, UserRole } from "@/types/database.types";
-import logger from "@/utils/logger";
+import {
+  Team,
+  TeamMemberWithProfile,
+  TeamInvitation,
+  UserRole,
+} from "@/types/database.types";
+import log from "@/utils/logger";
 
 interface TeamState {
   currentTeam: Team | null;
   teamMembers: TeamMemberWithProfile[] | null;
+  teamInvitations: TeamInvitation[] | null;
   userRole: UserRole | null;
   isLoading: boolean;
   error: string | null;
@@ -19,15 +25,18 @@ interface TeamState {
   }) => void;
   fetchCurrentTeam: () => Promise<void>;
   fetchTeamMembers: () => Promise<void>;
-  inviteTeamMember: (email: string, role: UserRole) => Promise<void>;
+  fetchTeamInvitations: () => Promise<void>;
+  inviteTeamMember: (email: string, role: UserRole) => Promise<string | null>;
   updateTeamMemberRole: (memberId: string, role: UserRole) => Promise<void>;
   removeTeamMember: (memberId: string) => Promise<void>;
+  cancelInvitation: (invitationId: string) => Promise<void>;
   clearError: () => void;
 }
 
 export const useTeamStore = create<TeamState>()((set, get) => ({
   currentTeam: null,
   teamMembers: null,
+  teamInvitations: null,
   userRole: null,
   isLoading: false,
   error: null,
@@ -54,7 +63,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
 
       if (!user) throw new Error("No user logged in");
 
-      logger.info("Fetching team for user", { userId: user.id });
+      log.info("Fetching team for user", { userId: user.id });
 
       // First, try to get team where user is master
       const { data: masterTeam, error: masterError } = await supabase
@@ -64,11 +73,11 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         .maybeSingle();
 
       if (masterError) {
-        logger.error("Error fetching master team", masterError);
+        log.error("Error fetching master team", masterError);
       }
 
       if (masterTeam) {
-        logger.info("User is master of team", { teamId: masterTeam.id });
+        log.info("User is master of team", { teamId: masterTeam.id });
         set({
           currentTeam: masterTeam,
           userRole: "master",
@@ -86,11 +95,11 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         .maybeSingle();
 
       if (memberError) {
-        logger.error("Error fetching team membership", memberError);
+        log.error("Error fetching team membership", memberError);
       }
 
       if (!membership) {
-        logger.info("No team found for user, creating new team");
+        log.info("No team found for user, creating new team");
 
         // No team found, create one using RPC function
         const { data: newTeamId, error: createError } = await supabase.rpc(
@@ -99,7 +108,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         );
 
         if (createError) {
-          logger.error("Failed to create team", createError);
+          log.error("Failed to create team", createError);
           throw new Error(`Failed to create team: ${createError.message}`);
         }
 
@@ -107,7 +116,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
           throw new Error("Failed to create team: No team ID returned");
         }
 
-        logger.info("Team created successfully", { teamId: newTeamId });
+        log.info("Team created successfully", { teamId: newTeamId });
 
         // Fetch the newly created team
         const { data: newTeam, error: fetchError } = await supabase
@@ -117,7 +126,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
           .single();
 
         if (fetchError) {
-          logger.error("Failed to fetch new team", fetchError);
+          log.error("Failed to fetch new team", fetchError);
           throw new Error(`Failed to fetch new team: ${fetchError.message}`);
         }
 
@@ -131,7 +140,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
       }
 
       // User is a member of a team
-      logger.info("User is member of team", {
+      log.info("User is member of team", {
         teamId: membership.team_id,
         role: membership.role,
       });
@@ -142,7 +151,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         isLoading: false,
       });
     } catch (error) {
-      logger.error(`Error in fetchCurrentTeam: ${JSON.stringify(error)}`);
+      log.error(`Error in fetchCurrentTeam: ${JSON.stringify(error)}`);
       set({ error: (error as Error).message, isLoading: false });
     }
   },
@@ -152,7 +161,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
     const { currentTeam } = get();
 
     if (!currentTeam) {
-      logger.warn("No team selected when fetching team members");
+      log.warn("No team selected when fetching team members");
       set({ teamMembers: [], isLoading: false });
 
       return;
@@ -161,21 +170,33 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      logger.info("Fetching team members", { teamId: currentTeam.id });
+      log.info("Fetching team members", { teamId: currentTeam.id });
 
-      const { data, error } = await supabase.rpc(
-        "get_team_members_with_profiles",
-        {
-          team_id_param: currentTeam.id,
-        },
-      );
+      // Fetch team members with profiles using join
+      const { data, error } = await supabase
+        .from("team_members")
+        .select(
+          `
+          *,
+          profiles!team_members_user_id_fkey (
+            id,
+            full_name,
+            email,
+            avatar_url,
+            created_at,
+            updated_at
+          )
+        `,
+        )
+        .eq("team_id", currentTeam.id)
+        .order("created_at", { ascending: true });
 
       if (error) {
-        logger.error("Error fetching team members", error);
+        log.error("Error fetching team members", error);
         throw error;
       }
 
-      // Transform RPC result to match TeamMemberWithProfile type
+      // Transform result to match TeamMemberWithProfile type
       const transformedData =
         data?.map((member: any) => ({
           id: member.id,
@@ -184,23 +205,61 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
           role: member.role,
           invited_by: member.invited_by,
           joined_at: member.joined_at,
-          profiles: member.profile_id
-            ? {
-                id: member.profile_id,
-                email: member.email,
-                full_name: member.full_name,
-                avatar_url: member.avatar_url,
-              }
-            : null,
+          profiles: member.profiles || null,
         })) || [];
 
-      logger.info("Team members fetched", { count: transformedData.length });
+      log.info("Team members fetched", { count: transformedData.length });
       set({
         teamMembers: transformedData as TeamMemberWithProfile[],
         isLoading: false,
       });
     } catch (error) {
-      logger.error(`Error in fetchTeamMembers ${error}`);
+      log.error(`Error in fetchTeamMembers ${error}`);
+      set({ error: (error as Error).message, isLoading: false });
+    }
+  },
+
+  fetchTeamInvitations: async () => {
+    const supabase = createClient();
+    const { currentTeam } = get();
+
+    if (!currentTeam) {
+      log.warn("No team selected when fetching invitations");
+      set({ teamInvitations: [], isLoading: false });
+
+      return;
+    }
+
+    set({ isLoading: true, error: null });
+
+    try {
+      log.info("Fetching team invitations", { teamId: currentTeam.id });
+
+      const { data, error } = await supabase
+        .from("team_invitations")
+        .select("*")
+        .eq("team_id", currentTeam.id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        log.error("Error fetching team invitations", error);
+        throw error;
+      }
+
+      log.info("Team invitations fetched", { count: data?.length || 0 });
+
+      // Filter out any invitations with 'master' role to match TeamInvitation type
+      const validInvitations = (data || []).filter(
+        (inv) => inv.role !== "master",
+      ) as TeamInvitation[];
+
+      set({
+        teamInvitations: validInvitations,
+        isLoading: false,
+      });
+    } catch (error) {
+      log.error(`Error in fetchTeamInvitations ${error}`);
       set({ error: (error as Error).message, isLoading: false });
     }
   },
@@ -212,13 +271,13 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
     if (!currentTeam) {
       set({ error: "No team selected" });
 
-      return;
+      return null;
     }
 
-    if (userRole !== "master" && userRole !== "editor") {
+    if (userRole !== "master" && userRole !== "team_mate") {
       set({ error: "Insufficient permissions to invite members" });
 
-      return;
+      return null;
     }
 
     set({ isLoading: true, error: null });
@@ -230,59 +289,321 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
 
       if (!user) throw new Error("No user logged in");
 
-      logger.info("Inviting team member", {
+      log.info("Inviting team member", {
         email,
         role,
         teamId: currentTeam.id,
       });
 
-      // First, check if user with email exists
-      const { data: existingUser, error: userError } = await supabase
+      // Check if team has reached member limit (V1.0: max 5 members)
+      const { data: canInvite, error: limitError } = await supabase.rpc(
+        "check_team_member_limit",
+        { team_id_param: currentTeam.id },
+      );
+
+      if (limitError) {
+        log.error("Error checking team member limit", limitError);
+        throw new Error("Failed to check team member limit");
+      }
+
+      if (!canInvite) {
+        throw new Error(
+          "Team has reached the maximum member limit (5 members)",
+        );
+      }
+
+      // Check if user is already a member (including master)
+      if (email === user.email) {
+        throw new Error("You cannot invite yourself");
+      }
+
+      // Check if invitation already exists
+      const { data: existingInvitation } = await supabase
+        .from("team_invitations")
+        .select("id, status, token")
+        .eq("team_id", currentTeam.id)
+        .eq("email", email)
+        .maybeSingle();
+
+      if (existingInvitation) {
+        if (existingInvitation.status === "pending") {
+          // Return existing invitation link and resend email
+          const invitationLink = `${window.location.origin}/invite/${existingInvitation.token}`;
+
+          log.info("Returning existing pending invitation", {
+            email,
+            link: invitationLink,
+          });
+
+          // Resend invitation email
+          try {
+            const inviterProfile = await supabase
+              .from("profiles")
+              .select("full_name, email")
+              .eq("id", user.id)
+              .single();
+
+            const teamData = await supabase
+              .from("teams")
+              .select("name")
+              .eq("id", currentTeam.id)
+              .single();
+
+            const emailResponse = await fetch("/api/team/invite", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                email,
+                inviterName:
+                  inviterProfile.data?.full_name ||
+                  inviterProfile.data?.email ||
+                  "A team member",
+                teamName: teamData.data?.name || "the team",
+                invitationLink,
+              }),
+            });
+
+            if (!emailResponse.ok) {
+              log.error(
+                "Failed to resend invitation email",
+                new Error(`HTTP ${emailResponse.status}`),
+              );
+            } else {
+              log.info("Invitation email resent successfully", { email });
+            }
+          } catch (emailError) {
+            log.error("Error resending invitation email", emailError as Error);
+          }
+
+          return invitationLink;
+        } else if (existingInvitation.status === "accepted") {
+          throw new Error(
+            "User has already accepted an invitation to this team",
+          );
+        } else {
+          // For expired or cancelled invitations, update the existing one
+          const { data: updatedInvitation, error: updateError } = await supabase
+            .from("team_invitations")
+            .update({
+              status: "pending",
+              invited_by: user.id,
+              role: role,
+              expires_at: new Date(
+                Date.now() + 7 * 24 * 60 * 60 * 1000,
+              ).toISOString(), // 7 days from now
+            })
+            .eq("id", existingInvitation.id)
+            .select("token")
+            .single();
+
+          if (updateError) {
+            log.error("Failed to update invitation", updateError);
+            throw new Error("Failed to update invitation. Please try again.");
+          }
+
+          log.info("Updated existing invitation", {
+            status: existingInvitation.status,
+            newStatus: "pending",
+          });
+
+          // Return the updated invitation link
+          const invitationLink = `${window.location.origin}/invite/${updatedInvitation.token}`;
+
+          // Send invitation email
+          try {
+            const inviterProfile = await supabase
+              .from("profiles")
+              .select("full_name, email")
+              .eq("id", user.id)
+              .single();
+
+            const teamData = await supabase
+              .from("teams")
+              .select("name")
+              .eq("id", currentTeam.id)
+              .single();
+
+            const emailResponse = await fetch("/api/team/invite", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                email,
+                inviterName:
+                  inviterProfile.data?.full_name ||
+                  inviterProfile.data?.email ||
+                  "A team member",
+                teamName: teamData.data?.name || "the team",
+                invitationLink,
+              }),
+            });
+
+            if (!emailResponse.ok) {
+              log.error(
+                "Failed to send invitation email for updated invitation",
+                new Error(`HTTP ${emailResponse.status}`),
+              );
+            } else {
+              log.info("Invitation email sent for updated invitation", {
+                email,
+              });
+            }
+          } catch (emailError) {
+            log.error(
+              "Error sending invitation email for updated invitation",
+              emailError as Error,
+            );
+          }
+
+          // Refresh invitations list
+          await get().fetchTeamInvitations();
+
+          return invitationLink;
+        }
+      }
+
+      // Check if user exists in the system
+      const { data: existingUser } = await supabase
         .from("profiles")
         .select("id")
         .eq("email", email)
-        .single();
-
-      if (userError) {
-        logger.error(`User not found ${email}`);
-        throw new Error("User with this email does not exist");
-      }
-
-      // Check if already a member
-      const { data: existingMember } = await supabase
-        .from("team_members")
-        .select("id")
-        .eq("team_id", currentTeam.id)
-        .eq("user_id", existingUser.id)
         .maybeSingle();
 
-      if (existingMember) {
-        throw new Error("User is already a team member");
+      if (existingUser) {
+        // User exists, check if already a team member
+        const { data: existingMember } = await supabase
+          .from("team_members")
+          .select("id")
+          .eq("team_id", currentTeam.id)
+          .eq("user_id", existingUser.id)
+          .maybeSingle();
+
+        if (existingMember) {
+          throw new Error("User is already a team member");
+        }
+
+        // Check if user is the master
+        const { data: team } = await supabase
+          .from("teams")
+          .select("master_user_id")
+          .eq("id", currentTeam.id)
+          .single();
+
+        if (team?.master_user_id === existingUser.id) {
+          throw new Error("User is already the team master");
+        }
       }
 
-      // Add team member
-      const { error } = await supabase.from("team_members").insert({
-        team_id: currentTeam.id,
-        user_id: existingUser.id,
-        role,
-        invited_by: user.id,
-      });
+      // Create invitation
+      const { data: invitation, error: inviteError } = await supabase
+        .from("team_invitations")
+        .insert({
+          team_id: currentTeam.id,
+          email,
+          role,
+          invited_by: user.id,
+        })
+        .select("token")
+        .single();
 
-      if (error) {
-        logger.error("Failed to add team member", error);
-        throw error;
+      if (inviteError) {
+        log.error("Failed to create invitation", inviteError);
+
+        // Check if it's a duplicate key error
+        if (
+          inviteError.code === "23505" &&
+          inviteError.message?.includes("team_invitations_team_id_email_key")
+        ) {
+          throw new Error(
+            "An invitation already exists for this email. Please try again.",
+          );
+        }
+
+        throw new Error(inviteError.message || "Failed to create invitation");
       }
 
-      logger.info("Team member invited successfully", {
-        userId: existingUser.id,
+      log.info("Team invitation created successfully", {
+        email,
+        token: invitation.token,
+        fullToken: invitation.token, // Log full token for debugging
       });
 
-      // Refresh team members
-      await get().fetchTeamMembers();
+      // Verify the invitation was actually created
+      const { data: verifyInvite } = await supabase
+        .from("team_invitations")
+        .select("id, token, email, status")
+        .eq("token", invitation.token)
+        .single();
+
+      log.info("Verification of created invitation", {
+        exists: !!verifyInvite,
+        invitationData: verifyInvite,
+      });
+
+      // Generate invitation link
+      const invitationLink = `${window.location.origin}/invite/${invitation.token}`;
+
+      log.info("Invitation link:", { link: invitationLink });
+
+      // Send invitation email
+      try {
+        const inviterProfile = await supabase
+          .from("profiles")
+          .select("full_name, email")
+          .eq("id", user.id)
+          .single();
+
+        const teamData = await supabase
+          .from("teams")
+          .select("name")
+          .eq("id", currentTeam.id)
+          .single();
+
+        const emailResponse = await fetch("/api/team/invite", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            inviterName:
+              inviterProfile.data?.full_name ||
+              inviterProfile.data?.email ||
+              "A team member",
+            teamName: teamData.data?.name || "the team",
+            invitationLink,
+          }),
+        });
+
+        if (!emailResponse.ok) {
+          log.error(
+            "Failed to send invitation email",
+            new Error(`HTTP ${emailResponse.status}`),
+            { status: emailResponse.status },
+          );
+          // Don't throw error - invitation is still created even if email fails
+        } else {
+          log.info("Invitation email sent successfully", { email });
+        }
+      } catch (emailError) {
+        log.error("Error sending invitation email", emailError as Error);
+        // Don't throw error - invitation is still created even if email fails
+      }
+
+      // Refresh invitations list
+      await get().fetchTeamInvitations();
+
       set({ isLoading: false });
+
+      return invitationLink;
     } catch (error) {
-      logger.error("Error in inviteTeamMember", error as Error);
+      log.error("Error in inviteTeamMember", error as Error);
       set({ error: (error as Error).message, isLoading: false });
+
+      return null;
     }
   },
 
@@ -299,7 +620,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      logger.info("Updating team member role", { memberId, role });
+      log.info("Updating team member role", { memberId, role });
 
       const { error } = await supabase
         .from("team_members")
@@ -307,14 +628,14 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         .eq("id", memberId);
 
       if (error) {
-        logger.error("Failed to update team member role", error);
+        log.error("Failed to update team member role", error);
         throw error;
       }
 
       await get().fetchTeamMembers();
       set({ isLoading: false });
     } catch (error) {
-      logger.error("Error in updateTeamMemberRole", error as Error);
+      log.error("Error in updateTeamMemberRole", error as Error);
       set({ error: (error as Error).message, isLoading: false });
     }
   },
@@ -332,7 +653,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      logger.info("Removing team member", { memberId });
+      log.info("Removing team member", { memberId });
 
       const { error } = await supabase
         .from("team_members")
@@ -340,14 +661,48 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         .eq("id", memberId);
 
       if (error) {
-        logger.error("Failed to remove team member", error);
+        log.error("Failed to remove team member", error);
         throw error;
       }
 
       await get().fetchTeamMembers();
       set({ isLoading: false });
     } catch (error) {
-      logger.error("Error in removeTeamMember", error as Error);
+      log.error("Error in removeTeamMember", error as Error);
+      set({ error: (error as Error).message, isLoading: false });
+    }
+  },
+
+  cancelInvitation: async (invitationId: string) => {
+    const supabase = createClient();
+    const { currentTeam, userRole } = get();
+
+    if (!currentTeam || userRole !== "master") {
+      set({ error: "Insufficient permissions" });
+
+      return;
+    }
+
+    set({ isLoading: true, error: null });
+
+    try {
+      log.info("Cancelling invitation", { invitationId });
+
+      const { error } = await supabase
+        .from("team_invitations")
+        .update({ status: "cancelled" })
+        .eq("id", invitationId)
+        .eq("team_id", currentTeam.id);
+
+      if (error) {
+        log.error("Failed to cancel invitation", error);
+        throw error;
+      }
+
+      await get().fetchTeamInvitations();
+      set({ isLoading: false });
+    } catch (error) {
+      log.error("Error in cancelInvitation", error as Error);
       set({ error: (error as Error).message, isLoading: false });
     }
   },

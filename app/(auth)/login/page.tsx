@@ -3,7 +3,16 @@ import { Card, CardBody, CardHeader } from "@heroui/card";
 import { title } from "@/components/primitives";
 import { AuthForm } from "@/components/auth/AuthForm";
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    returnUrl?: string;
+  }>;
+}) {
+  const params = await searchParams;
+  const returnUrl = params.returnUrl;
+
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <Card className="w-full max-w-md">
@@ -14,7 +23,7 @@ export default function LoginPage() {
           </p>
         </CardHeader>
         <CardBody className="px-6 py-4">
-          <AuthForm initialMode="login" />
+          <AuthForm initialMode="login" returnUrl={returnUrl} />
         </CardBody>
       </Card>
     </div>

@@ -1,10 +1,11 @@
 import { PlatformService } from "./platform-service.interface";
 
-import { Campaign, CampaignMetrics, PlatformType } from "@/types/platform";
+import { Campaign, CampaignMetrics, PlatformType } from "@/types";
 
 export abstract class BasePlatformService implements PlatformService {
   abstract platform: PlatformType;
   protected credentials: Record<string, any> = {};
+  protected teamId?: string;
 
   // Set credentials for use in subsequent operations
   setCredentials(credentials: Record<string, any>): void {
@@ -39,15 +40,17 @@ export abstract class BasePlatformService implements PlatformService {
   protected parseMetricsResponse(data: any): CampaignMetrics {
     // Default implementation - can be overridden by specific platforms
     return {
-      id: "",
-      campaign_id: "",
-      date: "",
       impressions: 0,
       clicks: 0,
-      conversions: 0,
       cost: 0,
+      conversions: 0,
       revenue: 0,
-      created_at: new Date().toISOString(),
+      ctr: 0,
+      cpc: 0,
+      cpm: 0,
+      roas: 0,
+      roi: 0,
+      date: new Date().toISOString().split("T")[0],
       ...data,
     };
   }

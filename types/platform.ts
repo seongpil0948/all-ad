@@ -1,103 +1,104 @@
-// Platform related types
-export type PlatformType =
-  | "facebook"
-  | "google"
-  | "kakao"
-  | "naver"
-  | "coupang";
+// Platform-specific types that extend base types
+import { PlatformType } from "./base.types";
+import { Campaign } from "./campaign.types";
+import { SyncResult } from "./sync.types";
 
-export type UserRole = "master" | "viewer" | "editor";
+// Platform status enum
+export enum PlatformStatus {
+  CONNECTED = "connected",
+  DISCONNECTED = "disconnected",
+  ERROR = "error",
+  SYNCING = "syncing",
+}
 
-export interface Team {
+// Platform interface
+export interface Platform {
+  id: string;
+  type: PlatformType;
+  name: string;
+  icon: string;
+  status: PlatformStatus;
+  connectedAt?: Date;
+  lastSyncedAt?: Date;
+  accountId?: string;
+  accountName?: string;
+}
+
+// Base interface for platform adapters
+export interface PlatformAdapter {
+  type: PlatformType;
+  connect(credentials: any): Promise<PlatformConnection>;
+  disconnect(connectionId: string): Promise<void>;
+  syncData(connectionId: string): Promise<SyncResult>;
+  getAccounts(connectionId: string): Promise<AdAccount[]>;
+  getCampaigns(accountId: string): Promise<Campaign[]>;
+}
+
+// Platform connection interface
+export interface PlatformConnection {
+  id: string;
+  platformType: PlatformType;
+  accountId: string;
+  accountName: string;
+  accessToken?: string;
+  refreshToken?: string;
+  expiresAt?: Date;
+  metadata?: Record<string, any>;
+}
+
+// Ad account interface
+export interface AdAccount {
   id: string;
   name: string;
-  master_user_id: string;
-  created_at: string;
-  updated_at: string;
+  currency: string;
+  timezone: string;
+  status: "active" | "paused" | "suspended";
 }
 
-export interface TeamMember {
-  id: string;
-  team_id: string;
-  user_id: string;
-  role: UserRole;
-  invited_by?: string;
-  joined_at: string;
-  user?: {
-    email: string;
-    full_name?: string;
-  };
+// OAuth credentials type
+export interface OAuthCredentials {
+  clientId: string;
+  clientSecret: string;
+  redirectUri: string;
+  scope?: string[];
 }
 
-export interface PlatformCredential {
-  id: string;
-  team_id: string;
-  platform: PlatformType;
-  credentials: Record<string, any>;
-  is_active: boolean;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
+// API credentials type
+export interface ApiCredentials {
+  apiKey?: string;
+  apiSecret?: string;
+  accountId?: string;
+  customerId?: string;
 }
 
-export interface Campaign {
-  id: string;
-  team_id: string;
-  platform: PlatformType;
-  platform_campaign_id: string;
-  name: string;
-  status?: string;
-  budget?: number;
-  is_active: boolean;
-  raw_data?: Record<string, any>;
-  created_at: string;
-  updated_at: string;
-  synced_at?: string;
-}
-
-export interface CampaignMetrics {
-  id: string;
-  campaign_id: string;
-  date: string;
-  impressions: number;
-  clicks: number;
-  conversions: number;
-  cost: number;
-  revenue: number;
-  raw_data?: Record<string, any>;
-  created_at: string;
-}
-
-// Platform credential schemas
-export interface FacebookCredentials {
-  access_token: string;
-  ad_account_id: string;
-  app_id?: string;
-  app_secret?: string;
-}
-
-export interface GoogleCredentials {
-  refresh_token: string;
-  client_id: string;
-  client_secret: string;
-  developer_token?: string;
-  customer_id?: string;
-}
-
-export interface KakaoCredentials {
-  access_token: string;
-  refresh_token: string;
-  ad_account_id: string;
-}
-
-export interface NaverCredentials {
-  access_token: string;
-  secret_key: string;
-  customer_id: string;
-}
-
-export interface CoupangCredentials {
-  access_key: string;
-  secret_key: string;
-  vendor_id: string;
-}
+// Platform-specific display config
+export const PLATFORM_CONFIG: Record<
+  PlatformType,
+  { name: string; icon: string; color: string }
+> = {
+  google: {
+    name: "Google Ads",
+    icon: "google",
+    color: "#4285F4",
+  },
+  facebook: {
+    name: "Meta Ads",
+    icon: "facebook",
+    color: "#1877F2",
+  },
+  kakao: {
+    name: "Kakao Moment",
+    icon: "kakao",
+    color: "#FEE500",
+  },
+  naver: {
+    name: "Naver Ads",
+    icon: "naver",
+    color: "#03C75A",
+  },
+  coupang: {
+    name: "Coupang Ads",
+    icon: "coupang",
+    color: "#FF5A5F",
+  },
+};

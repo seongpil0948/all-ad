@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/utils/supabase/server";
 import { platformServiceFactory } from "@/services/platforms/platform-service-factory";
-import { PlatformType } from "@/types/platform";
-import { Logger } from "@/utils/logger";
+import { PlatformType } from "@/types";
+import log from "@/utils/logger";
 
 export async function PUT(
   request: NextRequest,
@@ -114,7 +114,7 @@ export async function PUT(
         budget,
       });
     } catch (error) {
-      Logger.error(
+      log.error(
         `Budget update error for ${platformType}: ${JSON.stringify(error)}`,
       );
 
@@ -127,7 +127,7 @@ export async function PUT(
       );
     }
   } catch (error) {
-    Logger.error(
+    log.error(
       `Error in PUT /campaigns/${platform}/${campaignId}/budget: ${JSON.stringify(error)}`,
     );
 

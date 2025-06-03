@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { PlatformDatabaseService } from "@/services/platform-database.service";
 import { platformServiceFactory } from "@/services/platforms/platform-service-factory";
-import { PlatformType } from "@/types/platform";
+import { PlatformType } from "@/types";
 
 export async function savePlatformCredentials(
   platform: PlatformType,
@@ -28,26 +28,111 @@ export async function savePlatformCredentials(
     throw new Error("User has no team");
   }
 
-  // Validate credentials
-  const service = platformServiceFactory.createService(platform);
+  // For OAuth platforms, we just save the OAuth app credentials
+  // The actual validation happens during the OAuth flow
+  const oauthPlatforms = ["google", "facebook", "kakao"];
 
-  service.setCredentials(credentials);
-  const isValid = await service.validateCredentials();
+  if (oauthPlatforms.includes(platform)) {
+    // For OAuth platforms, save the OAuth app credentials
+    const {
+      client_id,
+      client_secret,
+      developer_token,
+      manual_refresh_token,
+      manual_token,
+    } = credentials;
 
-  if (!isValid) {
-    throw new Error("Invalid credentials");
-  }
+    if (!client_id || !client_secret) {
+      throw new Error("Client ID and Client Secret are required");
+    }
 
-  // Save credentials
-  const success = await dbService.savePlatformCredentials(
-    team.id,
-    platform,
-    credentials,
-    user.id,
-  );
+    // For Google, developer token is also required
+    if (platform === "google" && !developer_token) {
+      throw new Error("Developer Token is required for Google Ads");
+    }
 
-  if (!success) {
-    throw new Error("Failed to save credentials");
+    // Check if using manual refresh token
+    if (manual_refresh_token || manual_token) {
+      // Store with manual refresh token
+      const oauthManager = await import("@/lib/oauth/oauth-manager").then(
+        (m) => m.OAuthManager,
+      );
+      const manager = new oauthManager(platform, {
+        clientId: client_id,
+        clientSecret: client_secret,
+        redirectUri: "", // Not needed for manual tokens
+        scope: [],
+        authorizationUrl: "",
+        tokenUrl: "",
+      });
+
+      // Generate a unique account ID for manual token
+      const accountId = `${platform}_manual_${Date.now()}`;
+
+      // Store the manual token in Redis
+      await manager.storeTokens(user.id, accountId, {
+        access_token: manual_refresh_token || "",
+        refresh_token: manual_refresh_token || "",
+        expires_in: Date.now() + 365 * 24 * 60 * 60 * 1000, // 1 year expiry for manual tokens
+        refresh_token_expires_in: Date.now() + 365 * 24 * 60 * 60 * 1000, // 1 year expiry for manual tokens
+        scope: "",
+        token_type: "Bearer",
+      });
+
+      // Save credentials with manual token flag
+      const success = await dbService.savePlatformCredentials(
+        team.id,
+        platform,
+        { client_id, client_secret },
+        user.id,
+        {
+          developer_token,
+          manual_token: true,
+          connected: true,
+          connected_at: new Date().toISOString(),
+        },
+        accountId,
+      );
+
+      if (!success) {
+        throw new Error("Failed to save OAuth credentials");
+      }
+    } else {
+      // Save OAuth credentials for normal OAuth flow
+      const success = await dbService.savePlatformCredentials(
+        team.id,
+        platform,
+        { client_id, client_secret },
+        user.id,
+        { developer_token }, // Additional data
+      );
+
+      if (!success) {
+        throw new Error("Failed to save OAuth credentials");
+      }
+    }
+  } else {
+    // For API key platforms, validate credentials
+    const service = platformServiceFactory.createService(platform);
+
+    service.setCredentials(credentials);
+    const isValid = await service.validateCredentials();
+
+    if (!isValid) {
+      throw new Error("Invalid credentials");
+    }
+
+    // Save credentials
+    const success = await dbService.savePlatformCredentials(
+      team.id,
+      platform,
+      credentials,
+      user.id,
+    );
+
+    if (!success) {
+      throw new Error("Failed to save credentials");
+    }
   }
 
   revalidatePath("/settings");

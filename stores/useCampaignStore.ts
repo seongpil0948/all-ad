@@ -121,21 +121,16 @@ export const useCampaignStore = create<CampaignState>()((set, get) => ({
 
       if (error) throw error;
 
-      const campaigns = data || [];
+      const campaigns = (data || []) as Campaign[];
 
-      // Calculate stats
+      // Calculate stats (metrics are in campaign_metrics table, not campaigns)
       const stats: CampaignStats = {
         totalCampaigns: campaigns.length,
         activeCampaigns: campaigns.filter((c) => c.is_active).length,
         totalBudget: campaigns.reduce((sum, c) => sum + (c.budget || 0), 0),
-        totalClicks: campaigns.reduce((sum, c) => sum + (c.clicks || 0), 0),
-        totalImpressions: campaigns.reduce(
-          (sum, c) => sum + (c.impressions || 0),
-          0,
-        ),
-        platforms: Array.from(
-          new Set(campaigns.map((c) => c.platform_credentials?.platform)),
-        ).filter(Boolean).length,
+        totalClicks: 0, // TODO: fetch from campaign_metrics
+        totalImpressions: 0, // TODO: fetch from campaign_metrics
+        platforms: Array.from(new Set(campaigns.map((c) => c.platform))).length,
       };
 
       set({
@@ -164,7 +159,7 @@ export const useCampaignStore = create<CampaignState>()((set, get) => ({
       set((state) => ({
         metrics: {
           ...state.metrics,
-          [campaignId]: data || [],
+          [campaignId]: (data || []) as CampaignMetric[],
         },
       }));
     } catch (error) {

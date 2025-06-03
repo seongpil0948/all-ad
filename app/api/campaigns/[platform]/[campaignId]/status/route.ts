@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/utils/supabase/server";
 import { platformServiceFactory } from "@/services/platforms/platform-service-factory";
-import { PlatformType } from "@/types/platform";
+import { PlatformType } from "@/types";
 import log from "@/utils/logger";
 
 export async function PUT(

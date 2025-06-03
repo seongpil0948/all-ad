@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { platformServiceFactory } from "@/services/platforms/platform-service-factory";
 import { PlatformDatabaseService } from "@/services/platform-database.service";
-import { PlatformType } from "@/types/database.types";
+import { PlatformType } from "@/types";
 import log from "@/utils/logger";
 
 export async function POST(
@@ -87,14 +87,14 @@ export async function POST(
         name: campaignData.name,
         status: campaignData.status,
         budget: campaignData.budget,
-        is_active: campaignData.status === "ACTIVE",
+        is_active: campaignData.status === "active",
         raw_data: campaignData,
       });
 
       // Fetch and save metrics if available
-      // Check if the raw_data contains metrics information
-      if (savedCampaign && campaignData.raw_data?.metrics) {
-        const metrics = campaignData.raw_data.metrics;
+      // Check if the campaign contains metrics information
+      if (savedCampaign && campaignData.metrics) {
+        const metrics = campaignData.metrics;
 
         await dbService.upsertCampaignMetrics({
           campaign_id: savedCampaign.id, // Use the internal campaign ID

@@ -1,49 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { User } from "@supabase/supabase-js";
+import { useEffect } from "react";
+import { useShallow } from "zustand/shallow";
 
-import { createClient } from "@/utils/supabase/client";
-import log from "@/utils/logger";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const { user, profile, isLoading, isInitialized, initialize } = useAuthStore(
+    useShallow((state) => ({
+      user: state.user,
+      profile: state.profile,
+      isLoading: state.isLoading,
+      isInitialized: state.isInitialized,
+      initialize: state.initialize,
+    })),
+  );
 
   useEffect(() => {
-    // Get initial user
-    const getUser = async () => {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+    initialize();
+  }, [initialize]);
 
-        setUser(user);
-      } catch (error) {
-        log.error("Error getting user", error as Error, {
-          module: "useAuth",
-          hook: "useAuth",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getUser();
-
-    // Listen for auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [supabase]);
-
-  return { user, loading };
+  return {
+    user,
+    profile,
+    loading: !isInitialized || isLoading,
+    isLoading,
+  };
 }

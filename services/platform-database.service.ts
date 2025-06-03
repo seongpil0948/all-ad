@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { Campaign, CampaignMetric, Team } from "@/types/database.types";
-import { Logger } from "@/utils/logger";
+import log from "@/utils/logger";
 
 export class PlatformDatabaseService {
   async upsertCampaign(
@@ -22,7 +22,7 @@ export class PlatformDatabaseService {
       .single();
 
     if (error) {
-      Logger.error("Error upserting campaign:", error);
+      log.error("Error upserting campaign:", error);
 
       return null;
     }
@@ -43,7 +43,7 @@ export class PlatformDatabaseService {
       .single();
 
     if (error) {
-      Logger.error("Error upserting campaign metrics:", error);
+      log.error("Error upserting campaign metrics:", error);
 
       return null;
     }
@@ -74,7 +74,7 @@ export class PlatformDatabaseService {
     });
 
     if (error) {
-      Logger.error("Error fetching campaigns:", error);
+      log.error("Error fetching campaigns:", error);
 
       return [];
     }
@@ -104,7 +104,7 @@ export class PlatformDatabaseService {
     const { data, error } = await query.order("date", { ascending: false });
 
     if (error) {
-      Logger.error("Error fetching campaign metrics:", error);
+      log.error("Error fetching campaign metrics:", error);
 
       return [];
     }
@@ -124,7 +124,7 @@ export class PlatformDatabaseService {
       .eq("platform", platform);
 
     if (error) {
-      Logger.error("Error updating sync time:", error);
+      log.error("Error updating sync time:", error);
     }
   }
 
@@ -157,7 +157,7 @@ export class PlatformDatabaseService {
       );
 
       if (createError || !newTeamId) {
-        Logger.error(`Error creating team for user: ${createError}`);
+        log.error(`Error creating team for user: ${createError}`);
 
         return null;
       }
@@ -170,7 +170,7 @@ export class PlatformDatabaseService {
         .single();
 
       if (fetchError) {
-        Logger.error("Error fetching new team:", fetchError);
+        log.error("Error fetching new team:", fetchError);
 
         return null;
       }
@@ -186,7 +186,7 @@ export class PlatformDatabaseService {
       .single();
 
     if (teamError) {
-      Logger.error("Error fetching team details:", teamError);
+      log.error("Error fetching team details:", teamError);
 
       return null;
     }
@@ -199,24 +199,61 @@ export class PlatformDatabaseService {
     platform: string,
     credentials: Record<string, any>,
     userId: string,
+    additionalData?: Record<string, any>,
+    accountId?: string,
   ): Promise<boolean> {
     const client = await createClient();
-    const { error } = await client.from("platform_credentials").upsert(
-      {
-        team_id: teamId,
-        platform,
-        credentials,
-        is_active: true,
-        created_by: userId,
-        updated_at: new Date().toISOString(),
-      },
-      {
-        onConflict: "team_id,platform",
-      },
-    );
+
+    // Check if credentials already exist for this team and platform without a specific account_id
+    if (!accountId) {
+      // For OAuth platforms, first check if there's an existing credential
+      const { data: existing } = await client
+        .from("platform_credentials")
+        .select("id, account_id")
+        .eq("team_id", teamId)
+        .eq("platform", platform)
+        .single();
+
+      if (existing) {
+        // Update existing credential
+        const { error } = await client
+          .from("platform_credentials")
+          .update({
+            credentials,
+            data: additionalData || {},
+            user_id: userId,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", existing.id);
+
+        if (error) {
+          log.error("Error updating platform credentials:", error);
+
+          return false;
+        }
+
+        return true;
+      }
+    }
+
+    // For new credentials or when account_id is provided
+    const effectiveAccountId = accountId || `${platform}_pending_${Date.now()}`;
+
+    const { error } = await client.from("platform_credentials").insert({
+      team_id: teamId,
+      platform,
+      credentials,
+      data: additionalData || {},
+      user_id: userId,
+      account_id: effectiveAccountId,
+      is_active: true,
+      created_by: userId,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
 
     if (error) {
-      Logger.error("Error saving platform credentials:", error);
+      log.error("Error saving platform credentials:", error);
 
       return false;
     }
@@ -227,16 +264,24 @@ export class PlatformDatabaseService {
   async deletePlatformCredentials(
     teamId: string,
     platform: string,
+    accountId?: string,
   ): Promise<boolean> {
     const client = await createClient();
-    const { error } = await client
+    let query = client
       .from("platform_credentials")
       .delete()
       .eq("team_id", teamId)
       .eq("platform", platform);
 
+    // If accountId is provided, use it; otherwise delete all credentials for the platform
+    if (accountId) {
+      query = query.eq("account_id", accountId);
+    }
+
+    const { error } = await query;
+
     if (error) {
-      Logger.error("Error deleting platform credentials:", error);
+      log.error("Error deleting platform credentials:", error);
 
       return false;
     }
@@ -253,7 +298,7 @@ export class PlatformDatabaseService {
       .order("created_at", { ascending: false });
 
     if (error) {
-      Logger.error("Error fetching team credentials:", error);
+      log.error("Error fetching team credentials:", error);
 
       return [];
     }

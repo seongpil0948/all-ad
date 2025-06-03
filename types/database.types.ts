@@ -4,7 +4,7 @@ export type PlatformType =
   | "kakao"
   | "naver"
   | "coupang";
-export type UserRole = "master" | "viewer" | "editor";
+export type UserRole = "master" | "viewer" | "team_mate";
 
 export interface Profile {
   id: string;
@@ -37,6 +37,21 @@ export interface TeamMemberWithProfile extends TeamMember {
   profiles: Profile | null;
 }
 
+export type InvitationStatus = "pending" | "accepted" | "expired" | "cancelled";
+
+export interface TeamInvitation {
+  id: string;
+  team_id: string;
+  email: string;
+  role: Exclude<UserRole, "master">; // Only team_mate or viewer can be invited
+  invited_by: string;
+  status: InvitationStatus;
+  token: string;
+  expires_at: string;
+  accepted_at?: string | null;
+  created_at: string;
+}
+
 export interface PlatformCredential {
   id: string;
   team_id: string;
@@ -47,6 +62,7 @@ export interface PlatformCredential {
   created_at: string;
   updated_at: string;
   synced_at?: string | null;
+  last_sync_at?: string | null;
 }
 
 export interface Campaign {
@@ -94,6 +110,17 @@ export interface Database {
         Row: TeamMember;
         Insert: Omit<TeamMember, "id" | "joined_at">;
         Update: Partial<Omit<TeamMember, "id" | "joined_at">>;
+      };
+      team_invitations: {
+        Row: TeamInvitation;
+        Insert: Omit<
+          TeamInvitation,
+          "id" | "token" | "created_at" | "status" | "expires_at"
+        > & {
+          status?: InvitationStatus;
+          expires_at?: string;
+        };
+        Update: Partial<Omit<TeamInvitation, "id" | "token" | "created_at">>;
       };
       platform_credentials: {
         Row: PlatformCredential;

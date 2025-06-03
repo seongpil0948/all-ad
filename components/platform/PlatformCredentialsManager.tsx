@@ -18,12 +18,15 @@ import {
   FaGoogle,
   FaComment,
   FaShoppingCart,
+  FaExternalLinkAlt,
 } from "react-icons/fa";
 import { SiNaver } from "react-icons/si";
 
 import { PlatformCredentialForm } from "./PlatformCredentialForm";
 
-import { PlatformType, PlatformCredential } from "@/types/platform";
+import { OAuthClient } from "@/lib/oauth/oauth-client";
+import { getOAuthConfig } from "@/lib/oauth/platform-configs.client";
+import { PlatformCredential, PlatformType } from "@/types";
 
 interface PlatformCredentialsManagerProps {
   credentials: PlatformCredential[];
@@ -33,6 +36,8 @@ interface PlatformCredentialsManagerProps {
   ) => Promise<void>;
   onDelete: (platform: PlatformType) => Promise<void>;
   onToggle: (platform: PlatformType, isActive: boolean) => Promise<void>;
+  teamId: string;
+  userId: string;
 }
 
 const platformConfig = {
@@ -41,30 +46,35 @@ const platformConfig = {
     icon: FaFacebook,
     color: "primary" as const,
     bgColor: "bg-blue-500",
+    supportsOAuth: true,
   },
   google: {
     name: "Google",
     icon: FaGoogle,
     color: "danger" as const,
     bgColor: "bg-red-500",
+    supportsOAuth: true,
   },
   kakao: {
     name: "Kakao",
     icon: FaComment,
     color: "warning" as const,
     bgColor: "bg-yellow-400",
+    supportsOAuth: true,
   },
   naver: {
     name: "Naver",
     icon: SiNaver,
     color: "success" as const,
     bgColor: "bg-green-500",
+    supportsOAuth: false,
   },
   coupang: {
     name: "Coupang",
     icon: FaShoppingCart,
     color: "secondary" as const,
     bgColor: "bg-purple-500",
+    supportsOAuth: false,
   },
 };
 
@@ -73,6 +83,8 @@ export function PlatformCredentialsManager({
   onSave,
   onDelete,
   onToggle,
+  teamId,
+  userId,
 }: PlatformCredentialsManagerProps) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformType | null>(
@@ -81,8 +93,44 @@ export function PlatformCredentialsManager({
   const [isLoading, setIsLoading] = useState(false);
 
   const handleAddOrEdit = (platform: PlatformType) => {
+    // All platforms now show the form (OAuth platforms need credentials first)
     setSelectedPlatform(platform);
     onOpen();
+  };
+
+  const handleOAuthConnect = async (
+    platform: PlatformType,
+    credentials: Record<string, any>,
+  ) => {
+    // Store the OAuth credentials first
+    await onSave(platform, credentials);
+
+    // Create OAuth config with user-provided credentials
+    const oauthConfig = {
+      clientId: credentials.client_id,
+      clientSecret: credentials.client_secret,
+      redirectUri: `${window.location.origin}/api/auth/callback/${platform}-ads`,
+      scope: getOAuthConfig(platform)?.scope || [],
+      authorizationUrl: getOAuthConfig(platform)?.authorizationUrl || "",
+      tokenUrl: getOAuthConfig(platform)?.tokenUrl || "",
+    };
+
+    const oauthClient = new OAuthClient(platform, oauthConfig);
+
+    // Create state for OAuth flow
+    const state = Buffer.from(
+      JSON.stringify({
+        userId,
+        teamId,
+        platform,
+        timestamp: Date.now(),
+      }),
+    ).toString("base64");
+
+    // Redirect to OAuth authorization URL
+    const authUrl = oauthClient.getAuthorizationUrl(state);
+
+    window.location.href = authUrl;
   };
 
   const handleSave = async (credentials: Record<string, any>) => {
@@ -90,8 +138,29 @@ export function PlatformCredentialsManager({
 
     setIsLoading(true);
     try {
-      await onSave(selectedPlatform, credentials);
-      onOpenChange();
+      const config = platformConfig[selectedPlatform];
+
+      if (config.supportsOAuth) {
+        // Check if manual refresh token is provided
+        if (credentials.manual_refresh_token) {
+          // Save credentials with manual refresh token
+          const { manual_refresh_token, ...oauthCredentials } = credentials;
+
+          await onSave(selectedPlatform, {
+            ...oauthCredentials,
+            refresh_token: manual_refresh_token,
+            manual_token: true,
+          });
+          onOpenChange();
+        } else {
+          // For OAuth platforms, save credentials and then initiate OAuth flow
+          await handleOAuthConnect(selectedPlatform, credentials);
+        }
+      } else {
+        // For API key platforms, just save the credentials
+        await onSave(selectedPlatform, credentials);
+        onOpenChange();
+      }
     } finally {
       setIsLoading(false);
     }
@@ -145,7 +214,7 @@ export function PlatformCredentialsManager({
                 <div className="flex items-center gap-2">
                   {credential && (
                     <Switch
-                      isSelected={credential.is_active}
+                      isSelected={credential.isActive}
                       onValueChange={(isActive) =>
                         handleToggle(platform, isActive)
                       }
@@ -154,10 +223,19 @@ export function PlatformCredentialsManager({
                   <Button
                     color={credential ? "default" : config.color}
                     size="sm"
+                    startContent={
+                      config.supportsOAuth && !credential ? (
+                        <FaExternalLinkAlt size={14} />
+                      ) : null
+                    }
                     variant={credential ? "flat" : "solid"}
                     onPress={() => handleAddOrEdit(platform)}
                   >
-                    {credential ? "수정" : "연동"}
+                    {credential
+                      ? config.supportsOAuth
+                        ? "재연동"
+                        : "수정"
+                      : "연동"}
                   </Button>
                   {credential && (
                     <Button
