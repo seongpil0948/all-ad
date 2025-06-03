@@ -1,0 +1,51 @@
+// Platform adapter factory for creating appropriate adapters
+
+import { GoogleAdsAdapter } from "./google-ads-adapter";
+import { MetaAdsAdapter } from "./meta-ads-adapter";
+import { CoupangAdsAdapter } from "./coupang-ads-adapter";
+
+import { PlatformType, PlatformAdapter } from "@/types";
+import logger from "@/utils/logger";
+
+export class PlatformAdapterFactory {
+  private static adapters: Map<PlatformType, PlatformAdapter> = new Map();
+
+  static getAdapter(type: PlatformType): PlatformAdapter {
+    // Check if adapter already exists (singleton pattern)
+    if (this.adapters.has(type)) {
+      return this.adapters.get(type)!;
+    }
+
+    let adapter: PlatformAdapter;
+
+    switch (type) {
+      case PlatformType.GOOGLE:
+        adapter = new GoogleAdsAdapter();
+        break;
+      case PlatformType.META:
+        adapter = new MetaAdsAdapter();
+        break;
+      case PlatformType.COUPANG:
+        adapter = new CoupangAdsAdapter();
+        break;
+      default:
+        logger.error(`Unsupported platform type: ${type}`);
+        throw new Error(`Platform ${type} is not supported`);
+    }
+
+    // Store adapter instance
+    this.adapters.set(type, adapter);
+
+    logger.info(`Created adapter for platform: ${type}`);
+
+    return adapter;
+  }
+
+  static getSupportedPlatforms(): PlatformType[] {
+    return [PlatformType.GOOGLE, PlatformType.META, PlatformType.COUPANG];
+  }
+
+  static isPlatformSupported(type: string): boolean {
+    return this.getSupportedPlatforms().includes(type as PlatformType);
+  }
+}

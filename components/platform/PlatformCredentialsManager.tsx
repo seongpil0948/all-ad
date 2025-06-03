@@ -23,7 +23,7 @@ import { SiNaver } from "react-icons/si";
 
 import { PlatformCredentialForm } from "./PlatformCredentialForm";
 
-import { PlatformType, PlatformCredential } from "@/types/platform";
+import { PlatformCredential, PlatformType } from "@/types/database.types";
 
 interface PlatformCredentialsManagerProps {
   credentials: PlatformCredential[];

@@ -1,14 +1,29 @@
 import { platformServiceFactory } from "./platforms/platform-service-factory";
 import { PlatformDatabaseService } from "./platform-database.service";
 
-import { PlatformType } from "@/types/platform";
-import { Logger } from "@/utils/logger";
-import { Campaign as DBCampaign } from "@/types/database.types";
-import {
-  Campaign as PlatformCampaign,
-  CampaignMetrics,
-} from "@/types/platform";
+import logger from "@/utils/logger";
+import { Campaign as DBCampaign, PlatformType } from "@/types/database.types";
 import { createClient } from "@/utils/supabase/server";
+
+// Platform-specific campaign interface
+interface PlatformCampaign {
+  platform_campaign_id: string;
+  name: string;
+  status?: string;
+  budget?: number;
+  is_active: boolean;
+  raw_data?: Record<string, any>;
+}
+
+// Platform-specific metrics interface
+interface PlatformCampaignMetrics {
+  date: string;
+  impressions: number;
+  clicks: number;
+  conversions?: number;
+  cost?: number;
+  revenue?: number;
+}
 
 export class PlatformSyncService {
   async syncAllPlatforms(
@@ -50,7 +65,7 @@ export class PlatformSyncService {
         >,
       };
     } catch (error) {
-      Logger.error("Sync all platforms error:", error as Error);
+      logger.error("Sync all platforms error:", error as Error);
 
       return {
         success: false,
@@ -81,7 +96,8 @@ export class PlatformSyncService {
       }
 
       // Fetch campaigns from the platform
-      const campaigns = await service.fetchCampaigns();
+      const campaigns =
+        (await service.fetchCampaigns()) as unknown as PlatformCampaign[];
 
       // Save campaigns to database and get saved campaigns with IDs
       const savedCampaigns = await this.syncCampaigns(
@@ -103,18 +119,18 @@ export class PlatformSyncService {
 
         if (platformCampaign && platformCampaign.platform_campaign_id) {
           try {
-            const metrics = await service.fetchCampaignMetrics(
+            const metrics = (await service.fetchCampaignMetrics(
               platformCampaign.platform_campaign_id,
               startDate,
               endDate,
-            );
+            )) as unknown as PlatformCampaignMetrics[];
 
             // Save metrics to database
             if (metrics.length > 0) {
               await this.saveCampaignMetrics(savedCampaign.id, metrics);
             }
           } catch (error) {
-            Logger.error(
+            logger.error(
               `Failed to sync metrics for campaign ${platformCampaign.platform_campaign_id}:`,
               error as Error,
             );
@@ -129,7 +145,7 @@ export class PlatformSyncService {
 
       return true;
     } catch (error) {
-      Logger.error(`Platform sync error for ${platform}:`, error as Error);
+      logger.error(`Platform sync error for ${platform}:`, error as Error);
       throw error;
     }
   }
@@ -173,7 +189,7 @@ export class PlatformSyncService {
 
       return dbSuccess;
     } catch (error) {
-      Logger.error("Update campaign budget error:", error as Error);
+      logger.error("Update campaign budget error:", error as Error);
 
       return false;
     }
@@ -218,7 +234,7 @@ export class PlatformSyncService {
 
       return dbSuccess;
     } catch (error) {
-      Logger.error("Update campaign status error:", error as Error);
+      logger.error("Update campaign status error:", error as Error);
 
       return false;
     }
@@ -234,7 +250,7 @@ export class PlatformSyncService {
       .eq("is_active", true);
 
     if (error) {
-      Logger.error("Error fetching team credentials:", error);
+      logger.error("Error fetching team credentials:", error);
 
       return [];
     }
@@ -272,7 +288,7 @@ export class PlatformSyncService {
 
   private async saveCampaignMetrics(
     campaignId: string,
-    metrics: CampaignMetrics[],
+    metrics: PlatformCampaignMetrics[],
   ): Promise<void> {
     const dbService = new PlatformDatabaseService();
 
@@ -282,9 +298,9 @@ export class PlatformSyncService {
         date: metric.date,
         impressions: metric.impressions,
         clicks: metric.clicks,
-        conversions: metric.conversions,
-        cost: metric.cost,
-        revenue: metric.revenue,
+        conversions: metric.conversions || 0,
+        cost: metric.cost || 0,
+        revenue: metric.revenue || 0,
       });
     }
   }
@@ -303,7 +319,7 @@ export class PlatformSyncService {
       .eq("id", campaignId);
 
     if (error) {
-      Logger.error("Error updating campaign settings:", error);
+      logger.error("Error updating campaign settings:", error);
 
       return false;
     }

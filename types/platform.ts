@@ -1,103 +1,110 @@
-// Platform related types
-export type PlatformType =
-  | "facebook"
-  | "google"
-  | "kakao"
-  | "naver"
-  | "coupang";
+// Platform-related type definitions
 
-export type UserRole = "master" | "viewer" | "editor";
+export enum PlatformType {
+  GOOGLE = "google",
+  META = "meta",
+  COUPANG = "coupang",
+  NAVER = "naver", // For V2.0
+}
 
-export interface Team {
+export enum PlatformStatus {
+  CONNECTED = "connected",
+  DISCONNECTED = "disconnected",
+  ERROR = "error",
+  SYNCING = "syncing",
+}
+
+export interface Platform {
+  id: string;
+  type: PlatformType;
+  name: string;
+  icon: string;
+  status: PlatformStatus;
+  connectedAt?: Date;
+  lastSyncedAt?: Date;
+  accountId?: string;
+  accountName?: string;
+}
+
+export type PlatformCredential = Record<string, any>;
+
+// Base interface for platform adapters
+export interface PlatformAdapter {
+  type: PlatformType;
+  connect(credentials: any): Promise<PlatformConnection>;
+  disconnect(connectionId: string): Promise<void>;
+  syncData(connectionId: string): Promise<SyncResult>;
+  getAccounts(connectionId: string): Promise<AdAccount[]>;
+  getCampaigns(accountId: string): Promise<Campaign[]>;
+}
+
+export interface PlatformConnection {
+  id: string;
+  platformType: PlatformType;
+  accountId: string;
+  accountName: string;
+  accessToken?: string;
+  refreshToken?: string;
+  expiresAt?: Date;
+  metadata?: Record<string, any>;
+}
+
+export interface SyncResult {
+  success: boolean;
+  syncedAt: Date;
+  dataCount?: {
+    campaigns?: number;
+    adGroups?: number;
+    ads?: number;
+  };
+  error?: string;
+}
+
+export interface AdAccount {
   id: string;
   name: string;
-  master_user_id: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TeamMember {
-  id: string;
-  team_id: string;
-  user_id: string;
-  role: UserRole;
-  invited_by?: string;
-  joined_at: string;
-  user?: {
-    email: string;
-    full_name?: string;
-  };
-}
-
-export interface PlatformCredential {
-  id: string;
-  team_id: string;
-  platform: PlatformType;
-  credentials: Record<string, any>;
-  is_active: boolean;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
+  currency: string;
+  timezone: string;
+  status: "active" | "paused" | "suspended";
 }
 
 export interface Campaign {
   id: string;
-  team_id: string;
-  platform: PlatformType;
-  platform_campaign_id: string;
+  platformType: PlatformType;
+  accountId: string;
   name: string;
-  status?: string;
+  status: "active" | "paused" | "removed";
   budget?: number;
-  is_active: boolean;
-  raw_data?: Record<string, any>;
-  created_at: string;
-  updated_at: string;
-  synced_at?: string;
+  budgetType?: "daily" | "lifetime";
+  startDate?: Date;
+  endDate?: Date;
+  objective?: string;
+  metrics?: CampaignMetrics;
 }
 
 export interface CampaignMetrics {
-  id: string;
-  campaign_id: string;
-  date: string;
   impressions: number;
   clicks: number;
-  conversions: number;
-  cost: number;
-  revenue: number;
-  raw_data?: Record<string, any>;
-  created_at: string;
+  spend: number;
+  conversions?: number;
+  ctr?: number; // Click-through rate
+  cpc?: number; // Cost per click
+  cpm?: number; // Cost per mille
+  roas?: number; // Return on ad spend
 }
 
-// Platform credential schemas
-export interface FacebookCredentials {
-  access_token: string;
-  ad_account_id: string;
-  app_id?: string;
-  app_secret?: string;
+// OAuth credentials type
+export interface OAuthCredentials {
+  clientId: string;
+  clientSecret: string;
+  redirectUri: string;
+  scope?: string[];
 }
 
-export interface GoogleCredentials {
-  refresh_token: string;
-  client_id: string;
-  client_secret: string;
-  developer_token?: string;
-  customer_id?: string;
-}
-
-export interface KakaoCredentials {
-  access_token: string;
-  refresh_token: string;
-  ad_account_id: string;
-}
-
-export interface NaverCredentials {
-  access_token: string;
-  secret_key: string;
-  customer_id: string;
-}
-
-export interface CoupangCredentials {
-  access_key: string;
-  secret_key: string;
-  vendor_id: string;
+// API credentials type
+export interface ApiCredentials {
+  apiKey?: string;
+  apiSecret?: string;
+  accountId?: string;
+  customerId?: string;
 }

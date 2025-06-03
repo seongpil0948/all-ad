@@ -23,6 +23,7 @@ export async function login(
 
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
+  const returnUrl = formData.get("returnUrl") as string;
 
   // Validation
   if (!email || !email.includes("@")) {
@@ -53,6 +54,10 @@ export async function login(
   revalidatePath("/", "layout");
   revalidatePath("/dashboard");
 
+  // Redirect to returnUrl if provided and valid, otherwise to dashboard
+  if (returnUrl && returnUrl.startsWith("/")) {
+    redirect(returnUrl);
+  }
   redirect("/dashboard");
 }
 
@@ -64,6 +69,8 @@ export async function signup(
 
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
+  const returnUrl = formData.get("returnUrl") as string;
+  const inviteToken = formData.get("inviteToken") as string;
 
   if (!email || !email.includes("@")) {
     return {
@@ -73,11 +80,12 @@ export async function signup(
     };
   }
 
-  const { error } = await supabase.auth.signUp({
+  const { error, data } = await supabase.auth.signUp({
     email,
     password,
     options: {
       emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+      data: inviteToken ? { invitation_token: inviteToken } : undefined,
     },
   });
 
@@ -89,6 +97,17 @@ export async function signup(
         },
       };
     }
+  }
+
+  // If signup is successful and user is immediately logged in
+  if (data?.user && data?.session) {
+    revalidatePath("/", "layout");
+
+    // Redirect to returnUrl if provided and valid, otherwise to dashboard
+    if (returnUrl && returnUrl.startsWith("/")) {
+      redirect(returnUrl);
+    }
+    redirect("/dashboard");
   }
 
   return {

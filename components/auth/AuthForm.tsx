@@ -13,9 +13,17 @@ import { login, signup, type ActionState } from "@/app/(auth)/login/actions";
 
 interface AuthFormProps {
   initialMode?: "login" | "signup";
+  returnUrl?: string;
+  defaultEmail?: string;
+  inviteToken?: string;
 }
 
-export function AuthForm({ initialMode = "login" }: AuthFormProps) {
+export function AuthForm({
+  initialMode = "login",
+  returnUrl,
+  defaultEmail,
+  inviteToken,
+}: AuthFormProps) {
   const [isSignUp, setIsSignUp] = useState(initialMode === "signup");
   const initialState: ActionState = { errors: {} };
 
@@ -28,9 +36,16 @@ export function AuthForm({ initialMode = "login" }: AuthFormProps) {
   return (
     <>
       <Form action={currentAction} validationErrors={currentState.errors}>
+        {returnUrl && (
+          <input name="returnUrl" type="hidden" value={returnUrl} />
+        )}
+        {inviteToken && (
+          <input name="inviteToken" type="hidden" value={inviteToken} />
+        )}
         <div className="flex flex-col gap-4 items-center w-full min-w-sm mx-auto">
           <Input
             isRequired
+            defaultValue={defaultEmail}
             errorMessage={currentState.errors?.email}
             isInvalid={!!currentState.errors?.email}
             label="이메일"
