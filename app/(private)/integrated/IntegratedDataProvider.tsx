@@ -2,7 +2,12 @@
 
 import { useEffect } from "react";
 
-import { useCampaignStore, usePlatformStore, useTeamStore } from "@/stores";
+import {
+  useCampaignStore,
+  usePlatformStore,
+  useTeamStore,
+  useAuthStore,
+} from "@/stores";
 import { UserRole } from "@/types/database.types";
 
 interface IntegratedData {
@@ -50,6 +55,9 @@ export function IntegratedDataProvider({
       teamMembers: initialData.teamMembers,
       userRole: initialData.userRole as UserRole,
     });
+
+    // Set user data to auth store
+    useAuthStore.setState({ user: initialData.user });
   }, [initialData, setCampaigns, setStats, setCredentials, setInitialData]);
 
   return <>{children}</>;

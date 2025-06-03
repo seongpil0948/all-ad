@@ -39,11 +39,13 @@ async function getInvitationDetails(token: string) {
       error: rpcError.message,
       code: rpcError.code,
     });
+
     return { invitation: null, error: rpcError };
   }
 
   if (!rpcResult || !rpcResult.invitation) {
     logger.error("No invitation found with RPC", { token, rpcResult });
+
     return { invitation: null, error: new Error("Invitation not found") };
   }
 

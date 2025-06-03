@@ -7,7 +7,7 @@ import { FaChartBar, FaKey, FaUsers } from "react-icons/fa";
 import { CampaignDashboard } from "@/components/dashboard/CampaignDashboard";
 import { PlatformCredentialsManager } from "@/components/platform/PlatformCredentialsManager";
 import { TeamManagement } from "@/components/team/TeamManagement";
-import { usePlatformStore } from "@/stores";
+import { usePlatformStore, useTeamStore, useAuthStore } from "@/stores";
 
 export default function IntegratedTabsClient() {
   const {
@@ -16,6 +16,9 @@ export default function IntegratedTabsClient() {
     deleteCredential,
     toggleCredentialStatus,
   } = usePlatformStore();
+
+  const { currentTeam } = useTeamStore();
+  const { user } = useAuthStore();
 
   return (
     <Tabs
@@ -70,6 +73,8 @@ export default function IntegratedTabsClient() {
                   updatedAt: c.updated_at,
                   lastSyncAt: c.synced_at || null,
                 }))}
+              teamId={currentTeam?.id || ""}
+              userId={user?.id || ""}
               onDelete={async (platform) => {
                 const credential = credentials.find(
                   (c) => c.platform === platform,

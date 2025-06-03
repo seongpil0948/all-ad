@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
@@ -68,7 +69,7 @@ Deno.serve(async (req) => {
     // Prepare email data for Resend API
     const resendData = {
       // from: emailData.from || "Acme <onboarding@resend.dev>", // Use Resend's test domain
-      from: "onboarding@resend.dev",
+      from: "All Ad <noreply@all-ad.in>'",
       to: Array.isArray(emailData.to) ? emailData.to : [emailData.to],
       subject: emailData.subject,
       html: emailData.html,

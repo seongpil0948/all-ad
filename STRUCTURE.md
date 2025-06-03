@@ -192,6 +192,22 @@ all-ad/
 │   ├── ads/                   # 광고 도메인
 │   └── auth/                  # 인증 도메인
 │
+├── lib/                        # 라이브러리 유틸리티
+│   ├── oauth/                 # OAuth 관련 유틸리티 ✅ (새로 추가)
+│   │   ├── oauth-manager.ts   # 서버측 OAuth 토큰 관리
+│   │   ├── oauth-client.ts    # 클라이언트측 OAuth URL 생성
+│   │   ├── platform-configs.ts # 서버측 OAuth 설정
+│   │   └── platform-configs.client.ts # 클라이언트측 OAuth 설정
+│   ├── platforms/             # 플랫폼 어댑터
+│   │   ├── adapter-factory.ts
+│   │   ├── base-adapter.ts
+│   │   ├── google-ads-adapter.ts
+│   │   ├── meta-ads-adapter.ts
+│   │   ├── coupang-ads-adapter.ts
+│   │   ├── platform-manager.ts
+│   │   └── index.ts
+│   └── redis.ts               # Redis 클라이언트 ✅ (새로 추가)
+│
 ├── utils/                     # 유틸리티 함수
 │   ├── auth-helpers/         # 인증 헬퍼
 │   ├── supabase/            # Supabase 클라이언트
@@ -217,29 +233,42 @@ all-ad/
 ├── hooks/                  # 커스텀 훅
 │   └── use-auth.ts        # 인증 훅
 │
+├── docs/                   # 문서
+│   └── oauth-configuration.md # OAuth 설정 가이드 ✅ (새로 추가)
+│
 ├── config/                # 설정 파일
 │   ├── fonts.ts          # 폰트 설정
 │   └── site.ts           # 사이트 설정
 │
 ├── supabase/             # Supabase 설정
-│   └── migrations/       # 데이터베이스 마이그레이션
-│       ├── 001_create_profiles.sql
-│       ├── 002_fix_storage_policies.sql
-│       ├── 003_create_platform_auth_and_campaigns.sql
-│       ├── 004_create_team_rpc_function.sql
-│       ├── 004a_fix_team_members_rls_recursion.sql
-│       ├── 005a_create_team_members_profiles_function.sql
-│       ├── 005b_fix_all_rls_recursion.sql
-│       ├── 006_fix_team_creation.sql
-│       ├── 008_auto_accept_invitation_on_signup.sql
-│       ├── 009a_fix_user_role_enum_safe.sql
-│       ├── 009b_recreate_policies_and_tables.sql
-│       ├── 010_fix_team_creation_syntax.sql  # ✅ NEW: 팀 생성 시 SQL 문법 오류 수정
-│       ├── 011_add_missing_columns.sql        # ✅ NEW: 누락된 컬럼 추가
-│       ├── 012_fix_all_enums_and_functions.sql # ✅ NEW: 모든 enum 및 함수 종합 수정
-│       ├── 013_fix_team_members_rls_recursion.sql # ✅ NEW: RLS 무한 재귀 문제 해결
-│       ├── 014_ensure_team_functions_exist.sql # ✅ NEW: 팀 관련 함수 생성 확인
-│       └── 015_create_accept_invitation_function.sql # ✅ NEW: 초대 수락/거절 함수 생성
+│   ├── migrations/       # 데이터베이스 마이그레이션
+│   │   ├── 001_create_profiles.sql
+│   │   ├── 002_fix_storage_policies.sql
+│   │   ├── 003_create_platform_auth_and_campaigns.sql
+│   │   ├── 004_create_team_rpc_function.sql
+│   │   ├── 004a_fix_team_members_rls_recursion.sql
+│   │   ├── 005a_create_team_members_profiles_function.sql
+│   │   ├── 005b_fix_all_rls_recursion.sql
+│   │   ├── 006_fix_team_creation.sql
+│   │   ├── 008_auto_accept_invitation_on_signup.sql
+│   │   ├── 009a_fix_user_role_enum_safe.sql
+│   │   ├── 009b_recreate_policies_and_tables.sql
+│   │   ├── 010_fix_team_creation_syntax.sql  # ✅ NEW: 팀 생성 시 SQL 문법 오류 수정
+│   │   ├── 011_add_missing_columns.sql        # ✅ NEW: 누락된 컬럼 추가
+│   │   ├── 012_fix_all_enums_and_functions.sql # ✅ NEW: 모든 enum 및 함수 종합 수정
+│   │   ├── 013_fix_team_members_rls_recursion.sql # ✅ NEW: RLS 무한 재귀 문제 해결
+│   │   ├── 014_ensure_team_functions_exist.sql # ✅ NEW: 팀 관련 함수 생성 확인
+│   │   ├── 015_create_accept_invitation_function.sql # ✅ NEW: 초대 수락/거절 함수 생성
+│   │   ├── 016_fix_invitation_token_access.sql
+│   │   ├── 017_fix_invitation_public_access.sql
+│   │   ├── 018_create_get_invitation_by_token.sql
+│   │   ├── 019_add_oauth_credentials_to_platform_credentials.sql # ✅ NEW: OAuth 인증 정보 저장을 위한 컬럼 추가
+│   │   └── 020_create_oauth_refresh_cron_job.sql # ✅ NEW: OAuth 토큰 자동 갱신 cron job
+│   └── functions/        # Supabase Edge Functions
+│       ├── resend/       # 이메일 발송 함수
+│       └── refresh-oauth-tokens/ # ✅ NEW: OAuth 토큰 갱신 함수
+│           ├── index.ts
+│           └── deno.json
 │
 ├── styles/              # 스타일
 │   └── globals.css     # 전역 스타일
@@ -252,6 +281,40 @@ all-ad/
     ├── middleware.ts    # Next.js 미들웨어
     └── instrumentation.ts # OpenTelemetry 설정
 ```
+
+## 주요 리팩토링 내용 (2025-01-06)
+
+### OAuth 인증 사용자 제공 방식으로 변경 (2025-01-06)
+
+1. **사용자별 OAuth 앱 지원**
+
+   - 환경 변수 대신 각 팀이 자체 OAuth 앱 생성
+   - platform_credentials 테이블에 OAuth 인증 정보 저장
+   - 각 플랫폼별 OAuth 앱 설정 가이드 제공
+
+2. **업데이트된 컴포넌트**
+
+   - `PlatformCredentialForm`: OAuth 앱 정보 입력 필드 추가 + 리디렉션 URI 표시
+   - `PlatformCredentialsManager`: OAuth 흐름 업데이트 + 수동 토큰 입력 지원
+   - OAuth 콜백 라우트들: 팀별 저장된 인증 정보 사용
+
+3. **수동 토큰 입력 옵션**
+
+   - OAuth 연동 실패 시 대체 방안으로 수동 토큰 입력 지원
+   - Google: Refresh Token 직접 입력 가능
+   - Facebook: Access Token 직접 입력 가능
+   - Kakao: Refresh Token 직접 입력 가능
+
+4. **Supabase Cron Job 통합**
+
+   - CRON_SECRET 제거하고 Supabase 내부 cron 사용
+   - Edge Function으로 토큰 자동 갱신 구현
+   - pg_cron을 통한 시간별 토큰 갱신
+
+5. **보안 개선사항**
+   - OAuth 인증 정보는 credentials 컬럼에 안전하게 저장
+   - 토큰은 Redis에 저장 (또는 DB의 data 필드)
+   - 팀별 격리된 인증 정보 관리
 
 ## 주요 리팩토링 내용 (2024-01-08)
 

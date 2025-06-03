@@ -3,7 +3,7 @@ import { trace } from "@opentelemetry/api";
 import { getLogger } from "../infrastructure/monitoring/logger/otel-logger";
 import { LogContext } from "../infrastructure/monitoring/interfaces/logger.interface";
 
-const logger = getLogger();
+const _log = getLogger();
 
 // Utility class for easy logging with automatic span creation
 export class Logger {
@@ -16,22 +16,22 @@ export class Logger {
 
   // Trace level - most detailed logging
   static trace(message: string, context?: LogContext): void {
-    logger.trace(message, this.getContext(context));
+    _log.trace(message, this.getContext(context));
   }
 
   // Debug level - debugging information
   static debug(message: string, context?: LogContext): void {
-    logger.debug(message, this.getContext(context));
+    _log.debug(message, this.getContext(context));
   }
 
   // Info level - general information
   static info(message: string, context?: LogContext): void {
-    logger.info(message, this.getContext(context));
+    _log.info(message, this.getContext(context));
   }
 
   // Warn level - warning messages
   static warn(message: string, context?: LogContext): void {
-    logger.warn(message, this.getContext(context));
+    _log.warn(message, this.getContext(context));
   }
 
   // Error level - error messages
@@ -41,18 +41,19 @@ export class Logger {
     context?: LogContext,
   ): void {
     if (error instanceof Error) {
-      logger.error(message, error, this.getContext(context));
+      _log.error(message, error, this.getContext(context));
     } else if (typeof error === "string") {
-      logger.error(message, new Error(error), this.getContext(context));
+      _log.error(message, new Error(error), this.getContext(context));
     } else if (error !== undefined) {
       const serializedError = JSON.stringify(error, null, 2);
-      logger.error(
+
+      _log.error(
         `${message}: ${serializedError}`,
         undefined,
         this.getContext(context),
       );
     } else {
-      logger.error(message, undefined, this.getContext(context));
+      _log.error(message, undefined, this.getContext(context));
     }
   }
 
@@ -118,9 +119,9 @@ export class Logger {
     };
 
     if (level === "error") {
-      logger.error(message, undefined, this.getContext(httpContext));
+      _log.error(message, undefined, this.getContext(httpContext));
     } else {
-      logger.info(message, this.getContext(httpContext));
+      _log.info(message, this.getContext(httpContext));
     }
   }
 
@@ -133,7 +134,7 @@ export class Logger {
   ): void {
     const message = `DB ${operation} on ${table}`;
 
-    logger.debug(
+    _log.debug(
       message,
       this.getContext({
         ...context,
@@ -150,15 +151,9 @@ export class Logger {
     const level = duration > 1000 ? "warn" : "debug";
 
     if (level === "warn") {
-      logger.warn(
-        message,
-        this.getContext({ ...context, operation, duration }),
-      );
+      _log.warn(message, this.getContext({ ...context, operation, duration }));
     } else {
-      logger.debug(
-        message,
-        this.getContext({ ...context, operation, duration }),
-      );
+      _log.debug(message, this.getContext({ ...context, operation, duration }));
     }
   }
 }
@@ -175,6 +170,8 @@ export const log = {
   db: Logger.db.bind(Logger),
   perf: Logger.perf.bind(Logger),
 };
+
+export const logger = _log;
 
 // Default export for easy import
 export default log;

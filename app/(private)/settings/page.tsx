@@ -27,6 +27,17 @@ export default async function SettingsPage() {
     redirect("/login");
   }
 
+  // Get user's team
+  const { data: teamMember } = await supabase
+    .from("team_members")
+    .select("team_id")
+    .eq("user_id", user.id)
+    .single();
+
+  if (!teamMember) {
+    redirect("/error?message=no_team");
+  }
+
   const credentials = await getTeamCredentials();
 
   return (
@@ -37,6 +48,8 @@ export default async function SettingsPage() {
         {/* Platform Credentials Section */}
         <PlatformCredentialsManager
           credentials={credentials}
+          teamId={teamMember.team_id}
+          userId={user.id}
           onDelete={deletePlatformCredentials}
           onSave={savePlatformCredentials}
           onToggle={togglePlatformCredentials}

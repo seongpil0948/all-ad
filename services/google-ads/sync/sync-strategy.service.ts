@@ -3,7 +3,7 @@ import { CampaignControlService } from "../campaign/campaign-control.service";
 
 import { createClient } from "@/utils/supabase/server";
 import { Logger } from "@/utils/logger";
-import { SyncConfig, SyncResult, SyncError } from "@/types/google-ads.types";
+import { SyncResult, SyncError } from "@/types/google-ads.types";
 
 export class GoogleAdsSyncService {
   private googleAdsClient: GoogleAdsClient;

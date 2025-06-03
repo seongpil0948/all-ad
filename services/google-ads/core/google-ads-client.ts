@@ -22,9 +22,19 @@ export class GoogleAdsClient {
       !this.customer ||
       this.customer.credentials.customer_id !== customerId
     ) {
+      // Use access token if available, otherwise use refresh token
+      const authToken =
+        this.credentials.accessToken || this.credentials.refreshToken;
+
+      if (!authToken) {
+        throw new Error(
+          "No authentication token available (neither access_token nor refresh_token)",
+        );
+      }
+
       this.customer = this.client.Customer({
         customer_id: customerId,
-        refresh_token: this.credentials.refreshToken,
+        refresh_token: authToken,
         login_customer_id: this.credentials.loginCustomerId,
       });
     }
@@ -129,9 +139,18 @@ export class GoogleAdsClient {
   // 하위 계정 목록 조회 (MCC)
   async getAccessibleCustomers(): Promise<string[]> {
     try {
+      const authToken =
+        this.credentials.accessToken || this.credentials.refreshToken;
+
+      if (!authToken) {
+        throw new Error(
+          "No authentication token available for listing accessible customers",
+        );
+      }
+
       const customer = this.client.Customer({
         customer_id: this.credentials.loginCustomerId || "",
-        refresh_token: this.credentials.refreshToken,
+        refresh_token: authToken,
       });
 
       // listAccessibleCustomers는 google-ads-api의 Customer 메서드가 아닐 수 있음

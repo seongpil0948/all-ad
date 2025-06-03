@@ -14,16 +14,35 @@ import { GoogleAdsApiCredentials } from "@/types/google-ads.types";
 export class GooglePlatformService extends BasePlatformService {
   platform: PlatformType = "google";
   private googleAdsService?: GoogleAdsIntegrationService;
+  private userId?: string;
+  private accountId?: string;
 
-  // Google Ads 서비스 초기화
-  private getGoogleAdsService(): GoogleAdsIntegrationService {
+  constructor() {
+    super();
+  }
+
+  // Set user context for OAuth token retrieval
+  setUserContext(userId: string, accountId: string) {
+    this.userId = userId;
+    this.accountId = accountId;
+  }
+
+  // Google Ads 서비스 초기화 with OAuth token
+  private async getGoogleAdsService(): Promise<GoogleAdsIntegrationService> {
     if (!this.googleAdsService) {
       const credentials = this.credentials as GoogleAdsCredentials;
+
+      // For OAuth platforms, the refresh token is used
+      // The google-ads-api library handles token refresh automatically
+      if (!credentials.refreshToken) {
+        throw new Error("No refresh token available for Google Ads");
+      }
+
       const googleAdsCredentials: GoogleAdsApiCredentials = {
         clientId: credentials.clientId,
         clientSecret: credentials.clientSecret,
         refreshToken: credentials.refreshToken,
-        developerToken: credentials.developerToken || "",
+        developerToken: credentials.developerToken,
         loginCustomerId: credentials.loginCustomerId,
       };
 
@@ -36,16 +55,15 @@ export class GooglePlatformService extends BasePlatformService {
   }
 
   async validateCredentials(): Promise<boolean> {
-    const { clientId, clientSecret, refreshToken, customerId } = this
-      .credentials as GoogleAdsCredentials;
+    const { customerId } = this.credentials as GoogleAdsCredentials;
 
-    if (!clientId || !clientSecret || !refreshToken || !customerId) {
+    if (!customerId) {
       return false;
     }
 
     try {
       // Google Ads 연결 테스트
-      const service = this.getGoogleAdsService();
+      const service = await this.getGoogleAdsService();
 
       return await service.testConnection(customerId);
     } catch (error) {
@@ -60,7 +78,7 @@ export class GooglePlatformService extends BasePlatformService {
 
     try {
       const { customerId } = this.credentials as GoogleAdsCredentials;
-      const service = this.getGoogleAdsService();
+      const service = await this.getGoogleAdsService();
       const googleCampaigns = await service.getCampaigns(customerId);
 
       // Google Ads 캠페인을 플랫폼 공통 형식으로 변환
@@ -103,7 +121,7 @@ export class GooglePlatformService extends BasePlatformService {
 
     try {
       const { customerId } = this.credentials as GoogleAdsCredentials;
-      const service = this.getGoogleAdsService();
+      const service = await this.getGoogleAdsService();
       const metrics = await service.getCampaignMetrics(
         customerId,
         campaignId,
@@ -139,7 +157,7 @@ export class GooglePlatformService extends BasePlatformService {
 
     try {
       const { customerId } = this.credentials as GoogleAdsCredentials;
-      const service = this.getGoogleAdsService();
+      const service = await this.getGoogleAdsService();
 
       await service.updateCampaignBudget(
         customerId,
@@ -165,7 +183,7 @@ export class GooglePlatformService extends BasePlatformService {
 
     try {
       const { customerId } = this.credentials as GoogleAdsCredentials;
-      const service = this.getGoogleAdsService();
+      const service = await this.getGoogleAdsService();
 
       await service.toggleCampaignStatus(customerId, campaignId, isActive);
 
@@ -181,7 +199,7 @@ export class GooglePlatformService extends BasePlatformService {
   async syncData(syncType: "FULL" | "INCREMENTAL" = "INCREMENTAL") {
     try {
       const { customerId } = this.credentials as GoogleAdsCredentials;
-      const service = this.getGoogleAdsService();
+      const service = await this.getGoogleAdsService();
 
       await service.triggerSync(customerId, syncType);
       Logger.info("Google Ads sync triggered", { syncType });

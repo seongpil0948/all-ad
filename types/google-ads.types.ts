@@ -4,7 +4,8 @@
 export interface GoogleAdsApiCredentials {
   clientId: string;
   clientSecret: string;
-  refreshToken: string;
+  refreshToken?: string; // Optional as we handle refresh internally
+  accessToken?: string; // For direct token usage
   developerToken: string;
   loginCustomerId?: string; // MCC 계정 ID
 }
