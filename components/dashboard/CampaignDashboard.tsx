@@ -37,7 +37,8 @@ import { SiNaver, SiKakaotalk } from "react-icons/si";
 import { MdStorefront } from "react-icons/md";
 
 import { useCampaignStore } from "@/stores";
-import { Campaign, PlatformType } from "@/types/database.types";
+import { Campaign } from "@/types/campaign.types";
+import { PlatformType } from "@/types";
 import log from "@/utils/logger";
 
 const platformIcons = {
@@ -57,15 +58,16 @@ const platformColors = {
 } as const;
 
 export function CampaignDashboard() {
-  const {
-    campaigns,
-    isLoading,
-    fetchCampaigns,
-    fetchCampaignMetrics,
-    updateCampaignBudget,
-    toggleCampaignStatus,
-    setFilters,
-  } = useCampaignStore();
+  const campaigns = useCampaignStore((state) => state.campaigns);
+  const isLoading = useCampaignStore((state) => state.isLoading);
+  const fetchCampaigns = useCampaignStore((state) => state.fetchCampaigns);
+  const updateCampaignBudget = useCampaignStore(
+    (state) => state.updateCampaignBudget,
+  );
+  const updateCampaignStatus = useCampaignStore(
+    (state) => state.updateCampaignStatus,
+  );
+  const setFilters = useCampaignStore((state) => state.setFilters);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(
@@ -120,10 +122,13 @@ export function CampaignDashboard() {
 
   const handleStatusToggle = async (campaign: Campaign) => {
     try {
-      await toggleCampaignStatus(campaign.id);
+      await updateCampaignStatus(
+        campaign.id,
+        campaign.isActive ? "PAUSED" : "ENABLED",
+      );
       addToast({
         title: "성공",
-        description: `캠페인이 ${campaign.is_active ? "비활성화" : "활성화"}되었습니다`,
+        description: `캠페인이 ${campaign.isActive ? "비활성화" : "활성화"}되었습니다`,
         color: "success",
       });
     } catch (error) {
@@ -137,8 +142,8 @@ export function CampaignDashboard() {
   };
 
   const handleViewMetrics = (campaignId: string) => {
-    fetchCampaignMetrics(campaignId);
-    // 메트릭 모달 오픈 로직 추가 가능
+    // TODO: Implement metrics view when metrics API is available
+    log.info("View metrics for campaign:", { campaignId });
   };
 
   // 플랫폼별 캠페인 수 계산
@@ -154,7 +159,7 @@ export function CampaignDashboard() {
   // 전체 통계 계산
   const totalStats = {
     totalCampaigns: campaigns.length,
-    activeCampaigns: campaigns.filter((c) => c.is_active).length,
+    activeCampaigns: campaigns.filter((c) => c.isActive).length,
     totalBudget: campaigns.reduce((sum, c) => sum + (c.budget || 0), 0),
   };
 
@@ -254,14 +259,14 @@ export function CampaignDashboard() {
                   <div>
                     <p className="font-medium">{campaign.name}</p>
                     <p className="text-xs text-default-500">
-                      ID: {campaign.platform_campaign_id}
+                      ID: {campaign.platformCampaignId}
                     </p>
                   </div>
                 </TableCell>
 
                 <TableCell>
                   <Chip
-                    color={campaign.status === "ACTIVE" ? "success" : "default"}
+                    color={campaign.isActive ? "success" : "default"}
                     size="sm"
                     variant="flat"
                   >
@@ -285,15 +290,15 @@ export function CampaignDashboard() {
 
                 <TableCell>
                   <Button
-                    color={campaign.is_active ? "success" : "default"}
+                    color={campaign.isActive ? "success" : "default"}
                     size="sm"
                     startContent={
-                      campaign.is_active ? <FaCheck /> : <FaPowerOff />
+                      campaign.isActive ? <FaCheck /> : <FaPowerOff />
                     }
                     variant="flat"
                     onPress={() => handleStatusToggle(campaign)}
                   >
-                    {campaign.is_active ? "활성" : "비활성"}
+                    {campaign.isActive ? "활성" : "비활성"}
                   </Button>
                 </TableCell>
 

@@ -1,10 +1,6 @@
-"use client";
-
 import { Card, CardBody, CardHeader } from "@heroui/card";
-import { Button } from "@heroui/button";
 import { Chip } from "@heroui/chip";
 import { Progress } from "@heroui/progress";
-import { useRouter } from "next/navigation";
 import {
   FaArrowUp,
   FaArrowDown,
@@ -14,11 +10,11 @@ import {
 } from "react-icons/fa";
 import { SiNaver } from "react-icons/si";
 
+import DemoButton from "./DemoButton";
+
 import { title } from "@/components/primitives";
 
 export default function DemoPage() {
-  const router = useRouter();
-
   const mockData = {
     totalSpend: "₩3,456,789",
     totalRevenue: "₩12,345,678",
@@ -137,9 +133,7 @@ export default function DemoPage() {
         <p className="text-default-500 mb-4">
           이것은 실제 대시보드의 일부 기능만을 보여주는 데모입니다.
         </p>
-        <Button color="primary" size="lg" onPress={() => router.push("/login")}>
-          전체 기능 사용하기
-        </Button>
+        <DemoButton />
       </div>
     </div>
   );

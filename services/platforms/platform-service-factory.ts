@@ -1,41 +1,19 @@
 import {
   PlatformService,
-  PlatformServiceFactory,
+  PlatformServiceFactory as IPlatformServiceFactory,
 } from "./platform-service.interface";
-import { FacebookPlatformService } from "./facebook-platform.service";
-import { GooglePlatformService } from "./google-platform.service";
-import { KakaoPlatformService } from "./kakao-platform.service";
-import { NaverPlatformService } from "./naver-platform.service";
-import { CoupangPlatformService } from "./coupang-platform.service";
 
 import { PlatformType } from "@/types";
 
-export class PlatformServiceFactoryImpl implements PlatformServiceFactory {
-  private static instance: PlatformServiceFactoryImpl;
+export class PlatformServiceFactory implements IPlatformServiceFactory {
   private services: Map<PlatformType, PlatformService>;
 
-  private constructor() {
+  constructor() {
     this.services = new Map();
-    this.registerServices();
   }
 
-  static getInstance(): PlatformServiceFactoryImpl {
-    if (!PlatformServiceFactoryImpl.instance) {
-      PlatformServiceFactoryImpl.instance = new PlatformServiceFactoryImpl();
-    }
-
-    return PlatformServiceFactoryImpl.instance;
-  }
-
-  private registerServices(): void {
-    this.services.set(
-      "facebook" as PlatformType,
-      new FacebookPlatformService(),
-    );
-    this.services.set("google" as PlatformType, new GooglePlatformService());
-    this.services.set("kakao" as PlatformType, new KakaoPlatformService());
-    this.services.set("naver" as PlatformType, new NaverPlatformService());
-    this.services.set("coupang" as PlatformType, new CoupangPlatformService());
+  register(platform: PlatformType, service: PlatformService): void {
+    this.services.set(platform, service);
   }
 
   createService(platform: PlatformType): PlatformService {
@@ -47,7 +25,8 @@ export class PlatformServiceFactoryImpl implements PlatformServiceFactory {
 
     return service;
   }
-}
 
-// Export singleton instance
-export const platformServiceFactory = PlatformServiceFactoryImpl.getInstance();
+  getAvailablePlatforms(): PlatformType[] {
+    return Array.from(this.services.keys());
+  }
+}

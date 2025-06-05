@@ -5,16 +5,10 @@ import { redirect } from "next/navigation";
 import { AuthError } from "@supabase/supabase-js";
 
 import { createClient } from "@/utils/supabase/server";
+import { ActionState } from "@/types/actions";
 import log from "@/utils/logger";
 
-export type ActionState = {
-  errors?: {
-    email?: string;
-    password?: string;
-    general?: string;
-  };
-  success?: boolean;
-};
+export type { ActionState };
 
 export async function login(
   prevState: ActionState,

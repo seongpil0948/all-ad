@@ -1,18 +1,13 @@
-"use client";
-
 import { Card, CardBody, CardHeader, CardFooter } from "@heroui/card";
-import { Button } from "@heroui/button";
 import { Chip } from "@heroui/chip";
 import { Divider } from "@heroui/divider";
-import { useRouter } from "next/navigation";
 import { FaCheck, FaStar } from "react-icons/fa";
-import { motion } from "framer-motion";
+
+import PricingButton from "./PricingButton";
 
 import { title, subtitle } from "@/components/primitives";
 
 export default function PricingPage() {
-  const router = useRouter();
-
   const plans = [
     {
       name: "Starter",
@@ -68,12 +63,7 @@ export default function PricingPage() {
 
   return (
     <div className="container mx-auto px-6 py-20">
-      <motion.div
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-12"
-        initial={{ opacity: 0, y: 20 }}
-        transition={{ duration: 0.5 }}
-      >
+      <div className="text-center mb-12">
         <h1 className={title({ size: "lg" })}>
           비즈니스에 맞는{" "}
           <span className={title({ color: "violet", size: "lg" })}>플랜</span>을
@@ -83,16 +73,11 @@ export default function PricingPage() {
           14일 무료 체험으로 시작하세요. 언제든지 업그레이드하거나 취소할 수
           있습니다.
         </p>
-      </motion.div>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
         {plans.map((plan, index) => (
-          <motion.div
-            key={index}
-            animate={{ opacity: 1, y: 0 }}
-            initial={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.5, delay: index * 0.1 }}
-          >
+          <div key={index}>
             <Card
               className={`h-full ${plan.popular ? "border-primary border-2" : ""}`}
               shadow={plan.popular ? "lg" : "sm"}
@@ -136,37 +121,23 @@ export default function PricingPage() {
               </CardBody>
 
               <CardFooter>
-                <Button
-                  fullWidth
-                  color={plan.popular ? "primary" : "default"}
-                  variant={plan.popular ? "shadow" : "flat"}
-                  onPress={() => {
-                    if (plan.name === "Enterprise") {
-                      router.push("/contact");
-                    } else {
-                      router.push("/login");
-                    }
-                  }}
-                >
-                  {plan.cta}
-                </Button>
+                <PricingButton
+                  cta={plan.cta}
+                  isPopular={plan.popular}
+                  planName={plan.name}
+                />
               </CardFooter>
             </Card>
-          </motion.div>
+          </div>
         ))}
       </div>
 
-      <motion.div
-        animate={{ opacity: 1 }}
-        className="mt-16 text-center"
-        initial={{ opacity: 0 }}
-        transition={{ duration: 0.5, delay: 0.5 }}
-      >
+      <div className="mt-16 text-center">
         <p className="text-default-500">
           모든 플랜에는 14일 무료 체험이 포함되어 있습니다. 신용카드 정보는
           필요하지 않습니다.
         </p>
-      </motion.div>
+      </div>
     </div>
   );
 }

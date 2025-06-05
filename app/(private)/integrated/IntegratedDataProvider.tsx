@@ -45,6 +45,7 @@ export function IntegratedDataProvider({
       totalCampaigns: initialData.stats.totalCampaigns,
       activeCampaigns: initialData.stats.activeCampaigns,
       totalBudget: initialData.stats.totalBudget,
+      totalSpend: 0,
       totalImpressions: 0,
       totalClicks: 0,
       platforms: initialData.stats.connectedPlatforms,

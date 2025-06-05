@@ -23,14 +23,14 @@ import { useAuthStore } from "@/stores/useAuthStore";
 
 export function UserDropdown() {
   const router = useRouter();
-  const { user, profile } = useAuth();
-  const logout = useAuthStore((state) => state.logout);
+  const { user } = useAuth();
+  const signOut = useAuthStore((state) => state.signOut);
 
   if (!user) return null;
 
   const handleSignOut = async () => {
     try {
-      await logout();
+      await signOut();
       router.push("/");
       router.refresh();
     } catch (error) {
@@ -46,7 +46,7 @@ export function UserDropdown() {
 
   const userEmail = user.email || "";
   const userInitials = getUserInitials(userEmail);
-  const userName = profile?.full_name || userEmail.split("@")[0];
+  const userName = userEmail.split("@")[0];
 
   return (
     <Dropdown placement="bottom-end">
@@ -58,7 +58,6 @@ export function UserDropdown() {
           color="primary"
           name={userInitials}
           size="sm"
-          src={profile?.avatar_url || undefined}
         />
       </DropdownTrigger>
       <DropdownMenu

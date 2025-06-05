@@ -1,17 +1,9 @@
-"use client";
-
-import { Accordion, AccordionItem } from "@heroui/accordion";
-import { motion } from "framer-motion";
+import { FAQAccordion } from "./FAQAccordion";
 
 import { title, subtitle } from "@/components/primitives";
 
-interface FAQItem {
-  question: string;
-  answer: string;
-}
-
 export const FAQSection = () => {
-  const faqs: FAQItem[] = [
+  const faqs = [
     {
       question: "올애드는 어떤 광고 플랫폼을 지원하나요?",
       answer:
@@ -42,38 +34,14 @@ export const FAQSection = () => {
   return (
     <section className="px-6 py-20">
       <div className="max-w-4xl mx-auto">
-        <motion.div
-          className="text-center mb-12"
-          initial={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
-          viewport={{ once: true }}
-          whileInView={{ opacity: 1 }}
-        >
+        <div className="text-center mb-12">
           <h2 className={title({ size: "md" })}>자주 묻는 질문</h2>
           <p className={subtitle({ class: "mt-2" })}>
             궁금하신 점이 있으신가요?
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.5 }}
-          viewport={{ once: true }}
-          whileInView={{ opacity: 1, y: 0 }}
-        >
-          <Accordion variant="bordered">
-            {faqs.map((faq, index) => (
-              <AccordionItem
-                key={index}
-                aria-label={faq.question}
-                className="text-base"
-                title={faq.question}
-              >
-                <p className="text-default-600 pb-4">{faq.answer}</p>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </motion.div>
+        <FAQAccordion faqs={faqs} />
       </div>
     </section>
   );

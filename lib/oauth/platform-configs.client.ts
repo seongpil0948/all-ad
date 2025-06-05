@@ -1,4 +1,4 @@
-import { OAuthConfig } from "./oauth-client";
+import type { OAuthConfig } from "@/types/oauth";
 
 // Base OAuth configurations (without client credentials)
 const baseOAuthConfigs = {

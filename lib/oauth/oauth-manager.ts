@@ -1,17 +1,10 @@
-import { OAuthConfig } from "./oauth-client";
+import type { OAuthConfig, TokenData } from "@/types/oauth";
 
 import log from "@/utils/logger";
 import { setToken, getToken } from "@/lib/redis";
 import { createClient } from "@/utils/supabase/server";
 
-export interface TokenData {
-  access_token: string;
-  refresh_token?: string;
-  expires_in: number;
-  token_type: string;
-  scope?: string;
-  refresh_token_expires_in?: number;
-}
+export type { OAuthConfig } from "@/types/oauth";
 
 export class OAuthManager {
   private config: OAuthConfig;
@@ -202,4 +195,10 @@ export class OAuthManager {
       return null;
     }
   }
+}
+
+// Helper function to get OAuth manager instance
+export function getOAuthManager(): OAuthManager {
+  // This is a placeholder - you'll need to pass platform and config
+  throw new Error("getOAuthManager requires platform and config parameters");
 }

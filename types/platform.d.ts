@@ -3,6 +3,25 @@ import { PlatformType } from "./base.types";
 import { Campaign } from "./campaign.types";
 import { SyncResult } from "./sync.types";
 
+// Platform sync service interfaces
+export interface PlatformCampaign {
+  platform_campaign_id: string;
+  name: string;
+  status?: string;
+  budget?: number;
+  is_active: boolean;
+  raw_data?: Record<string, any>;
+}
+
+export interface PlatformCampaignMetrics {
+  date: string;
+  impressions: number;
+  clicks: number;
+  conversions?: number;
+  cost?: number;
+  revenue?: number;
+}
+
 // Platform status enum
 export enum PlatformStatus {
   CONNECTED = "connected",

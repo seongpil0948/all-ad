@@ -1,6 +1,3 @@
-"use client";
-
-import { motion } from "framer-motion";
 import { FaChartLine, FaUsers, FaBullseye, FaClock } from "react-icons/fa";
 
 interface StatItemProps {
@@ -12,13 +9,7 @@ interface StatItemProps {
 
 const StatItem = ({ icon, value, label, suffix = "" }: StatItemProps) => {
   return (
-    <motion.div
-      className="text-center"
-      initial={{ opacity: 0, scale: 0.8 }}
-      transition={{ duration: 0.5 }}
-      viewport={{ once: true }}
-      whileInView={{ opacity: 1, scale: 1 }}
-    >
+    <div className="text-center transform transition-transform duration-300 hover:scale-105">
       <div className="inline-flex items-center justify-center w-12 h-12 mb-4 text-primary">
         {icon}
       </div>
@@ -27,7 +18,7 @@ const StatItem = ({ icon, value, label, suffix = "" }: StatItemProps) => {
         {suffix && <span className="text-2xl lg:text-3xl">{suffix}</span>}
       </div>
       <p className="text-default-500">{label}</p>
-    </motion.div>
+    </div>
   );
 };
 

@@ -170,11 +170,21 @@ all-ad/
 │   ├── platform-database.service.ts      # DB 서비스
 │   └── platform-sync.service.ts          # 동기화 서비스
 │
-├── stores/                       # Zustand 상태 관리 ✅ (통합 및 개선됨)
-│   ├── useAuthStore.ts          # 인증 상태
-│   ├── useCampaignStore.ts      # 캠페인 상태 (setCampaigns, setStats 추가)
+├── stores/                       # Zustand 상태 관리 ✅ (Slice 패턴 적용)
+│   ├── slices/                  # 재사용 가능한 상태 슬라이스 ✅ NEW
+│   │   ├── loadingSlice.ts      # 로딩 상태 관리
+│   │   ├── errorSlice.ts        # 에러 상태 관리
+│   │   ├── authDataSlice.ts     # 인증 데이터
+│   │   ├── authActionsSlice.ts  # 인증 액션
+│   │   ├── campaignDataSlice.ts # 캠페인 데이터
+│   │   ├── campaignFilterSlice.ts # 캠페인 필터
+│   │   └── campaignActionsSlice.ts # 캠페인 액션
+│   ├── useAuthStore.ts          # 인증 상태 (Slice 패턴 적용)
+│   ├── useCampaignStore.ts      # 캠페인 상태 (Slice 패턴 적용)
 │   ├── usePlatformStore.ts      # 플랫폼 상태
-│   ├── useTeamStore.ts          # 팀 상태 (setInitialData 추가)
+│   ├── useTeamStore.ts          # 팀 상태
+│   ├── useAuthStore.old.ts      # 이전 버전 백업
+│   ├── useCampaignStore.old.ts  # 이전 버전 백업
 │   └── index.ts                 # 스토어 내보내기
 │
 ├── infrastructure/              # 인프라 레이어
@@ -193,6 +203,10 @@ all-ad/
 │   └── auth/                  # 인증 도메인
 │
 ├── lib/                        # 라이브러리 유틸리티
+│   ├── di/                    # 의존성 주입 컨테이너 ✅ NEW
+│   │   ├── container.ts       # DI 컨테이너 구현
+│   │   ├── bootstrap.ts       # 서비스 등록 및 초기화
+│   │   └── service-resolver.ts # 타입 안전한 서비스 리졸버
 │   ├── oauth/                 # OAuth 관련 유틸리티 ✅ (새로 추가)
 │   │   ├── oauth-manager.ts   # 서버측 OAuth 토큰 관리
 │   │   ├── oauth-client.ts    # 클라이언트측 OAuth URL 생성
@@ -214,6 +228,8 @@ all-ad/
 │   │   ├── client.ts        # 브라우저 클라이언트
 │   │   ├── server.ts        # 서버 클라이언트
 │   │   └── middleware.ts    # 미들웨어
+│   ├── campaign-transformer.ts # 캠페인 타입 변환 ✅ NEW
+│   ├── email-templates.ts    # 이메일 템플릿
 │   ├── logger.ts            # 로거 유틸리티
 │   └── profile.ts           # 프로필 유틸리티
 │
@@ -282,7 +298,37 @@ all-ad/
     └── instrumentation.ts # OpenTelemetry 설정
 ```
 
-## 주요 리팩토링 내용 (2025-01-06)
+## 주요 리팩토링 내용
+
+### 코드 정리 및 중복 제거 (2025-01-06)
+
+1. **중복 타입 정의 통합**
+
+   - `PlatformType`을 `/types/base.types.ts`에서만 정의
+   - `/types/database.types.ts`에서는 import하여 사용
+   - `/types/store.d.ts` 파일 제거 (실제 store 파일들과 중복)
+
+2. **Platform 서비스 통합**
+
+   - `/lib/platforms` 폴더 제거 (Adapter Pattern)
+   - `/services/platforms`로 통일 (Service Pattern)
+   - 데이터베이스 스키마와 일치하는 구조로 정리
+
+3. **미사용 컴포넌트 제거**
+
+   - `LoginRedirect.tsx` - 사용되지 않음
+   - `counter.tsx` - 사용되지 않음
+   - `CampaignTable.tsx` - CampaignDashboard에 통합됨
+   - `DashboardStats.tsx` - CampaignDashboard에 통합됨
+   - `PlatformCredentialForm.tsx` - PlatformCredentialsManager에 직접 구현
+   - `PlatformCredentials.tsx` - 사용되지 않음
+   - `InviteTeamMemberModal.tsx` - TeamManagement에 직접 구현
+
+4. **구조 정리 효과**
+   - 약 7개의 미사용 컴포넌트 제거
+   - 중복된 타입 정의 통합으로 일관성 향상
+   - Platform 서비스 구조 단순화
+   - 코드베이스 크기 감소 및 유지보수성 향상
 
 ### 프로젝트 구조 정리 (2025-01-06)
 
@@ -336,6 +382,81 @@ all-ad/
    - OAuth 인증 정보는 credentials 컬럼에 안전하게 저장
    - 토큰은 Redis에 저장 (또는 DB의 data 필드)
    - 팀별 격리된 인증 정보 관리
+
+## 주요 리팩토링 내용 (2025-01-06) - 대규모 코드베이스 개선
+
+### 1. 중복 파일 제거 및 코드 정리
+
+- **제거된 중복 파일**:
+  - `/app/page-refactored.tsx`
+  - `/app/(auth)/login/page-refactored.tsx`
+  - `/app/(private)/analytics/page-refactored.tsx`
+  - 빈 디렉토리 정리 완료
+
+### 2. 타입 정의 통합 및 정리
+
+- **새로 생성된 타입 파일**:
+
+  - `/types/store.d.ts` - 모든 Store 인터페이스 통합
+  - `/types/oauth.d.ts` - OAuth 관련 타입
+  - `/types/components.d.ts` - 컴포넌트 Props 타입
+  - `/types/actions.d.ts` - Server Actions 타입
+  - `/types/config.d.ts` - 설정 타입
+  - `/types/email.d.ts` - 이메일 템플릿 타입
+  - `/types/redis.d.ts` - Redis 타입
+
+- **타입 정의 이동**:
+  - 20개 이상의 inline 타입 정의를 `/types` 폴더로 이동
+  - 모든 타입은 `.d.ts` 파일로 관리
+
+### 3. 의존성 주입(DI) 컨테이너 구현
+
+- **DI 시스템 구축**:
+
+  - `/lib/di/container.ts` - DI 컨테이너 구현
+  - `/lib/di/bootstrap.ts` - 서비스 등록 및 초기화
+  - `/lib/di/service-resolver.ts` - 타입 안전한 서비스 리졸버
+
+- **서비스 레이어 리팩토링**:
+  - `PlatformServiceFactory` - DI 패턴 적용
+  - `PlatformSyncService` - 의존성 주입으로 변경
+  - `PlatformDatabaseService` - 생성자 주입 패턴 적용
+
+### 4. Store 구조 개선 - Slice 패턴 도입
+
+- **Slice 패턴 구현**:
+
+  - `/stores/slices/` 폴더에 재사용 가능한 slice들 생성
+  - `loadingSlice`, `errorSlice` - 공통 상태 관리
+  - `campaignDataSlice`, `campaignFilterSlice`, `campaignActionsSlice` - 캠페인 관련
+  - `authDataSlice`, `authActionsSlice` - 인증 관련
+
+- **Store 리팩토링**:
+  - `useCampaignStore` - slice 패턴으로 완전 재구현
+  - `useAuthStore` - slice 패턴 적용
+  - 기존 파일은 `.old.ts`로 백업
+
+### 5. Server Components 최적화
+
+- **서버 컴포넌트로 변환**:
+  - `/app/pricing/page.tsx` - 서버 컴포넌트 + `PricingButton` 클라이언트 컴포넌트
+  - `/app/contact/page.tsx` - 서버 컴포넌트 + `ContactForm` 클라이언트 컴포넌트
+  - `/app/support/page.tsx` - 완전 서버 컴포넌트
+  - `/app/demo/page.tsx` - 서버 컴포넌트 + `DemoButton` 클라이언트 컴포넌트
+  - `/app/error/page.tsx` - 완전 서버 컴포넌트
+
+### 6. API 엔드포인트 추가
+
+- **새로운 API 라우트**:
+  - `/api/campaigns` - 캠페인 조회 API
+  - `/api/sync` - 전체 플랫폼 동기화 API
+  - 클라이언트 스토어에서 서버 함수 직접 호출 제거
+
+### 7. 유틸리티 추가
+
+- **Campaign Transformer**:
+  - `/utils/campaign-transformer.ts` - DB 타입과 앱 타입 간 변환
+  - snake_case ↔ camelCase 변환 처리
 
 ## 주요 리팩토링 내용 (2024-01-08)
 

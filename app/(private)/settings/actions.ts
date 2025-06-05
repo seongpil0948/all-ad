@@ -3,8 +3,10 @@
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/utils/supabase/server";
-import { PlatformDatabaseService } from "@/services/platform-database.service";
-import { platformServiceFactory } from "@/services/platforms/platform-service-factory";
+import {
+  getPlatformDatabaseService,
+  getPlatformServiceFactory,
+} from "@/lib/di/service-resolver";
 import { PlatformType } from "@/types";
 
 export async function savePlatformCredentials(
@@ -21,7 +23,7 @@ export async function savePlatformCredentials(
   }
 
   // Get user's team
-  const dbService = new PlatformDatabaseService();
+  const dbService = await getPlatformDatabaseService();
   const team = await dbService.getUserTeam(user.id);
 
   if (!team) {
@@ -113,6 +115,7 @@ export async function savePlatformCredentials(
     }
   } else {
     // For API key platforms, validate credentials
+    const platformServiceFactory = await getPlatformServiceFactory();
     const service = platformServiceFactory.createService(platform);
 
     service.setCredentials(credentials);
@@ -149,7 +152,7 @@ export async function deletePlatformCredentials(platform: PlatformType) {
   }
 
   // Get user's team
-  const dbService = new PlatformDatabaseService();
+  const dbService = await getPlatformDatabaseService();
   const team = await dbService.getUserTeam(user.id);
 
   if (!team) {
@@ -179,7 +182,7 @@ export async function togglePlatformCredentials(
   }
 
   // Get user's team
-  const dbService = new PlatformDatabaseService();
+  const dbService = await getPlatformDatabaseService();
   const team = await dbService.getUserTeam(user.id);
 
   if (!team) {
@@ -211,7 +214,7 @@ export async function getTeamCredentials() {
   }
 
   // Get user's team
-  const dbService = new PlatformDatabaseService();
+  const dbService = await getPlatformDatabaseService();
   const team = await dbService.getUserTeam(user.id);
 
   if (!team) {

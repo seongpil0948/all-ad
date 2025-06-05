@@ -1,13 +1,18 @@
-import { createClient } from "@/utils/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ILogger } from "@/infrastructure/monitoring/interfaces/logger.interface";
+
 import { Campaign, CampaignMetric, Team } from "@/types/database.types";
-import log from "@/utils/logger";
 
 export class PlatformDatabaseService {
+  constructor(
+    private client: SupabaseClient,
+    private log?: ILogger,
+  ) {}
+
   async upsertCampaign(
     campaign: Omit<Campaign, "id" | "created_at" | "updated_at">,
   ): Promise<Campaign | null> {
-    const client = await createClient();
-    const { data, error } = await client
+    const { data, error } = await this.client
       .from("campaigns")
       .upsert(
         {
@@ -22,7 +27,7 @@ export class PlatformDatabaseService {
       .single();
 
     if (error) {
-      log.error("Error upserting campaign:", error);
+      this.log?.error("Error upserting campaign:", error);
 
       return null;
     }
@@ -33,8 +38,7 @@ export class PlatformDatabaseService {
   async upsertCampaignMetrics(
     metrics: Omit<CampaignMetric, "id" | "created_at">,
   ): Promise<CampaignMetric | null> {
-    const client = await createClient();
-    const { data, error } = await client
+    const { data, error } = await this.client
       .from("campaign_metrics")
       .upsert(metrics, {
         onConflict: "campaign_id,date",
@@ -43,7 +47,7 @@ export class PlatformDatabaseService {
       .single();
 
     if (error) {
-      log.error("Error upserting campaign metrics:", error);
+      this.log?.error("Error upserting campaign metrics:", error);
 
       return null;
     }
@@ -58,8 +62,7 @@ export class PlatformDatabaseService {
       isActive?: boolean;
     },
   ): Promise<Campaign[]> {
-    const client = await createClient();
-    let query = client.from("campaigns").select("*").eq("team_id", teamId);
+    let query = this.client.from("campaigns").select("*").eq("team_id", teamId);
 
     if (filters?.platform) {
       query = query.eq("platform", filters.platform);
@@ -74,7 +77,7 @@ export class PlatformDatabaseService {
     });
 
     if (error) {
-      log.error("Error fetching campaigns:", error);
+      this.log?.error("Error fetching campaigns:", error);
 
       return [];
     }
@@ -89,8 +92,7 @@ export class PlatformDatabaseService {
       endDate: string;
     },
   ): Promise<CampaignMetric[]> {
-    const client = await createClient();
-    let query = client
+    let query = this.client
       .from("campaign_metrics")
       .select("*")
       .eq("campaign_id", campaignId);
@@ -104,7 +106,7 @@ export class PlatformDatabaseService {
     const { data, error } = await query.order("date", { ascending: false });
 
     if (error) {
-      log.error("Error fetching campaign metrics:", error);
+      this.log?.error("Error fetching campaign metrics:", error);
 
       return [];
     }
@@ -116,23 +118,20 @@ export class PlatformDatabaseService {
     teamId: string,
     platform: string,
   ): Promise<void> {
-    const client = await createClient();
-    const { error } = await client
+    const { error } = await this.client
       .from("platform_credentials")
       .update({ synced_at: new Date().toISOString() })
       .eq("team_id", teamId)
       .eq("platform", platform);
 
     if (error) {
-      log.error("Error updating sync time:", error);
+      this.log?.error("Error updating sync time:", error);
     }
   }
 
   async getUserTeam(userId: string): Promise<Team | null> {
-    const client = await createClient();
-
     // First, check if user is a master of any team
-    const { data: masterTeam, error: masterError } = await client
+    const { data: masterTeam, error: masterError } = await this.client
       .from("teams")
       .select("*")
       .eq("master_user_id", userId)
@@ -143,7 +142,7 @@ export class PlatformDatabaseService {
     }
 
     // If not a master, check team_members table
-    const { data: memberData, error: memberError } = await client
+    const { data: memberData, error: memberError } = await this.client
       .from("team_members")
       .select("team_id")
       .eq("user_id", userId)
@@ -151,26 +150,26 @@ export class PlatformDatabaseService {
 
     if (memberError || !memberData) {
       // No team found, try to create one
-      const { data: newTeamId, error: createError } = await client.rpc(
+      const { data: newTeamId, error: createError } = await this.client.rpc(
         "create_team_for_user",
         { user_id: userId },
       );
 
       if (createError || !newTeamId) {
-        log.error(`Error creating team for user: ${createError}`);
+        this.log?.error(`Error creating team for user: ${createError}`);
 
         return null;
       }
 
       // Fetch the newly created team
-      const { data: newTeam, error: fetchError } = await client
+      const { data: newTeam, error: fetchError } = await this.client
         .from("teams")
         .select("*")
         .eq("id", newTeamId)
         .single();
 
       if (fetchError) {
-        log.error("Error fetching new team:", fetchError);
+        this.log?.error("Error fetching new team:", fetchError);
 
         return null;
       }
@@ -179,14 +178,14 @@ export class PlatformDatabaseService {
     }
 
     // Fetch the team details
-    const { data: team, error: teamError } = await client
+    const { data: team, error: teamError } = await this.client
       .from("teams")
       .select("*")
       .eq("id", memberData.team_id)
       .single();
 
     if (teamError) {
-      log.error("Error fetching team details:", teamError);
+      this.log?.error("Error fetching team details:", teamError);
 
       return null;
     }
@@ -202,12 +201,10 @@ export class PlatformDatabaseService {
     additionalData?: Record<string, any>,
     accountId?: string,
   ): Promise<boolean> {
-    const client = await createClient();
-
     // Check if credentials already exist for this team and platform without a specific account_id
     if (!accountId) {
       // For OAuth platforms, first check if there's an existing credential
-      const { data: existing } = await client
+      const { data: existing } = await this.client
         .from("platform_credentials")
         .select("id, account_id")
         .eq("team_id", teamId)
@@ -216,7 +213,7 @@ export class PlatformDatabaseService {
 
       if (existing) {
         // Update existing credential
-        const { error } = await client
+        const { error } = await this.client
           .from("platform_credentials")
           .update({
             credentials,
@@ -227,7 +224,7 @@ export class PlatformDatabaseService {
           .eq("id", existing.id);
 
         if (error) {
-          log.error("Error updating platform credentials:", error);
+          this.log?.error("Error updating platform credentials:", error);
 
           return false;
         }
@@ -239,7 +236,7 @@ export class PlatformDatabaseService {
     // For new credentials or when account_id is provided
     const effectiveAccountId = accountId || `${platform}_pending_${Date.now()}`;
 
-    const { error } = await client.from("platform_credentials").insert({
+    const { error } = await this.client.from("platform_credentials").insert({
       team_id: teamId,
       platform,
       credentials,
@@ -253,7 +250,7 @@ export class PlatformDatabaseService {
     });
 
     if (error) {
-      log.error("Error saving platform credentials:", error);
+      this.log?.error("Error saving platform credentials:", error);
 
       return false;
     }
@@ -266,8 +263,7 @@ export class PlatformDatabaseService {
     platform: string,
     accountId?: string,
   ): Promise<boolean> {
-    const client = await createClient();
-    let query = client
+    let query = this.client
       .from("platform_credentials")
       .delete()
       .eq("team_id", teamId)
@@ -281,7 +277,7 @@ export class PlatformDatabaseService {
     const { error } = await query;
 
     if (error) {
-      log.error("Error deleting platform credentials:", error);
+      this.log?.error("Error deleting platform credentials:", error);
 
       return false;
     }
@@ -290,15 +286,14 @@ export class PlatformDatabaseService {
   }
 
   async getTeamCredentials(teamId: string) {
-    const client = await createClient();
-    const { data, error } = await client
+    const { data, error } = await this.client
       .from("platform_credentials")
       .select("*")
       .eq("team_id", teamId)
       .order("created_at", { ascending: false });
 
     if (error) {
-      log.error("Error fetching team credentials:", error);
+      this.log?.error("Error fetching team credentials:", error);
 
       return [];
     }

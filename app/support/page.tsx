@@ -1,9 +1,6 @@
-"use client";
-
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Link } from "@heroui/link";
 import { FaEnvelope, FaPhone, FaQuestionCircle, FaBook } from "react-icons/fa";
-import { motion } from "framer-motion";
 
 import { title, subtitle } from "@/components/primitives";
 
@@ -43,26 +40,16 @@ export default function SupportPage() {
 
   return (
     <div className="container mx-auto px-6 py-20">
-      <motion.div
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-12"
-        initial={{ opacity: 0, y: 20 }}
-        transition={{ duration: 0.5 }}
-      >
+      <div className="text-center mb-12">
         <h1 className={title({ size: "lg" })}>고객 지원</h1>
         <p className={subtitle({ class: "mt-4 max-w-2xl mx-auto" })}>
           궁금한 점이 있으신가요? 다양한 방법으로 도움을 받으실 수 있습니다.
         </p>
-      </motion.div>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
         {supportOptions.map((option, index) => (
-          <motion.div
-            key={index}
-            animate={{ opacity: 1, y: 0 }}
-            initial={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.5, delay: index * 0.1 }}
-          >
+          <div key={index}>
             <Card className="h-full hover:shadow-lg transition-shadow">
               <CardHeader className="pb-0 pt-6">
                 <div className="p-3 bg-primary/10 rounded-lg w-fit mb-4">
@@ -81,16 +68,11 @@ export default function SupportPage() {
                 </Link>
               </CardBody>
             </Card>
-          </motion.div>
+          </div>
         ))}
       </div>
 
-      <motion.div
-        animate={{ opacity: 1 }}
-        className="mt-16 text-center"
-        initial={{ opacity: 0 }}
-        transition={{ duration: 0.5, delay: 0.5 }}
-      >
+      <div className="mt-16 text-center">
         <Card className="max-w-2xl mx-auto">
           <CardBody className="text-center py-8">
             <h3 className="text-xl font-semibold mb-2">엔터프라이즈 고객</h3>
@@ -102,7 +84,7 @@ export default function SupportPage() {
             </Link>
           </CardBody>
         </Card>
-      </motion.div>
+      </div>
     </div>
   );
 }

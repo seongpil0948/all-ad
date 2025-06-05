@@ -31,7 +31,6 @@ import {
   FaEye,
   FaTrash,
   FaUser,
-  FaTimesCircle,
 } from "react-icons/fa";
 
 import { useTeamStore, useAuthStore } from "@/stores";
@@ -69,11 +68,10 @@ export function TeamManagement() {
     error,
     fetchCurrentTeam,
     fetchTeamMembers,
-    fetchTeamInvitations,
+    fetchInvitations,
     inviteTeamMember,
-    updateTeamMemberRole,
-    removeTeamMember,
-    cancelInvitation,
+    updateMemberRole,
+    removeMember,
   } = useTeamStore();
 
   const currentUser = useAuthStore((state) => state.user);
@@ -86,12 +84,6 @@ export function TeamManagement() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [invitationLink, setInvitationLink] = useState<string | null>(null);
-  const {
-    isOpen: isLinkModalOpen,
-    onOpen: onLinkModalOpen,
-    onClose: onLinkModalClose,
-  } = useDisclosure();
 
   // Clear messages after 3 seconds
   useEffect(() => {
@@ -123,7 +115,7 @@ export function TeamManagement() {
   useEffect(() => {
     if (currentTeam && isInitialized) {
       fetchTeamMembers();
-      fetchTeamInvitations();
+      fetchInvitations();
     }
   }, [currentTeam?.id, isInitialized]);
 
@@ -136,19 +128,12 @@ export function TeamManagement() {
     }
 
     try {
-      const link = await inviteTeamMember(inviteEmail, inviteRole);
-
-      if (link) {
-        log.info(`팀원 초대 성공: ${inviteEmail}`);
-        setInvitationLink(link);
-        setSuccessMessage(`${inviteEmail}님에게 초대장을 보냈습니다.`);
-        onClose();
-        setInviteEmail("");
-        setInviteRole("viewer");
-        onLinkModalOpen(); // Open the link modal
-      } else {
-        throw new Error("Failed to create invitation");
-      }
+      await inviteTeamMember(inviteEmail, inviteRole);
+      log.info(`팀원 초대 성공: ${inviteEmail}`);
+      setSuccessMessage(`${inviteEmail}님에게 초대장을 보냈습니다.`);
+      onClose();
+      setInviteEmail("");
+      setInviteRole("viewer");
     } catch (error) {
       log.error(`팀원 초대 실패: ${JSON.stringify(error)}`);
       setErrorMessage("초대 중 오류가 발생했습니다. 다시 시도해주세요.");
@@ -158,7 +143,7 @@ export function TeamManagement() {
   const handleRoleUpdate = useCallback(
     async (memberId: string) => {
       try {
-        await updateTeamMemberRole(memberId, editingRole);
+        await updateMemberRole(memberId, editingRole);
         log.info(`팀원 권한 변경 성공: ${roleConfig[editingRole].label}`);
         setSuccessMessage(
           `팀원의 권한이 ${roleConfig[editingRole].label}로 변경되었습니다.`,
@@ -169,14 +154,14 @@ export function TeamManagement() {
         setErrorMessage("권한 변경에 실패했습니다. 다시 시도해주세요.");
       }
     },
-    [editingRole, updateTeamMemberRole],
+    [editingRole, updateMemberRole],
   );
 
   const handleRemoveMember = useCallback(
     async (memberId: string, memberName: string) => {
       if (confirm(`${memberName}님을 팀에서 제거하시겠습니까?`)) {
         try {
-          await removeTeamMember(memberId);
+          await removeMember(memberId);
           log.info(`팀원 제거 성공: ${memberName}`);
           setSuccessMessage(`${memberName}님이 팀에서 제거되었습니다.`);
         } catch (error) {
@@ -185,23 +170,7 @@ export function TeamManagement() {
         }
       }
     },
-    [removeTeamMember],
-  );
-
-  const handleCancelInvitation = useCallback(
-    async (invitationId: string, email: string) => {
-      if (confirm(`${email}님에 대한 초대를 취소하시겠습니까?`)) {
-        try {
-          await cancelInvitation(invitationId);
-          log.info(`초대 취소 성공: ${email}`);
-          setSuccessMessage(`${email}님에 대한 초대가 취소되었습니다.`);
-        } catch (error) {
-          log.error(`초대 취소 실패: ${JSON.stringify(error)}`);
-          setErrorMessage("초대 취소 중 오류가 발생했습니다.");
-        }
-      }
-    },
-    [cancelInvitation],
+    [removeMember],
   );
 
   const canManageTeam = userRole === "master" || userRole === "team_mate";
@@ -250,38 +219,6 @@ export function TeamManagement() {
         <Card className="bg-success-50 border-success-200">
           <CardBody>
             <p className="text-success">{successMessage}</p>
-            {invitationLink && (
-              <div className="mt-3">
-                <p className="text-sm text-success-700 mb-2">
-                  초대 링크를 복사해서 초대할 사람에게 전달하세요:
-                </p>
-                <div className="flex gap-2">
-                  <Input
-                    readOnly
-                    classNames={{
-                      input: "text-xs",
-                    }}
-                    size="sm"
-                    value={invitationLink}
-                    variant="bordered"
-                  />
-                  <Button
-                    color="success"
-                    size="sm"
-                    variant="flat"
-                    onPress={() => {
-                      navigator.clipboard.writeText(invitationLink);
-                      setSuccessMessage("초대 링크가 복사되었습니다.");
-                      setTimeout(() => {
-                        setInvitationLink(null);
-                      }, 10000); // Clear link after 10 seconds
-                    }}
-                  >
-                    복사
-                  </Button>
-                </div>
-              </div>
-            )}
           </CardBody>
         </Card>
       )}
@@ -525,25 +462,7 @@ export function TeamManagement() {
                       </p>
                     </TableCell>
 
-                    {userRole === "master" ? (
-                      <TableCell>
-                        <Button
-                          color="danger"
-                          size="sm"
-                          variant="light"
-                          onPress={() =>
-                            handleCancelInvitation(
-                              invitation.id,
-                              invitation.email,
-                            )
-                          }
-                        >
-                          <FaTimesCircle />
-                        </Button>
-                      </TableCell>
-                    ) : (
-                      <></>
-                    )}
+                    {userRole === "master" ? <TableCell>-</TableCell> : <></>}
                   </TableRow>
                 )}
               </TableBody>
@@ -603,41 +522,6 @@ export function TeamManagement() {
             </Button>
             <Button color="primary" onPress={handleInvite}>
               초대
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-
-      {/* Invitation Link Modal */}
-      <Modal isOpen={isLinkModalOpen} onClose={onLinkModalClose}>
-        <ModalContent>
-          <ModalHeader>초대 링크가 생성되었습니다</ModalHeader>
-          <ModalBody>
-            <div className="space-y-4">
-              <p className="text-sm text-default-600">
-                아래 링크를 복사하여 초대하려는 사용자에게 전달해주세요.
-              </p>
-              <div className="p-3 bg-default-100 rounded-lg">
-                <code className="text-xs break-all">{invitationLink}</code>
-              </div>
-              <Button
-                fullWidth
-                color="primary"
-                variant="flat"
-                onPress={() => {
-                  if (invitationLink) {
-                    navigator.clipboard.writeText(invitationLink);
-                    setSuccessMessage("링크가 클립보드에 복사되었습니다.");
-                  }
-                }}
-              >
-                링크 복사
-              </Button>
-            </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="light" onPress={onLinkModalClose}>
-              닫기
             </Button>
           </ModalFooter>
         </ModalContent>

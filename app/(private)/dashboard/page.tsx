@@ -105,6 +105,10 @@ export default async function DashboardPage() {
       (sum: number, c: any) => sum + (c.budget || 0),
       0,
     ),
+    totalSpend: campaigns.reduce(
+      (sum: number, c: any) => sum + (c.cost || 0),
+      0,
+    ),
     totalClicks: campaigns.reduce(
       (sum: number, c: any) => sum + (c.clicks || 0),
       0,

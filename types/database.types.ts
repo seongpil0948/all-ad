@@ -1,9 +1,6 @@
-export type PlatformType =
-  | "facebook"
-  | "google"
-  | "kakao"
-  | "naver"
-  | "coupang";
+import { PlatformType } from "./base.types";
+
+export type { PlatformType };
 export type UserRole = "master" | "viewer" | "team_mate";
 
 export interface Profile {

@@ -1,142 +1,116 @@
-import { NextRequest, NextResponse } from "next/server";
-
+import { withAuth } from "@/lib/api/middleware";
+import { ApiErrors, handleApiError, validateParams } from "@/lib/api/errors";
+import { successResponse } from "@/lib/api/response";
 import { createClient } from "@/utils/supabase/server";
-import { platformServiceFactory } from "@/services/platforms/platform-service-factory";
+import { getPlatformServiceFactory } from "@/lib/di/service-resolver";
 import { PlatformType } from "@/types";
 import log from "@/utils/logger";
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ platform: string; campaignId: string }> },
-) {
-  const { platform, campaignId } = await params;
+const VALID_PLATFORMS: PlatformType[] = [
+  "facebook",
+  "google",
+  "kakao",
+  "naver",
+  "coupang",
+];
 
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { budget } = await request.json();
-
-    if (!budget || isNaN(budget) || budget < 0) {
-      return NextResponse.json(
-        { error: "Invalid budget value" },
-        { status: 400 },
-      );
-    }
-
-    const platformType = platform as PlatformType;
-
-    const validPlatforms: PlatformType[] = [
-      "facebook",
-      "google",
-      "kakao",
-      "naver",
-      "coupang",
-    ];
-
-    if (!validPlatforms.includes(platformType)) {
-      return NextResponse.json({ error: "Invalid platform" }, { status: 400 });
-    }
-
-    // Get user's team and check permissions
-    const { data: teamMember, error: teamError } = await supabase
-      .from("team_members")
-      .select("team_id, role")
-      .eq("user_id", user.id)
-      .single();
-
-    if (teamError || !teamMember) {
-      return NextResponse.json({ error: "Team not found" }, { status: 404 });
-    }
-
-    if (teamMember.role === "viewer") {
-      return NextResponse.json(
-        { error: "Insufficient permissions" },
-        { status: 403 },
-      );
-    }
-
-    // Get platform credentials
-    const { data: credential, error: credError } = await supabase
-      .from("platform_credentials")
-      .select("*")
-      .eq("team_id", teamMember.team_id)
-      .eq("platform", platformType)
-      .eq("is_active", true)
-      .single();
-
-    if (credError || !credential) {
-      return NextResponse.json(
-        { error: "Platform credentials not found" },
-        { status: 404 },
-      );
-    }
-
-    // Update budget in the platform
-    const platformService = platformServiceFactory.createService(platformType);
-
-    await platformService.setCredentials(credential.credentials);
-
+export const PATCH = withAuth(
+  async (request, context, routeContext) => {
     try {
-      const success = await platformService.updateCampaignBudget(
-        campaignId,
-        budget,
-      );
+      const { platform, campaignId } = await routeContext.params;
+      const body = await request.json();
 
-      if (!success) {
-        throw new Error("Failed to update budget on platform");
+      // Validate request body
+      validateParams(body, ["budget"]);
+      const { budget } = body;
+
+      // Validate budget value
+      if (isNaN(budget) || budget < 0) {
+        throw ApiErrors.INVALID_REQUEST(
+          "Invalid budget value. Must be a positive number",
+        );
       }
 
-      // Update budget in our database
-      const { error: updateError } = await supabase
-        .from("campaigns")
-        .update({
-          budget,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("team_id", teamMember.team_id)
+      // Validate platform
+      const platformType = platform as PlatformType;
+
+      if (!VALID_PLATFORMS.includes(platformType)) {
+        throw ApiErrors.INVALID_REQUEST("Invalid platform");
+      }
+
+      const supabase = await createClient();
+
+      // Get platform credentials
+      const { data: credential, error: credError } = await supabase
+        .from("platform_credentials")
+        .select("*")
+        .eq("team_id", context.teamMember.team_id)
         .eq("platform", platformType)
-        .eq("platform_campaign_id", campaignId);
+        .eq("is_active", true)
+        .single();
 
-      if (updateError) {
-        throw updateError;
+      if (credError || !credential) {
+        throw ApiErrors.NOT_FOUND("Platform credentials");
       }
 
-      return NextResponse.json({
-        success: true,
-        message: "Budget updated successfully",
-        budget,
-      });
-    } catch (error) {
-      log.error(
-        `Budget update error for ${platformType}: ${JSON.stringify(error)}`,
-      );
+      // Update budget in the platform
+      const platformServiceFactory = await getPlatformServiceFactory();
+      const platformService =
+        platformServiceFactory.createService(platformType);
 
-      return NextResponse.json(
-        {
-          error: "Failed to update budget",
-          details: error instanceof Error ? error.message : "Unknown error",
-        },
-        { status: 500 },
+      await platformService.setCredentials(credential.credentials);
+
+      try {
+        const success = await platformService.updateCampaignBudget(
+          campaignId,
+          budget,
+        );
+
+        if (!success) {
+          throw new Error("Failed to update budget on platform");
+        }
+
+        // Update budget in our database
+        const { error: updateError } = await supabase
+          .from("campaigns")
+          .update({
+            budget,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("team_id", context.teamMember.team_id)
+          .eq("platform", platformType)
+          .eq("platform_campaign_id", campaignId);
+
+        if (updateError) {
+          throw updateError;
+        }
+
+        log.info("Campaign budget updated", {
+          userId: context.user.id,
+          teamId: context.teamMember.team_id,
+          platform: platformType,
+          campaignId,
+          newBudget: budget,
+        });
+
+        return successResponse(
+          { campaignId, budget },
+          { message: "Budget updated successfully" },
+        );
+      } catch (error) {
+        throw ApiErrors.PLATFORM_ERROR(
+          platformType,
+          error instanceof Error ? error.message : "Failed to update budget",
+        );
+      }
+    } catch (error) {
+      return handleApiError(
+        error,
+        "PATCH /campaigns/[platform]/[campaignId]/budget",
       );
     }
-  } catch (error) {
-    log.error(
-      `Error in PUT /campaigns/${platform}/${campaignId}/budget: ${JSON.stringify(error)}`,
-    );
-
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+  {
+    requiredRole: ["master", "team_mate"], // Only master and team_mate can update
+  },
+);

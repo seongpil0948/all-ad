@@ -7,14 +7,8 @@ import { Button } from "@heroui/button";
 import { Spinner } from "@heroui/spinner";
 
 import { uploadAvatar, deleteAvatar } from "@/utils/profile";
+import { AvatarUploadProps } from "@/types/components";
 import log from "@/utils/logger";
-
-interface AvatarUploadProps {
-  userId: string;
-  currentAvatarUrl?: string;
-  onUploadComplete: (url: string) => void;
-  onDeleteComplete: () => void;
-}
 
 export function AvatarUpload({
   userId,

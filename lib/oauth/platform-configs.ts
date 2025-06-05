@@ -1,5 +1,5 @@
 // Server-side only OAuth configuration functions
-import { OAuthConfig } from "./oauth-client";
+import type { OAuthConfig } from "@/types/oauth";
 
 import { createClient } from "@/utils/supabase/server";
 

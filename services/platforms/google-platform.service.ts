@@ -10,6 +10,8 @@ import {
 } from "@/types";
 import log from "@/utils/logger";
 import { GoogleAdsApiCredentials } from "@/types/google-ads.types";
+import { formatDateToYYYYMMDD } from "@/utils/date-formatter";
+import { transformPlatformMetrics } from "@/utils/metric-transformer";
 
 export class GooglePlatformService extends BasePlatformService {
   platform: PlatformType = "google";
@@ -125,22 +127,14 @@ export class GooglePlatformService extends BasePlatformService {
       const metrics = await service.getCampaignMetrics(
         customerId,
         campaignId,
-        startDate.toISOString().split("T")[0],
-        endDate.toISOString().split("T")[0],
+        formatDateToYYYYMMDD(startDate),
+        formatDateToYYYYMMDD(endDate),
       );
 
       // 메트릭을 플랫폼 공통 형식으로 변환
-      return metrics.map((metric) => ({
-        impressions: metric.impressions,
-        clicks: metric.clicks,
-        cost: metric.costMicros / 1_000_000,
-        conversions: metric.conversions,
-        revenue: metric.conversionValue,
-        ctr: metric.ctr,
-        cpc: metric.averageCpc / 1_000_000,
-        cpm: metric.averageCpm / 1_000_000,
-        date: metric.date || new Date().toISOString().split("T")[0],
-      }));
+      return metrics.map((metric) =>
+        transformPlatformMetrics("google", metric),
+      );
     } catch (error) {
       log.error("Failed to fetch campaign metrics", error as Error);
       throw error;

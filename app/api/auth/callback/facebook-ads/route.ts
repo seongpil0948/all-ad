@@ -1,125 +1,48 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
+import {
+  handleOAuthCallback,
+  standardTokenExchange,
+} from "@/lib/oauth/oauth-callback-handler";
 import { createClient } from "@/utils/supabase/server";
-import { OAuthManager } from "@/lib/oauth/oauth-manager";
-import { getOAuthConfigWithCredentials } from "@/lib/oauth/platform-configs";
-import log from "@/utils/logger";
 
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const code = searchParams.get("code");
-  const state = searchParams.get("state");
-  const error = searchParams.get("error");
+  return handleOAuthCallback(request, {
+    platform: "facebook",
 
-  if (error) {
-    log.error("Facebook Ads OAuth error:", { error });
+    getOAuthConfig: async (teamId: string) => {
+      const supabase = await createClient();
 
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_SITE_URL}/settings?error=oauth_denied`,
-    );
-  }
-
-  if (!code || !state) {
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_SITE_URL}/settings?error=invalid_callback`,
-    );
-  }
-
-  try {
-    // Verify state and get user info
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/login?error=unauthorized`,
-      );
-    }
-
-    // Decode state to get account info
-    const stateData = JSON.parse(Buffer.from(state, "base64").toString());
-
-    if (stateData.userId !== user.id) {
-      throw new Error("State mismatch");
-    }
-
-    // Get OAuth config with team's stored credentials
-    const oauthConfig = await getOAuthConfigWithCredentials(
-      "facebook",
-      stateData.teamId,
-    );
-
-    if (!oauthConfig) {
-      throw new Error("OAuth credentials not found for this team");
-    }
-
-    // Exchange code for tokens
-    const oauthManager = new OAuthManager("facebook", oauthConfig);
-    const tokenData = await oauthManager.exchangeCodeForTokens(code);
-
-    // Get ad accounts from Facebook API
-    const accountsResponse = await fetch(
-      `https://graph.facebook.com/v18.0/me/adaccounts?fields=id,name,account_status&access_token=${tokenData.access_token}`,
-    );
-
-    if (!accountsResponse.ok) {
-      throw new Error("Failed to fetch Facebook ad accounts");
-    }
-
-    const { data: adAccounts } = await accountsResponse.json();
-    const primaryAccount = adAccounts[0]; // Use first account or let user select
-
-    if (!primaryAccount) {
-      throw new Error("No Facebook ad account found");
-    }
-
-    // Find the pending credential record and update it
-    const { data: pendingCreds } = await supabase
-      .from("platform_credentials")
-      .select("id, account_id, data")
-      .eq("team_id", stateData.teamId)
-      .eq("platform", "facebook")
-      .ilike("account_id", "facebook_pending_%")
-      .single();
-
-    if (pendingCreds) {
-      // Update the pending credential with actual account information
-      const { error: updateError } = await supabase
+      const { data: credential } = await supabase
         .from("platform_credentials")
-        .update({
-          account_id: primaryAccount.id,
-          account_name: primaryAccount.name || "Facebook Ads Account",
-          data: {
-            ...pendingCreds.data,
-            account_status: primaryAccount.account_status,
-            connected: true,
-            connected_at: new Date().toISOString(),
-          },
-          is_active: true,
-          last_synced_at: new Date().toISOString(),
-        })
-        .eq("id", pendingCreds.id);
+        .select("credentials")
+        .eq("team_id", teamId)
+        .eq("platform", "facebook")
+        .single();
 
-      if (updateError) {
-        throw updateError;
+      if (!credential?.credentials) {
+        return null;
       }
-    } else {
-      throw new Error("No pending credentials found");
-    }
 
-    // Store tokens in Redis
-    await oauthManager.storeTokens(user.id, primaryAccount.id, tokenData);
+      const baseUrl =
+        process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_SITE_URL}/settings?success=facebook_connected`,
-    );
-  } catch (error) {
-    log.error("Facebook Ads OAuth callback error:", error as Error);
+      return {
+        clientId: credential.credentials.app_id,
+        clientSecret: credential.credentials.app_secret,
+        redirectUri: `${baseUrl}/api/auth/callback/facebook-ads`,
+        authorizationUrl: "https://www.facebook.com/v18.0/dialog/oauth",
+        tokenUrl: "https://graph.facebook.com/v18.0/oauth/access_token",
+        scope: ["ads_management", "ads_read"],
+      };
+    },
 
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_SITE_URL}/settings?error=oauth_failed`,
-    );
-  }
+    exchangeCodeForToken: async (code, config) => {
+      return standardTokenExchange(
+        code,
+        config,
+        "https://graph.facebook.com/v18.0/oauth/access_token",
+      );
+    },
+  });
 }

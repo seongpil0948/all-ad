@@ -2,12 +2,7 @@
  * Email templates for the AllAd platform
  */
 
-interface EmailTemplateData {
-  inviterName: string;
-  teamName: string;
-  invitationLink: string;
-  email?: string;
-}
+import { EmailTemplateData } from "@/types/email";
 
 const baseStyles = {
   container: `

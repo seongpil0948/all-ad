@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/utils/supabase/server";
-import { platformServiceFactory } from "@/services/platforms/platform-service-factory";
-import { PlatformDatabaseService } from "@/services/platform-database.service";
+import {
+  getPlatformServiceFactory,
+  getPlatformDatabaseService,
+  getLogger,
+} from "@/lib/di/service-resolver";
 import { PlatformType } from "@/types";
-import log from "@/utils/logger";
 
 export async function POST(
   request: NextRequest,
@@ -68,9 +70,13 @@ export async function POST(
       );
     }
 
+    // Get services from DI container
+    const platformServiceFactory = await getPlatformServiceFactory();
+    const dbService = await getPlatformDatabaseService();
+    const log = await getLogger();
+
     // Create platform service
     const platformService = platformServiceFactory.createService(platformType);
-    const dbService = new PlatformDatabaseService();
 
     // Set credentials
     platformService.setCredentials(credential.credentials);
@@ -120,6 +126,8 @@ export async function POST(
       message: `Synced ${campaigns.length} campaigns for ${platformType}`,
     });
   } catch (error) {
+    const log = await getLogger();
+
     log.error(`Sync error for platform ${error}:`);
 
     return NextResponse.json(

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/utils/supabase/server";
-import { platformServiceFactory } from "@/services/platforms/platform-service-factory";
+import { getPlatformServiceFactory } from "@/lib/di/service-resolver";
 import log from "@/utils/logger";
 
 export async function updateCampaignBudgetAction(
@@ -65,6 +65,7 @@ export async function updateCampaignBudgetAction(
 
     // Update on the platform
     try {
+      const platformServiceFactory = await getPlatformServiceFactory();
       const platformService = platformServiceFactory.createService(
         campaign.platform_credentials.platform,
       );
@@ -158,6 +159,7 @@ export async function toggleCampaignStatusAction(campaignId: string) {
 
     // Update on the platform
     try {
+      const platformServiceFactory = await getPlatformServiceFactory();
       const platformService = platformServiceFactory.createService(
         campaign.platform_credentials.platform,
       );

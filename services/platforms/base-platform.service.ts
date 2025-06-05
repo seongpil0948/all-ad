@@ -1,6 +1,7 @@
 import { PlatformService } from "./platform-service.interface";
 
 import { Campaign, CampaignMetrics, PlatformType } from "@/types";
+import { formatDateToYYYYMMDD } from "@/utils/date-formatter";
 
 export abstract class BasePlatformService implements PlatformService {
   abstract platform: PlatformType;
@@ -34,7 +35,7 @@ export abstract class BasePlatformService implements PlatformService {
 
   // Common helper methods
   protected formatDate(date: Date): string {
-    return date.toISOString().split("T")[0];
+    return formatDateToYYYYMMDD(date);
   }
 
   protected parseMetricsResponse(data: any): CampaignMetrics {

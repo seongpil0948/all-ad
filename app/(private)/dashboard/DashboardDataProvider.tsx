@@ -4,6 +4,7 @@ import { useEffect } from "react";
 
 import { useCampaignStore } from "@/stores";
 import { Campaign } from "@/types/database.types";
+import { transformDbCampaignToApp } from "@/utils/campaign-transformer";
 
 interface DashboardDataProviderProps {
   initialCampaigns: Campaign[];
@@ -11,6 +12,7 @@ interface DashboardDataProviderProps {
     totalCampaigns: number;
     activeCampaigns: number;
     totalBudget: number;
+    totalSpend: number;
     totalClicks: number;
     totalImpressions: number;
     platforms: number;
@@ -28,8 +30,18 @@ export function DashboardDataProvider({
 
   useEffect(() => {
     // Set initial data from server
-    setCampaigns(initialCampaigns);
-    setStats(initialStats);
+    const transformedCampaigns = initialCampaigns.map(transformDbCampaignToApp);
+
+    setCampaigns(transformedCampaigns);
+    setStats({
+      totalCampaigns: initialStats.totalCampaigns,
+      activeCampaigns: initialStats.activeCampaigns,
+      totalBudget: initialStats.totalBudget,
+      totalSpend: initialStats.totalSpend,
+      totalClicks: initialStats.totalClicks,
+      totalImpressions: initialStats.totalImpressions,
+      platforms: initialStats.platforms,
+    });
   }, []);
 
   return <>{children}</>;

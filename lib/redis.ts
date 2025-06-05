@@ -1,8 +1,7 @@
 import { createClient } from "redis";
 
 import log from "@/utils/logger";
-
-export type RedisClient = ReturnType<typeof createClient>;
+import { RedisClient } from "@/types/redis";
 
 let redisClient: RedisClient | null = null;
 

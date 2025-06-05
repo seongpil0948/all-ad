@@ -1,12 +1,5 @@
 // Client-side OAuth utilities
-export interface OAuthConfig {
-  clientId: string;
-  clientSecret: string;
-  redirectUri: string;
-  scope: string[];
-  authorizationUrl: string;
-  tokenUrl: string;
-}
+import type { OAuthConfig } from "@/types/oauth";
 
 export class OAuthClient {
   private config: OAuthConfig;
