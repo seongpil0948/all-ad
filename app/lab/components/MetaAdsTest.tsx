@@ -37,7 +37,7 @@ export default function MetaAdsTest() {
     businessId: "",
   });
 
-  const [authCode, setAuthCode] = useState("");
+  const [authCode, setAuthCode] = useState(""); // OAuth 콜백에서 받은 코드 (현재는 직접 토큰 입력 방식)
   const [loading] = useState(false);
   const [apiResponse, setApiResponse] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);

@@ -10,9 +10,9 @@ interface EmailRequest {
   replyTo?: string;
 }
 
-interface ResendResponse {
-  id: string;
-}
+// interface ResendResponse {
+//   id: string;
+// }
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const RESEND_API_URL = "https://api.resend.com/emails";

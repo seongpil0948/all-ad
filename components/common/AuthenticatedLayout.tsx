@@ -14,7 +14,7 @@ interface AuthenticatedLayoutProps {
 
 export function AuthenticatedLayout({
   children,
-  requiredRole,
+  requiredRole: _requiredRole,
 }: AuthenticatedLayoutProps) {
   const { user, loading } = useAuth();
   const router = useRouter();

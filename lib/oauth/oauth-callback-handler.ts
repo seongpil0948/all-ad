@@ -3,7 +3,6 @@ import type { PlatformType } from "@/types";
 
 import { NextRequest, NextResponse } from "next/server";
 
-import { createClient } from "@/utils/supabase/server";
 import { OAuthManager } from "@/lib/oauth/oauth-manager";
 import log from "@/utils/logger";
 
@@ -110,7 +109,6 @@ export async function handleOAuthCallback(
       const tokenData = await params.exchangeCodeForToken(code, oauthConfig);
 
       // Save token to database
-      const supabase = await createClient();
       const oauthManager = new OAuthManager(params.platform, oauthConfig);
 
       await oauthManager.storeTokens(teamId, params.platform, {

@@ -73,7 +73,6 @@ export async function POST(
     // Get services from DI container
     const platformServiceFactory = await getPlatformServiceFactory();
     const dbService = await getPlatformDatabaseService();
-    const log = await getLogger();
 
     // Create platform service
     const platformService = platformServiceFactory.createService(platformType);

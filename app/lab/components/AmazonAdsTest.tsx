@@ -41,7 +41,7 @@ export default function AmazonAdsTest() {
   });
 
   const [authCode, setAuthCode] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [apiResponse, setApiResponse] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 

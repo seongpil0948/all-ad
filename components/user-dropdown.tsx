@@ -33,7 +33,7 @@ export function UserDropdown() {
       await signOut();
       router.push("/");
       router.refresh();
-    } catch (error) {
+    } catch {
       // Error is handled in the store
     }
   };

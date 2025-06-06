@@ -7,16 +7,15 @@ import { Input } from "@heroui/input";
 import { Divider } from "@heroui/divider";
 import { Code } from "@heroui/code";
 import { Select, SelectItem } from "@heroui/select";
+import { useIsSSR } from "@react-aria/ssr";
 
 import log from "@/utils/logger";
 import {
   GoogleAdsTestCredentials,
-  GoogleAdsCampaign,
   generateAuthUrl,
   fetchGoogleAdsAccounts,
   testConnection,
 } from "@/app/lab/actions";
-import { useIsSSR } from "@react-aria/ssr";
 
 interface GoogleAdsAccount {
   id: string;
@@ -40,7 +39,6 @@ export default function GoogleAdsTest() {
   const [loading, setLoading] = useState(false);
   const [accounts, setAccounts] = useState<GoogleAdsAccount[]>([]);
   const [selectedAccountId, setSelectedAccountId] = useState("");
-  const [campaigns, setCampaigns] = useState<GoogleAdsCampaign[]>([]);
   const [apiResponse, setApiResponse] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -126,6 +124,7 @@ export default function GoogleAdsTest() {
       setLoading(false);
     }
   };
+
   if (isSSR) {
     return <div>Loading...</div>;
   }
