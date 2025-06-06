@@ -87,16 +87,16 @@ FACEBOOK_APP_SECRET=your_facebook_app_secret
 
 ```bash
 # 의존성 설치
-npm install
+pnpm install
 
 # 개발 서버 실행
-npm run dev
+pnpm dev
 
 # 프로덕션 빌드
-npm run build
+pnpm build
 
 # 프로덕션 실행
-npm start
+pnpm start
 ```
 
 ### 데이터베이스 마이그레이션

@@ -9,6 +9,7 @@ This is a Next.js 15 multi-tenant advertising platform that integrates multiple 
 [너가 작업해야할 경로, 프로젝트 경로 MCP 활용]
 /Users/2309-n0015/Code/Project/all-ad
 
+- 틱톡, 구글, 메타, 아마존등 통합에 필요한 문서들은 docs 에 위치하고 있어
 - 작업전 STRUCTURE.md 파일, 프로젝트지식(프로젝트 정책 및 유저 워크플로우)을 확인하여 중복 코드 방지 및 기존 코드를 활용해줘, 작업후 구조 변경시 STRUCTURE.md 도 업데이트 되어야해
 - 작업 후 pnpm format, pnpm lint, pnpm build 를 통해 문제 없음을 검증하도 록해줘
 - 미 이메일 기반 로그인/회원가입 시스템이 이미 구현(Auth)되어있음

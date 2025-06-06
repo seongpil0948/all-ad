@@ -215,8 +215,8 @@ importers:
         specifier: 12.15.0
         version: 12.15.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       google-ads-api:
-        specifier: 19.0.4-rest-beta
-        version: 19.0.4-rest-beta
+        specifier: 17.1.0
+        version: 17.1.0
       intl-messageformat:
         specifier: 10.7.16
         version: 10.7.16
@@ -244,12 +244,6 @@ importers:
       redis:
         specifier: ^5.1.1
         version: 5.1.1
-      reflect-metadata:
-        specifier: ^0.2.2
-        version: 0.2.2
-      tsyringe:
-        specifier: ^4.10.0
-        version: 4.10.0
       zustand:
         specifier: ^5.0.2
         version: 5.0.5(@types/react@19.1.6)(react@19.1.0)(use-sync-external-store@1.5.0(react@19.1.0))
@@ -3384,12 +3378,6 @@ packages:
       }
     engines: { node: ">=4" }
 
-  axios@1.9.0:
-    resolution:
-      {
-        integrity: sha512-re4CqKTJaURpzbLHtIi6XpDv20/CnpXOtjRY5/CU32L8gU8ek9UIivcfvSWvmKEngmVbrUtPpdDwWDWL7DNHvg==,
-      }
-
   axobject-query@4.1.0:
     resolution:
       {
@@ -3502,12 +3490,6 @@ packages:
         integrity: sha512-+IxzY9BZOQd/XuYPRmrvEVjF/nqj5kgT4kEq7VofrDoM1MxoRjEWkrCC3EtLi59TVawxTAn+orJwFQcrqEN1+g==,
       }
     engines: { node: ">=18" }
-
-  circ-json@1.0.4:
-    resolution:
-      {
-        integrity: sha512-/2NljkKlOCvNgs8jsIlJcCFhUfF6C1JJKM8PdJQ6HqIrqhJBouMcWFdeDJLNLZAadeTj0K9FMziH74hpEtAr1g==,
-      }
 
   cjs-module-lexer@1.4.3:
     resolution:
@@ -4209,18 +4191,6 @@ packages:
         integrity: sha512-GX+ysw4PBCz0PzosHDepZGANEuFCMLrnRTiEy9McGjmkCQYwRq4A/X786G/fjM/+OjsWSU1ZrY5qyARZmO/uwg==,
       }
 
-  follow-redirects@1.15.9:
-    resolution:
-      {
-        integrity: sha512-gew4GsXizNgdoRyqmyfMHyAmXsZDk6mHkSxZFCzW9gwlbtOW44CDtYavM+y+72qD/Vq2l550kMF52DT8fOLJqQ==,
-      }
-    engines: { node: ">=4.0" }
-    peerDependencies:
-      debug: "*"
-    peerDependenciesMeta:
-      debug:
-        optional: true
-
   for-each@0.3.5:
     resolution:
       {
@@ -4234,13 +4204,6 @@ packages:
         integrity: sha512-XHIrMD0NpDrNM/Ckf7XJiBbLl57KEhT3+i3yY+eWm+cqYZJQTZrKo8Y8AWKnuV5GT4scfuUGt9LzNoIx3dU1nQ==,
       }
     engines: { node: ">= 0.12" }
-
-  form-data@4.0.2:
-    resolution:
-      {
-        integrity: sha512-hGfm/slu0ZabnNt4oaRZ6uREyfCj6P4fT/n6A1rGV+Z0VdGXjfOhVUpkn6qVQONHGIFwmveGXyDs75+nr6FM8w==,
-      }
-    engines: { node: ">= 6" }
 
   fraction.js@4.3.7:
     resolution:
@@ -4389,16 +4352,16 @@ packages:
       }
     engines: { node: ">= 0.4" }
 
-  google-ads-api@19.0.4-rest-beta:
+  google-ads-api@17.1.0:
     resolution:
       {
-        integrity: sha512-m2rqTiknWaXAHZzp6v0eJJgtdUbGk5lrqknpVK1lGErReSy23yd1M391vX4jqezQ2eMMOVKeL3s6U+8qHkA0vQ==,
+        integrity: sha512-dI8vtEb+Rkaxh1UudHyla2jw119ffKypvGOcaRXqh3mckk6mGVDkx04FdovVemBid5/cfJR8Hvb90gVU9hyZmw==,
       }
 
-  google-ads-node@15.0.0:
+  google-ads-node@14.0.0:
     resolution:
       {
-        integrity: sha512-2+Etg5TKnDhAUGV0OR6ol6AKKyeJQHAC5ixgZn4/CQLZx+5J7O2o39uE8ZJWFxZ46E4+aWhQ/UtoAn4/9bc0fA==,
+        integrity: sha512-rbgZkcaRSCQKnwRki4Jl2GY6Csd12a3ouX45xcK1ttFbJqtKrm8GPkctAIVnwAx0yVi8VMgpFWaEls8/i0SGJg==,
       }
 
   google-auth-library@7.14.1:
@@ -5072,13 +5035,6 @@ packages:
         integrity: sha512-sNPKHvyjVf7gyjwS4xGTaW/mCnF8wnjtifKBEhxfZ7E/S8tQ0rssrwGNn6q8JH/ohItJfSQp9mBtQYuTlH5QnA==,
       }
 
-  map-obj@4.3.0:
-    resolution:
-      {
-        integrity: sha512-hdN1wVrZbb29eBGiGjJbeP8JbKjq1urkHJ/LIP/NY48MZ1QVXUsQBV1G1zvYFHn1XE06cwjBsOI2K3Ulnj1YXQ==,
-      }
-    engines: { node: ">=8" }
-
   math-intrinsics@1.1.0:
     resolution:
       {
@@ -5508,12 +5464,6 @@ packages:
       }
     engines: { node: ">=12.0.0" }
 
-  proxy-from-env@1.1.0:
-    resolution:
-      {
-        integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==,
-      }
-
   punycode@2.3.1:
     resolution:
       {
@@ -5578,12 +5528,6 @@ packages:
         integrity: sha512-4t6n2Q9aFqpQnqBR/g84zsXW+U0hdSzYymqoGGZk44p+kuzzHbgukjOAca+PlQ563TbXcgv1njerllYWjAWw4g==,
       }
     engines: { node: ">= 18" }
-
-  reflect-metadata@0.2.2:
-    resolution:
-      {
-        integrity: sha512-urBwgfrvVP/eAyXx4hluJivBKzuEbSQs9rKWCrCkbSxNv8mxPcUZKeuoF3Uy4mJl3Lwprp6yy5/39VWigZ4K6Q==,
-      }
 
   reflect.getprototypeof@1.0.10:
     resolution:
@@ -5824,22 +5768,10 @@ packages:
       }
     engines: { node: ">= 0.4" }
 
-  stream-chain@2.2.5:
-    resolution:
-      {
-        integrity: sha512-1TJmBx6aSWqZ4tx7aTpBDXK0/e2hhcNSTV8+CbFJtDjbb+I1mZ8lHit0Grw9GRT+6JbIrrDd8esncgBi8aBXGA==,
-      }
-
   stream-events@1.0.5:
     resolution:
       {
         integrity: sha512-E1GUzBSgvct8Jsb3v2X15pjzN1tYebtbLaMg+eBOUOAxgbLoSbT2NS91ckc5lJD1KfLjId+jXJRgo0qnV5Nerg==,
-      }
-
-  stream-json@1.9.1:
-    resolution:
-      {
-        integrity: sha512-uWkjJ+2Nt/LO9Z/JyKZbMusL8Dkh97uUBTv3AJQ74y07lVahLY4eEFsPsE97pxYBwr8nnjMAIch5eqI0gPShyw==,
       }
 
   stream-shift@1.0.3:
@@ -6050,12 +5982,6 @@ packages:
         integrity: sha512-2Ac2RgzDe/cn48GvOe3M+o82pEFewD3UPbyoUHHdKasHwJKjds4fLXWf/Ux5kATBKN20oaFGu+jbElp1pos0mg==,
       }
 
-  tslib@1.14.1:
-    resolution:
-      {
-        integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==,
-      }
-
   tslib@2.3.0:
     resolution:
       {
@@ -6067,13 +5993,6 @@ packages:
       {
         integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==,
       }
-
-  tsyringe@4.10.0:
-    resolution:
-      {
-        integrity: sha512-axr3IdNuVIxnaK5XGEUFTu3YmAQ6lllgrvqfEoR16g/HGnYY/6We4oWENtAnzK6/LpJ2ur9PAb80RBt7/U4ugw==,
-      }
-    engines: { node: ">= 6.0.0" }
 
   type-check@0.4.0:
     resolution:
@@ -9087,14 +9006,6 @@ snapshots:
 
   axe-core@4.10.3: {}
 
-  axios@1.9.0:
-    dependencies:
-      follow-redirects: 1.15.9
-      form-data: 4.0.2
-      proxy-from-env: 1.1.0
-    transitivePeerDependencies:
-      - debug
-
   axobject-query@4.1.0: {}
 
   balanced-match@1.0.2: {}
@@ -9156,8 +9067,6 @@ snapshots:
       supports-color: 7.2.0
 
   chownr@3.0.0: {}
-
-  circ-json@1.0.4: {}
 
   cjs-module-lexer@1.4.3: {}
 
@@ -9707,8 +9616,6 @@ snapshots:
 
   flatted@3.3.3: {}
 
-  follow-redirects@1.15.9: {}
-
   for-each@0.3.5:
     dependencies:
       is-callable: 1.2.7
@@ -9720,13 +9627,6 @@ snapshots:
       es-set-tostringtag: 2.1.0
       mime-types: 2.1.35
       safe-buffer: 5.2.1
-
-  form-data@4.0.2:
-    dependencies:
-      asynckit: 0.4.0
-      combined-stream: 1.0.8
-      es-set-tostringtag: 2.1.0
-      mime-types: 2.1.35
 
   fraction.js@4.3.7: {}
 
@@ -9841,23 +9741,18 @@ snapshots:
       define-properties: 1.2.1
       gopd: 1.2.0
 
-  google-ads-api@19.0.4-rest-beta:
+  google-ads-api@17.1.0:
     dependencies:
       "@isaacs/ttlcache": 1.4.1
-      axios: 1.9.0
-      circ-json: 1.0.4
-      google-ads-node: 15.0.0
+      google-ads-node: 14.0.0
       google-auth-library: 7.14.1
       google-gax: 4.6.1
       long: 4.0.0
-      map-obj: 4.3.0
-      stream-json: 1.9.1
     transitivePeerDependencies:
-      - debug
       - encoding
       - supports-color
 
-  google-ads-node@15.0.0:
+  google-ads-node@14.0.0:
     dependencies:
       google-gax: 4.6.1
       lru-cache: 10.4.3
@@ -10277,8 +10172,6 @@ snapshots:
     dependencies:
       "@jridgewell/sourcemap-codec": 1.5.0
 
-  map-obj@4.3.0: {}
-
   math-intrinsics@1.1.0: {}
 
   merge2@1.4.1: {}
@@ -10520,8 +10413,6 @@ snapshots:
       "@types/node": 22.15.27
       long: 5.3.2
 
-  proxy-from-env@1.1.0: {}
-
   punycode@2.3.1: {}
 
   queue-microtask@1.2.3: {}
@@ -10561,8 +10452,6 @@ snapshots:
       "@redis/json": 5.1.1(@redis/client@5.1.1)
       "@redis/search": 5.1.1(@redis/client@5.1.1)
       "@redis/time-series": 5.1.1(@redis/client@5.1.1)
-
-  reflect-metadata@0.2.2: {}
 
   reflect.getprototypeof@1.0.10:
     dependencies:
@@ -10758,15 +10647,9 @@ snapshots:
       es-errors: 1.3.0
       internal-slot: 1.1.0
 
-  stream-chain@2.2.5: {}
-
   stream-events@1.0.5:
     dependencies:
       stubs: 3.0.0
-
-  stream-json@1.9.1:
-    dependencies:
-      stream-chain: 2.2.5
 
   stream-shift@1.0.3: {}
 
@@ -10910,15 +10793,9 @@ snapshots:
       minimist: 1.2.8
       strip-bom: 3.0.0
 
-  tslib@1.14.1: {}
-
   tslib@2.3.0: {}
 
   tslib@2.8.1: {}
-
-  tsyringe@4.10.0:
-    dependencies:
-      tslib: 1.14.1
 
   type-check@0.4.0:
     dependencies:
