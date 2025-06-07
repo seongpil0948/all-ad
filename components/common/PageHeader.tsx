@@ -1,11 +1,6 @@
-import { title, subtitle } from "@/components/primitives";
+import type { PageHeaderProps } from "@/types/components";
 
-interface PageHeaderProps {
-  pageTitle: string;
-  pageSubtitle?: string;
-  highlight?: string;
-  centered?: boolean;
-}
+import { title, subtitle } from "@/components/primitives";
 
 export function PageHeader({
   pageTitle,

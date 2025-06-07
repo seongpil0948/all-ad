@@ -22,7 +22,6 @@ import {
   ModalFooter,
   useDisclosure,
 } from "@heroui/modal";
-import { Spinner } from "@heroui/spinner";
 import { addToast } from "@heroui/toast";
 import {
   FaFacebook,
@@ -40,6 +39,7 @@ import { useCampaignStore } from "@/stores";
 import { Campaign } from "@/types/campaign.types";
 import { PlatformType } from "@/types";
 import log from "@/utils/logger";
+import { LoadingState } from "@/components/common";
 
 const platformIcons = {
   facebook: FaFacebook,
@@ -164,11 +164,7 @@ export function CampaignDashboard() {
   };
 
   if (isLoading && campaigns.length === 0) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Spinner size="lg" />
-      </div>
-    );
+    return <LoadingState message="캠페인 데이터를 불러오는 중..." />;
   }
 
   return (

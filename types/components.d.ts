@@ -45,3 +45,71 @@ export interface AvatarUploadProps {
   onUploadComplete: (url: string) => void;
   onDeleteComplete: () => void;
 }
+
+export interface MessageCardProps {
+  message: string;
+  type: "success" | "error" | "info" | "warning";
+  onClose?: () => void;
+}
+
+// Common component props
+export interface LoadingStateProps {
+  message?: string;
+  size?: "sm" | "md" | "lg";
+  fullScreen?: boolean;
+}
+
+export interface ErrorStateProps {
+  title?: string;
+  message: string;
+  onRetry?: () => void;
+  type?: "error" | "warning" | "info";
+}
+
+export interface PageHeaderProps {
+  pageTitle: string;
+  pageSubtitle?: string;
+  highlight?: string;
+  centered?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+}
+
+export interface MetricCardProps {
+  title: string;
+  value: string | number;
+  trend?: {
+    value: number;
+    isPositive: boolean;
+  };
+  icon?: React.ReactNode;
+  description?: string;
+}
+
+export interface CTAButtonProps {
+  children: React.ReactNode;
+  href?: string;
+  color?: "primary" | "secondary" | "success" | "warning" | "danger";
+  variant?: "solid" | "bordered" | "light" | "flat" | "shadow";
+  size?: "sm" | "md" | "lg";
+  fullWidth?: boolean;
+  className?: string;
+  startContent?: React.ReactNode;
+  endContent?: React.ReactNode;
+  onPress?: () => void;
+}
+
+// Auth related props
+export interface AuthFormProps {
+  type: "login" | "signup";
+}
+
+// Dashboard related props
+export interface SyncButtonProps {
+  platform?: PlatformType;
+  onSync?: () => void;
+}
+
+export interface DashboardDataProviderProps {
+  children: React.ReactNode;
+}

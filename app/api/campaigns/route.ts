@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-
 import { createClient } from "@/utils/supabase/server";
 import log from "@/utils/logger";
 import { transformDbCampaignToApp } from "@/utils/campaign-transformer";
+import { successResponse } from "@/lib/api/response";
+import { ApiErrors, handleApiError } from "@/lib/api/errors";
 
 export async function GET(request: Request) {
   try {
@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw ApiErrors.UNAUTHORIZED();
     }
 
     // Get user's team
@@ -28,8 +28,7 @@ export async function GET(request: Request) {
         userId: user.id,
         error: teamError,
       });
-
-      return NextResponse.json({ error: "Team not found" }, { status: 404 });
+      throw ApiErrors.TEAM_NOT_FOUND();
     }
 
     // Parse query parameters
@@ -58,11 +57,7 @@ export async function GET(request: Request) {
 
     if (campaignsError) {
       log.error("Error fetching campaigns", { error: campaignsError });
-
-      return NextResponse.json(
-        { error: "Failed to fetch campaigns" },
-        { status: 500 },
-      );
+      throw ApiErrors.INTERNAL_ERROR();
     }
 
     // Calculate stats
@@ -88,16 +83,11 @@ export async function GET(request: Request) {
       transformDbCampaignToApp,
     );
 
-    return NextResponse.json({
+    return successResponse({
       campaigns: transformedCampaigns,
       stats,
     });
   } catch (error) {
-    log.error("Unexpected error in GET /api/campaigns", { error });
-
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return handleApiError(error, "GET /api/campaigns");
   }
 }

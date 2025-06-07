@@ -37,7 +37,6 @@ export default function MetaAdsTest() {
     businessId: "1081449880552906",
   });
 
-  const [authCode, setAuthCode] = useState(""); // OAuth 콜백에서 받은 코드
   const [apiResponse, setApiResponse] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,7 +67,7 @@ export default function MetaAdsTest() {
     const errorParam = urlParams.get("error");
 
     if (code) {
-      setAuthCode(code);
+      // OAuth code received - could be used for token exchange
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 

@@ -1,8 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 import { createClient } from "@/utils/supabase/server";
 import log from "@/utils/logger";
 import { getTeamInvitationEmailTemplate } from "@/utils/email-templates";
+import { successResponse } from "@/lib/api/response";
+import { ApiErrors, handleApiError, validateParams } from "@/lib/api/errors";
 
 /**
  * API endpoint to send team invitation email
@@ -18,18 +20,19 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw ApiErrors.UNAUTHORIZED();
     }
 
-    const { email, inviterName, teamName, invitationLink } =
-      await request.json();
+    const body = await request.json();
 
-    if (!email || !inviterName || !teamName || !invitationLink) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 },
-      );
-    }
+    validateParams(body, [
+      "email",
+      "inviterName",
+      "teamName",
+      "invitationLink",
+    ]);
+
+    const { email, inviterName, teamName, invitationLink } = body;
 
     log.info("Sending invitation email", { email, teamName });
 
@@ -54,10 +57,7 @@ export async function POST(request: NextRequest) {
     if (!supabaseUrl || !supabaseAnonKey) {
       log.error("Supabase configuration missing");
 
-      return NextResponse.json(
-        { error: "Email service configuration error" },
-        { status: 500 },
-      );
+      throw ApiErrors.INTERNAL_ERROR();
     }
 
     try {
@@ -101,13 +101,8 @@ export async function POST(request: NextRequest) {
       log.warn("Continuing despite email failure - invitation created");
     }
 
-    return NextResponse.json({ success: true });
+    return successResponse(null, { message: "Invitation sent successfully" });
   } catch (error) {
-    log.error("Failed to send invitation email", error as Error);
-
-    return NextResponse.json(
-      { error: "Failed to send invitation email" },
-      { status: 500 },
-    );
+    return handleApiError(error, "POST /api/team/invite");
   }
 }

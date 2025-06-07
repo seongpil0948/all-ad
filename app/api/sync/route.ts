@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
-
 import { createClient } from "@/utils/supabase/server";
 import { getPlatformSyncService } from "@/lib/di/service-resolver";
 import log from "@/utils/logger";
 import { PlatformType } from "@/types";
+import { successResponse } from "@/lib/api/response";
+import { ApiErrors, handleApiError } from "@/lib/api/errors";
 
 export async function POST(request: Request) {
   try {
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw ApiErrors.UNAUTHORIZED();
     }
 
     // Get user's team
@@ -29,8 +29,7 @@ export async function POST(request: Request) {
         userId: user.id,
         error: teamError,
       });
-
-      return NextResponse.json({ error: "Team not found" }, { status: 404 });
+      throw ApiErrors.TEAM_NOT_FOUND();
     }
 
     // Parse request body for optional platform parameter
@@ -54,11 +53,7 @@ export async function POST(request: Request) {
           platform,
           error: credError,
         });
-
-        return NextResponse.json(
-          { error: `No credentials found for ${platform}` },
-          { status: 404 },
-        );
+        throw ApiErrors.NOT_FOUND(`Credentials for ${platform}`);
       }
 
       const success = await syncService.syncPlatform(
@@ -67,13 +62,18 @@ export async function POST(request: Request) {
         credential.credentials,
       );
 
-      return NextResponse.json({
-        success,
-        platform,
-        message: success
-          ? `Successfully synced ${platform}`
-          : `Failed to sync ${platform}`,
-      });
+      if (!success) {
+        throw ApiErrors.SYNC_FAILED(platform);
+      }
+
+      return successResponse(
+        {
+          platform,
+        },
+        {
+          message: `Successfully synced ${platform}`,
+        },
+      );
     } else {
       // Sync all platforms
       const result = await syncService.syncAllPlatforms(
@@ -81,20 +81,18 @@ export async function POST(request: Request) {
         user.id,
       );
 
-      return NextResponse.json({
-        success: result.success,
-        results: result.results,
-        message: result.success
-          ? "Successfully synced all platforms"
-          : "Some platforms failed to sync",
-      });
+      return successResponse(
+        {
+          results: result.results,
+        },
+        {
+          message: result.success
+            ? "Successfully synced all platforms"
+            : "Some platforms failed to sync",
+        },
+      );
     }
   } catch (error) {
-    log.error("Unexpected error in POST /api/sync", { error });
-
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return handleApiError(error, "POST /api/sync");
   }
 }

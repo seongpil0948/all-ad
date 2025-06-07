@@ -1,3 +1,5 @@
+import { Card, CardBody } from "@heroui/card";
+
 import { PLATFORMS, SECTION_TITLES } from "@/constants/home";
 import { PageHeader } from "@/components/common/PageHeader";
 
@@ -16,15 +18,18 @@ export function PlatformsSection() {
             const Icon = platform.icon;
 
             return (
-              <div
+              <Card
                 key={index}
-                className="flex flex-col items-center p-6 bg-white dark:bg-default-100 rounded-lg hover:shadow-md transition-shadow"
+                isPressable
+                className="hover:shadow-md transition-shadow"
               >
-                <div className={`text-5xl mb-3 ${platform.color}`}>
-                  <Icon />
-                </div>
-                <span className="text-sm font-medium">{platform.name}</span>
-              </div>
+                <CardBody className="flex flex-col items-center p-6">
+                  <div className={`text-5xl mb-3 ${platform.color}`}>
+                    <Icon />
+                  </div>
+                  <span className="text-sm font-medium">{platform.name}</span>
+                </CardBody>
+              </Card>
             );
           })}
         </div>

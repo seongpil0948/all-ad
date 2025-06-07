@@ -1,13 +1,8 @@
+import type { ErrorStateProps } from "@/types/components";
+
 import { Card, CardBody } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { FaExclamationTriangle } from "react-icons/fa";
-
-interface ErrorStateProps {
-  title?: string;
-  message: string;
-  onRetry?: () => void;
-  type?: "error" | "warning" | "info";
-}
 
 export function ErrorState({
   title = "오류가 발생했습니다",

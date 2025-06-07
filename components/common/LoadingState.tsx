@@ -1,10 +1,6 @@
-import { Spinner } from "@heroui/spinner";
+import type { LoadingStateProps } from "@/types/components";
 
-interface LoadingStateProps {
-  message?: string;
-  size?: "sm" | "md" | "lg";
-  fullScreen?: boolean;
-}
+import { Spinner } from "@heroui/spinner";
 
 export function LoadingState({
   message = "로딩 중...",

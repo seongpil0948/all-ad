@@ -23,7 +23,6 @@ import {
   useDisclosure,
 } from "@heroui/modal";
 import { Avatar } from "@heroui/avatar";
-import { Spinner } from "@heroui/spinner";
 import {
   FaUserPlus,
   FaCrown,
@@ -36,6 +35,7 @@ import {
 import { useTeamStore, useAuthStore } from "@/stores";
 import { UserRole } from "@/types/database.types";
 import log from "@/utils/logger";
+import { LoadingState } from "@/components/common";
 
 const roleConfig = {
   master: {
@@ -176,11 +176,7 @@ export function TeamManagement() {
   const canManageTeam = userRole === "master" || userRole === "team_mate";
 
   if (isLoading && !currentTeam) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Spinner size="lg" />
-      </div>
-    );
+    return <LoadingState message="팀 정보를 불러오는 중..." />;
   }
 
   if (!currentTeam) {
