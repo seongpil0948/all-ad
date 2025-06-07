@@ -8,6 +8,7 @@ export interface GoogleAdsTestCredentials {
   clientId: string;
   clientSecret: string;
   developerToken: string;
+  accessToken?: string; // 선택적, OAuth2 인증 후 사용
   refreshToken: string;
   loginCustomerId?: string;
 }
@@ -23,17 +24,22 @@ export interface GoogleAdsCampaign {
 }
 
 // Google Ads API 클라이언트 생성
-function createGoogleAdsClient(credentials: GoogleAdsTestCredentials) {
+function createGoogleAdsClient(
+  credentials: GoogleAdsTestCredentials,
+  targetCustomerId?: string,
+) {
   const client = new GoogleAdsApi({
     client_id: credentials.clientId,
     client_secret: credentials.clientSecret,
     developer_token: credentials.developerToken,
   });
 
+  // MCC 계정으로 로그인하여 다른 계정에 접근하는 경우
   const customer = client.Customer({
-    customer_id: credentials.loginCustomerId || "",
+    // customer_id: targetCustomerId || credentials.loginCustomerId || "", // 작업할 대상 계정
+    customer_id: targetCustomerId || credentials.loginCustomerId || "", // 작업할 대상 계정
     refresh_token: credentials.refreshToken,
-    login_customer_id: credentials.loginCustomerId,
+    login_customer_id: credentials.loginCustomerId, // MCC 관리자 계정
   });
 
   return { client, customer };
@@ -49,7 +55,8 @@ export async function generateAuthUrl(clientId: string, redirectUri: string) {
       `response_type=code&` +
       `scope=${encodeURIComponent("https://www.googleapis.com/auth/adwords")}&` +
       `access_type=offline&` +
-      `prompt=consent`;
+      `prompt=consent&` +
+      `include_granted_scopes=true`;
 
     log.info("Auth URL generated", { clientId });
 
@@ -67,7 +74,12 @@ export async function exchangeCodeForToken(
   clientId: string,
   clientSecret: string,
   redirectUri: string,
-) {
+): Promise<{
+  success: boolean;
+  refreshToken?: string;
+  accessToken?: string;
+  error?: string;
+}> {
   try {
     const response = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
@@ -108,7 +120,11 @@ export async function fetchGoogleAdsAccounts(
   credentials: GoogleAdsTestCredentials,
 ) {
   try {
-    const { customer } = createGoogleAdsClient(credentials);
+    // MCC 계정을 사용하여 하위 계정 목록 조회
+    const { customer } = createGoogleAdsClient(
+      credentials,
+      credentials.loginCustomerId,
+    );
 
     const query = `
       SELECT
@@ -141,6 +157,7 @@ export async function fetchGoogleAdsAccounts(
       success: false,
       error: error.message || "계정 목록 조회 실패",
       details: error.details || undefined,
+      accounts: [],
     };
   }
 }
@@ -151,16 +168,26 @@ export async function fetchCampaigns(
   customerId: string,
 ) {
   try {
-    const { client } = createGoogleAdsClient(credentials);
+    // 특정 고객 ID를 대상으로 작업
+    const { customer } = createGoogleAdsClient(credentials, customerId);
 
-    // 특정 고객 ID로 새 customer 인스턴스 생성
-    const customer = client.Customer({
-      customer_id: customerId,
-      refresh_token: credentials.refreshToken,
-      login_customer_id: credentials.loginCustomerId,
-    });
+    // Manager 계정인지 확인
+    const isManagerAccount = customerId === credentials.loginCustomerId;
 
-    const query = `
+    // Manager 계정에서는 메트릭을 제외한 기본 정보만 조회
+    const query = isManagerAccount
+      ? `
+      SELECT
+        campaign.id,
+        campaign.name,
+        campaign.status,
+        campaign.campaign_budget,
+        campaign_budget.amount_micros
+      FROM campaign
+      WHERE campaign.status != 'REMOVED'
+      ORDER BY campaign.id
+    `
+      : `
       SELECT
         campaign.id,
         campaign.name,
@@ -210,13 +237,8 @@ export async function updateCampaignStatus(
   status: "ENABLED" | "PAUSED",
 ) {
   try {
-    const { client } = createGoogleAdsClient(credentials);
-
-    const customer = client.Customer({
-      customer_id: customerId,
-      refresh_token: credentials.refreshToken,
-      login_customer_id: credentials.loginCustomerId,
-    });
+    // 특정 고객 ID를 대상으로 작업
+    const { customer } = createGoogleAdsClient(credentials, customerId);
 
     const operations: any[] = [
       {
@@ -259,13 +281,8 @@ export async function createLabel(
   },
 ) {
   try {
-    const { client } = createGoogleAdsClient(credentials);
-
-    const customer = client.Customer({
-      customer_id: customerId,
-      refresh_token: credentials.refreshToken,
-      login_customer_id: credentials.loginCustomerId,
-    });
+    // 특정 고객 ID를 대상으로 작업
+    const { customer } = createGoogleAdsClient(credentials, customerId);
 
     const operations: any[] = [
       {
@@ -302,7 +319,11 @@ export async function createLabel(
 // 테스트 연결
 export async function testConnection(credentials: GoogleAdsTestCredentials) {
   try {
-    const { customer } = createGoogleAdsClient(credentials);
+    // MCC 계정으로 연결 테스트
+    const { customer } = createGoogleAdsClient(
+      credentials,
+      credentials.loginCustomerId,
+    );
 
     // 간단한 쿼리로 연결 테스트
     const query = `

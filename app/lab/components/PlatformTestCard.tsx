@@ -19,14 +19,12 @@ interface PlatformTestCardProps {
   title: string;
   testItems: TestItem[];
   onRunTest: (testId: string) => void;
-  isLoading?: boolean;
 }
 
 export default function PlatformTestCard({
   title,
   testItems,
   onRunTest,
-  isLoading = false,
 }: PlatformTestCardProps) {
   const getStatusIcon = (status: TestItem["status"]) => {
     switch (status) {
@@ -98,7 +96,7 @@ export default function PlatformTestCard({
               {getStatusChip(item.status)}
               <Button
                 color="primary"
-                isDisabled={isLoading || item.status === "testing"}
+                isDisabled={item.status === "testing"}
                 size="sm"
                 variant="flat"
                 onPress={() => onRunTest(item.id)}

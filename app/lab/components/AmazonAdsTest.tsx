@@ -41,7 +41,6 @@ export default function AmazonAdsTest() {
   });
 
   const [authCode, setAuthCode] = useState("");
-  const [loading] = useState(false);
   const [apiResponse, setApiResponse] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -87,7 +86,7 @@ export default function AmazonAdsTest() {
       client_id: credentials.clientId,
       scope: "advertising::campaign_management",
       response_type: "code",
-      redirect_uri: `${window.location.origin}/lab/amazon`,
+      redirect_uri: `${window.location.origin}/api/auth/callback/amazon-ads`,
     });
 
     const authUrl = `https://www.amazon.com/ap/oa?${params.toString()}`;
@@ -271,7 +270,6 @@ export default function AmazonAdsTest() {
       </Card>
 
       <PlatformTestCard
-        isLoading={loading}
         testItems={testItems}
         title="Amazon Ads API 연동 테스트"
         onRunTest={runTest}

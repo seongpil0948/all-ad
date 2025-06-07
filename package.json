@@ -82,7 +82,7 @@
     "dotenv": "^16.5.0",
     "echarts": "^5.6.0",
     "framer-motion": "12.15.0",
-    "google-ads-api": "17.1.0",
+    "google-ads-api": "20.0.1",
     "intl-messageformat": "10.7.16",
     "next": "15.3.3",
     "next-themes": "0.4.6",

@@ -38,7 +38,6 @@ export default function TikTokAdsTest() {
   });
 
   const [authCode, setAuthCode] = useState("");
-  const [loading] = useState(false);
   const [apiResponse, setApiResponse] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -84,7 +83,7 @@ export default function TikTokAdsTest() {
       client_key: credentials.appId,
       scope: "ads.management,ads.operation,reporting",
       response_type: "code",
-      redirect_uri: `${window.location.origin}/lab/tiktok`,
+      redirect_uri: `${window.location.origin}/api/auth/callback/tiktok-ads`,
       state: Math.random().toString(36).substring(7),
     });
 
@@ -277,7 +276,6 @@ export default function TikTokAdsTest() {
       </Card>
 
       <PlatformTestCard
-        isLoading={loading}
         testItems={testItems}
         title="TikTok Ads API 연동 테스트"
         onRunTest={runTest}

@@ -30,15 +30,14 @@ interface TestItem {
 
 export default function MetaAdsTest() {
   const [credentials, setCredentials] = useState<MetaCredentials>({
-    appId: "",
-    appSecret: "",
+    appId: "1225707049222640",
+    appSecret: "05181cc437c787e18b8b8059e4dcfeb9",
     accessToken: "",
     systemUserToken: "",
-    businessId: "",
+    businessId: "1081449880552906",
   });
 
-  const [authCode, setAuthCode] = useState(""); // OAuth 콜백에서 받은 코드 (현재는 직접 토큰 입력 방식)
-  const [loading] = useState(false);
+  const [authCode, setAuthCode] = useState(""); // OAuth 콜백에서 받은 코드
   const [apiResponse, setApiResponse] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,7 +81,7 @@ export default function MetaAdsTest() {
   const handleGenerateAuthUrl = () => {
     const params = new URLSearchParams({
       client_id: credentials.appId,
-      redirect_uri: `${window.location.origin}/lab/meta`,
+      redirect_uri: `${window.location.origin}/api/auth/callback/meta-ads`,
       scope:
         "ads_management,ads_read,business_management,pages_read_engagement",
       response_type: "code",
@@ -251,7 +250,6 @@ export default function MetaAdsTest() {
       </Card>
 
       <PlatformTestCard
-        isLoading={loading}
         testItems={testItems}
         title="Meta Ads API 연동 테스트"
         onRunTest={runTest}
