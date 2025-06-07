@@ -11,6 +11,21 @@ export interface GoogleAdsCustomer {
   auto_tagging_enabled?: boolean;
   tracking_url_template?: string;
   resource_name?: string;
+  can_manage_clients?: boolean;
+  status?:
+    | "UNSPECIFIED"
+    | "UNKNOWN"
+    | "ENABLED"
+    | "CANCELED"
+    | "SUSPENDED"
+    | "CLOSED";
+  optimization_score?: number;
+  has_partners_badge?: boolean;
+  call_reporting_setting?: {
+    call_reporting_enabled?: boolean;
+    call_conversion_reporting_enabled?: boolean;
+    call_conversion_action?: string;
+  };
 }
 
 // Customer Client Link types
@@ -47,6 +62,8 @@ export interface CustomerClient {
     | "CLOSED";
   level?: string;
   applied_labels?: string[];
+  hidden?: boolean;
+  client_customer?: string;
 }
 
 // Campaign types
@@ -179,8 +196,17 @@ export interface GoogleAdsAccountInfo {
   currencyCode?: string;
   timeZone?: string;
   isManager: boolean;
-  isTestAccount?: boolean;
+  isTestAccount: boolean;
   isMCC?: boolean;
+  status?: string;
+  isHidden?: boolean;
+  level?: number;
+  linkStatus?: string;
+  resourceName?: string;
+  canManageClients?: boolean;
+  optimizationScore?: number;
+  hasPartnersBadge?: boolean;
+  callReportingEnabled?: boolean;
 }
 
 // OAuth token response

@@ -49,7 +49,6 @@ function createGoogleAdsClient(
 
   // MCC 계정으로 로그인하여 다른 계정에 접근하는 경우
   const customer = client.Customer({
-    // customer_id: targetCustomerId || credentials.loginCustomerId || "", // 작업할 대상 계정
     customer_id: targetCustomerId || credentials.loginCustomerId || "", // 작업할 대상 계정
     refresh_token: credentials.refreshToken,
     login_customer_id: credentials.loginCustomerId, // MCC 관리자 계정
@@ -128,69 +127,175 @@ export async function exchangeCodeForToken(
   }
 }
 
-// 계정 목록 가져오기
+// 계정 목록 가져오기 - 개선된 버전
 export async function fetchGoogleAdsAccounts(
   credentials: GoogleAdsTestCredentials,
 ) {
   try {
-    // MCC 계정을 사용하여 하위 계정 목록 조회
     const { customer } = createGoogleAdsClient(
       credentials,
       credentials.loginCustomerId,
     );
 
-    // 두 가지 쿼리를 시도: 먼저 customer_client_link로, 실패하면 customer_client로
     let accounts: GoogleAdsAccountInfo[] = [];
 
+    // 방법 1: customer_client를 통한 직접 조회 (권장)
     try {
-      // customer_client_link를 통해 연결된 모든 계정 조회 (테스트 계정 포함)
-      const linkQuery = `
+      const clientQuery = `
         SELECT
-          customer_client_link.client_customer,
-          customer_client_link.status,
-          customer_client_link.manager_link_id
-        FROM customer_client_link
-        WHERE customer_client_link.status = 'ACTIVE'
-      `;
+          customer_client.client_customer,
+          customer_client.id,
+          customer_client.descriptive_name,
+          customer_client.currency_code,
+          customer_client.time_zone,
+          customer_client.manager,
+          customer_client.test_account,
+          customer_client.status,
+          customer_client.level,
+          customer_client.hidden
+        FROM customer_client
+        `;
 
-      const linkResponse: GoogleAdsQueryResponseRow[] =
-        await customer.query(linkQuery);
+      const clientResponse: GoogleAdsQueryResponseRow[] =
+        await customer.query(clientQuery);
 
-      // 각 연결된 계정의 세부 정보 조회
-      for (const link of linkResponse) {
-        if (!link?.customer_client_link?.client_customer) continue;
+      log.info(`Found ${clientResponse.length} accounts via customer_client`);
+      log.debug(`customer_client response: ${JSON.stringify(clientResponse)}`);
 
-        const clientCustomerId = link.customer_client_link.client_customer
-          .split("/")
-          .pop();
+      // 모든 계정 처리 (상태와 관계없이)
+      for (const row of clientResponse) {
+        if (!row.customer_client) continue;
 
-        if (!clientCustomerId) continue;
+        const account: GoogleAdsAccountInfo = {
+          id: row.customer_client.id,
+          name:
+            row.customer_client.descriptive_name ||
+            `Account ${row.customer_client.id}`,
+          currencyCode: row.customer_client.currency_code,
+          timeZone: row.customer_client.time_zone,
+          isManager: row.customer_client.manager || false,
+          isTestAccount: row.customer_client.test_account || false,
+          status: row.customer_client.status,
+          isHidden: row.customer_client.hidden || false,
+          level: row.customer_client.level
+            ? parseInt(row.customer_client.level, 10)
+            : undefined,
+          resourceName: row.customer_client.client_customer,
+        };
 
-        try {
-          const { customer: clientCustomer } = createGoogleAdsClient(
-            credentials,
-            clientCustomerId,
-          );
+        accounts.push(account);
 
-          const detailQuery = `
-            SELECT
-              customer.id,
-              customer.descriptive_name,
-              customer.currency_code,
-              customer.time_zone,
-              customer.test_account,
-              customer.manager
-            FROM customer
-            LIMIT 1
-          `;
+        // 추가 정보가 필요한 경우 개별 계정 상세 조회
+        if (row.customer_client.id) {
+          try {
+            const { customer: clientCustomer } = createGoogleAdsClient(
+              credentials,
+              row.customer_client.id,
+            );
 
-          const detailResponse: GoogleAdsQueryResponseRow[] =
-            await clientCustomer.query(detailQuery);
+            const detailQuery = `
+              SELECT
+                customer.id,
+                customer.descriptive_name,
+                customer.currency_code,
+                customer.time_zone,
+                customer.test_account,
+                customer.manager,
+                customer.status,
+                customer.optimization_score,
+                customer.has_partners_badge,
+                customer.call_reporting_setting.call_reporting_enabled
+              FROM customer
+              WHERE customer.id = ${row.customer_client.id}
+              LIMIT 1
+            `;
 
-          if (detailResponse && detailResponse.length > 0) {
-            const customerData = detailResponse[0]?.customer;
+            const detailResponse: GoogleAdsQueryResponseRow[] =
+              await clientCustomer.query(detailQuery);
 
-            if (customerData) {
+            if (detailResponse?.[0]?.customer) {
+              const customerData = detailResponse[0].customer;
+              // 추가 정보로 업데이트
+              const accountIndex = accounts.findIndex(
+                (acc) => acc.id === customerData.id,
+              );
+
+              if (accountIndex !== -1) {
+                accounts[accountIndex] = {
+                  ...accounts[accountIndex],
+                  optimizationScore: customerData.optimization_score,
+                  hasPartnersBadge: customerData.has_partners_badge,
+                  callReportingEnabled:
+                    customerData.call_reporting_setting?.call_reporting_enabled,
+                };
+              }
+            }
+          } catch (detailError) {
+            log.warn(
+              `Could not fetch additional details for account ${row.customer_client.id}`,
+              { error: detailError as Record<string, unknown> },
+            );
+            // 상세 정보 조회 실패해도 기본 정보는 유지
+          }
+        }
+      }
+    } catch (clientError) {
+      log.error("customer_client query failed", { error: clientError });
+      try {
+        const linkQuery = `
+          SELECT
+            customer_client_link.client_customer,
+            customer_client_link.status,
+            customer_client_link.manager_link_id,
+            customer_client_link.hidden
+          FROM customer_client_link
+        `;
+
+        const linkResponse: GoogleAdsQueryResponseRow[] =
+          await customer.query(linkQuery);
+
+        log.info(`Found ${linkResponse.length} links via customer_client_link`);
+
+        // 각 연결된 계정의 세부 정보 조회
+        for (const link of linkResponse) {
+          if (!link?.customer_client_link?.client_customer) continue;
+
+          const clientCustomerId = link.customer_client_link.client_customer
+            .split("/")
+            .pop();
+
+          if (!clientCustomerId) continue;
+
+          // 이미 추가된 계정인지 확인
+          if (accounts.find((acc) => acc.id === clientCustomerId)) {
+            continue;
+          }
+
+          try {
+            const { customer: clientCustomer } = createGoogleAdsClient(
+              credentials,
+              clientCustomerId,
+            );
+
+            const detailQuery = `
+              SELECT
+                customer.id,
+                customer.descriptive_name,
+                customer.currency_code,
+                customer.time_zone,
+                customer.test_account,
+                customer.manager,
+                customer.status
+              FROM customer
+              LIMIT 1
+            `;
+
+            const detailResponse: GoogleAdsQueryResponseRow[] =
+              await clientCustomer.query(detailQuery);
+
+            if (detailResponse?.[0]?.customer) {
+              const customerData = detailResponse[0].customer;
+
               accounts.push({
                 id: customerData.id,
                 name:
@@ -199,105 +304,47 @@ export async function fetchGoogleAdsAccounts(
                 timeZone: customerData.time_zone,
                 isManager: customerData.manager || false,
                 isTestAccount: customerData.test_account || false,
+                status: customerData.status,
+                linkStatus: link.customer_client_link.status,
+                isHidden: link.customer_client_link.hidden || false,
+                resourceName: link.customer_client_link.client_customer,
               });
             }
-          }
-        } catch (detailError) {
-          log.warn(`Failed to fetch details for account ${clientCustomerId}`, {
-            error:
-              detailError instanceof Error
-                ? detailError.message
-                : String(detailError),
-          });
-        }
-      }
-    } catch (linkError) {
-      log.warn("customer_client_link query failed, trying customer_client", {
-        error:
-          linkError instanceof Error ? linkError.message : String(linkError),
-      });
-
-      // Fallback: customer_client 테이블 사용
-      const clientQuery = `
-        SELECT
-          customer_client.id,
-          customer_client.descriptive_name,
-          customer_client.currency_code,
-          customer_client.time_zone,
-          customer_client.manager,
-          customer_client.test_account
-        FROM customer_client
-        WHERE customer_client.status = 'ENABLED'
-      `;
-
-      const clientResponse: GoogleAdsQueryResponseRow[] =
-        await customer.query(clientQuery);
-
-      accounts = clientResponse
-        .filter((row) => row.customer_client)
-        .map((row) => ({
-          id: row.customer_client!.id,
-          name:
-            row.customer_client!.descriptive_name ||
-            `Account ${row.customer_client!.id}`,
-          currencyCode: row.customer_client!.currency_code,
-          timeZone: row.customer_client!.time_zone,
-          isManager: row.customer_client!.manager || false,
-          isTestAccount: row.customer_client!.test_account || false,
-        }));
-    }
-
-    // MCC 계정 자체도 추가
-    try {
-      const mccQuery = `
-        SELECT
-          customer.id,
-          customer.descriptive_name,
-          customer.currency_code,
-          customer.time_zone,
-          customer.test_account,
-          customer.manager
-        FROM customer
-        LIMIT 1
-      `;
-
-      const mccResponse: GoogleAdsQueryResponseRow[] =
-        await customer.query(mccQuery);
-
-      if (mccResponse && mccResponse.length > 0) {
-        const mccData = mccResponse[0]?.customer;
-
-        if (mccData) {
-          const mccAccount = {
-            id: mccData.id,
-            name: mccData.descriptive_name || `MCC Account ${mccData.id}`,
-            currencyCode: mccData.currency_code,
-            timeZone: mccData.time_zone,
-            isManager: true,
-            isTestAccount: mccData.test_account || false,
-            isMCC: true,
-          };
-
-          // MCC 계정이 목록에 없으면 추가
-          if (!accounts.find((acc) => acc.id === mccAccount.id)) {
-            accounts.unshift(mccAccount);
+          } catch (detailError) {
+            log.warn(
+              `Failed to fetch details for linked account ${clientCustomerId}`,
+              { error: detailError as Record<string, unknown> },
+            );
           }
         }
+      } catch (linkError) {
+        log.error("customer_client_link query also failed", {
+          error: linkError,
+        });
       }
-    } catch (mccError) {
-      log.warn("Failed to fetch MCC account details", {
-        error: mccError instanceof Error ? mccError.message : String(mccError),
-      });
     }
 
-    log.info("Fetched Google Ads accounts", {
-      count: accounts.length,
-      accounts: accounts.map((acc) => ({
-        id: acc.id,
-        name: acc.name,
-        isManager: acc.isManager,
-        isTestAccount: acc.isTestAccount,
-      })),
+    // 계정 정렬: MCC > 일반 관리자 > 일반 계정 > 테스트 계정
+    accounts.sort((a, b) => {
+      if (a.isMCC) return -1;
+      if (b.isMCC) return 1;
+      if (a.isManager && !b.isManager) return -1;
+      if (!a.isManager && b.isManager) return 1;
+      if (!a.isTestAccount && b.isTestAccount) return -1;
+      if (a.isTestAccount && !b.isTestAccount) return 1;
+
+      return 0;
+    });
+
+    log.info("Successfully fetched all accounts", {
+      total: accounts.length,
+      breakdown: {
+        mcc: accounts.filter((a) => a.isMCC).length,
+        managers: accounts.filter((a) => a.isManager && !a.isMCC).length,
+        test: accounts.filter((a) => a.isTestAccount).length,
+        regular: accounts.filter((a) => !a.isManager && !a.isTestAccount)
+          .length,
+      },
     });
 
     return { success: true, accounts };
