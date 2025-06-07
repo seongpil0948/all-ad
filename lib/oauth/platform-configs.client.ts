@@ -11,8 +11,8 @@ const baseOAuthConfigs = {
   facebook: {
     redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback/facebook-ads`,
     scope: ["ads_management", "ads_read", "business_management"],
-    authorizationUrl: "https://www.facebook.com/v18.0/dialog/oauth",
-    tokenUrl: "https://graph.facebook.com/v18.0/oauth/access_token",
+    authorizationUrl: "https://www.facebook.com/v23.0/dialog/oauth",
+    tokenUrl: "https://graph.facebook.com/v23.0/oauth/access_token",
   },
   meta: {
     redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback/meta-ads`,
@@ -22,8 +22,8 @@ const baseOAuthConfigs = {
       "business_management",
       "pages_read_engagement",
     ],
-    authorizationUrl: "https://www.facebook.com/v18.0/dialog/oauth",
-    tokenUrl: "https://graph.facebook.com/v18.0/oauth/access_token",
+    authorizationUrl: "https://www.facebook.com/v23.0/dialog/oauth",
+    tokenUrl: "https://graph.facebook.com/v23.0/oauth/access_token",
   },
   kakao: {
     redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback/kakao-ads`,

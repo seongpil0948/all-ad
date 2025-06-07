@@ -3,6 +3,7 @@
 import { GoogleAdsApi } from "google-ads-api";
 
 import log from "@/utils/logger";
+import { MetaAdsIntegrationService } from "@/services/meta-ads/meta-ads-integration.service";
 
 export interface GoogleAdsTestCredentials {
   clientId: string;
@@ -126,28 +127,156 @@ export async function fetchGoogleAdsAccounts(
       credentials.loginCustomerId,
     );
 
-    const query = `
-      SELECT
-        customer_client.id,
-        customer_client.descriptive_name,
-        customer_client.currency_code,
-        customer_client.time_zone,
-        customer_client.manager
-      FROM customer_client
-      WHERE customer_client.status = 'ENABLED'
-    `;
+    // 두 가지 쿼리를 시도: 먼저 customer_client_link로, 실패하면 customer_client로
+    let accounts = [];
 
-    const response = await customer.query(query);
+    try {
+      // customer_client_link를 통해 연결된 모든 계정 조회 (테스트 계정 포함)
+      const linkQuery = `
+        SELECT
+          customer_client_link.client_customer,
+          customer_client_link.status,
+          customer_client_link.manager_link_id
+        FROM customer_client_link
+        WHERE customer_client_link.status = 'ACTIVE'
+      `;
 
-    const accounts = response.map((row: any) => ({
-      id: row.customer_client.id,
-      name: row.customer_client.descriptive_name,
-      currencyCode: row.customer_client.currency_code,
-      timeZone: row.customer_client.time_zone,
-      isManager: row.customer_client.manager,
-    }));
+      const linkResponse = await customer.query(linkQuery);
 
-    log.info("Fetched Google Ads accounts", { count: accounts.length });
+      // 각 연결된 계정의 세부 정보 조회
+      for (const link of linkResponse) {
+        if (!link?.customer_client_link?.client_customer) continue;
+
+        const clientCustomerId = link.customer_client_link.client_customer
+          .split("/")
+          .pop();
+
+        if (!clientCustomerId) continue;
+
+        try {
+          const { customer: clientCustomer } = createGoogleAdsClient(
+            credentials,
+            clientCustomerId,
+          );
+
+          const detailQuery = `
+            SELECT
+              customer.id,
+              customer.descriptive_name,
+              customer.currency_code,
+              customer.time_zone,
+              customer.test_account,
+              customer.manager
+            FROM customer
+            LIMIT 1
+          `;
+
+          const detailResponse = await clientCustomer.query(detailQuery);
+
+          if (detailResponse && detailResponse.length > 0) {
+            const customerData = detailResponse[0]?.customer;
+
+            if (customerData) {
+              accounts.push({
+                id: customerData.id,
+                name:
+                  customerData.descriptive_name || `Account ${customerData.id}`,
+                currencyCode: customerData.currency_code,
+                timeZone: customerData.time_zone,
+                isManager: customerData.manager,
+                isTestAccount: customerData.test_account,
+              });
+            }
+          }
+        } catch (detailError: any) {
+          log.warn(
+            `Failed to fetch details for account ${clientCustomerId}`,
+            detailError as Error,
+          );
+        }
+      }
+    } catch (linkError: any) {
+      log.warn(
+        "customer_client_link query failed, trying customer_client",
+        linkError as Error,
+      );
+
+      // Fallback: customer_client 테이블 사용
+      const clientQuery = `
+        SELECT
+          customer_client.id,
+          customer_client.descriptive_name,
+          customer_client.currency_code,
+          customer_client.time_zone,
+          customer_client.manager,
+          customer_client.test_account
+        FROM customer_client
+        WHERE customer_client.status = 'ENABLED'
+      `;
+
+      const clientResponse = await customer.query(clientQuery);
+
+      accounts = clientResponse.map((row: any) => ({
+        id: row.customer_client.id,
+        name:
+          row.customer_client.descriptive_name ||
+          `Account ${row.customer_client.id}`,
+        currencyCode: row.customer_client.currency_code,
+        timeZone: row.customer_client.time_zone,
+        isManager: row.customer_client.manager,
+        isTestAccount: row.customer_client.test_account,
+      }));
+    }
+
+    // MCC 계정 자체도 추가
+    try {
+      const mccQuery = `
+        SELECT
+          customer.id,
+          customer.descriptive_name,
+          customer.currency_code,
+          customer.time_zone,
+          customer.test_account,
+          customer.manager
+        FROM customer
+        LIMIT 1
+      `;
+
+      const mccResponse = await customer.query(mccQuery);
+
+      if (mccResponse && mccResponse.length > 0) {
+        const mccData = mccResponse[0]?.customer;
+
+        if (mccData) {
+          const mccAccount = {
+            id: mccData.id,
+            name: mccData.descriptive_name || `MCC Account ${mccData.id}`,
+            currencyCode: mccData.currency_code,
+            timeZone: mccData.time_zone,
+            isManager: true,
+            isTestAccount: mccData.test_account,
+            isMCC: true,
+          };
+
+          // MCC 계정이 목록에 없으면 추가
+          if (!accounts.find((acc: any) => acc.id === mccAccount.id)) {
+            accounts.unshift(mccAccount);
+          }
+        }
+      }
+    } catch (mccError: any) {
+      log.warn("Failed to fetch MCC account details", mccError as Error);
+    }
+
+    log.info("Fetched Google Ads accounts", {
+      count: accounts.length,
+      accounts: accounts.map((acc: any) => ({
+        id: acc.id,
+        name: acc.name,
+        isManager: acc.isManager,
+        isTestAccount: acc.isTestAccount,
+      })),
+    });
 
     return { success: true, accounts };
   } catch (error: any) {
@@ -350,6 +479,239 @@ export async function testConnection(credentials: GoogleAdsTestCredentials) {
       success: false,
       error: error.message || "연결 테스트 실패",
       details: error.details || undefined,
+    };
+  }
+}
+
+// Meta/Facebook Ads 관련 액션 추가
+export interface MetaAdsTestCredentials {
+  appId: string;
+  appSecret: string;
+  accessToken: string;
+  businessId?: string;
+}
+
+// Meta Ads 토큰 교환
+export async function exchangeMetaToken(
+  code: string,
+  appId: string,
+  appSecret: string,
+  redirectUri: string,
+): Promise<{
+  success: boolean;
+  accessToken?: string;
+  error?: string;
+}> {
+  try {
+    const response = await fetch(
+      `https://graph.facebook.com/v23.0/oauth/access_token`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          client_id: appId,
+          client_secret: appSecret,
+          redirect_uri: redirectUri,
+          code: code,
+        }),
+      },
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error?.message || "토큰 교환 실패");
+    }
+
+    log.info("Meta token exchanged successfully");
+
+    return {
+      success: true,
+      accessToken: data.access_token,
+    };
+  } catch (error: any) {
+    log.error("Failed to exchange Meta token", error);
+
+    return {
+      success: false,
+      error: error.message || "토큰 교환 실패",
+    };
+  }
+}
+
+// Meta Ads 계정 목록 가져오기
+export async function fetchMetaAdsAccounts(
+  credentials: MetaAdsTestCredentials,
+) {
+  try {
+    const response = await fetch(
+      `https://graph.facebook.com/v23.0/me/adaccounts?fields=id,name,account_status,currency,timezone_name&access_token=${credentials.accessToken}`,
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || data.error) {
+      throw new Error(data.error?.message || "계정 목록 조회 실패");
+    }
+
+    const accounts =
+      data.data?.map((account: any) => ({
+        id: account.id.replace("act_", ""),
+        name: account.name,
+        status: account.account_status,
+        currency: account.currency,
+        timezone: account.timezone_name,
+      })) || [];
+
+    log.info("Fetched Meta ad accounts", { count: accounts.length });
+
+    return { success: true, accounts };
+  } catch (error: any) {
+    log.error("Failed to fetch Meta accounts", error);
+
+    return {
+      success: false,
+      error: error.message || "계정 목록 조회 실패",
+      accounts: [],
+    };
+  }
+}
+
+// Meta Ads 캠페인 목록 가져오기
+export async function fetchMetaCampaigns(
+  credentials: MetaAdsTestCredentials,
+  accountId: string,
+) {
+  try {
+    const response = await fetch(
+      `https://graph.facebook.com/v23.0/act_${accountId}/campaigns?fields=id,name,status,objective,daily_budget,lifetime_budget&access_token=${credentials.accessToken}`,
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || data.error) {
+      throw new Error(data.error?.message || "캠페인 목록 조회 실패");
+    }
+
+    const campaigns =
+      data.data?.map((campaign: any) => ({
+        id: campaign.id,
+        name: campaign.name,
+        status: campaign.status,
+        objective: campaign.objective,
+        dailyBudget: campaign.daily_budget
+          ? parseInt(campaign.daily_budget) / 100
+          : undefined,
+        lifetimeBudget: campaign.lifetime_budget
+          ? parseInt(campaign.lifetime_budget) / 100
+          : undefined,
+      })) || [];
+
+    log.info("Fetched Meta campaigns", { accountId, count: campaigns.length });
+
+    return { success: true, campaigns };
+  } catch (error: any) {
+    log.error("Failed to fetch Meta campaigns", error);
+
+    return {
+      success: false,
+      error: error.message || "캠페인 목록 조회 실패",
+      campaigns: [],
+    };
+  }
+}
+
+// Meta Ads 캠페인 상태 변경
+export async function updateMetaCampaignStatus(
+  credentials: MetaAdsTestCredentials,
+  campaignId: string,
+  status: "ACTIVE" | "PAUSED",
+) {
+  try {
+    const response = await fetch(
+      `https://graph.facebook.com/v23.0/${campaignId}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: status,
+          access_token: credentials.accessToken,
+        }),
+      },
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || data.error) {
+      throw new Error(data.error?.message || "캠페인 상태 변경 실패");
+    }
+
+    log.info("Meta campaign status updated", { campaignId, status });
+
+    return { success: true };
+  } catch (error: any) {
+    log.error("Failed to update Meta campaign status", error);
+
+    return {
+      success: false,
+      error: error.message || "캠페인 상태 변경 실패",
+    };
+  }
+}
+
+// Meta Ads 캠페인 배치 상태 변경
+export async function batchUpdateMetaCampaignStatus(
+  credentials: MetaAdsTestCredentials,
+  updates: Array<{ campaignId: string; status: "ACTIVE" | "PAUSED" }>,
+) {
+  try {
+    const metaService = new MetaAdsIntegrationService({
+      accessToken: credentials.accessToken || "",
+      appId: credentials.appId,
+      appSecret: credentials.appSecret,
+      businessId: credentials.businessId,
+    });
+
+    const results = await metaService.batchUpdateCampaignStatus(updates);
+
+    log.info("Batch updated Meta campaign statuses", results);
+
+    return {
+      success: true,
+      results,
+    };
+  } catch (error: any) {
+    log.error("Failed to batch update Meta campaign statuses", error);
+
+    return {
+      success: false,
+      error: error.message || "배치 캠페인 상태 변경 실패",
+    };
+  }
+}
+
+// Meta Ads 캐시 초기화
+export async function clearMetaCache(pattern?: string) {
+  try {
+    const metaService = new MetaAdsIntegrationService({
+      accessToken: "dummy", // Cache clearing doesn't need valid token
+    });
+
+    await metaService.clearCache(pattern);
+
+    log.info("Meta cache cleared", { pattern });
+
+    return { success: true };
+  } catch (error: any) {
+    log.error("Failed to clear Meta cache", error);
+
+    return {
+      success: false,
+      error: error.message || "캐시 초기화 실패",
     };
   }
 }

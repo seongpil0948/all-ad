@@ -1,24 +1,27 @@
+import type { OAuthConfig } from "@/types/oauth";
+
 import { NextRequest } from "next/server";
 
 import {
-  handleOAuthCallback,
+  handleUnifiedOAuthCallback,
   standardTokenExchange,
-} from "@/lib/oauth/oauth-callback-handler";
+} from "@/lib/oauth/unified-oauth-handler";
 import { getOAuthConfig } from "@/lib/oauth/platform-configs";
-import type { OAuthConfig } from "@/types/oauth";
 
 export async function GET(request: NextRequest) {
-  return handleOAuthCallback(request, {
+  return handleUnifiedOAuthCallback(request, {
     platform: "google",
-    getOAuthConfig: async (teamId: string): Promise<OAuthConfig | null> => {
+    environment: "production",
+    getOAuthConfig: async (_teamId: string): Promise<OAuthConfig | null> => {
       const config = getOAuthConfig("google");
+
       return config;
     },
     exchangeCodeForToken: async (code: string, config: OAuthConfig) => {
       return standardTokenExchange(
         code,
         config,
-        "https://oauth2.googleapis.com/token"
+        "https://oauth2.googleapis.com/token",
       );
     },
   });

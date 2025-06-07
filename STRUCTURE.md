@@ -210,6 +210,8 @@ all-ad/
 │   ├── oauth/                 # OAuth 관련 유틸리티 ✅ (새로 추가)
 │   │   ├── oauth-manager.ts   # 서버측 OAuth 토큰 관리
 │   │   ├── oauth-client.ts    # 클라이언트측 OAuth URL 생성
+│   │   ├── oauth-callback-handler.ts # 프로덕션 OAuth 콜백 핸들러 (레거시)
+│   │   ├── unified-oauth-handler.ts # 통합 OAuth 콜백 핸들러 ✅ NEW
 │   │   ├── platform-configs.ts # 서버측 OAuth 설정
 │   │   └── platform-configs.client.ts # 클라이언트측 OAuth 설정
 │   ├── platforms/             # 플랫폼 어댑터

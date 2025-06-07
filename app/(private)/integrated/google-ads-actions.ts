@@ -31,6 +31,7 @@ export async function startGoogleAdsAuth() {
 
     // Get OAuth config for Google Ads
     const config = getOAuthConfig("google");
+
     if (!config) {
       throw new Error("Google Ads OAuth config not found");
     }

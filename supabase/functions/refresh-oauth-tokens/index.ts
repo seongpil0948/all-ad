@@ -229,7 +229,7 @@ async function refreshFacebookToken(
   });
 
   const response = await fetch(
-    "https://graph.facebook.com/v18.0/oauth/access_token",
+    "https://graph.facebook.com/v23.0/oauth/access_token",
     {
       method: "POST",
       headers: {

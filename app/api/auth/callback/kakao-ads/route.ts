@@ -1,14 +1,15 @@
 import { NextRequest } from "next/server";
 
 import {
-  handleOAuthCallback,
+  handleUnifiedOAuthCallback,
   standardTokenExchange,
-} from "@/lib/oauth/oauth-callback-handler";
+} from "@/lib/oauth/unified-oauth-handler";
 import { createClient } from "@/utils/supabase/server";
 
 export async function GET(request: NextRequest) {
-  return handleOAuthCallback(request, {
+  return handleUnifiedOAuthCallback(request, {
     platform: "kakao",
+    environment: "production",
 
     getOAuthConfig: async (teamId: string) => {
       const supabase = await createClient();

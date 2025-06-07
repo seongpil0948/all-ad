@@ -1,14 +1,15 @@
 import { NextRequest } from "next/server";
 
 import {
-  handleOAuthCallback,
+  handleUnifiedOAuthCallback,
   standardTokenExchange,
-} from "@/lib/oauth/oauth-callback-handler";
+} from "@/lib/oauth/unified-oauth-handler";
 import { createClient } from "@/utils/supabase/server";
 
 export async function GET(request: NextRequest) {
-  return handleOAuthCallback(request, {
+  return handleUnifiedOAuthCallback(request, {
     platform: "facebook",
+    environment: "production",
 
     getOAuthConfig: async (teamId: string) => {
       const supabase = await createClient();
@@ -31,8 +32,8 @@ export async function GET(request: NextRequest) {
         clientId: credential.credentials.app_id,
         clientSecret: credential.credentials.app_secret,
         redirectUri: `${baseUrl}/api/auth/callback/facebook-ads`,
-        authorizationUrl: "https://www.facebook.com/v18.0/dialog/oauth",
-        tokenUrl: "https://graph.facebook.com/v18.0/oauth/access_token",
+        authorizationUrl: "https://www.facebook.com/v23.0/dialog/oauth",
+        tokenUrl: "https://graph.facebook.com/v23.0/oauth/access_token",
         scope: ["ads_management", "ads_read"],
       };
     },
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
       return standardTokenExchange(
         code,
         config,
-        "https://graph.facebook.com/v18.0/oauth/access_token",
+        "https://graph.facebook.com/v23.0/oauth/access_token",
       );
     },
   });

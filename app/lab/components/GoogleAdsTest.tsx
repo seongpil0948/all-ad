@@ -8,6 +8,7 @@ import { Divider } from "@heroui/divider";
 import { Code } from "@heroui/code";
 import { Select, SelectItem } from "@heroui/select";
 import { Snippet } from "@heroui/snippet";
+import { Chip } from "@heroui/chip";
 import { useIsSSR } from "@react-aria/ssr";
 
 import PlatformTestCard from "./PlatformTestCard";
@@ -29,6 +30,8 @@ interface GoogleAdsAccount {
   currencyCode?: string;
   timeZone?: string;
   isManager?: boolean;
+  isTestAccount?: boolean;
+  isMCC?: boolean;
 }
 
 export default function GoogleAdsTest() {
@@ -135,8 +138,8 @@ export default function GoogleAdsTest() {
           prev.map((item) =>
             item.id === "accounts"
               ? { ...item, status: "success" as const }
-              : item
-          )
+              : item,
+          ),
         );
       } else {
         setError(result.error || "계정 목록 조회 실패");
@@ -145,8 +148,8 @@ export default function GoogleAdsTest() {
           prev.map((item) =>
             item.id === "accounts"
               ? { ...item, status: "error" as const, error: result.error }
-              : item
-          )
+              : item,
+          ),
         );
       }
     } catch (err) {
@@ -170,7 +173,7 @@ export default function GoogleAdsTest() {
         authCode,
         credentials.clientId,
         credentials.clientSecret,
-        `${window.location.origin}/api/auth/callback/google-ads-lab`
+        `${window.location.origin}/api/auth/callback/google-ads-lab`,
       );
 
       if (result.success && result.refreshToken) {
@@ -182,8 +185,10 @@ export default function GoogleAdsTest() {
         setApiResponse(result);
         setTestItems((prev) =>
           prev.map((item) =>
-            item.id === "token" ? { ...item, status: "success" as const } : item
-          )
+            item.id === "token"
+              ? { ...item, status: "success" as const }
+              : item,
+          ),
         );
       } else {
         setError(result.error || "토큰 교환 실패");
@@ -191,8 +196,8 @@ export default function GoogleAdsTest() {
           prev.map((item) =>
             item.id === "token"
               ? { ...item, status: "error" as const, error: result.error }
-              : item
-          )
+              : item,
+          ),
         );
       }
     } catch (err) {
@@ -221,8 +226,8 @@ export default function GoogleAdsTest() {
           prev.map((item) =>
             item.id === "campaigns"
               ? { ...item, status: "success" as const }
-              : item
-          )
+              : item,
+          ),
         );
       } else {
         setError(result.error || "캠페인 목록 조회 실패");
@@ -230,8 +235,8 @@ export default function GoogleAdsTest() {
           prev.map((item) =>
             item.id === "campaigns"
               ? { ...item, status: "error" as const, error: result.error }
-              : item
-          )
+              : item,
+          ),
         );
       }
     } catch (err) {
@@ -244,8 +249,8 @@ export default function GoogleAdsTest() {
   const runTest = async (testId: string) => {
     setTestItems((prev) =>
       prev.map((item) =>
-        item.id === testId ? { ...item, status: "testing" as const } : item
-      )
+        item.id === testId ? { ...item, status: "testing" as const } : item,
+      ),
     );
 
     switch (testId) {
@@ -265,8 +270,8 @@ export default function GoogleAdsTest() {
           prev.map((item) =>
             item.id === testId
               ? { ...item, status: "error" as const, error: "구현 예정" }
-              : item
-          )
+              : item,
+          ),
         );
         break;
     }
@@ -500,7 +505,26 @@ export default function GoogleAdsTest() {
               >
                 {(account: GoogleAdsAccount) => (
                   <SelectItem key={account.id}>
-                    {account.name} ({account.id})
+                    <div className="flex items-center gap-2">
+                      <span>
+                        {account.name} ({account.id})
+                      </span>
+                      {account.isMCC && (
+                        <Chip color="primary" size="sm" variant="flat">
+                          MCC
+                        </Chip>
+                      )}
+                      {account.isTestAccount && (
+                        <Chip color="warning" size="sm" variant="flat">
+                          테스트
+                        </Chip>
+                      )}
+                      {account.isManager && !account.isMCC && (
+                        <Chip color="secondary" size="sm" variant="flat">
+                          관리자
+                        </Chip>
+                      )}
+                    </div>
                   </SelectItem>
                 )}
               </Select>
@@ -548,7 +572,7 @@ export default function GoogleAdsTest() {
                           credentials,
                           selectedAccountId,
                           campaign.id,
-                          newStatus
+                          newStatus,
                         )
                           .then((result) => {
                             if (result.success) {
@@ -556,8 +580,8 @@ export default function GoogleAdsTest() {
                                 prev.map((c) =>
                                   c.id === campaign.id
                                     ? { ...c, status: newStatus }
-                                    : c
-                                )
+                                    : c,
+                                ),
                               );
                             } else {
                               setError(result.error || "캠페인 상태 변경 실패");

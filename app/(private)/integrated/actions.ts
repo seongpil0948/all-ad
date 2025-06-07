@@ -87,6 +87,7 @@ export async function getIntegratedData() {
 
     // Get profiles for team members
     let teamMembersWithProfiles: any[] = [];
+
     if (teamMembers && !teamError) {
       const userIds = teamMembers.map((member) => member.user_id);
       const { data: profiles } = await supabase
@@ -172,6 +173,7 @@ export async function syncAllPlatformsAction() {
         action: "syncAllPlatformsAction",
         teamId: teams.team_id,
       });
+
       return;
     }
 

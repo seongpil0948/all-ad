@@ -63,6 +63,17 @@ export function PlatformCredentialForm({
               }
             />
             <Input
+              label="MCC Account ID (Manager Customer ID)"
+              placeholder="123-456-7890 (대시 없이)"
+              value={values.loginCustomerId || ""}
+              onChange={(e) =>
+                setValues({
+                  ...values,
+                  loginCustomerId: e.target.value.replace(/-/g, ""),
+                })
+              }
+            />
+            <Input
               label="Refresh Token (Optional)"
               placeholder="수동으로 얻은 Refresh Token"
               value={values.refreshToken || ""}

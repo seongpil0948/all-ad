@@ -29,6 +29,7 @@ export interface FacebookCredentials {
   accountId: string;
   appId?: string;
   appSecret?: string;
+  businessId?: string;
 }
 
 // Kakao specific credentials

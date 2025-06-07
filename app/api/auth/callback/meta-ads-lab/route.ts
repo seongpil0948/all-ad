@@ -3,10 +3,8 @@ import { NextRequest } from "next/server";
 import { handleUnifiedOAuthCallback } from "@/lib/oauth/unified-oauth-handler";
 
 export async function GET(request: NextRequest) {
-  // This route is currently used for lab environment redirects
-  // Using 'google' as placeholder since 'amazon' is not in PlatformType yet
   return handleUnifiedOAuthCallback(request, {
-    platform: "google" as any, // TODO: Add 'amazon' to PlatformType when implementing Amazon Ads
+    platform: "facebook", // Using 'facebook' as per PlatformType
     environment: "lab",
   });
 }
