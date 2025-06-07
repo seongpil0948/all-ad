@@ -58,7 +58,7 @@ const platformColors = {
 } as const;
 
 export function CampaignDashboard() {
-  const campaigns = useCampaignStore((state) => state.campaigns);
+  const campaigns = useCampaignStore((state) => state.campaigns) || [];
   const isLoading = useCampaignStore((state) => state.isLoading);
   const fetchCampaigns = useCampaignStore((state) => state.fetchCampaigns);
   const updateCampaignBudget = useCampaignStore(

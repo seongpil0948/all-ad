@@ -72,23 +72,33 @@ export async function getIntegratedData() {
       });
     }
 
-    // Get team members
+    // Get team members with profiles
     const { data: teamMembers, error: teamError } = await supabase
       .from("team_members")
       .select(
         `
         id,
         role,
-        created_at,
-        user:profiles(
-          id,
-          email,
-          full_name,
-          avatar_url
-        )
+        joined_at,
+        user_id
       `,
       )
       .eq("team_id", teamId);
+
+    // Get profiles for team members
+    let teamMembersWithProfiles: any[] = [];
+    if (teamMembers && !teamError) {
+      const userIds = teamMembers.map((member) => member.user_id);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("id", userIds);
+
+      teamMembersWithProfiles = teamMembers.map((member) => ({
+        ...member,
+        user: profiles?.find((p) => p.id === member.user_id) || null,
+      }));
+    }
 
     if (teamError) {
       log.error("Failed to fetch team members", teamError, {
@@ -113,7 +123,7 @@ export async function getIntegratedData() {
       team,
       credentials: credentials || [],
       campaigns: campaigns || [],
-      teamMembers: teamMembers || [],
+      teamMembers: teamMembersWithProfiles || [],
       stats,
       userRole: teamMember.role,
     };
@@ -127,8 +137,6 @@ export async function getIntegratedData() {
 }
 
 export async function syncAllPlatformsAction() {
-  "use server";
-
   const supabase = await createClient();
 
   try {
@@ -159,7 +167,12 @@ export async function syncAllPlatformsAction() {
       .eq("is_active", true);
 
     if (!credentials || credentials.length === 0) {
-      return { success: false, message: "No active platforms to sync" };
+      log.warn("No active platforms to sync", {
+        module: "integrated/actions",
+        action: "syncAllPlatformsAction",
+        teamId: teams.team_id,
+      });
+      return;
     }
 
     // Sync each platform
@@ -196,14 +209,12 @@ export async function syncAllPlatformsAction() {
 
     revalidatePath("/integrated");
     revalidatePath("/dashboard");
-
-    return { success: true, message: "All platforms synced successfully" };
   } catch (error) {
     log.error("Failed to sync all platforms", error as Error, {
       module: "integrated/actions",
       action: "syncAllPlatformsAction",
     });
 
-    return { success: false, message: "Failed to sync platforms" };
+    throw error;
   }
 }

@@ -23,11 +23,7 @@ export default async function IntegratedDashboard() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">통합 대시보드</h1>
-          <form
-            action={async () => {
-              await syncAllPlatformsAction();
-            }}
-          >
+          <form action={syncAllPlatformsAction}>
             <SyncButton />
           </form>
         </div>

@@ -34,7 +34,7 @@ export async function handleOAuthCallback(
   const errorDescription = searchParams.get("error_description");
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  const settingsUrl = `${baseUrl}/settings`;
+  const settingsUrl = `${baseUrl}/integrated`;
 
   try {
     // Handle OAuth errors

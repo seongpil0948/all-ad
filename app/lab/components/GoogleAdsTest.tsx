@@ -106,7 +106,7 @@ export default function GoogleAdsTest() {
   const handleGenerateAuthUrl = async () => {
     setError(null);
     try {
-      const redirectUri = `${window.location.origin}/api/auth/callback/google-ads`;
+      const redirectUri = `${window.location.origin}/api/auth/callback/google-ads-lab`;
       const result = await generateAuthUrl(credentials.clientId, redirectUri);
 
       if (result.success) {
@@ -135,8 +135,8 @@ export default function GoogleAdsTest() {
           prev.map((item) =>
             item.id === "accounts"
               ? { ...item, status: "success" as const }
-              : item,
-          ),
+              : item
+          )
         );
       } else {
         setError(result.error || "계정 목록 조회 실패");
@@ -145,8 +145,8 @@ export default function GoogleAdsTest() {
           prev.map((item) =>
             item.id === "accounts"
               ? { ...item, status: "error" as const, error: result.error }
-              : item,
-          ),
+              : item
+          )
         );
       }
     } catch (err) {
@@ -170,7 +170,7 @@ export default function GoogleAdsTest() {
         authCode,
         credentials.clientId,
         credentials.clientSecret,
-        `${window.location.origin}/api/auth/callback/google-ads`,
+        `${window.location.origin}/api/auth/callback/google-ads-lab`
       );
 
       if (result.success && result.refreshToken) {
@@ -182,10 +182,8 @@ export default function GoogleAdsTest() {
         setApiResponse(result);
         setTestItems((prev) =>
           prev.map((item) =>
-            item.id === "token"
-              ? { ...item, status: "success" as const }
-              : item,
-          ),
+            item.id === "token" ? { ...item, status: "success" as const } : item
+          )
         );
       } else {
         setError(result.error || "토큰 교환 실패");
@@ -193,8 +191,8 @@ export default function GoogleAdsTest() {
           prev.map((item) =>
             item.id === "token"
               ? { ...item, status: "error" as const, error: result.error }
-              : item,
-          ),
+              : item
+          )
         );
       }
     } catch (err) {
@@ -223,8 +221,8 @@ export default function GoogleAdsTest() {
           prev.map((item) =>
             item.id === "campaigns"
               ? { ...item, status: "success" as const }
-              : item,
-          ),
+              : item
+          )
         );
       } else {
         setError(result.error || "캠페인 목록 조회 실패");
@@ -232,8 +230,8 @@ export default function GoogleAdsTest() {
           prev.map((item) =>
             item.id === "campaigns"
               ? { ...item, status: "error" as const, error: result.error }
-              : item,
-          ),
+              : item
+          )
         );
       }
     } catch (err) {
@@ -246,8 +244,8 @@ export default function GoogleAdsTest() {
   const runTest = async (testId: string) => {
     setTestItems((prev) =>
       prev.map((item) =>
-        item.id === testId ? { ...item, status: "testing" as const } : item,
-      ),
+        item.id === testId ? { ...item, status: "testing" as const } : item
+      )
     );
 
     switch (testId) {
@@ -267,8 +265,8 @@ export default function GoogleAdsTest() {
           prev.map((item) =>
             item.id === testId
               ? { ...item, status: "error" as const, error: "구현 예정" }
-              : item,
-          ),
+              : item
+          )
         );
         break;
     }
@@ -326,7 +324,7 @@ export default function GoogleAdsTest() {
                     OAuth 2.0 클라이언트에 리디렉션 URI 추가:
                   </p>
                   <Code className="mt-1 text-xs">
-                    {`${window.location.origin}/api/auth/callback/google-ads`}
+                    {`${window.location.origin}/api/auth/callback/google-ads-lab`}
                   </Code>
                 </div>
                 <Divider />
@@ -550,7 +548,7 @@ export default function GoogleAdsTest() {
                           credentials,
                           selectedAccountId,
                           campaign.id,
-                          newStatus,
+                          newStatus
                         )
                           .then((result) => {
                             if (result.success) {
@@ -558,8 +556,8 @@ export default function GoogleAdsTest() {
                                 prev.map((c) =>
                                   c.id === campaign.id
                                     ? { ...c, status: newStatus }
-                                    : c,
-                                ),
+                                    : c
+                                )
                               );
                             } else {
                               setError(result.error || "캠페인 상태 변경 실패");

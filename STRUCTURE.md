@@ -351,6 +351,60 @@ all-ad/
 
 ## 주요 리팩토링 내용 (2025-01-06)
 
+### 코드베이스 리팩토링 (2025-01-07)
+
+1. **코드 품질 개선**
+
+   - Supabase Edge Function에서 console.log 제거
+   - 모든 컴포넌트에서 Hero UI 일관성 있게 사용
+   - API 라우트에서 공통 response helper 사용
+   - 서버 컴포넌트 패턴 적용 (forgot-password 페이지)
+   - 공통 LoadingState/ErrorState 컴포넌트 사용
+
+2. **타입 정의 중앙화**
+
+   - 컴포넌트 props 인터페이스를 `/types/components.d.ts`로 이동
+   - 인라인 타입 정의 제거
+   - 타입 import 방식 통일
+
+3. **UI 컴포넌트 업데이트**
+   - MessageCard: Hero UI Button 사용 (onClick → onPress)
+   - PlatformsSection: Hero UI Card 사용
+   - 커스텀 Spinner 대신 LoadingState 컴포넌트 사용
+
+### Google Ads API 통합 강화 (2025-01-07)
+
+1. **Google Ads 전문 서비스 구조**
+
+   - `/services/google-ads/` - Google Ads 전용 서비스 모듈
+   - `core/google-ads-client.ts` - Google Ads API 클라이언트
+   - `campaign/campaign-control.service.ts` - 캠페인 제어 서비스
+   - `label/label-management.service.ts` - 라벨 관리 서비스
+   - `sync/sync-strategy.service.ts` - 동기화 전략 서비스
+   - `google-ads-integration.service.ts` - 통합 서비스
+
+2. **데이터베이스 스키마 확장**
+
+   - `sync_logs` 테이블 추가 - 동기화 이력 추적
+   - 플랫폼별 동기화 상태 관리
+   - 에러 추적 및 성능 모니터링
+
+3. **OAuth 콜백 개선**
+
+   - `/app/api/auth/callback/google-ads/route.ts` - OAuth Manager 통합
+   - 토큰 자동 교환 및 저장
+   - 통합 대시보드로 리다이렉트
+
+4. **컴포넌트 추가**
+
+   - `GoogleAdsIntegration.tsx` - Google Ads 연동 UI 컴포넌트
+   - `google-ads-actions.ts` - Server Actions for OAuth flow
+
+5. **API 엔드포인트 구현**
+   - 캠페인 상태 토글 (`/api/campaigns/[platform]/[campaignId]/status`)
+   - 예산 업데이트 (`/api/campaigns/[platform]/[campaignId]/budget`)
+   - 플랫폼별 동기화 (`/api/sync/[platform]`)
+
 ### OAuth 인증 사용자 제공 방식으로 변경 (2025-01-06)
 
 1. **사용자별 OAuth 앱 지원**

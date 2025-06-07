@@ -81,14 +81,16 @@ export class GoogleAdsSyncService {
       }
 
       // 동기화 로그 업데이트
-      await supabase.from("sync_logs").upsert({
-        account_id: accountId,
-        platform: "google_ads",
+      await supabase.from("sync_logs").insert({
+        team_id: accountId, // Assuming accountId is team_id in this context
+        platform: "google",
         last_sync_at: new Date().toISOString(),
         sync_type: "INCREMENTAL",
         records_processed: recordsProcessed,
         success_count: successCount,
         error_count: errors.length,
+        status: "completed",
+        completed_at: new Date().toISOString(),
       });
 
       const result: SyncResult = {
@@ -138,14 +140,16 @@ export class GoogleAdsSyncService {
       }
 
       // 동기화 로그 업데이트
-      await supabase.from("sync_logs").upsert({
-        account_id: accountId,
-        platform: "google_ads",
+      await supabase.from("sync_logs").insert({
+        team_id: accountId, // Assuming accountId is team_id in this context
+        platform: "google",
         last_sync_at: new Date().toISOString(),
         sync_type: "FULL",
         records_processed: recordsProcessed,
         success_count: successCount,
         error_count: errors.length,
+        status: "completed",
+        completed_at: new Date().toISOString(),
       });
 
       const result: SyncResult = {
