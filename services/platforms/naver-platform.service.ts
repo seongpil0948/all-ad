@@ -13,21 +13,15 @@ export class NaverPlatformService extends BasePlatformService {
 
   async validateCredentials(): Promise<boolean> {
     const { apiKey, apiSecret, customerId } = this
-      .credentials as NaverCredentials;
+      .credentials as unknown as NaverCredentials;
 
     if (!apiKey || !apiSecret || !customerId) {
       return false;
     }
 
-    try {
-      // Validate credentials by making a test API call
-      // TODO: Implement actual Naver API validation
-      return true;
-    } catch (error) {
-      log.error("Naver credential validation error:", error as Error);
-
-      return false;
-    }
+    // TODO: Implement actual Naver API validation
+    // For now, return true if credentials are present
+    return true;
   }
 
   async fetchCampaigns(): Promise<Campaign[]> {

@@ -1,10 +1,9 @@
-// Using require as per SDK documentation
-
 import crypto from "crypto";
 
 import log from "@/utils/logger";
 import { getRedisClient } from "@/lib/redis";
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const adsSdk = require("facebook-nodejs-business-sdk");
 
 const { AdAccount, Campaign, Business, AdsInsights, FacebookAdsApi, User } =
@@ -35,8 +34,36 @@ export interface MetaCampaign {
   };
 }
 
+interface MetaAdAccount {
+  id: string;
+  name: string;
+  currency: string;
+  timezone: string;
+  status: number;
+}
+
+interface MetaCampaignInsights {
+  campaignId: string;
+  impressions: number;
+  clicks: number;
+  spend: number;
+  ctr: number;
+  cpc: number;
+  conversions: number;
+}
+
+interface MetaAction {
+  action_type: string;
+  value: string;
+}
+
+interface MetaBatchResponse {
+  code: number;
+  body: string;
+}
+
 export class MetaAdsIntegrationService {
-  private api: any;
+  private api: typeof FacebookAdsApi;
   private credentials: MetaAdsCredentials;
   private cacheKeyPrefix = "meta_ads:";
   private cacheTTL = 24 * 60 * 60; // 24 hours as per documentation
@@ -117,10 +144,10 @@ export class MetaAdsIntegrationService {
   /**
    * Get all accessible ad accounts with caching
    */
-  async getAdAccounts(businessId?: string): Promise<any[]> {
+  async getAdAccounts(businessId?: string): Promise<MetaAdAccount[]> {
     // Check cache first
     const cacheKey = `accounts:${businessId || "user"}`;
-    const cached = await this.getCachedData<any[]>(cacheKey);
+    const cached = await this.getCachedData<MetaAdAccount[]>(cacheKey);
 
     if (cached) {
       log.info("Returning cached ad accounts", { count: cached.length });
@@ -268,7 +295,7 @@ export class MetaAdsIntegrationService {
     campaignId: string,
     startDate: string,
     endDate: string,
-  ): Promise<any> {
+  ): Promise<MetaCampaignInsights | null> {
     try {
       const campaign = new Campaign(campaignId);
       const insights = await campaign.getInsights(this.defaultFields.insights, {
@@ -381,7 +408,7 @@ export class MetaAdsIntegrationService {
   /**
    * Helper method to extract conversions from actions array
    */
-  private extractConversions(actions?: any[]): number {
+  private extractConversions(actions?: MetaAction[]): number {
     if (!actions || !Array.isArray(actions)) return 0;
 
     const conversionActions = [
@@ -438,10 +465,10 @@ export class MetaAdsIntegrationService {
                 : undefined,
             };
           } catch (error) {
-            log.warn(
-              `Failed to fetch insights for campaign ${campaign.id}`,
-              error as Error,
-            );
+            log.warn(`Failed to fetch insights for campaign ${campaign.id}`, {
+              error: (error as Error).message,
+              campaignId: campaign.id,
+            });
 
             return campaign;
           }
@@ -481,7 +508,7 @@ export class MetaAdsIntegrationService {
         return JSON.parse(cached) as T;
       }
     } catch (error) {
-      log.warn("Cache read error", { key, error });
+      log.warn("Cache read error", { key, error: (error as Error).message });
     }
 
     return null;
@@ -504,7 +531,7 @@ export class MetaAdsIntegrationService {
         JSON.stringify(data),
       );
     } catch (error) {
-      log.warn("Cache write error", { key, error });
+      log.warn("Cache write error", { key, error: (error as Error).message });
     }
   }
 
@@ -543,7 +570,7 @@ export class MetaAdsIntegrationService {
           });
 
           // Process batch response
-          response.forEach((result: any, index: number) => {
+          response.forEach((result: MetaBatchResponse, index: number) => {
             if (result.code === 200) {
               results.successful.push(batch[index].campaignId);
             } else {

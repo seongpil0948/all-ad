@@ -25,12 +25,12 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    validateParams(body, [
-      "email",
-      "inviterName",
-      "teamName",
-      "invitationLink",
-    ]);
+    validateParams<{
+      email: string;
+      inviterName: string;
+      teamName: string;
+      invitationLink: string;
+    }>(body, ["email", "inviterName", "teamName", "invitationLink"]);
 
     const { email, inviterName, teamName, invitationLink } = body;
 
@@ -92,7 +92,8 @@ export async function POST(request: NextRequest) {
       }
     } catch (emailError) {
       log.error("Error calling email service", {
-        error: emailError,
+        error:
+          emailError instanceof Error ? emailError.message : String(emailError),
         message: (emailError as Error).message,
         stack: (emailError as Error).stack,
       });

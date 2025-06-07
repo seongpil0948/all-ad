@@ -67,7 +67,10 @@ export default function MetaAdsTest() {
   const [accounts, setAccounts] = useState<MetaAdAccount[]>([]);
   const [selectedAccountId, setSelectedAccountId] = useState("");
   const [campaigns, setCampaigns] = useState<MetaCampaign[]>([]);
-  const [apiResponse, setApiResponse] = useState<any>(null);
+  const [apiResponse, setApiResponse] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedCampaigns, setSelectedCampaigns] = useState<Set<string>>(
     new Set(),
@@ -540,7 +543,9 @@ export default function MetaAdsTest() {
                           ),
                         );
                         setSelectedCampaigns(new Set());
-                        setApiResponse(result.results);
+                        if (result.results) {
+                          setApiResponse(result.results);
+                        }
                       } else {
                         setError(result.error || "배치 처리 실패");
                       }
@@ -577,7 +582,9 @@ export default function MetaAdsTest() {
                           ),
                         );
                         setSelectedCampaigns(new Set());
-                        setApiResponse(result.results);
+                        if (result.results) {
+                          setApiResponse(result.results);
+                        }
                       } else {
                         setError(result.error || "배치 처리 실패");
                       }

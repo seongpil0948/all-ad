@@ -5,7 +5,7 @@ export interface PlatformService {
   platform: PlatformType;
 
   // Set credentials for the service
-  setCredentials(credentials: Record<string, any>): void;
+  setCredentials(credentials: Record<string, unknown>): void;
 
   // Validate credentials
   validateCredentials(): Promise<boolean>;

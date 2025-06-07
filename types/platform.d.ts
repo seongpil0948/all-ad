@@ -10,7 +10,7 @@ export interface PlatformCampaign {
   status?: string;
   budget?: number;
   is_active: boolean;
-  raw_data?: Record<string, any>;
+  raw_data?: Record<string, unknown>;
 }
 
 export interface PlatformCampaignMetrics {
@@ -46,7 +46,7 @@ export interface Platform {
 // Base interface for platform adapters
 export interface PlatformAdapter {
   type: PlatformType;
-  connect(credentials: any): Promise<PlatformConnection>;
+  connect(credentials: Record<string, unknown>): Promise<PlatformConnection>;
   disconnect(connectionId: string): Promise<void>;
   syncData(connectionId: string): Promise<SyncResult>;
   getAccounts(connectionId: string): Promise<AdAccount[]>;
@@ -62,7 +62,7 @@ export interface PlatformConnection {
   accessToken?: string;
   refreshToken?: string;
   expiresAt?: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // Ad account interface

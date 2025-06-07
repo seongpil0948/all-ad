@@ -105,7 +105,7 @@ export interface GoogleAdsApiResponse<T> {
 export interface GoogleAdsError {
   code: string;
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
 // 배치 작업 타입
@@ -118,7 +118,7 @@ export interface BatchOperation {
     | "label"
     | "campaign_label";
   operation: "create" | "update" | "remove";
-  resource: any;
+  resource: Record<string, unknown>;
   updateMask?: {
     paths: string[];
   };
@@ -153,8 +153,8 @@ export interface ChangeEvent {
   changeResourceId: string;
   changeResourceName: string;
   clientType: string;
-  oldResource?: any;
-  newResource?: any;
+  oldResource?: Record<string, unknown>;
+  newResource?: Record<string, unknown>;
   resourceChangeOperation: string;
   changedFields: string[];
 }
@@ -163,7 +163,7 @@ export interface ChangeEvent {
 export interface QueueJob {
   id: string;
   type: "sync-account" | "update-campaigns" | "fetch-metrics";
-  data: any;
+  data: Record<string, unknown>;
   priority: number;
   attempts: number;
   createdAt: string;

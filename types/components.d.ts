@@ -13,8 +13,8 @@ export interface ProvidersProps {
 
 export interface PlatformCredentialFormProps {
   platform: PlatformType;
-  initialValues?: Record<string, any>;
-  onSubmit: (credentials: Record<string, any>) => void;
+  initialValues?: Record<string, unknown>;
+  onSubmit: (credentials: Record<string, unknown>) => void;
 }
 
 export interface CampaignTableProps {

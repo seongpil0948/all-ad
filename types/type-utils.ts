@@ -3,11 +3,19 @@ import {
   Campaign as DbCampaign,
   PlatformCredential as DbPlatformCredential,
 } from "./database.types";
+import { CredentialValues } from "./credentials.types";
 
-import { Campaign, PlatformCredential, CampaignStatus } from "./index";
+import {
+  Campaign,
+  PlatformCredential,
+  CampaignStatus,
+  CampaignMetrics,
+} from "./index";
 
 // Convert snake_case to camelCase
-export function toCamelCase<T extends Record<string, any>>(obj: T): any {
+export function toCamelCase<T extends Record<string, unknown>>(
+  obj: T,
+): unknown {
   if (Array.isArray(obj)) {
     return obj.map(toCamelCase);
   }
@@ -16,19 +24,35 @@ export function toCamelCase<T extends Record<string, any>>(obj: T): any {
     return obj;
   }
 
-  return Object.keys(obj).reduce((acc, key) => {
-    const camelKey = key.replace(/_([a-z])/g, (_, letter) =>
-      letter.toUpperCase(),
-    );
+  return Object.keys(obj).reduce(
+    (acc, key) => {
+      const camelKey = key.replace(/_([a-z])/g, (_, letter) =>
+        letter.toUpperCase(),
+      );
 
-    acc[camelKey] = toCamelCase(obj[key]);
+      const value = obj[key];
 
-    return acc;
-  }, {} as any);
+      acc[camelKey] =
+        value && typeof value === "object" && !Array.isArray(value)
+          ? toCamelCase(value as Record<string, unknown>)
+          : Array.isArray(value)
+            ? value.map((item) =>
+                typeof item === "object" && item !== null
+                  ? toCamelCase(item as Record<string, unknown>)
+                  : item,
+              )
+            : value;
+
+      return acc;
+    },
+    {} as Record<string, unknown>,
+  );
 }
 
 // Convert camelCase to snake_case
-export function toSnakeCase<T extends Record<string, any>>(obj: T): any {
+export function toSnakeCase<T extends Record<string, unknown>>(
+  obj: T,
+): unknown {
   if (Array.isArray(obj)) {
     return obj.map(toSnakeCase);
   }
@@ -37,16 +61,30 @@ export function toSnakeCase<T extends Record<string, any>>(obj: T): any {
     return obj;
   }
 
-  return Object.keys(obj).reduce((acc, key) => {
-    const snakeKey = key.replace(
-      /[A-Z]/g,
-      (letter) => `_${letter.toLowerCase()}`,
-    );
+  return Object.keys(obj).reduce(
+    (acc, key) => {
+      const snakeKey = key.replace(
+        /[A-Z]/g,
+        (letter) => `_${letter.toLowerCase()}`,
+      );
 
-    acc[snakeKey] = toSnakeCase(obj[key]);
+      const value = obj[key];
 
-    return acc;
-  }, {} as any);
+      acc[snakeKey] =
+        value && typeof value === "object" && !Array.isArray(value)
+          ? toSnakeCase(value as Record<string, unknown>)
+          : Array.isArray(value)
+            ? value.map((item) =>
+                typeof item === "object" && item !== null
+                  ? toSnakeCase(item as Record<string, unknown>)
+                  : item,
+              )
+            : value;
+
+      return acc;
+    },
+    {} as Record<string, unknown>,
+  );
 }
 
 // Convert database campaign to application campaign
@@ -62,7 +100,9 @@ export function dbCampaignToAppCampaign(dbCampaign: DbCampaign): Campaign {
     isActive: dbCampaign.is_active,
     createdAt: dbCampaign.created_at,
     updatedAt: dbCampaign.updated_at,
-    metrics: dbCampaign.raw_data ? toCamelCase(dbCampaign.raw_data) : undefined,
+    metrics: dbCampaign.raw_data
+      ? (toCamelCase(dbCampaign.raw_data) as unknown as CampaignMetrics)
+      : undefined,
   };
 }
 
@@ -80,7 +120,9 @@ export function appCampaignToDbCampaign(
     budget: appCampaign.budget,
     is_active: appCampaign.isActive,
     raw_data: appCampaign.metrics
-      ? toSnakeCase(appCampaign.metrics)
+      ? (toSnakeCase(
+          appCampaign.metrics as unknown as Record<string, unknown>,
+        ) as unknown as Record<string, unknown>)
       : undefined,
   };
 }
@@ -93,7 +135,7 @@ export function dbCredentialToAppCredential(
     id: dbCred.id,
     teamId: dbCred.team_id,
     platform: dbCred.platform,
-    credentials: dbCred.credentials,
+    credentials: dbCred.credentials as CredentialValues,
     isActive: dbCred.is_active,
     createdAt: dbCred.created_at,
     updatedAt: dbCred.updated_at,

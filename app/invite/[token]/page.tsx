@@ -24,7 +24,14 @@ async function getInvitationDetails(token: string) {
 
   log.info("Debug: All invitation tokens", {
     tokens: debugTokens,
-    error: debugError,
+    error: debugError
+      ? {
+          message: debugError.message,
+          code: debugError.code,
+          details: debugError.details,
+          hint: debugError.hint,
+        }
+      : null,
   });
 
   // Use RPC function to get invitation by token
@@ -38,6 +45,8 @@ async function getInvitationDetails(token: string) {
       token,
       error: rpcError.message,
       code: rpcError.code,
+      details: rpcError.details,
+      hint: rpcError.hint,
     });
 
     return { invitation: null, error: rpcError };
@@ -82,7 +91,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
   const { invitation, error } = await getInvitationDetails(token);
 
   if (error || !invitation) {
-    log.error("Invalid invitation token: " + token, error || undefined);
+    log.error("Invalid invitation token: " + token, error ?? {});
     notFound();
   }
 

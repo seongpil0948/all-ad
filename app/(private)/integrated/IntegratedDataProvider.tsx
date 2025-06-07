@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { User } from "@supabase/supabase-js";
 
 import {
   useCampaignStore,
@@ -8,21 +9,27 @@ import {
   useTeamStore,
   useAuthStore,
 } from "@/stores";
-import { UserRole } from "@/types/database.types";
+import {
+  UserRole,
+  Team,
+  PlatformCredential,
+  TeamMemberWithProfile,
+} from "@/types/database.types";
+import { Campaign as AppCampaign } from "@/types/campaign.types";
 
 interface IntegratedData {
-  user: any;
-  team: any;
-  credentials: any[];
-  campaigns: any[];
-  teamMembers: any[];
+  user: User;
+  team: Team;
+  credentials: PlatformCredential[];
+  campaigns: AppCampaign[];
+  teamMembers: TeamMemberWithProfile[];
   stats: {
     totalCampaigns: number;
     activeCampaigns: number;
     totalBudget: number;
     connectedPlatforms: number;
   };
-  userRole: string;
+  userRole: UserRole;
 }
 
 interface IntegratedDataProviderProps {

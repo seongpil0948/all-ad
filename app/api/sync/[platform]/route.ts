@@ -93,7 +93,7 @@ export async function POST(
         status: campaignData.status,
         budget: campaignData.budget,
         is_active: campaignData.status === "active",
-        raw_data: campaignData,
+        raw_data: { ...campaignData },
       });
 
       // Fetch and save metrics if available
@@ -109,7 +109,7 @@ export async function POST(
           conversions: metrics.conversions || 0,
           cost: metrics.cost || 0,
           revenue: metrics.revenue || 0,
-          raw_data: metrics,
+          raw_data: { ...metrics },
         });
       }
     }
@@ -127,7 +127,12 @@ export async function POST(
   } catch (error) {
     const log = await getLogger();
 
-    log.error(`Sync error for platform ${error}:`);
+    const { platform } = await params;
+
+    log.error(
+      "Sync error for platform: " + platform,
+      error instanceof Error ? error : new Error(String(error)),
+    );
 
     return NextResponse.json(
       {

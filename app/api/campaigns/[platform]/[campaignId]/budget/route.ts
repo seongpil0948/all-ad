@@ -21,7 +21,7 @@ export const PATCH = withAuth(
       const body = await request.json();
 
       // Validate request body
-      validateParams(body, ["budget"]);
+      validateParams<{ budget: number }>(body, ["budget"]);
       const { budget } = body;
 
       // Validate budget value

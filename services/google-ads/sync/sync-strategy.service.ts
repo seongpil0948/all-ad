@@ -5,6 +5,51 @@ import { createClient } from "@/utils/supabase/server";
 import log from "@/utils/logger";
 import { SyncResult, SyncError } from "@/types/google-ads.types";
 
+// Type definitions
+interface GoogleAdsCampaignData {
+  id?: string;
+  name?: string;
+  status?: string;
+  budgetAmountMicros?: string;
+  startDate?: string;
+  endDate?: string;
+  "campaign.id"?: string;
+  "campaign.name"?: string;
+  "campaign.status"?: string;
+  "campaign_budget.amount_micros"?: string;
+  "campaign.start_date"?: string;
+  "campaign.end_date"?: string;
+  metrics?: {
+    impressions?: string;
+    clicks?: string;
+    costMicros?: string;
+    conversions?: string;
+    conversionValue?: string;
+  };
+  "metrics.impressions"?: string;
+  "metrics.clicks"?: string;
+  "metrics.cost_micros"?: string;
+  "metrics.conversions"?: string;
+  "metrics.conversions_value"?: string;
+  "metrics.ctr"?: string;
+  "metrics.average_cpc"?: string;
+  "metrics.average_cpm"?: string;
+}
+
+interface SyncLog {
+  id: string;
+  team_id: string;
+  platform: string;
+  last_sync_at: string;
+  sync_type: "FULL" | "INCREMENTAL";
+  records_processed: number;
+  success_count: number;
+  error_count: number;
+  status: string;
+  created_at: string;
+  completed_at?: string;
+}
+
 export class GoogleAdsSyncService {
   private googleAdsClient: GoogleAdsClient;
   private campaignService: CampaignControlService;
@@ -69,7 +114,19 @@ export class GoogleAdsSyncService {
       // 데이터베이스 업데이트
       for (const campaign of modifiedCampaigns) {
         try {
-          await this.updateCampaignData(accountId, campaign);
+          await this.updateCampaignData(accountId, {
+            ...campaign,
+            budgetAmountMicros: campaign.budgetAmountMicros?.toString(),
+            metrics: campaign.metrics
+              ? {
+                  impressions: campaign.metrics.impressions?.toString(),
+                  clicks: campaign.metrics.clicks?.toString(),
+                  costMicros: campaign.metrics.costMicros?.toString(),
+                  conversions: campaign.metrics.conversions?.toString(),
+                  conversionValue: campaign.metrics.conversionValue?.toString(),
+                }
+              : undefined,
+          });
           successCount++;
         } catch (error) {
           errors.push({
@@ -103,7 +160,7 @@ export class GoogleAdsSyncService {
         completedAt: new Date().toISOString(),
       };
 
-      log.info("증분 동기화 완료", result);
+      log.info("증분 동기화 완료", { ...result });
 
       return result;
     } catch (error) {
@@ -128,7 +185,19 @@ export class GoogleAdsSyncService {
       // 데이터베이스 업데이트
       for (const campaign of campaigns) {
         try {
-          await this.updateCampaignData(accountId, campaign);
+          await this.updateCampaignData(accountId, {
+            ...campaign,
+            budgetAmountMicros: campaign.budgetAmountMicros?.toString(),
+            metrics: campaign.metrics
+              ? {
+                  impressions: campaign.metrics.impressions?.toString(),
+                  clicks: campaign.metrics.clicks?.toString(),
+                  costMicros: campaign.metrics.costMicros?.toString(),
+                  conversions: campaign.metrics.conversions?.toString(),
+                  conversionValue: campaign.metrics.conversionValue?.toString(),
+                }
+              : undefined,
+          });
           successCount++;
         } catch (error) {
           errors.push({
@@ -162,7 +231,7 @@ export class GoogleAdsSyncService {
         completedAt: new Date().toISOString(),
       };
 
-      log.info("전체 동기화 완료", result);
+      log.info("전체 동기화 완료", { ...result });
 
       return result;
     } catch (error) {
@@ -175,7 +244,7 @@ export class GoogleAdsSyncService {
   private async getModifiedCampaigns(
     accountId: string,
     since: string,
-  ): Promise<any[]> {
+  ): Promise<GoogleAdsCampaignData[]> {
     const sinceDate = since.split("T")[0];
     const query = `
       SELECT
@@ -201,7 +270,10 @@ export class GoogleAdsSyncService {
     `;
 
     try {
-      const results = await this.googleAdsClient.query(accountId, query);
+      const results = await this.googleAdsClient.query<GoogleAdsCampaignData>(
+        accountId,
+        query,
+      );
 
       return results;
     } catch (error) {
@@ -216,7 +288,7 @@ export class GoogleAdsSyncService {
   // 캠페인 데이터 업데이트
   private async updateCampaignData(
     accountId: string,
-    campaignData: any,
+    campaignData: GoogleAdsCampaignData,
   ): Promise<void> {
     const supabase = await createClient();
 
@@ -275,7 +347,7 @@ export class GoogleAdsSyncService {
   }
 
   // 동기화 상태 조회
-  async getSyncStatus(accountId: string): Promise<any> {
+  async getSyncStatus(accountId: string): Promise<SyncLog | null> {
     const supabase = await createClient();
 
     const { data, error } = await supabase
@@ -295,7 +367,10 @@ export class GoogleAdsSyncService {
   }
 
   // 동기화 이력 조회
-  async getSyncHistory(accountId: string, limit: number = 10): Promise<any[]> {
+  async getSyncHistory(
+    accountId: string,
+    limit: number = 10,
+  ): Promise<SyncLog[]> {
     const supabase = await createClient();
 
     const { data, error } = await supabase

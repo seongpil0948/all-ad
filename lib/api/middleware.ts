@@ -48,7 +48,7 @@ export function withAuth(
       if (authError || !user) {
         log.warn("Unauthorized API request", {
           path: request.nextUrl.pathname,
-          error: authError,
+          error: authError?.message || "No user found",
         });
 
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -64,7 +64,7 @@ export function withAuth(
       if (teamError || !teamMember) {
         log.warn("Team not found for user", {
           userId: user.id,
-          error: teamError,
+          error: teamError?.message || "No team membership found",
         });
 
         return NextResponse.json({ error: "Team not found" }, { status: 404 });

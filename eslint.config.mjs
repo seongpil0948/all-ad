@@ -1,5 +1,8 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { defineConfig, globalIgnores } from "eslint/config";
-import { fixupConfigRules, fixupPluginRules } from "@eslint/compat";
+import { fixupPluginRules } from "@eslint/compat";
 import react from "eslint-plugin-react";
 import unusedImports from "eslint-plugin-unused-imports";
 import _import from "eslint-plugin-import";
@@ -8,20 +11,14 @@ import jsxA11Y from "eslint-plugin-jsx-a11y";
 import prettier from "eslint-plugin-prettier";
 import globals from "globals";
 import tsParser from "@typescript-eslint/parser";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import js from "@eslint/js";
-import { FlatCompat } from "@eslint/eslintrc";
+import nextPlugin from "@next/eslint-plugin-next";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-  allConfig: js.configs.all,
-});
 
 export default defineConfig([
+  // Global ignores
   globalIgnores([
     ".now/*",
     "**/*.css",
@@ -43,17 +40,13 @@ export default defineConfig([
     "!**/plopfile.js",
     "!**/react-shim.js",
     "!**/tsup.config.ts",
+    "supabase/functions/**",
   ]),
+  // Base recommended config
+  js.configs.recommended,
+  // TypeScript files configuration
   {
-    extends: fixupConfigRules(
-      compat.extends(
-        "plugin:react/recommended",
-        "plugin:prettier/recommended",
-        "plugin:react-hooks/recommended",
-        "plugin:jsx-a11y/recommended",
-        "plugin:@next/next/recommended",
-      ),
-    ),
+    files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.mjs"],
 
     plugins: {
       react: fixupPluginRules(react),
@@ -62,18 +55,20 @@ export default defineConfig([
       "@typescript-eslint": typescriptEslint,
       "jsx-a11y": fixupPluginRules(jsxA11Y),
       prettier: fixupPluginRules(prettier),
+      "@next/next": nextPlugin,
     },
 
     languageOptions: {
       globals: {
-        ...Object.fromEntries(
-          Object.entries(globals.browser).map(([key]) => [key, "off"]),
-        ),
+        ...globals.browser,
         ...globals.node,
+        ...globals.es2021,
+        React: "readonly",
+        JSX: "readonly",
       },
 
       parser: tsParser,
-      ecmaVersion: 12,
+      ecmaVersion: "latest",
       sourceType: "module",
 
       parserOptions: {
@@ -89,10 +84,23 @@ export default defineConfig([
       },
     },
 
-    files: ["**/*.ts", "**/*.tsx"],
-
     rules: {
-      "no-console": "warn",
+      // Next.js recommended rules
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs["core-web-vitals"].rules,
+
+      // TypeScript recommended rules
+      ...typescriptEslint.configs.recommended.rules,
+
+      // React recommended rules
+      ...react.configs.recommended.rules,
+
+      // JSX A11y recommended rules
+      ...jsxA11Y.configs.recommended.rules,
+
+      // Custom rules
+      "no-console": ["warn", { allow: ["warn", "error"] }],
+      "no-undef": "error",
       "react/prop-types": "off",
       "react/jsx-uses-react": "off",
       "react/react-in-jsx-scope": "off",
@@ -117,6 +125,7 @@ export default defineConfig([
           argsIgnorePattern: "^_.*?$",
         },
       ],
+      "@typescript-eslint/no-explicit-any": "warn",
 
       "import/order": [
         "warn",
@@ -174,6 +183,18 @@ export default defineConfig([
           next: ["const", "let", "var"],
         },
       ],
+    },
+  },
+  // TypeScript-specific configuration
+  {
+    files: ["**/*.ts", "**/*.tsx"],
+    ignores: ["supabase/functions/**/*.ts"],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        project: "./tsconfig.json",
+        tsconfigRootDir: __dirname,
+      },
     },
   },
 ]);

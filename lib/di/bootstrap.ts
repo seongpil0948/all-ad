@@ -1,5 +1,7 @@
 // 의존성 주입 부트스트래핑
 
+import { SupabaseClient } from "@supabase/supabase-js";
+
 import { container, ServiceTokens } from "./container";
 
 import { PlatformServiceFactory } from "@/services/platforms/platform-service-factory";
@@ -18,6 +20,7 @@ import { GoogleAdsSyncService } from "@/services/google-ads/sync/sync-strategy.s
 import { GoogleAdsIntegrationService } from "@/services/google-ads/google-ads-integration.service";
 import { getRedisClient } from "@/lib/redis";
 import { createClient as createSupabaseClient } from "@/utils/supabase/server";
+import { GoogleAdsApiCredentials } from "@/types/google-ads.types";
 import log from "@/utils/logger";
 
 // 서비스 등록 함수
@@ -90,23 +93,23 @@ export async function bootstrapDI() {
   container.registerSingleton(
     ServiceTokens.PLATFORM_DATABASE_SERVICE,
     async () => {
-      const supabase = (await container.resolve(
+      const supabase = await container.resolve<SupabaseClient>(
         ServiceTokens.SUPABASE_CLIENT,
-      )) as any;
-      const logger = (await container.resolve(ServiceTokens.LOGGER)) as any;
+      );
+      const logger = await container.resolve<typeof log>(ServiceTokens.LOGGER);
 
       return new PlatformDatabaseService(supabase, logger);
     },
   );
 
   container.registerSingleton(ServiceTokens.PLATFORM_SYNC_SERVICE, async () => {
-    const platformFactory = (await container.resolve(
+    const platformFactory = await container.resolve<PlatformServiceFactory>(
       ServiceTokens.PLATFORM_SERVICE_FACTORY,
-    )) as any;
-    const databaseService = (await container.resolve(
+    );
+    const databaseService = await container.resolve<PlatformDatabaseService>(
       ServiceTokens.PLATFORM_DATABASE_SERVICE,
-    )) as any;
-    const logger = (await container.resolve(ServiceTokens.LOGGER)) as any;
+    );
+    const logger = await container.resolve<typeof log>(ServiceTokens.LOGGER);
 
     return new PlatformSyncService(platformFactory, databaseService, logger);
   });
@@ -118,7 +121,8 @@ export async function bootstrapDI() {
   // Google Ads Services
   container.register(ServiceTokens.GOOGLE_ADS_CLIENT, () => {
     // 이 서비스는 credentials가 필요하므로 팩토리 패턴 사용
-    return (credentials: any) => new GoogleAdsClient(credentials);
+    return (credentials: GoogleAdsApiCredentials) =>
+      new GoogleAdsClient(credentials);
   });
 
   container.register(ServiceTokens.CAMPAIGN_CONTROL_SERVICE, () => {
@@ -143,7 +147,8 @@ export async function bootstrapDI() {
     ServiceTokens.GOOGLE_ADS_INTEGRATION_SERVICE,
     () => {
       // GoogleAdsIntegrationService requires credentials
-      return (credentials: any) => new GoogleAdsIntegrationService(credentials);
+      return (credentials: GoogleAdsApiCredentials) =>
+        new GoogleAdsIntegrationService(credentials);
     },
   );
 }

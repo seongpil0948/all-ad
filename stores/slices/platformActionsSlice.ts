@@ -7,6 +7,7 @@ import { ErrorSlice } from "./errorSlice";
 import { PlatformDataSlice } from "./platformDataSlice";
 
 import { PlatformCredential, PlatformType } from "@/types/database.types";
+import { Json } from "@/types/supabase.types";
 import { createClient } from "@/utils/supabase/client";
 import log from "@/utils/logger";
 
@@ -14,11 +15,11 @@ export interface PlatformActionsSlice {
   fetchCredentials: () => Promise<void>;
   addCredential: (
     platform: PlatformType,
-    credentials: Record<string, any>,
+    credentials: Record<string, unknown>,
   ) => Promise<void>;
   updateCredential: (
     id: string,
-    credentials: Record<string, any>,
+    credentials: Record<string, unknown>,
   ) => Promise<void>;
   toggleCredentialStatus: (id: string) => Promise<void>;
   deleteCredential: (id: string) => Promise<void>;
@@ -102,7 +103,7 @@ export const createPlatformActionsSlice: StateCreator<
       const { error } = await supabase.from("platform_credentials").insert({
         team_id: teamMember.team_id,
         platform,
-        credentials,
+        credentials: credentials as Json,
         created_by: user.id,
       });
 
@@ -124,7 +125,10 @@ export const createPlatformActionsSlice: StateCreator<
     try {
       const { error } = await supabase
         .from("platform_credentials")
-        .update({ credentials, updated_at: new Date().toISOString() })
+        .update({
+          credentials: credentials as Json,
+          updated_at: new Date().toISOString(),
+        })
         .eq("id", id);
 
       if (error) throw error;

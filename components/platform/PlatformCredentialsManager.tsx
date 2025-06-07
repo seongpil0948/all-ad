@@ -27,12 +27,13 @@ import { PlatformCredentialForm } from "./PlatformCredentialForm";
 import { OAuthClient } from "@/lib/oauth/oauth-client";
 import { getOAuthConfig } from "@/lib/oauth/platform-configs.client";
 import { PlatformCredential, PlatformType } from "@/types";
+import { CredentialValues } from "@/types/credentials.types";
 
 interface PlatformCredentialsManagerProps {
   credentials: PlatformCredential[];
   onSave: (
     platform: PlatformType,
-    credentials: Record<string, any>,
+    credentials: CredentialValues,
   ) => Promise<void>;
   onDelete: (platform: PlatformType) => Promise<void>;
   onToggle: (platform: PlatformType, isActive: boolean) => Promise<void>;
@@ -100,12 +101,16 @@ export function PlatformCredentialsManager({
 
   const handleOAuthConnect = async (
     platform: PlatformType,
-    credentials: Record<string, any>,
+    credentials: CredentialValues,
   ) => {
     // Store the OAuth credentials first
     await onSave(platform, credentials);
 
     // Create OAuth config with user-provided credentials
+    if (!credentials.client_id || !credentials.client_secret) {
+      throw new Error("Client ID and Client Secret are required for OAuth");
+    }
+
     const oauthConfig = {
       clientId: credentials.client_id,
       clientSecret: credentials.client_secret,
@@ -133,7 +138,7 @@ export function PlatformCredentialsManager({
     window.location.href = authUrl;
   };
 
-  const handleSave = async (credentials: Record<string, any>) => {
+  const handleSave = async (credentials: CredentialValues) => {
     if (!selectedPlatform) return;
 
     setIsLoading(true);
@@ -142,13 +147,16 @@ export function PlatformCredentialsManager({
 
       if (config.supportsOAuth) {
         // Check if manual refresh token is provided
-        if (credentials.manual_refresh_token) {
+        if (
+          "manual_refresh_token" in credentials &&
+          credentials.manual_refresh_token
+        ) {
           // Save credentials with manual refresh token
           const { manual_refresh_token, ...oauthCredentials } = credentials;
 
           await onSave(selectedPlatform, {
             ...oauthCredentials,
-            refresh_token: manual_refresh_token,
+            refresh_token: manual_refresh_token as string,
             manual_token: true,
           });
           onOpenChange();

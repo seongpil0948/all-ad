@@ -1,5 +1,17 @@
 "use server";
 
+import type {
+  GoogleAdsQueryResponseRow,
+  GoogleAdsAccountInfo,
+  GoogleOAuthTokenResponse,
+  MutateResourceResponse,
+} from "@/types/google-ads-api.types";
+import type {
+  MetaAdsApiResponse,
+  MetaAdsAccountRaw,
+  MetaAdsCampaignRaw,
+} from "@/types/meta-ads.types";
+
 import { GoogleAdsApi } from "google-ads-api";
 
 import log from "@/utils/logger";
@@ -96,7 +108,7 @@ export async function exchangeCodeForToken(
       }),
     });
 
-    const data = await response.json();
+    const data: GoogleOAuthTokenResponse = await response.json();
 
     if (!response.ok) {
       throw new Error(data.error_description || "토큰 교환 실패");
@@ -128,7 +140,7 @@ export async function fetchGoogleAdsAccounts(
     );
 
     // 두 가지 쿼리를 시도: 먼저 customer_client_link로, 실패하면 customer_client로
-    let accounts = [];
+    let accounts: GoogleAdsAccountInfo[] = [];
 
     try {
       // customer_client_link를 통해 연결된 모든 계정 조회 (테스트 계정 포함)
@@ -141,7 +153,8 @@ export async function fetchGoogleAdsAccounts(
         WHERE customer_client_link.status = 'ACTIVE'
       `;
 
-      const linkResponse = await customer.query(linkQuery);
+      const linkResponse: GoogleAdsQueryResponseRow[] =
+        await customer.query(linkQuery);
 
       // 각 연결된 계정의 세부 정보 조회
       for (const link of linkResponse) {
@@ -171,7 +184,8 @@ export async function fetchGoogleAdsAccounts(
             LIMIT 1
           `;
 
-          const detailResponse = await clientCustomer.query(detailQuery);
+          const detailResponse: GoogleAdsQueryResponseRow[] =
+            await clientCustomer.query(detailQuery);
 
           if (detailResponse && detailResponse.length > 0) {
             const customerData = detailResponse[0]?.customer;
@@ -183,23 +197,25 @@ export async function fetchGoogleAdsAccounts(
                   customerData.descriptive_name || `Account ${customerData.id}`,
                 currencyCode: customerData.currency_code,
                 timeZone: customerData.time_zone,
-                isManager: customerData.manager,
-                isTestAccount: customerData.test_account,
+                isManager: customerData.manager || false,
+                isTestAccount: customerData.test_account || false,
               });
             }
           }
-        } catch (detailError: any) {
-          log.warn(
-            `Failed to fetch details for account ${clientCustomerId}`,
-            detailError as Error,
-          );
+        } catch (detailError) {
+          log.warn(`Failed to fetch details for account ${clientCustomerId}`, {
+            error:
+              detailError instanceof Error
+                ? detailError.message
+                : String(detailError),
+          });
         }
       }
-    } catch (linkError: any) {
-      log.warn(
-        "customer_client_link query failed, trying customer_client",
-        linkError as Error,
-      );
+    } catch (linkError) {
+      log.warn("customer_client_link query failed, trying customer_client", {
+        error:
+          linkError instanceof Error ? linkError.message : String(linkError),
+      });
 
       // Fallback: customer_client 테이블 사용
       const clientQuery = `
@@ -214,18 +230,21 @@ export async function fetchGoogleAdsAccounts(
         WHERE customer_client.status = 'ENABLED'
       `;
 
-      const clientResponse = await customer.query(clientQuery);
+      const clientResponse: GoogleAdsQueryResponseRow[] =
+        await customer.query(clientQuery);
 
-      accounts = clientResponse.map((row: any) => ({
-        id: row.customer_client.id,
-        name:
-          row.customer_client.descriptive_name ||
-          `Account ${row.customer_client.id}`,
-        currencyCode: row.customer_client.currency_code,
-        timeZone: row.customer_client.time_zone,
-        isManager: row.customer_client.manager,
-        isTestAccount: row.customer_client.test_account,
-      }));
+      accounts = clientResponse
+        .filter((row) => row.customer_client)
+        .map((row) => ({
+          id: row.customer_client!.id,
+          name:
+            row.customer_client!.descriptive_name ||
+            `Account ${row.customer_client!.id}`,
+          currencyCode: row.customer_client!.currency_code,
+          timeZone: row.customer_client!.time_zone,
+          isManager: row.customer_client!.manager || false,
+          isTestAccount: row.customer_client!.test_account || false,
+        }));
     }
 
     // MCC 계정 자체도 추가
@@ -242,7 +261,8 @@ export async function fetchGoogleAdsAccounts(
         LIMIT 1
       `;
 
-      const mccResponse = await customer.query(mccQuery);
+      const mccResponse: GoogleAdsQueryResponseRow[] =
+        await customer.query(mccQuery);
 
       if (mccResponse && mccResponse.length > 0) {
         const mccData = mccResponse[0]?.customer;
@@ -254,23 +274,25 @@ export async function fetchGoogleAdsAccounts(
             currencyCode: mccData.currency_code,
             timeZone: mccData.time_zone,
             isManager: true,
-            isTestAccount: mccData.test_account,
+            isTestAccount: mccData.test_account || false,
             isMCC: true,
           };
 
           // MCC 계정이 목록에 없으면 추가
-          if (!accounts.find((acc: any) => acc.id === mccAccount.id)) {
+          if (!accounts.find((acc) => acc.id === mccAccount.id)) {
             accounts.unshift(mccAccount);
           }
         }
       }
-    } catch (mccError: any) {
-      log.warn("Failed to fetch MCC account details", mccError as Error);
+    } catch (mccError) {
+      log.warn("Failed to fetch MCC account details", {
+        error: mccError instanceof Error ? mccError.message : String(mccError),
+      });
     }
 
     log.info("Fetched Google Ads accounts", {
       count: accounts.length,
-      accounts: accounts.map((acc: any) => ({
+      accounts: accounts.map((acc) => ({
         id: acc.id,
         name: acc.name,
         isManager: acc.isManager,
@@ -279,13 +301,16 @@ export async function fetchGoogleAdsAccounts(
     });
 
     return { success: true, accounts };
-  } catch (error: any) {
+  } catch (error) {
     log.error("Failed to fetch accounts", error);
 
     return {
       success: false,
-      error: error.message || "계정 목록 조회 실패",
-      details: error.details || undefined,
+      error: error instanceof Error ? error.message : "계정 목록 조회 실패",
+      details:
+        error instanceof Error && "details" in error
+          ? (error as Error & { details: unknown }).details
+          : undefined,
       accounts: [],
     };
   }
@@ -332,28 +357,33 @@ export async function fetchCampaigns(
       ORDER BY campaign.id
     `;
 
-    const response = await customer.query(query);
+    const response: GoogleAdsQueryResponseRow[] = await customer.query(query);
 
-    const campaigns: GoogleAdsCampaign[] = response.map((row: any) => ({
-      id: row.campaign.id,
-      name: row.campaign.name,
-      status: row.campaign.status,
-      budgetAmountMicros: row.campaign_budget?.amount_micros,
-      impressions: row.metrics?.impressions,
-      clicks: row.metrics?.clicks,
-      costMicros: row.metrics?.cost_micros,
-    }));
+    const campaigns: GoogleAdsCampaign[] = response
+      .filter((row) => row.campaign)
+      .map((row) => ({
+        id: row.campaign!.id,
+        name: row.campaign!.name,
+        status: row.campaign!.status,
+        budgetAmountMicros: row.campaign_budget?.amount_micros,
+        impressions: row.metrics?.impressions,
+        clicks: row.metrics?.clicks,
+        costMicros: row.metrics?.cost_micros,
+      }));
 
     log.info("Fetched campaigns", { customerId, count: campaigns.length });
 
     return { success: true, campaigns };
-  } catch (error: any) {
+  } catch (error) {
     log.error("Failed to fetch campaigns", error);
 
     return {
       success: false,
-      error: error.message || "캠페인 목록 조회 실패",
-      details: error.details || undefined,
+      error: error instanceof Error ? error.message : "캠페인 목록 조회 실패",
+      details:
+        error instanceof Error && "details" in error
+          ? (error as Error & { details: unknown }).details
+          : undefined,
     };
   }
 }
@@ -369,10 +399,10 @@ export async function updateCampaignStatus(
     // 특정 고객 ID를 대상으로 작업
     const { customer } = createGoogleAdsClient(credentials, customerId);
 
-    const operations: any[] = [
+    const operations = [
       {
-        entity: "campaign",
-        operation: "update",
+        entity: "campaign" as const,
+        operation: "update" as const,
         resource: {
           resource_name: `customers/${customerId}/campaigns/${campaignId}`,
           status: status,
@@ -383,18 +413,22 @@ export async function updateCampaignStatus(
       },
     ];
 
-    const response = await customer.mutateResources(operations);
+    const response: MutateResourceResponse =
+      await customer.mutateResources(operations);
 
     log.info("Campaign status updated", { customerId, campaignId, status });
 
     return { success: true, response };
-  } catch (error: any) {
+  } catch (error) {
     log.error("Failed to update campaign status", error);
 
     return {
       success: false,
-      error: error.message || "캠페인 상태 변경 실패",
-      details: error.details || undefined,
+      error: error instanceof Error ? error.message : "캠페인 상태 변경 실패",
+      details:
+        error instanceof Error && "details" in error
+          ? (error as Error & { details: unknown }).details
+          : undefined,
     };
   }
 }
@@ -413,10 +447,10 @@ export async function createLabel(
     // 특정 고객 ID를 대상으로 작업
     const { customer } = createGoogleAdsClient(credentials, customerId);
 
-    const operations: any[] = [
+    const operations = [
       {
-        entity: "label",
-        operation: "create",
+        entity: "label" as const,
+        operation: "create" as const,
         resource: {
           name: labelData.name,
           description: labelData.description,
@@ -429,18 +463,22 @@ export async function createLabel(
       },
     ];
 
-    const response = await customer.mutateResources(operations);
+    const response: MutateResourceResponse =
+      await customer.mutateResources(operations);
 
     log.info("Label created", { customerId, labelName: labelData.name });
 
     return { success: true, response };
-  } catch (error: any) {
+  } catch (error) {
     log.error("Failed to create label", error);
 
     return {
       success: false,
-      error: error.message || "라벨 생성 실패",
-      details: error.details || undefined,
+      error: error instanceof Error ? error.message : "라벨 생성 실패",
+      details:
+        error instanceof Error && "details" in error
+          ? (error as Error & { details: unknown }).details
+          : undefined,
     };
   }
 }
@@ -463,7 +501,7 @@ export async function testConnection(credentials: GoogleAdsTestCredentials) {
       LIMIT 1
     `;
 
-    const response = await customer.query(query);
+    const response: GoogleAdsQueryResponseRow[] = await customer.query(query);
 
     log.info("Connection test successful");
 
@@ -472,13 +510,16 @@ export async function testConnection(credentials: GoogleAdsTestCredentials) {
       message: "Google Ads API 연결 성공",
       customer: response[0]?.customer,
     };
-  } catch (error: any) {
+  } catch (error) {
     log.error("Connection test failed", error);
 
     return {
       success: false,
-      error: error.message || "연결 테스트 실패",
-      details: error.details || undefined,
+      error: error instanceof Error ? error.message : "연결 테스트 실패",
+      details:
+        error instanceof Error && "details" in error
+          ? (error as Error & { details: unknown }).details
+          : undefined,
     };
   }
 }
@@ -519,7 +560,8 @@ export async function exchangeMetaToken(
       },
     );
 
-    const data = await response.json();
+    const data: MetaAdsApiResponse<unknown> & { access_token?: string } =
+      await response.json();
 
     if (!response.ok) {
       throw new Error(data.error?.message || "토큰 교환 실패");
@@ -531,12 +573,12 @@ export async function exchangeMetaToken(
       success: true,
       accessToken: data.access_token,
     };
-  } catch (error: any) {
+  } catch (error) {
     log.error("Failed to exchange Meta token", error);
 
     return {
       success: false,
-      error: error.message || "토큰 교환 실패",
+      error: error instanceof Error ? error.message : "토큰 교환 실패",
     };
   }
 }
@@ -550,14 +592,14 @@ export async function fetchMetaAdsAccounts(
       `https://graph.facebook.com/v23.0/me/adaccounts?fields=id,name,account_status,currency,timezone_name&access_token=${credentials.accessToken}`,
     );
 
-    const data = await response.json();
+    const data: MetaAdsApiResponse<MetaAdsAccountRaw> = await response.json();
 
     if (!response.ok || data.error) {
       throw new Error(data.error?.message || "계정 목록 조회 실패");
     }
 
     const accounts =
-      data.data?.map((account: any) => ({
+      data.data?.map((account) => ({
         id: account.id.replace("act_", ""),
         name: account.name,
         status: account.account_status,
@@ -568,12 +610,12 @@ export async function fetchMetaAdsAccounts(
     log.info("Fetched Meta ad accounts", { count: accounts.length });
 
     return { success: true, accounts };
-  } catch (error: any) {
+  } catch (error) {
     log.error("Failed to fetch Meta accounts", error);
 
     return {
       success: false,
-      error: error.message || "계정 목록 조회 실패",
+      error: error instanceof Error ? error.message : "계정 목록 조회 실패",
       accounts: [],
     };
   }
@@ -589,14 +631,14 @@ export async function fetchMetaCampaigns(
       `https://graph.facebook.com/v23.0/act_${accountId}/campaigns?fields=id,name,status,objective,daily_budget,lifetime_budget&access_token=${credentials.accessToken}`,
     );
 
-    const data = await response.json();
+    const data: MetaAdsApiResponse<MetaAdsCampaignRaw> = await response.json();
 
     if (!response.ok || data.error) {
       throw new Error(data.error?.message || "캠페인 목록 조회 실패");
     }
 
     const campaigns =
-      data.data?.map((campaign: any) => ({
+      data.data?.map((campaign) => ({
         id: campaign.id,
         name: campaign.name,
         status: campaign.status,
@@ -612,12 +654,12 @@ export async function fetchMetaCampaigns(
     log.info("Fetched Meta campaigns", { accountId, count: campaigns.length });
 
     return { success: true, campaigns };
-  } catch (error: any) {
+  } catch (error) {
     log.error("Failed to fetch Meta campaigns", error);
 
     return {
       success: false,
-      error: error.message || "캠페인 목록 조회 실패",
+      error: error instanceof Error ? error.message : "캠페인 목록 조회 실패",
       campaigns: [],
     };
   }
@@ -644,7 +686,7 @@ export async function updateMetaCampaignStatus(
       },
     );
 
-    const data = await response.json();
+    const data: MetaAdsApiResponse<unknown> = await response.json();
 
     if (!response.ok || data.error) {
       throw new Error(data.error?.message || "캠페인 상태 변경 실패");
@@ -653,12 +695,12 @@ export async function updateMetaCampaignStatus(
     log.info("Meta campaign status updated", { campaignId, status });
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     log.error("Failed to update Meta campaign status", error);
 
     return {
       success: false,
-      error: error.message || "캠페인 상태 변경 실패",
+      error: error instanceof Error ? error.message : "캠페인 상태 변경 실패",
     };
   }
 }
@@ -684,12 +726,13 @@ export async function batchUpdateMetaCampaignStatus(
       success: true,
       results,
     };
-  } catch (error: any) {
+  } catch (error) {
     log.error("Failed to batch update Meta campaign statuses", error);
 
     return {
       success: false,
-      error: error.message || "배치 캠페인 상태 변경 실패",
+      error:
+        error instanceof Error ? error.message : "배치 캠페인 상태 변경 실패",
     };
   }
 }
@@ -706,12 +749,12 @@ export async function clearMetaCache(pattern?: string) {
     log.info("Meta cache cleared", { pattern });
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     log.error("Failed to clear Meta cache", error);
 
     return {
       success: false,
-      error: error.message || "캐시 초기화 실패",
+      error: error instanceof Error ? error.message : "캐시 초기화 실패",
     };
   }
 }

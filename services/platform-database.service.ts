@@ -196,9 +196,9 @@ export class PlatformDatabaseService {
   async savePlatformCredentials(
     teamId: string,
     platform: string,
-    credentials: Record<string, any>,
+    credentials: Record<string, unknown>,
     userId: string,
-    additionalData?: Record<string, any>,
+    additionalData?: Record<string, unknown>,
     accountId?: string,
   ): Promise<boolean> {
     // Check if credentials already exist for this team and platform without a specific account_id

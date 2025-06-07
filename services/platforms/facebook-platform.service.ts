@@ -11,6 +11,14 @@ import {
 import log from "@/utils/logger";
 import { formatDateToYYYYMMDD } from "@/utils/date-formatter";
 
+interface MetaAdAccount {
+  id: string;
+  name: string;
+  currency: string;
+  timezone: string;
+  status: number;
+}
+
 export class FacebookPlatformService extends BasePlatformService {
   platform: PlatformType = "facebook";
   private metaAdsService?: MetaAdsIntegrationService;
@@ -18,7 +26,7 @@ export class FacebookPlatformService extends BasePlatformService {
   // Initialize Meta Ads service
   private getMetaAdsService(): MetaAdsIntegrationService {
     if (!this.metaAdsService) {
-      const credentials = this.credentials as FacebookCredentials;
+      const credentials = this.credentials as unknown as FacebookCredentials;
 
       this.metaAdsService = new MetaAdsIntegrationService({
         accessToken: credentials.accessToken || "",
@@ -32,7 +40,8 @@ export class FacebookPlatformService extends BasePlatformService {
   }
 
   async validateCredentials(): Promise<boolean> {
-    const { accountId, accessToken } = this.credentials as FacebookCredentials;
+    const { accountId, accessToken } = this
+      .credentials as unknown as FacebookCredentials;
 
     if (!accessToken || !accountId) {
       return false;
@@ -53,7 +62,7 @@ export class FacebookPlatformService extends BasePlatformService {
     log.info("Fetching Facebook campaigns");
 
     try {
-      const { accountId } = this.credentials as FacebookCredentials;
+      const { accountId } = this.credentials as unknown as FacebookCredentials;
       const service = this.getMetaAdsService();
 
       // Get campaigns with last 30 days insights
@@ -104,8 +113,8 @@ export class FacebookPlatformService extends BasePlatformService {
   ): Promise<CampaignMetrics[]> {
     log.info("Fetching Facebook campaign metrics", {
       campaignId,
-      startDate,
-      endDate,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
     });
 
     try {
@@ -201,10 +210,10 @@ export class FacebookPlatformService extends BasePlatformService {
   /**
    * Get all accessible ad accounts for account selection
    */
-  async getAccessibleAccounts(): Promise<any[]> {
+  async getAccessibleAccounts(): Promise<MetaAdAccount[]> {
     try {
       const service = this.getMetaAdsService();
-      const credentials = this.credentials as FacebookCredentials;
+      const credentials = this.credentials as unknown as FacebookCredentials;
 
       return await service.getAdAccounts(credentials.businessId);
     } catch (error) {

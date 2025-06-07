@@ -42,5 +42,5 @@ export interface BaseSyncResult {
 export interface ApiError {
   code: string;
   message: string;
-  details?: any;
+  details?: unknown;
 }

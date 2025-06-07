@@ -9,6 +9,7 @@ import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
 import { createClient } from "@/utils/supabase/client";
 import log from "@/utils/logger";
+import { AcceptTeamInvitationResult } from "@/types/database.types";
 
 interface InviteAcceptClientProps {
   token: string;
@@ -55,26 +56,25 @@ export default function InviteAcceptClient({
       log.info("Accepting invitation", { token });
 
       // Call the RPC function to accept invitation
-      const { data, error: acceptError } = (await supabase.rpc(
+      const { data, error: acceptError } = await supabase.rpc(
         "accept_team_invitation",
         {
           invitation_token: token,
         },
-      )) as {
-        data: { success: boolean; error?: string; team_id?: string } | null;
-        error: any;
-      };
+      );
 
       if (acceptError) {
         log.error("Failed to accept invitation", acceptError);
         throw new Error(acceptError.message);
       }
 
-      if (!data || !data.success) {
-        throw new Error(data?.error || "Failed to accept invitation");
+      const result = data as AcceptTeamInvitationResult | null;
+
+      if (!result || !result.success) {
+        throw new Error(result?.error || "Failed to accept invitation");
       }
 
-      log.info("Invitation accepted successfully", { teamId: data.team_id });
+      log.info("Invitation accepted successfully", { teamId: result.team_id });
 
       setSuccess(true);
 

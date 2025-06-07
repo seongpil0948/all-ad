@@ -11,7 +11,7 @@ interface ServiceDescriptor<T> {
 }
 
 export class DIContainer {
-  private services = new Map<symbol, ServiceDescriptor<any>>();
+  private services = new Map<symbol, ServiceDescriptor<unknown>>();
 
   register<T>(token: symbol, factory: ServiceFactory<T>): void {
     this.services.set(token, {
@@ -39,10 +39,10 @@ export class DIContainer {
         descriptor.instance = await descriptor.factory();
       }
 
-      return descriptor.instance;
+      return descriptor.instance as T;
     }
 
-    return await descriptor.factory();
+    return (await descriptor.factory()) as T;
   }
 }
 

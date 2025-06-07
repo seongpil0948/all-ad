@@ -5,11 +5,11 @@ import { formatDateToYYYYMMDD } from "@/utils/date-formatter";
 
 export abstract class BasePlatformService implements PlatformService {
   abstract platform: PlatformType;
-  protected credentials: Record<string, any> = {};
+  protected credentials: Record<string, unknown> = {};
   protected teamId?: string;
 
   // Set credentials for use in subsequent operations
-  setCredentials(credentials: Record<string, any>): void {
+  setCredentials(credentials: Record<string, unknown>): void {
     this.credentials = credentials;
   }
 
@@ -38,7 +38,9 @@ export abstract class BasePlatformService implements PlatformService {
     return formatDateToYYYYMMDD(date);
   }
 
-  protected parseMetricsResponse(data: any): CampaignMetrics {
+  protected parseMetricsResponse(
+    data: Partial<CampaignMetrics>,
+  ): CampaignMetrics {
     // Default implementation - can be overridden by specific platforms
     return {
       impressions: 0,

@@ -4,6 +4,8 @@ import { TeamManagement } from "@/components/team/TeamManagement";
 import { PageHeader } from "@/components/common";
 import { createClient } from "@/utils/supabase/server";
 import log from "@/utils/logger";
+import { Team, UserRole, TeamMemberWithProfile } from "@/types/database.types";
+import { Database } from "@/types/supabase.types";
 
 export default async function TeamPage() {
   const supabase = await createClient();
@@ -22,9 +24,9 @@ export default async function TeamPage() {
   }
 
   // Fetch initial team data
-  let currentTeam = null;
-  let userRole = null;
-  let teamMembers = null;
+  let currentTeam: Team | null = null;
+  let userRole: UserRole | null = null;
+  let teamMembers: TeamMemberWithProfile[] | null = null;
 
   try {
     // Check if user is master of any team
@@ -57,23 +59,41 @@ export default async function TeamPage() {
         team_id_param: currentTeam.id,
       });
 
+      interface TeamMemberRPCResult {
+        id: string;
+        team_id: string;
+        user_id: string;
+        role: Database["public"]["Enums"]["user_role"];
+        invited_by: string;
+        joined_at: string;
+        profile_id: string;
+        email: string;
+        full_name: string;
+        avatar_url: string;
+      }
+
       if (data) {
-        teamMembers = data.map((member: any) => ({
-          id: member.id,
-          team_id: member.team_id,
-          user_id: member.user_id,
-          role: member.role,
-          invited_by: member.invited_by,
-          joined_at: member.joined_at,
-          profiles: member.profile_id
-            ? {
-                id: member.profile_id,
-                email: member.email,
-                full_name: member.full_name,
-                avatar_url: member.avatar_url,
-              }
-            : null,
-        }));
+        teamMembers = (data as TeamMemberRPCResult[]).map(
+          (member) =>
+            ({
+              id: member.id,
+              team_id: member.team_id,
+              user_id: member.user_id,
+              role: member.role as UserRole,
+              invited_by: member.invited_by,
+              joined_at: member.joined_at,
+              profiles: member.profile_id
+                ? {
+                    id: member.profile_id,
+                    email: member.email,
+                    full_name: member.full_name,
+                    avatar_url: member.avatar_url,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  }
+                : null,
+            }) as TeamMemberWithProfile,
+        );
       }
     }
   } catch (error) {

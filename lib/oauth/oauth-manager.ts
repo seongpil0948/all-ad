@@ -6,6 +6,16 @@ import { createClient } from "@/utils/supabase/server";
 
 export type { OAuthConfig } from "@/types/oauth";
 
+// Stored token data with calculated expiry timestamps
+interface StoredTokenData {
+  access_token: string;
+  refresh_token?: string;
+  expires_at: number;
+  refresh_expires_at?: number | null;
+  token_type: string;
+  scope?: string;
+}
+
 export class OAuthManager {
   private config: OAuthConfig;
   private platform: string;
@@ -149,7 +159,7 @@ export class OAuthManager {
     accountId: string,
   ): Promise<string | null> {
     const tokenKey = `oauth:${this.platform}:${userId}:${accountId}:tokens`;
-    const tokenData = await getToken(tokenKey);
+    const tokenData = await getToken<StoredTokenData>(tokenKey);
 
     if (!tokenData) {
       log.error(`No tokens found for ${this.platform}:${userId}:${accountId}`);

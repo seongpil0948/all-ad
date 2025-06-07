@@ -8,6 +8,7 @@ import { CampaignDashboard } from "@/components/dashboard/CampaignDashboard";
 import { PlatformCredentialsManager } from "@/components/platform/PlatformCredentialsManager";
 import { TeamManagement } from "@/components/team/TeamManagement";
 import { usePlatformStore, useTeamStore, useAuthStore } from "@/stores";
+import { CredentialValues } from "@/types/credentials.types";
 
 export default function IntegratedTabsClient() {
   const {
@@ -67,7 +68,7 @@ export default function IntegratedTabsClient() {
                   id: c.id,
                   teamId: c.team_id,
                   platform: c.platform,
-                  credentials: c.credentials,
+                  credentials: c.credentials as CredentialValues,
                   isActive: c.is_active,
                   createdAt: c.created_at,
                   updatedAt: c.updated_at,

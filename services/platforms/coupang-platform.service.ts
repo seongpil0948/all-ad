@@ -13,21 +13,15 @@ export class CoupangPlatformService extends BasePlatformService {
 
   async validateCredentials(): Promise<boolean> {
     const { accessKey, secretKey, vendorId } = this
-      .credentials as CoupangCredentials;
+      .credentials as unknown as CoupangCredentials;
 
     if (!accessKey || !secretKey || !vendorId) {
       return false;
     }
 
-    try {
-      // Validate credentials by making a test API call
-      // TODO: Implement actual Coupang API validation
-      return true;
-    } catch (error) {
-      log.error("Coupang credential validation error:", error as Error);
-
-      return false;
-    }
+    // TODO: Implement actual Coupang API validation
+    // For now, return true if credentials are present
+    return true;
   }
 
   async fetchCampaigns(): Promise<Campaign[]> {

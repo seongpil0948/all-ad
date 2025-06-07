@@ -65,7 +65,7 @@ const METRIC_MAPPINGS = {
  */
 export function transformPlatformMetrics(
   platform: keyof typeof METRIC_MAPPINGS,
-  rawMetrics: Record<string, any>,
+  rawMetrics: Record<string, unknown>,
 ): CampaignMetrics {
   const mapping = METRIC_MAPPINGS[platform];
   const metrics: CampaignMetrics = {
@@ -79,13 +79,14 @@ export function transformPlatformMetrics(
     cpm: 0,
     roas: 0,
     roi: 0,
-    date: rawMetrics.date || new Date().toISOString().split("T")[0],
+    date: (rawMetrics.date as string) || new Date().toISOString().split("T")[0],
   };
 
   // Map fields
   for (const [key, sourceField] of Object.entries(mapping)) {
     if (rawMetrics[sourceField] !== undefined) {
-      (metrics as any)[key] = rawMetrics[sourceField];
+      (metrics as unknown as Record<string, unknown>)[key] =
+        rawMetrics[sourceField];
     }
   }
 
@@ -93,18 +94,18 @@ export function transformPlatformMetrics(
   if (platform === "google") {
     // Convert micros to currency for Google
     if (rawMetrics.costMicros !== undefined) {
-      metrics.cost = rawMetrics.costMicros / 1_000_000;
+      metrics.cost = (rawMetrics.costMicros as number) / 1_000_000;
     }
     if (rawMetrics.averageCpc !== undefined) {
-      metrics.cpc = rawMetrics.averageCpc / 1_000_000;
+      metrics.cpc = (rawMetrics.averageCpc as number) / 1_000_000;
     }
     if (rawMetrics.averageCpm !== undefined) {
-      metrics.cpm = rawMetrics.averageCpm / 1_000_000;
+      metrics.cpm = (rawMetrics.averageCpm as number) / 1_000_000;
     }
   } else if (platform === "facebook") {
     // Facebook costs are in cents
     if (rawMetrics.spend !== undefined) {
-      metrics.cost = parseFloat(rawMetrics.spend);
+      metrics.cost = parseFloat(rawMetrics.spend as string);
     }
   }
 

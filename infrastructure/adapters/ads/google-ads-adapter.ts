@@ -7,6 +7,49 @@ import {
   CreateCampaignDto,
 } from "@/services/ads/ad-service";
 
+// Type definitions for Google Ads API
+interface GoogleAdsApiParams {
+  customer_id?: string;
+  account_id?: string;
+  campaign_id?: string;
+  start_date?: string;
+  end_date?: string;
+  method?: string;
+  body?: {
+    name: string;
+    budget_micros: number;
+    start_date: string;
+    end_date: string | null;
+    targeting?: Record<string, unknown>;
+  };
+}
+
+interface GoogleAdsCampaign {
+  id: string;
+  name: string;
+  status: string;
+  budget_micros: number;
+  start_date: string;
+  end_date: string | null;
+}
+
+interface GoogleAdsApiResponse {
+  campaigns: GoogleAdsCampaign[];
+}
+
+interface GoogleAdsMetrics {
+  impressions: number;
+  clicks: number;
+  conversions: number;
+  cost_micros: number;
+  ctr: number;
+  average_cpc: number;
+}
+
+interface GoogleAdsMetricsResponse {
+  metrics: GoogleAdsMetrics;
+}
+
 // Google Ads Adapter Implementation (Hexagonal Architecture - Adapter)
 export class GoogleAdsAdapter implements IAdPlatformAdapter {
   private apiKey: string;
@@ -91,7 +134,7 @@ export class GoogleAdsAdapter implements IAdPlatformAdapter {
         });
 
         const performance = this.transformGooglePerformance(
-          response,
+          response as unknown as GoogleAdsMetricsResponse,
           campaignId,
           dateRange,
         );
@@ -143,7 +186,9 @@ export class GoogleAdsAdapter implements IAdPlatformAdapter {
           },
         });
 
-        const createdCampaign = this.transformGoogleCampaign(response);
+        const createdCampaign = this.transformGoogleCampaign(
+          response as unknown as GoogleAdsCampaign,
+        );
 
         log.info("Google Ads campaign created successfully", {
           module: "GoogleAdsAdapter",
@@ -165,13 +210,16 @@ export class GoogleAdsAdapter implements IAdPlatformAdapter {
   }
 
   // Private helper methods
-  private async makeApiCall(endpoint: string, params: any): Promise<any> {
+  private async makeApiCall(
+    endpoint: string,
+    params: GoogleAdsApiParams,
+  ): Promise<GoogleAdsApiResponse> {
     const startTime = Date.now();
     const url = `${this.baseUrl}${endpoint}`;
 
     log.http("GET", url, undefined, undefined, {
       module: "GoogleAdsAdapter",
-      params,
+      params: { ...params },
     });
 
     try {
@@ -187,7 +235,7 @@ export class GoogleAdsAdapter implements IAdPlatformAdapter {
         responseSize: JSON.stringify(mockResponse).length,
       });
 
-      return mockResponse;
+      return mockResponse as GoogleAdsApiResponse;
     } catch (error) {
       const duration = Date.now() - startTime;
 
@@ -199,13 +247,13 @@ export class GoogleAdsAdapter implements IAdPlatformAdapter {
     }
   }
 
-  private transformGoogleCampaigns(response: any): Campaign[] {
-    return response.campaigns.map((gc: any) =>
+  private transformGoogleCampaigns(response: GoogleAdsApiResponse): Campaign[] {
+    return response.campaigns.map((gc: GoogleAdsCampaign) =>
       this.transformGoogleCampaign(gc),
     );
   }
 
-  private transformGoogleCampaign(gc: any): Campaign {
+  private transformGoogleCampaign(gc: GoogleAdsCampaign): Campaign {
     return {
       id: `google_${gc.id}`,
       name: gc.name,
@@ -218,7 +266,7 @@ export class GoogleAdsAdapter implements IAdPlatformAdapter {
   }
 
   private transformGooglePerformance(
-    response: any,
+    response: GoogleAdsMetricsResponse,
     campaignId: string,
     dateRange: DateRange,
   ): AdPerformance {
@@ -248,7 +296,9 @@ export class GoogleAdsAdapter implements IAdPlatformAdapter {
     return date.toISOString().split("T")[0];
   }
 
-  private getMockResponse(endpoint: string): any {
+  private getMockResponse(
+    endpoint: string,
+  ): GoogleAdsApiResponse | GoogleAdsMetricsResponse {
     if (endpoint === "/campaigns") {
       return {
         campaigns: [
@@ -285,6 +335,9 @@ export class GoogleAdsAdapter implements IAdPlatformAdapter {
       };
     }
 
-    return {};
+    // Default response for unknown endpoints
+    return {
+      campaigns: [],
+    } as GoogleAdsApiResponse;
   }
 }

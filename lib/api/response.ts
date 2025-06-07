@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 /**
  * Standard API success response format
  */
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   message?: string;
@@ -11,7 +11,7 @@ export interface ApiResponse<T = any> {
     page?: number;
     limit?: number;
     total?: number;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 

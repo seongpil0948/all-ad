@@ -1,12 +1,40 @@
 // Platform credentials types
 import { PlatformType } from "./base.types";
 
+// Unified credential values interface for forms
+export interface CredentialValues {
+  // Google OAuth
+  clientId?: string;
+  clientSecret?: string;
+  developerToken?: string;
+  loginCustomerId?: string;
+  refreshToken?: string;
+  // Facebook OAuth
+  appId?: string;
+  appSecret?: string;
+  accessToken?: string;
+  // Kakao OAuth
+  restApiKey?: string;
+  secretKey?: string;
+  // Naver API
+  customerId?: string;
+  // Coupang API
+  accessKey?: string;
+  // OAuth fields (snake_case for compatibility)
+  client_id?: string;
+  client_secret?: string;
+  refresh_token?: string;
+  manual_token?: boolean;
+  manual_refresh_token?: string;
+  [key: string]: string | boolean | undefined;
+}
+
 // Base credential interface
 export interface PlatformCredential {
   id: string;
   teamId: string;
   platform: PlatformType;
-  credentials: Record<string, any>;
+  credentials: CredentialValues;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

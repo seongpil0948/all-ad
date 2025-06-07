@@ -7,6 +7,24 @@ import { createClient } from "@/utils/supabase/server";
 import { GoogleAdsCredentials } from "@/types";
 import log from "@/utils/logger";
 
+// Type definitions
+interface GoogleAdsAccountRecord {
+  id: string;
+  team_id: string;
+  platform: string;
+  account_id: string;
+  account_name: string;
+  credentials: {
+    client_id: string;
+    client_secret: string;
+    refresh_token: string;
+    developer_token: string;
+    login_customer_id?: string;
+  };
+  is_active: boolean;
+  customer_id: string;
+}
+
 export class GoogleAdsScheduler {
   private syncJobs: Map<string, cron.ScheduledTask> = new Map();
 
@@ -104,7 +122,9 @@ export class GoogleAdsScheduler {
   }
 
   // 활성화된 Google Ads 계정 목록 조회
-  private async getActiveGoogleAdsAccounts(): Promise<any[]> {
+  private async getActiveGoogleAdsAccounts(): Promise<
+    GoogleAdsAccountRecord[]
+  > {
     const supabase = await createClient();
 
     const { data, error } = await supabase

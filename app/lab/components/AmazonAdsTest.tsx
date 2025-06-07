@@ -41,7 +41,10 @@ export default function AmazonAdsTest() {
   });
 
   const [authCode, setAuthCode] = useState("");
-  const [apiResponse, setApiResponse] = useState<any>(null);
+  const [apiResponse, setApiResponse] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [testItems, setTestItems] = useState<TestItem[]>([
@@ -124,21 +127,23 @@ export default function AmazonAdsTest() {
         ),
       );
 
-      setApiResponse(result);
-    } catch (error: any) {
+      if (result) {
+        setApiResponse(result);
+      }
+    } catch (error) {
       setTestItems((prev) =>
         prev.map((item) =>
           item.id === testId
             ? {
                 ...item,
                 status: "error",
-                error: error.message || "테스트 실패",
+                error: error instanceof Error ? error.message : "테스트 실패",
               }
             : item,
         ),
       );
 
-      setError(error.message);
+      setError(error instanceof Error ? error.message : "Unknown error");
       log.error(`Test ${testId} failed`, error);
     }
   };
@@ -220,7 +225,7 @@ export default function AmazonAdsTest() {
             onChange={(e) =>
               setCredentials({
                 ...credentials,
-                region: e.target.value as any,
+                region: e.target.value as "NA" | "EU" | "FE",
               })
             }
           >

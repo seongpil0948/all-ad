@@ -9,7 +9,7 @@ export interface ApiError {
   error: string;
   message?: string;
   code?: string;
-  details?: any;
+  details?: unknown;
 }
 
 /**
@@ -20,7 +20,7 @@ export class ApiException extends Error {
     public statusCode: number,
     public code: string,
     message: string,
-    public details?: any,
+    public details?: unknown,
   ) {
     super(message);
     this.name = "ApiException";
@@ -107,7 +107,10 @@ export function handleApiError(error: unknown, context?: string): NextResponse {
     log.warn(`API error ${context ? `in ${context}` : ""}`, {
       code: error.code,
       message: error.message,
-      details: error.details,
+      details:
+        typeof error.details === "object" && error.details !== null
+          ? (error.details as Record<string, unknown>)
+          : String(error.details),
     });
 
     return createErrorResponse(error);
@@ -122,12 +125,21 @@ export function handleApiError(error: unknown, context?: string): NextResponse {
 /**
  * Validate required parameters
  */
-export function validateParams<T extends Record<string, any>>(
-  params: any,
+export function validateParams<T extends Record<string, unknown>>(
+  params: unknown,
   required: (keyof T)[],
 ): asserts params is T {
+  if (!params || typeof params !== "object") {
+    throw ApiErrors.INVALID_REQUEST("Invalid parameters");
+  }
+
+  const paramObj = params as Record<string, unknown>;
+
   for (const key of required) {
-    if (!params || params[key] === undefined || params[key] === null) {
+    if (
+      paramObj[key as string] === undefined ||
+      paramObj[key as string] === null
+    ) {
       throw ApiErrors.MISSING_PARAMETER(String(key));
     }
   }
@@ -141,6 +153,6 @@ export function hasErrorMessage(error: unknown): error is { message: string } {
     typeof error === "object" &&
     error !== null &&
     "message" in error &&
-    typeof (error as any).message === "string"
+    typeof (error as Record<string, unknown>).message === "string"
   );
 }

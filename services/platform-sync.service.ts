@@ -7,6 +7,15 @@ import { Campaign as DBCampaign, PlatformType } from "@/types/database.types";
 import { PlatformCampaign, PlatformCampaignMetrics } from "@/types/platform";
 import { createClient } from "@/utils/supabase/server";
 
+// Type definitions
+interface PlatformCredential {
+  id: string;
+  team_id: string;
+  platform: string;
+  credentials: Record<string, unknown>;
+  is_active: boolean;
+}
+
 export class PlatformSyncService {
   constructor(
     private platformServiceFactory: PlatformServiceFactory,
@@ -67,7 +76,7 @@ export class PlatformSyncService {
   async syncPlatform(
     teamId: string,
     platform: PlatformType,
-    credentials: Record<string, any>,
+    credentials: Record<string, unknown>,
   ): Promise<boolean> {
     try {
       const service = this.platformServiceFactory.createService(platform);
@@ -146,7 +155,7 @@ export class PlatformSyncService {
       // Get platform credentials
       const credentials = await this.getTeamCredentials(teamId);
       const platformCredential = credentials.find(
-        (c: any) => c.platform === platform,
+        (c) => c.platform === platform,
       );
 
       if (!platformCredential) {
@@ -191,7 +200,7 @@ export class PlatformSyncService {
       // Get platform credentials
       const credentials = await this.getTeamCredentials(teamId);
       const platformCredential = credentials.find(
-        (c: any) => c.platform === platform,
+        (c) => c.platform === platform,
       );
 
       if (!platformCredential) {
@@ -226,7 +235,9 @@ export class PlatformSyncService {
   }
 
   // Helper methods
-  private async getTeamCredentials(teamId: string): Promise<any[]> {
+  private async getTeamCredentials(
+    teamId: string,
+  ): Promise<PlatformCredential[]> {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("platform_credentials")

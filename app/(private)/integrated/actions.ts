@@ -1,11 +1,35 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { User } from "@supabase/supabase-js";
 
 import { createClient } from "@/utils/supabase/server";
 import log from "@/utils/logger";
+import {
+  Team,
+  PlatformCredential,
+  UserRole,
+  TeamMemberWithProfile,
+} from "@/types/database.types";
+import { Campaign as AppCampaign } from "@/types/campaign.types";
+import { transformDbCampaignToApp } from "@/utils/campaign-transformer";
 
-export async function getIntegratedData() {
+interface IntegratedData {
+  user: User;
+  team: Team;
+  credentials: PlatformCredential[];
+  campaigns: AppCampaign[];
+  teamMembers: TeamMemberWithProfile[];
+  stats: {
+    totalCampaigns: number;
+    activeCampaigns: number;
+    totalBudget: number;
+    connectedPlatforms: number;
+  };
+  userRole: UserRole;
+}
+
+export async function getIntegratedData(): Promise<IntegratedData> {
   const supabase = await createClient();
 
   try {
@@ -41,6 +65,17 @@ export async function getIntegratedData() {
       ? teamMember.team[0]
       : teamMember.team;
     const teamId = team.id;
+
+    // Ensure we have the full team object
+    const { data: fullTeam } = await supabase
+      .from("teams")
+      .select("*")
+      .eq("id", teamId)
+      .single();
+
+    if (!fullTeam) {
+      throw new Error("Team not found");
+    }
 
     // Get credentials
     const { data: credentials, error: credentialsError } = await supabase
@@ -78,15 +113,17 @@ export async function getIntegratedData() {
       .select(
         `
         id,
+        team_id,
         role,
         joined_at,
-        user_id
+        user_id,
+        invited_by
       `,
       )
       .eq("team_id", teamId);
 
     // Get profiles for team members
-    let teamMembersWithProfiles: any[] = [];
+    let teamMembersWithProfiles: TeamMemberWithProfile[] = [];
 
     if (teamMembers && !teamError) {
       const userIds = teamMembers.map((member) => member.user_id);
@@ -97,7 +134,8 @@ export async function getIntegratedData() {
 
       teamMembersWithProfiles = teamMembers.map((member) => ({
         ...member,
-        user: profiles?.find((p) => p.id === member.user_id) || null,
+        team_id: member.team_id || teamId, // Ensure team_id is set
+        profiles: profiles?.find((p) => p.id === member.user_id) || null,
       }));
     }
 
@@ -112,18 +150,21 @@ export async function getIntegratedData() {
     // Calculate statistics
     const stats = {
       totalCampaigns: campaigns?.length || 0,
-      activeCampaigns: campaigns?.filter((c: any) => c.is_active).length || 0,
-      totalBudget:
-        campaigns?.reduce((sum: any, c: any) => sum + (c.budget || 0), 0) || 0,
-      connectedPlatforms:
-        credentials?.filter((c: any) => c.is_active).length || 0,
+      activeCampaigns: campaigns?.filter((c) => c.is_active).length || 0,
+      totalBudget: campaigns?.reduce((sum, c) => sum + (c.budget || 0), 0) || 0,
+      connectedPlatforms: credentials?.filter((c) => c.is_active).length || 0,
     };
+
+    // Transform campaigns to app layer
+    const appCampaigns = (campaigns || []).map((campaign) =>
+      transformDbCampaignToApp(campaign),
+    );
 
     return {
       user,
-      team,
+      team: fullTeam,
       credentials: credentials || [],
-      campaigns: campaigns || [],
+      campaigns: appCampaigns,
       teamMembers: teamMembersWithProfiles || [],
       stats,
       userRole: teamMember.role,
@@ -178,7 +219,7 @@ export async function syncAllPlatformsAction() {
     }
 
     // Sync each platform
-    const syncPromises = credentials.map(async (cred: any) => {
+    const syncPromises = credentials.map(async (cred) => {
       try {
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_APP_URL}/api/sync/${cred.platform}`,

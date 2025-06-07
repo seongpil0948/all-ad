@@ -340,7 +340,7 @@ export function TeamManagement() {
                         </div>
                       ) : (
                         <Chip
-                          color={roleConfig[member.role].color as any}
+                          color={roleConfig[member.role].color}
                           startContent={
                             <div className="w-4 h-4">
                               {createElement(roleConfig[member.role].icon, {
@@ -434,7 +434,7 @@ export function TeamManagement() {
                     </TableCell>
                     <TableCell>
                       <Chip
-                        color={roleConfig[invitation.role].color as any}
+                        color={roleConfig[invitation.role].color}
                         startContent={
                           <div className="w-4 h-4">
                             {createElement(roleConfig[invitation.role].icon, {

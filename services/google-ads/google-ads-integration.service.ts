@@ -6,6 +6,14 @@ import { GoogleAdsSyncService } from "./sync/sync-strategy.service";
 import { GoogleAdsApiCredentials } from "@/types/google-ads.types";
 import log from "@/utils/logger";
 
+// Type definitions
+interface GoogleAdsMutateResponse {
+  results: Array<{
+    resource_name: string;
+  }>;
+  partial_failure_error?: unknown;
+}
+
 // Google Ads 통합 서비스
 export class GoogleAdsIntegrationService {
   private googleAdsClient: GoogleAdsClient;
@@ -28,7 +36,7 @@ export class GoogleAdsIntegrationService {
     accountId: string,
     campaignId: string,
     enable: boolean,
-  ): Promise<any> {
+  ): Promise<GoogleAdsMutateResponse> {
     try {
       log.info("캠페인 상태 변경 시작", { accountId, campaignId, enable });
 
@@ -52,7 +60,7 @@ export class GoogleAdsIntegrationService {
     accountId: string,
     labelId: string,
     enable: boolean,
-  ): Promise<any> {
+  ): Promise<GoogleAdsMutateResponse> {
     try {
       log.info("라벨 기반 캠페인 일괄 제어 시작", {
         accountId,

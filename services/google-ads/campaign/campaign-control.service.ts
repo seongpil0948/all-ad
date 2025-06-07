@@ -1,3 +1,5 @@
+import type { MutateOperation } from "google-ads-api";
+
 import { GoogleAdsClient } from "../core/google-ads-client";
 
 import log from "@/utils/logger";
@@ -7,6 +9,34 @@ import {
   GoogleAdsMetrics,
 } from "@/types/google-ads.types";
 
+// Type definitions for Google Ads API responses
+interface GoogleAdsMutateResponse {
+  results: Array<{
+    resource_name: string;
+  }>;
+  partial_failure_error?: unknown;
+}
+
+interface GoogleAdsCampaignResult {
+  "campaign.id": string;
+  "campaign.name": string;
+  "campaign.status": string;
+  "campaign_budget.amount_micros": string;
+  "campaign.start_date": string;
+  "campaign.end_date": string;
+  "campaign.campaign_budget": string;
+  "campaign.type"?: string;
+  "metrics.impressions"?: string;
+  "metrics.clicks"?: string;
+  "metrics.cost_micros"?: string;
+  "metrics.conversions"?: string;
+  "metrics.conversions_value"?: string;
+  "metrics.ctr"?: string;
+  "metrics.average_cpc"?: string;
+  "metrics.average_cpm"?: string;
+  "segments.date"?: string;
+}
+
 export class CampaignControlService {
   constructor(private googleAdsClient: GoogleAdsClient) {}
 
@@ -14,18 +44,21 @@ export class CampaignControlService {
   async updateCampaignStatus(
     customerId: string,
     updates: CampaignStatusUpdate[],
-  ): Promise<any> {
-    const operations = updates.map((update) => ({
-      entity: "campaign",
-      operation: "update",
-      resource: {
-        resource_name: `customers/${customerId}/campaigns/${update.campaignId}`,
-        status: update.status,
-      },
-      update_mask: {
-        paths: ["status"],
-      },
-    }));
+  ): Promise<GoogleAdsMutateResponse> {
+    const operations = updates.map(
+      (update) =>
+        ({
+          entity: "campaign",
+          operation: "update",
+          resource: {
+            resource_name: `customers/${customerId}/campaigns/${update.campaignId}`,
+            status: update.status,
+          },
+          update_mask: {
+            paths: ["status"],
+          },
+        }) as MutateOperation<Record<string, unknown>>,
+    );
 
     try {
       const response = await this.googleAdsClient.mutate(
@@ -77,13 +110,16 @@ export class CampaignControlService {
     `;
 
     try {
-      const results = await this.googleAdsClient.query<any>(customerId, query);
+      const results = await this.googleAdsClient.query<GoogleAdsCampaignResult>(
+        customerId,
+        query,
+      );
 
       // 결과를 GoogleAdsCampaign 형식으로 변환
       return results.map((result) => ({
         id: result["campaign.id"],
         name: result["campaign.name"],
-        status: result["campaign.status"],
+        status: result["campaign.status"] as "ENABLED" | "PAUSED" | "REMOVED",
         budgetAmountMicros: parseInt(
           result["campaign_budget.amount_micros"] || "0",
         ),
@@ -114,7 +150,7 @@ export class CampaignControlService {
     customerId: string,
     campaignId: string,
     enable: boolean,
-  ): Promise<any> {
+  ): Promise<GoogleAdsMutateResponse> {
     const status = enable ? "ENABLED" : "PAUSED";
 
     return this.updateCampaignStatus(customerId, [{ campaignId, status }]);
@@ -124,7 +160,7 @@ export class CampaignControlService {
   async enableCampaigns(
     customerId: string,
     campaignIds: string[],
-  ): Promise<any> {
+  ): Promise<GoogleAdsMutateResponse> {
     const updates: CampaignStatusUpdate[] = campaignIds.map((campaignId) => ({
       campaignId,
       status: "ENABLED",
@@ -137,7 +173,7 @@ export class CampaignControlService {
   async pauseCampaigns(
     customerId: string,
     campaignIds: string[],
-  ): Promise<any> {
+  ): Promise<GoogleAdsMutateResponse> {
     const updates: CampaignStatusUpdate[] = campaignIds.map((campaignId) => ({
       campaignId,
       status: "PAUSED",
@@ -172,7 +208,10 @@ export class CampaignControlService {
     `;
 
     try {
-      const results = await this.googleAdsClient.query<any>(customerId, query);
+      const results = await this.googleAdsClient.query<GoogleAdsCampaignResult>(
+        customerId,
+        query,
+      );
 
       return results.map((result) => ({
         impressions: parseInt(result["metrics.impressions"] || "0"),
@@ -199,7 +238,7 @@ export class CampaignControlService {
     customerId: string,
     campaignId: string,
     budgetAmountMicros: number,
-  ): Promise<any> {
+  ): Promise<GoogleAdsMutateResponse> {
     // 먼저 캠페인의 현재 예산 ID를 조회
     const campaignQuery = `
       SELECT
@@ -209,10 +248,10 @@ export class CampaignControlService {
       WHERE campaign.id = ${campaignId}
     `;
 
-    const campaigns = await this.googleAdsClient.query<any>(
-      customerId,
-      campaignQuery,
-    );
+    const campaigns = await this.googleAdsClient.query<{
+      "campaign.id": string;
+      "campaign.campaign_budget": string;
+    }>(customerId, campaignQuery);
 
     if (!campaigns.length) {
       throw new Error(`캠페인을 찾을 수 없습니다: ${campaignId}`);
@@ -232,7 +271,7 @@ export class CampaignControlService {
         update_mask: {
           paths: ["amount_micros"],
         },
-      },
+      } as MutateOperation<Record<string, unknown>>,
     ];
 
     try {

@@ -5,11 +5,12 @@ import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
 
 import { PlatformType } from "@/types";
+import { CredentialValues } from "@/types/credentials.types";
 
 interface PlatformCredentialFormProps {
   platform: PlatformType;
-  initialValues?: Record<string, any>;
-  onSubmit: (values: Record<string, any>) => Promise<void>;
+  initialValues?: CredentialValues;
+  onSubmit: (values: CredentialValues) => Promise<void>;
 }
 
 export function PlatformCredentialForm({
@@ -17,7 +18,7 @@ export function PlatformCredentialForm({
   initialValues,
   onSubmit,
 }: PlatformCredentialFormProps) {
-  const [values, setValues] = useState(initialValues || {});
+  const [values, setValues] = useState<CredentialValues>(initialValues || {});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -5,6 +5,7 @@ import { Button } from "@heroui/button";
 import { Divider } from "@heroui/divider";
 import { Input } from "@heroui/input";
 import { useFormStatus } from "react-dom";
+import { User } from "@supabase/supabase-js";
 
 import { updateAvatarAction } from "./actions";
 
@@ -13,7 +14,7 @@ import { Profile } from "@/types/database.types";
 import { MessageCard } from "@/components/common";
 
 interface ProfileFormProps {
-  user: any;
+  user: User;
   profile: Profile;
   updateProfileAction: (
     formData: FormData,

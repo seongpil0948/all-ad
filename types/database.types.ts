@@ -49,11 +49,19 @@ export interface TeamInvitation {
   created_at: string;
 }
 
+// RPC function return types
+export interface AcceptTeamInvitationResult {
+  success: boolean;
+  error?: string;
+  team_id?: string;
+  role?: UserRole;
+}
+
 export interface PlatformCredential {
   id: string;
   team_id: string;
   platform: PlatformType;
-  credentials: Record<string, any>;
+  credentials: Record<string, unknown>;
   is_active: boolean;
   created_by?: string | null;
   created_at: string;
@@ -71,7 +79,7 @@ export interface Campaign {
   status?: string | null;
   budget?: number | null;
   is_active: boolean;
-  raw_data?: Record<string, any> | null;
+  raw_data?: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
   synced_at?: string | null;
@@ -86,7 +94,7 @@ export interface CampaignMetric {
   conversions: number;
   cost: number;
   revenue: number;
-  raw_data?: Record<string, any> | null;
+  raw_data?: Record<string, unknown> | null;
   created_at: string;
 }
 

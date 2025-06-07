@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 import { DashboardDataProvider } from "./DashboardDataProvider";
 
@@ -7,8 +8,26 @@ import { CampaignDashboard } from "@/components/dashboard/CampaignDashboard";
 import { SyncButton } from "@/components/dashboard/SyncButton";
 import { PageHeader } from "@/components/common";
 import log from "@/utils/logger";
+import { Database } from "@/types/supabase.types";
+import { Campaign as AppCampaign, CampaignStats } from "@/types/campaign.types";
+import { Campaign as DBCampaign } from "@/types/database.types";
+import { transformDbCampaignToApp } from "@/utils/campaign-transformer";
 
-async function getCampaignData(supabase: any, teamId: string) {
+type DBPlatformCredential =
+  Database["public"]["Tables"]["platform_credentials"]["Row"];
+
+interface CampaignWithCredentials extends DBCampaign {
+  platform_credentials?: Partial<DBPlatformCredential>;
+  // Add metrics from campaign_metrics if needed
+  clicks?: number;
+  impressions?: number;
+  cost?: number;
+}
+
+async function getCampaignData(
+  supabase: SupabaseClient<Database>,
+  teamId: string,
+): Promise<AppCampaign[]> {
   // First fetch campaigns
   const { data: campaigns, error } = await supabase
     .from("campaigns")
@@ -33,10 +52,9 @@ async function getCampaignData(supabase: any, teamId: string) {
     .eq("team_id", teamId);
 
   // Map credentials to campaigns
-  const campaignsWithCredentials = campaigns.map((campaign: any) => {
+  const campaignsWithCredentials = campaigns.map((campaign) => {
     const credential = credentials?.find(
-      (c: any) =>
-        c.platform === campaign.platform && c.team_id === campaign.team_id,
+      (c) => c.platform === campaign.platform && c.team_id === campaign.team_id,
     );
 
     return {
@@ -45,7 +63,35 @@ async function getCampaignData(supabase: any, teamId: string) {
     };
   });
 
-  return campaignsWithCredentials;
+  // Transform to application layer campaigns
+  return campaignsWithCredentials.map((campaign) => {
+    // Ensure required fields are not null before transforming
+    const campaignWithDefaults: DBCampaign = {
+      ...campaign,
+      team_id: campaign.team_id || teamId,
+      is_active: campaign.is_active ?? true,
+      status: campaign.status || "ENABLED",
+      synced_at: campaign.synced_at || campaign.created_at,
+      raw_data: campaign.raw_data as Record<string, unknown> | null,
+    };
+
+    const appCampaign = transformDbCampaignToApp(campaignWithDefaults);
+
+    // Add metrics if available (from extended properties)
+    const extendedCampaign = campaign as CampaignWithCredentials;
+
+    if (extendedCampaign.clicks !== undefined) {
+      appCampaign.metrics = {
+        clicks: extendedCampaign.clicks,
+        impressions: extendedCampaign.impressions || 0,
+        cost: extendedCampaign.cost || 0,
+        conversions: 0,
+        revenue: 0,
+      };
+    }
+
+    return appCampaign;
+  });
 }
 
 export default async function DashboardPage() {
@@ -98,28 +144,20 @@ export default async function DashboardPage() {
   const campaigns = await getCampaignData(supabase, teamId);
 
   // Calculate statistics
-  const stats = {
+  const stats: CampaignStats = {
     totalCampaigns: campaigns.length,
-    activeCampaigns: campaigns.filter((c: any) => c.is_active).length,
-    totalBudget: campaigns.reduce(
-      (sum: number, c: any) => sum + (c.budget || 0),
-      0,
-    ),
-    totalSpend: campaigns.reduce(
-      (sum: number, c: any) => sum + (c.cost || 0),
-      0,
-    ),
+    activeCampaigns: campaigns.filter((c) => c.isActive).length,
+    totalBudget: campaigns.reduce((sum, c) => sum + (c.budget || 0), 0),
+    totalSpend: campaigns.reduce((sum, c) => sum + (c.metrics?.cost || 0), 0),
     totalClicks: campaigns.reduce(
-      (sum: number, c: any) => sum + (c.clicks || 0),
+      (sum, c) => sum + (c.metrics?.clicks || 0),
       0,
     ),
     totalImpressions: campaigns.reduce(
-      (sum: number, c: any) => sum + (c.impressions || 0),
+      (sum, c) => sum + (c.metrics?.impressions || 0),
       0,
     ),
-    platforms: Array.from(
-      new Set(campaigns.map((c: any) => c.platform_credentials?.platform)),
-    ).filter(Boolean).length,
+    platforms: Array.from(new Set(campaigns.map((c) => c.platform))).length,
   };
 
   return (

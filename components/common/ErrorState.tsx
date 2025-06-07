@@ -14,7 +14,7 @@ export function ErrorState({
     error: "danger",
     warning: "warning",
     info: "primary",
-  };
+  } as const;
 
   const iconColorMap = {
     error: "text-danger",
@@ -36,11 +36,7 @@ export function ErrorState({
             <p className={`text-${colorMap[type]}-700 mt-2`}>{message}</p>
           </div>
           {onRetry && (
-            <Button
-              color={colorMap[type] as any}
-              variant="flat"
-              onPress={onRetry}
-            >
+            <Button color={colorMap[type]} variant="flat" onPress={onRetry}>
               다시 시도
             </Button>
           )}

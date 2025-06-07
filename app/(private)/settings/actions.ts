@@ -8,11 +8,12 @@ import {
   getPlatformServiceFactory,
 } from "@/lib/di/service-resolver";
 import { PlatformType } from "@/types";
+import { CredentialValues } from "@/types/credentials.types";
 
 export async function savePlatformCredentials(
   platform: PlatformType,
-  credentials: Record<string, any>,
-) {
+  credentials: CredentialValues,
+): Promise<void> {
   const supabase = await createClient();
   const {
     data: { user },

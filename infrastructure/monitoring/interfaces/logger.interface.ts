@@ -8,7 +8,14 @@ export interface ILogger {
 }
 
 export interface LogContext {
-  [key: string]: any;
+  [key: string]:
+    | string
+    | number
+    | boolean
+    | undefined
+    | null
+    | Record<string, unknown>
+    | unknown[];
   userId?: string;
   sessionId?: string;
   traceId?: string;

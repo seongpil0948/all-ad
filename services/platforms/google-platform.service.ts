@@ -32,7 +32,7 @@ export class GooglePlatformService extends BasePlatformService {
   // Google Ads 서비스 초기화 with OAuth token
   private async getGoogleAdsService(): Promise<GoogleAdsIntegrationService> {
     if (!this.googleAdsService) {
-      const credentials = this.credentials as GoogleAdsCredentials;
+      const credentials = this.credentials as unknown as GoogleAdsCredentials;
 
       // For OAuth platforms, the refresh token is used
       // The google-ads-api library handles token refresh automatically
@@ -57,7 +57,7 @@ export class GooglePlatformService extends BasePlatformService {
   }
 
   async validateCredentials(): Promise<boolean> {
-    const { customerId } = this.credentials as GoogleAdsCredentials;
+    const { customerId } = this.credentials as unknown as GoogleAdsCredentials;
 
     if (!customerId) {
       return false;
@@ -79,7 +79,8 @@ export class GooglePlatformService extends BasePlatformService {
     log.info("Fetching Google Ads campaigns");
 
     try {
-      const { customerId } = this.credentials as GoogleAdsCredentials;
+      const { customerId } = this
+        .credentials as unknown as GoogleAdsCredentials;
       const service = await this.getGoogleAdsService();
       const googleCampaigns = await service.getCampaigns(customerId);
 
@@ -117,12 +118,13 @@ export class GooglePlatformService extends BasePlatformService {
   ): Promise<CampaignMetrics[]> {
     log.info("Fetching Google Ads campaign metrics", {
       campaignId,
-      startDate,
-      endDate,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
     });
 
     try {
-      const { customerId } = this.credentials as GoogleAdsCredentials;
+      const { customerId } = this
+        .credentials as unknown as GoogleAdsCredentials;
       const service = await this.getGoogleAdsService();
       const metrics = await service.getCampaignMetrics(
         customerId,
@@ -133,7 +135,7 @@ export class GooglePlatformService extends BasePlatformService {
 
       // 메트릭을 플랫폼 공통 형식으로 변환
       return metrics.map((metric) =>
-        transformPlatformMetrics("google", metric),
+        transformPlatformMetrics("google", { ...metric }),
       );
     } catch (error) {
       log.error("Failed to fetch campaign metrics", error as Error);
@@ -148,7 +150,8 @@ export class GooglePlatformService extends BasePlatformService {
     log.info(`Updating Google Ads campaign ${campaignId} budget to ${budget}`);
 
     try {
-      const { customerId } = this.credentials as GoogleAdsCredentials;
+      const { customerId } = this
+        .credentials as unknown as GoogleAdsCredentials;
       const service = await this.getGoogleAdsService();
 
       await service.updateCampaignBudget(
@@ -174,7 +177,8 @@ export class GooglePlatformService extends BasePlatformService {
     );
 
     try {
-      const { customerId } = this.credentials as GoogleAdsCredentials;
+      const { customerId } = this
+        .credentials as unknown as GoogleAdsCredentials;
       const service = await this.getGoogleAdsService();
 
       await service.toggleCampaignStatus(customerId, campaignId, isActive);
@@ -190,7 +194,8 @@ export class GooglePlatformService extends BasePlatformService {
   // 동기화 메서드 추가
   async syncData(syncType: "FULL" | "INCREMENTAL" = "INCREMENTAL") {
     try {
-      const { customerId } = this.credentials as GoogleAdsCredentials;
+      const { customerId } = this
+        .credentials as unknown as GoogleAdsCredentials;
       const service = await this.getGoogleAdsService();
 
       await service.triggerSync(customerId, syncType);
