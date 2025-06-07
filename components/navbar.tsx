@@ -70,12 +70,18 @@ export const Navbar = () => {
         justify="end"
       >
         <NavbarItem className="hidden sm:flex gap-3">
+          <Button as={NextLink} color="primary" href="/lab" variant="flat">
+            연구실
+          </Button>
           <ThemeSwitch />
           <UserOrLogin />
         </NavbarItem>
       </NavbarContent>
 
       <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
+        <Button as={NextLink} color="primary" href="/lab" variant="flat">
+          연구실
+        </Button>
         <ThemeSwitch />
         <UserOrLogin />
       </NavbarContent>
