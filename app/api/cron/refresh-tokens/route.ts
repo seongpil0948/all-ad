@@ -8,9 +8,15 @@ import log from "@/utils/logger";
 
 // This endpoint can be called by Supabase cron job or Vercel cron
 // The endpoint is protected by Supabase's service role key
-export async function GET(_request: NextRequest) {
-  // For Supabase cron, we trust the internal network
-  // For external calls, you could add additional security measures
+export async function GET(request: NextRequest) {
+  // Verify the request is from a trusted source
+  const authHeader = request.headers.get("authorization");
+  const cronSecret = process.env.CRON_SECRET;
+
+  // For Supabase Edge Functions, check the authorization header
+  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   try {
     const supabase = await createClient();

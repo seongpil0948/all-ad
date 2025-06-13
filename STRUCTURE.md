@@ -72,6 +72,11 @@ all-ad/
 │   │
 │   ├── api/                      # API 라우트
 │   │   ├── campaigns/            # 캠페인 API
+│   │   │   ├── coupang/         # Coupang 수동 관리 API ✅ NEW
+│   │   │   │   └── manual/
+│   │   │   │       ├── route.ts        # 캠페인 생성
+│   │   │   │       └── metrics/
+│   │   │   │           └── route.ts    # 성과 업데이트
 │   │   │   └── [platform]/
 │   │   │       └── [campaignId]/
 │   │   │           └── budget/
@@ -105,6 +110,8 @@ all-ad/
 │   │   └── echart.tsx           # ECharts 래퍼
 │   ├── common/                   # 공통 컴포넌트 ✅ (확장됨)
 │   │   ├── CTAButton.tsx
+│   │   ├── DataDisplay.tsx      # 데이터 표시 래퍼 컴포넌트 ✅ NEW
+│   │   ├── EmptyState.tsx       # 빈 상태 표시 컴포넌트 ✅ NEW
 │   │   ├── ErrorState.tsx       # 에러 상태 컴포넌트
 │   │   ├── LoadingState.tsx     # 로딩 상태 컴포넌트
 │   │   ├── MessageCard.tsx      # 메시지 표시 컴포넌트
@@ -129,6 +136,8 @@ all-ad/
 │   │   ├── TestimonialsSection.tsx
 │   │   └── index.ts
 │   ├── platform/                 # 플랫폼 관련 컴포넌트
+│   │   ├── coupang/             # Coupang 플랫폼 컴포넌트 ✅ NEW
+│   │   │   └── CoupangManualCampaignManager.tsx  # 수동 관리 UI
 │   │   ├── PlatformCredentialForm.tsx
 │   │   ├── PlatformCredentials.tsx
 │   │   └── PlatformCredentialsManager.tsx
@@ -164,7 +173,7 @@ all-ad/
 │   │   ├── facebook-platform.service.ts  # Facebook Ads
 │   │   ├── naver-platform.service.ts     # Naver Ads
 │   │   ├── kakao-platform.service.ts     # Kakao Ads
-│   │   ├── coupang-platform.service.ts   # Coupang Ads
+│   │   ├── coupang-platform.service.ts   # Coupang Ads ✅ (수동 관리 기능 추가)
 │   │   ├── platform-service-factory.ts   # 팩토리 패턴
 │   │   └── platform-service.interface.ts # 인터페이스 정의
 │   ├── platform-database.service.ts      # DB 서비스
@@ -233,7 +242,9 @@ all-ad/
 │   ├── campaign-transformer.ts # 캠페인 타입 변환 ✅ NEW
 │   ├── email-templates.ts    # 이메일 템플릿
 │   ├── logger.ts            # 로거 유틸리티
-│   └── profile.ts           # 프로필 유틸리티
+│   ├── profile.ts           # 프로필 유틸리티
+│   ├── server-action-wrapper.ts # Server Action 래퍼 ✅ NEW
+│   └── use-data-fetch.ts    # 데이터 페칭 훅 ✅ NEW
 │
 ├── types/                    # TypeScript 타입 정의
 │   ├── auth.types.ts        # 인증 타입
@@ -249,7 +260,8 @@ all-ad/
 │   └── index.ts           # 상수 내보내기
 │
 ├── hooks/                  # 커스텀 훅
-│   └── use-auth.ts        # 인증 훅
+│   ├── use-auth.ts        # 인증 훅
+│   └── use-data-fetch.ts  # 데이터 페칭 훅 ✅ NEW
 │
 ├── docs/                   # 문서
 │   └── oauth-configuration.md # OAuth 설정 가이드 ✅ (새로 추가)
@@ -281,7 +293,8 @@ all-ad/
 │   │   ├── 017_fix_invitation_public_access.sql
 │   │   ├── 018_create_get_invitation_by_token.sql
 │   │   ├── 019_add_oauth_credentials_to_platform_credentials.sql # ✅ NEW: OAuth 인증 정보 저장을 위한 컬럼 추가
-│   │   └── 020_create_oauth_refresh_cron_job.sql # ✅ NEW: OAuth 토큰 자동 갱신 cron job
+│   │   ├── 020_create_oauth_refresh_cron_job.sql # ✅ NEW: OAuth 토큰 자동 갱신 cron job
+│   │   └── 20240113_add_manual_campaigns.sql # ✅ NEW: Coupang 수동 캠페인 관리 테이블
 │   └── functions/        # Supabase Edge Functions
 │       ├── resend/       # 이메일 발송 함수
 │       └── refresh-oauth-tokens/ # ✅ NEW: OAuth 토큰 갱신 함수
@@ -514,9 +527,51 @@ all-ad/
   - `/utils/campaign-transformer.ts` - DB 타입과 앱 타입 간 변환
   - snake_case ↔ camelCase 변환 처리
 
-## 주요 리팩토링 내용 (2024-01-08)
+## 주요 리팩토링 내용 (2025-01-13)
 
-### Google Ads API 통합 구현 (2024-01-08)
+### 1. Coupang 수동 관리 시스템 구현
+
+- **데이터베이스 스키마**:
+
+  - `manual_campaigns` 테이블 추가 - 수동 캠페인 관리
+  - `manual_campaign_metrics` 테이블 추가 - 성과 데이터 관리
+  - RLS 정책 적용으로 팀별 격리
+
+- **서비스 업데이트**:
+
+  - `coupang-platform.service.ts` - 수동 캠페인 CRUD 구현
+  - `createManualCampaign()` - 수동 캠페인 생성
+  - `updateManualMetrics()` - 성과 데이터 업데이트
+
+- **UI 컴포넌트**:
+
+  - `CoupangManualCampaignManager.tsx` - 수동 관리 인터페이스
+  - 캠페인 추가 모달
+  - 성과 데이터 업데이트 모달
+
+- **API 라우트**:
+  - `/api/campaigns/coupang/manual` - 캠페인 생성
+  - `/api/campaigns/coupang/manual/metrics` - 성과 업데이트
+
+### 2. 공통 컴포넌트 생성
+
+- **EmptyState.tsx**: 빈 상태 표시 컴포넌트
+- **DataDisplay.tsx**: 데이터 표시 래퍼 컴포넌트
+
+### 3. 공통 유틸리티 생성
+
+- **server-action-wrapper.ts**: Server Action 인증/권한 래퍼
+- **use-data-fetch.ts**: 데이터 페칭 커스텀 훅
+
+### 4. Hero UI 일관성 적용
+
+- 모든 UI 컴포넌트를 Hero UI로 통일
+- HTML input → Hero UI Input/Checkbox 변환
+- 일관된 디자인 시스템 적용
+
+## 주요 리팩토링 내용 (2025-01-08)
+
+### Google Ads API 통합 구현 (2025-01-08)
 
 1. **google-ads-api 패키지 활용**
 

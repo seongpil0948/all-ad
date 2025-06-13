@@ -129,21 +129,36 @@ export async function updateTeamMemberRoleAction(
       throw new Error("No user logged in");
     }
 
-    // Check if user is master
-    const { data: masterTeam } = await supabase
-      .from("teams")
-      .select("id")
-      .eq("master_user_id", user.id)
-      .maybeSingle();
+    // Check if user is master and owns the team member
+    const { data: teamMember } = await supabase
+      .from("team_members")
+      .select(
+        `
+        team_id,
+        teams!inner (
+          master_user_id
+        )
+      `,
+      )
+      .eq("id", memberId)
+      .single();
 
-    if (!masterTeam) {
+    if (!teamMember) {
+      throw new Error("Team member not found");
+    }
+
+    // Type assertion for the joined data
+    const teamData = teamMember.teams as unknown as { master_user_id: string };
+    
+    if (teamData.master_user_id !== user.id) {
       throw new Error("Only team master can update roles");
     }
 
     const { error } = await supabase
       .from("team_members")
       .update({ role })
-      .eq("id", memberId);
+      .eq("id", memberId)
+      .eq("team_id", teamMember.team_id); // Additional safety check
 
     if (error) {
       log.error("Failed to update team member role", error);
@@ -180,21 +195,36 @@ export async function removeTeamMemberAction(memberId: string) {
       throw new Error("No user logged in");
     }
 
-    // Check if user is master
-    const { data: masterTeam } = await supabase
-      .from("teams")
-      .select("id")
-      .eq("master_user_id", user.id)
-      .maybeSingle();
+    // Check if user is master and owns the team member
+    const { data: teamMember } = await supabase
+      .from("team_members")
+      .select(
+        `
+        team_id,
+        teams!inner (
+          master_user_id
+        )
+      `,
+      )
+      .eq("id", memberId)
+      .single();
 
-    if (!masterTeam) {
+    if (!teamMember) {
+      throw new Error("Team member not found");
+    }
+
+    // Type assertion for the joined data
+    const teamData = teamMember.teams as unknown as { master_user_id: string };
+    
+    if (teamData.master_user_id !== user.id) {
       throw new Error("Only team master can remove members");
     }
 
     const { error } = await supabase
       .from("team_members")
       .delete()
-      .eq("id", memberId);
+      .eq("id", memberId)
+      .eq("team_id", teamMember.team_id); // Additional safety check
 
     if (error) {
       log.error("Failed to remove team member", error);

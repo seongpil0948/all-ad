@@ -15,6 +15,9 @@ export type { Database, Tables, Enums } from "./supabase.types";
 export * from "./auth.types";
 export * from "./user";
 
+// Re-export specific database types
+export type { UserRole, TeamMember, TeamInvitation } from "./database.types";
+
 // Re-export dashboard types
 export * from "./dashboard";
 

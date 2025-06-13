@@ -13,15 +13,10 @@ import { GoogleAdsApiCredentials } from "@/types/google-ads.types";
 import { formatDateToYYYYMMDD } from "@/utils/date-formatter";
 import { transformPlatformMetrics } from "@/utils/metric-transformer";
 
-export class GooglePlatformService extends BasePlatformService {
+export class GooglePlatformService extends BasePlatformService<GoogleAdsIntegrationService> {
   platform: PlatformType = "google";
-  private googleAdsService?: GoogleAdsIntegrationService;
   private userId?: string;
   private accountId?: string;
-
-  constructor() {
-    super();
-  }
 
   // Set user context for OAuth token retrieval
   setUserContext(userId: string, accountId: string) {
@@ -31,7 +26,7 @@ export class GooglePlatformService extends BasePlatformService {
 
   // Google Ads 서비스 초기화 with OAuth token
   private async getGoogleAdsService(): Promise<GoogleAdsIntegrationService> {
-    if (!this.googleAdsService) {
+    if (!this.service) {
       const credentials = this.credentials as unknown as GoogleAdsCredentials;
 
       // For OAuth platforms, the refresh token is used
@@ -48,31 +43,38 @@ export class GooglePlatformService extends BasePlatformService {
         loginCustomerId: credentials.loginCustomerId,
       };
 
-      this.googleAdsService = new GoogleAdsIntegrationService(
-        googleAdsCredentials,
-      );
+      this.service = new GoogleAdsIntegrationService(googleAdsCredentials);
     }
 
-    return this.googleAdsService;
+    return this.service;
   }
 
   async validateCredentials(): Promise<boolean> {
-    const { customerId } = this.credentials as unknown as GoogleAdsCredentials;
+    return this.executeWithErrorHandling(async () => {
+      const requiredFields = [
+        "clientId",
+        "clientSecret",
+        "refreshToken",
+        "developerToken",
+        "customerId",
+      ];
 
-    if (!customerId) {
-      return false;
-    }
+      if (!this.validateRequiredFields(requiredFields)) {
+        return false;
+      }
 
-    try {
+      const { customerId } = this
+        .credentials as unknown as GoogleAdsCredentials;
+
+      if (!customerId) {
+        return false;
+      }
+
       // Google Ads 연결 테스트
       const service = await this.getGoogleAdsService();
 
       return await service.testConnection(customerId);
-    } catch (error) {
-      log.error("Google credential validation error:", error as Error);
-
-      return false;
-    }
+    }, "validateCredentials");
   }
 
   async fetchCampaigns(): Promise<Campaign[]> {

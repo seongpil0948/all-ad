@@ -91,7 +91,8 @@ export function createErrorResponse(error: ApiException): NextResponse {
     message: error.message,
   };
 
-  if (error.details) {
+  // Only include details in development environment
+  if (error.details && process.env.NODE_ENV === "development") {
     response.details = error.details;
   }
 

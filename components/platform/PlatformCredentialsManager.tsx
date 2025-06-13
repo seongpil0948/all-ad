@@ -23,6 +23,7 @@ import {
 import { SiNaver } from "react-icons/si";
 
 import { PlatformCredentialForm } from "./PlatformCredentialForm";
+import { CoupangManualCampaignManager } from "./coupang/CoupangManualCampaignManager";
 
 import { OAuthClient } from "@/lib/oauth/oauth-client";
 import { getOAuthConfig } from "@/lib/oauth/platform-configs.client";
@@ -261,6 +262,11 @@ export function PlatformCredentialsManager({
           })}
         </CardBody>
       </Card>
+
+      {/* Coupang Manual Campaign Manager */}
+      {credentials.find((c) => c.platform === "coupang" && c.isActive) && (
+        <CoupangManualCampaignManager teamId={teamId} />
+      )}
 
       <Modal isOpen={isOpen} size="2xl" onOpenChange={onOpenChange}>
         <ModalContent>

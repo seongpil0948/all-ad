@@ -79,7 +79,9 @@ export function CampaignDashboard() {
   >("all");
 
   useEffect(() => {
-    fetchCampaigns();
+    fetchCampaigns().catch((err) => {
+      log.error("Failed to fetch campaigns", err);
+    });
   }, [fetchCampaigns]);
 
   const handlePlatformFilter = (platform: PlatformType | "all") => {

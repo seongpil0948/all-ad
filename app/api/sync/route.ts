@@ -33,8 +33,30 @@ export async function POST(request: Request) {
     }
 
     // Parse request body for optional platform parameter
-    const body = await request.json().catch(() => ({}));
-    const platform = body.platform as PlatformType | undefined;
+    let body: { platform?: PlatformType } = {};
+
+    try {
+      const contentType = request.headers.get("content-type");
+
+      if (contentType?.includes("application/json")) {
+        body = await request.json();
+      }
+    } catch (error) {
+      // If JSON parsing fails, continue with empty body
+      log.warn("Failed to parse request body", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+
+    const platform = body.platform;
+
+    // Validate platform if provided
+    if (
+      platform &&
+      !["google", "facebook", "naver", "kakao", "coupang"].includes(platform)
+    ) {
+      throw ApiErrors.INVALID_REQUEST("Invalid platform specified");
+    }
 
     const syncService = await getPlatformSyncService();
 

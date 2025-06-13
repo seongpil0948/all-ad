@@ -303,7 +303,9 @@ export default function AmazonAdsTest() {
 
                   <Card className="bg-gray-50">
                     <CardBody className="space-y-2">
-                      <p className="font-medium text-sm">2. &quot;403 Forbidden&quot;</p>
+                      <p className="font-medium text-sm">
+                        2. &quot;403 Forbidden&quot;
+                      </p>
                       <p className="text-sm text-gray-600">
                         해당 프로필에 대한 권한이 없습니다. 프로필 ID를
                         확인하세요.

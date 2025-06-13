@@ -10,6 +10,7 @@ import { Snippet } from "@heroui/snippet";
 import { Select, SelectItem } from "@heroui/select";
 import { Chip } from "@heroui/chip";
 import { Switch } from "@heroui/switch";
+import { Checkbox } from "@heroui/checkbox";
 
 import PlatformTestCard from "./PlatformTestCard";
 import MetaAdsSetupGuide from "./MetaAdsSetupGuide";
@@ -57,10 +58,10 @@ interface TestItem {
 
 export default function MetaAdsTest() {
   const [credentials, setCredentials] = useState<MetaAdsTestCredentials>({
-    appId: "1225707049222640",
-    appSecret: "05181cc437c787e18b8b8059e4dcfeb9",
+    appId: "",
+    appSecret: "",
     accessToken: "",
-    businessId: "1081449880552906",
+    businessId: "",
   });
 
   const [authCode, setAuthCode] = useState("");
@@ -635,10 +636,9 @@ export default function MetaAdsTest() {
                   }}
                 >
                   <div className="flex items-center gap-3">
-                    <input
-                      checked={selectedCampaigns.has(campaign.id)}
-                      className="w-4 h-4"
-                      type="checkbox"
+                    <Checkbox
+                      isSelected={selectedCampaigns.has(campaign.id)}
+                      size="sm"
                       onChange={() => {}}
                     />
                     <div>
