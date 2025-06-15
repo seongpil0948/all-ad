@@ -127,10 +127,10 @@ export async function signup(
     };
   }
 
-  log.info("Signup response:", { 
-    user: data?.user?.email, 
+  log.info("Signup response:", {
+    user: data?.user?.email,
     session: !!data?.session,
-    emailConfirmed: data?.user?.email_confirmed_at 
+    emailConfirmed: data?.user?.email_confirmed_at,
   });
 
   // Check if user was created

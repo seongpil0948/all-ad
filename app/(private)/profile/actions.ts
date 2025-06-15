@@ -4,9 +4,9 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/utils/supabase/server";
 import {
-  getProfile,
-  updateProfile as updateProfileUtil,
-} from "@/utils/profile";
+  getProfileServer,
+  updateProfileServer as updateProfileUtil,
+} from "@/utils/profile.server";
 import log from "@/utils/logger";
 
 export async function getProfileData() {
@@ -22,7 +22,7 @@ export async function getProfileData() {
     }
 
     // Fetch or create profile
-    let profile = await getProfile(user.id);
+    let profile = await getProfileServer(user.id);
 
     if (!profile) {
       // Create profile if it doesn't exist
@@ -36,10 +36,18 @@ export async function getProfileData() {
         .single();
 
       if (error) {
-        throw error;
+        // If duplicate key error, try to fetch the profile again
+        if (error.code === "23505") {
+          profile = await getProfileServer(user.id);
+          if (!profile) {
+            throw new Error("Profile exists but could not be fetched");
+          }
+        } else {
+          throw error;
+        }
+      } else {
+        profile = data;
       }
-
-      profile = data;
     }
 
     return {

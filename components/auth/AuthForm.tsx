@@ -32,7 +32,10 @@ export function AuthForm({
 
   // For signup, we use server action with useActionState
   const initialState: ActionState = { errors: {} };
-  const [signupState, signupAction, isSignupPending] = useActionState(signup, initialState);
+  const [signupState, signupAction, isSignupPending] = useActionState(
+    signup,
+    initialState,
+  );
 
   // Handle login with client action
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -96,12 +99,19 @@ export function AuthForm({
             />
 
             {signupState.errors?.general && (
-              <div className={`text-sm ${signupState.success ? "text-success" : "text-danger"}`}>
+              <div
+                className={`text-sm ${signupState.success ? "text-success" : "text-danger"}`}
+              >
                 {signupState.errors.general}
               </div>
             )}
 
-            <Button color="primary" fullWidth type="submit" isLoading={isSignupPending}>
+            <Button
+              color="primary"
+              fullWidth
+              type="submit"
+              isLoading={isSignupPending}
+            >
               회원가입
             </Button>
           </div>
