@@ -29,12 +29,13 @@ export async function login(
     };
   }
 
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
 
   if (error) {
+    log.error("Login error:", error);
     return {
       errors: {
         general:
@@ -45,7 +46,15 @@ export async function login(
     };
   }
 
-  // Get the user to ensure session is established
+  if (!data.session || !data.user) {
+    return {
+      errors: {
+        general: "로그인에 실패했습니다. 다시 시도해주세요.",
+      },
+    };
+  }
+
+  // Ensure session is properly established
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -53,10 +62,12 @@ export async function login(
   if (!user) {
     return {
       errors: {
-        general: "로그인에 실패했습니다. 다시 시도해주세요.",
+        general: "세션 확인에 실패했습니다. 다시 시도해주세요.",
       },
     };
   }
+
+  log.info("Login successful:", { userId: user.id, email: user.email });
 
   // Revalidate all paths to ensure the navbar updates
   revalidatePath("/", "layout");
@@ -88,28 +99,53 @@ export async function signup(
     };
   }
 
-  const options = {
+  if (!password || password.length < 6) {
+    return {
+      errors: {
+        password: "비밀번호는 최소 6자 이상이어야 합니다.",
+      },
+    };
+  }
+
+  log.info("Attempting signup for:", { email });
+
+  const { error, data } = await supabase.auth.signUp({
     email,
     password,
-    emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
-    data: inviteToken ? { invitation_token: inviteToken } : undefined,
-  };
-
-  const { error, data } = await supabase.auth.signUp(options);
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+      data: inviteToken ? { invitation_token: inviteToken } : undefined,
+    },
+  });
 
   if (error) {
-    log.error("Signup error", error);
-    if (error instanceof AuthError) {
-      return {
-        errors: {
-          general: error.message,
-        },
-      };
-    }
+    log.error("Signup error:", { error: error.message, code: error.code });
+    return {
+      errors: {
+        general: error.message,
+      },
+    };
+  }
+
+  log.info("Signup response:", { 
+    user: data?.user?.email, 
+    session: !!data?.session,
+    emailConfirmed: data?.user?.email_confirmed_at 
+  });
+
+  // Check if user was created
+  if (!data?.user) {
+    log.error("No user returned from signup");
+    return {
+      errors: {
+        general: "회원가입에 실패했습니다. 다시 시도해주세요.",
+      },
+    };
   }
 
   // If signup is successful and user is immediately logged in
-  if (data?.user && data?.session) {
+  if (data.session) {
+    log.info("User signed up and logged in immediately");
     revalidatePath("/", "layout");
 
     // Redirect to returnUrl if provided and valid, otherwise to dashboard
@@ -119,6 +155,8 @@ export async function signup(
     redirect("/dashboard");
   }
 
+  // User created but needs email confirmation
+  log.info("User created, email confirmation required");
   return {
     success: true,
     errors: {

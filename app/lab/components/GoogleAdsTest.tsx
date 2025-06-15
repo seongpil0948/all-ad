@@ -36,13 +36,12 @@ interface GoogleAdsAccount {
 
 export default function GoogleAdsTest() {
   const [credentials, setCredentials] = useState<GoogleAdsTestCredentials>({
-    clientId:
-      "1047362900010-d8heiq7g4sq3rm3qjr6uqagsri8cuep5.apps.googleusercontent.com",
-    clientSecret: "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",
-    developerToken: "h0lsJQWr8PuCrme3dGeTgw",
+    clientId: "",
+    clientSecret: "",
+    developerToken: "",
     accessToken: "",
     refreshToken: "",
-    loginCustomerId: "2616098766", // MCC 관리자 계정 (대시 없이)
+    loginCustomerId: "",
   });
   const isSSR = useIsSSR();
 

@@ -149,7 +149,7 @@ export async function updateTeamMemberRoleAction(
 
     // Type assertion for the joined data
     const teamData = teamMember.teams as unknown as { master_user_id: string };
-    
+
     if (teamData.master_user_id !== user.id) {
       throw new Error("Only team master can update roles");
     }
@@ -215,7 +215,7 @@ export async function removeTeamMemberAction(memberId: string) {
 
     // Type assertion for the joined data
     const teamData = teamMember.teams as unknown as { master_user_id: string };
-    
+
     if (teamData.master_user_id !== user.id) {
       throw new Error("Only team master can remove members");
     }

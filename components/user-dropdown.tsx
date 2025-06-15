@@ -18,23 +18,20 @@ import {
   FiUsers,
 } from "react-icons/fi";
 
-import { useAuth } from "@/hooks/use-auth";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { clientLogout } from "@/app/(auth)/login/client-actions";
 
 export function UserDropdown() {
   const router = useRouter();
-  const { user } = useAuth();
-  const signOut = useAuthStore((state) => state.signOut);
+  const user = useAuthStore((state) => state.user);
 
   if (!user) return null;
 
   const handleSignOut = async () => {
     try {
-      await signOut();
-      router.push("/");
-      router.refresh();
+      await clientLogout(router);
     } catch {
-      // Error is handled in the store
+      // Error is handled in the client action
     }
   };
 

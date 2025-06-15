@@ -18,13 +18,15 @@ import clsx from "clsx";
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { UserDropdown } from "@/components/user-dropdown";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 export const Navbar = () => {
-  const { user, loading } = useAuth();
+  const user = useAuthStore((state) => state.user);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const isInitialized = useAuthStore((state) => state.isInitialized);
 
   const UserOrLogin = () =>
-    loading ? (
+    !isInitialized || isLoading ? (
       <Skeleton className="flex rounded-full w-10 h-10" />
     ) : user ? (
       <UserDropdown />
