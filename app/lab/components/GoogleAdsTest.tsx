@@ -22,6 +22,7 @@ import {
   fetchGoogleAdsAccounts,
   fetchCampaigns,
   updateCampaignStatus,
+  fetchCampaignMetrics,
 } from "@/app/lab/actions";
 
 interface GoogleAdsAccount {
@@ -33,6 +34,8 @@ interface GoogleAdsAccount {
   isTestAccount?: boolean;
   isMCC?: boolean;
 }
+
+const STORAGE_KEY = "google-ads-test-credentials";
 
 export default function GoogleAdsTest() {
   const [credentials, setCredentials] = useState<GoogleAdsTestCredentials>({
@@ -91,33 +94,113 @@ export default function GoogleAdsTest() {
     },
   ]);
 
+  // Load saved credentials from localStorage on mount
+  useEffect(() => {
+    if (!isSSR) {
+      const savedCredentials = localStorage.getItem(STORAGE_KEY);
+
+      if (savedCredentials) {
+        try {
+          const parsed = JSON.parse(savedCredentials);
+
+          setCredentials((prev) => ({
+            ...prev,
+            ...parsed,
+            refreshToken: parsed.refreshToken || prev.refreshToken,
+            accessToken: parsed.accessToken || prev.accessToken,
+          }));
+        } catch (error) {
+          log.error("Failed to parse saved credentials", error);
+        }
+      }
+    }
+  }, [isSSR]);
+
+  // Save credentials to localStorage when they change
+  useEffect(() => {
+    if (!isSSR && credentials.clientId) {
+      // Don't save sensitive tokens to localStorage, only configuration
+      const toSave = {
+        clientId: credentials.clientId,
+        clientSecret: credentials.clientSecret,
+        developerToken: credentials.developerToken,
+        loginCustomerId: credentials.loginCustomerId,
+      };
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    }
+  }, [
+    credentials.clientId,
+    credentials.clientSecret,
+    credentials.developerToken,
+    credentials.loginCustomerId,
+    isSSR,
+  ]);
+
   // URL에서 OAuth 콜백 코드 확인
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get("code");
-    const errorParam = urlParams.get("error");
+    if (!isSSR) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get("code");
+      const errorParam = urlParams.get("error");
 
-    if (code) {
-      setAuthCode(code);
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
+      if (code) {
+        setAuthCode(code);
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname,
+        );
+      }
 
-    if (errorParam) {
-      setError(`OAuth 오류: ${errorParam}`);
-      window.history.replaceState({}, document.title, window.location.pathname);
+      if (errorParam) {
+        setError(`OAuth 오류: ${errorParam}`);
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname,
+        );
+      }
     }
-  }, []);
+  }, [isSSR]);
 
   // OAuth2 인증 URL 생성
   const handleGenerateAuthUrl = async () => {
     setError(null);
+
+    // 필수 값 검증
+    if (!credentials.clientId) {
+      setError("Client ID를 입력해주세요");
+
+      return;
+    }
+
     try {
       const redirectUri = `${window.location.origin}/api/auth/callback/google-ads-lab`;
       const result = await generateAuthUrl(credentials.clientId, redirectUri);
 
-      if (result.success) {
+      if (result.success && result.authUrl) {
         setApiResponse(result);
-        window.open(result.authUrl, "_blank");
+        // 새 창에서 OAuth 인증 시작
+        const authWindow = window.open(
+          result.authUrl,
+          "_blank",
+          "width=600,height=700",
+        );
+
+        // OAuth 창이 닫히면 authCode 확인
+        const checkInterval = setInterval(() => {
+          if (authWindow?.closed) {
+            clearInterval(checkInterval);
+            // URL params 다시 확인
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get("code");
+
+            if (code) {
+              setAuthCode(code);
+            }
+          }
+        }, 1000);
       } else {
         setError(result.error || "인증 URL 생성 실패");
       }
@@ -169,7 +252,18 @@ export default function GoogleAdsTest() {
       return;
     }
 
+    if (!credentials.clientId || !credentials.clientSecret) {
+      setError("Client ID와 Client Secret을 입력해주세요");
+
+      return;
+    }
+
     setError(null);
+    setTestItems((prev) =>
+      prev.map((item) =>
+        item.id === "token" ? { ...item, status: "testing" as const } : item,
+      ),
+    );
 
     try {
       const result = await exchangeCodeForToken(
@@ -288,7 +382,31 @@ export default function GoogleAdsTest() {
     <div className="space-y-6">
       <Card>
         <CardBody className="space-y-4">
-          <h2 className="text-xl font-semibold">Google Ads API 설정</h2>
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Google Ads API 설정</h2>
+            <Button
+              color="danger"
+              size="sm"
+              variant="light"
+              onPress={() => {
+                if (confirm("저장된 설정을 모두 삭제하시겠습니까?")) {
+                  localStorage.removeItem(STORAGE_KEY);
+                  setCredentials({
+                    clientId: "",
+                    clientSecret: "",
+                    developerToken: "",
+                    accessToken: "",
+                    refreshToken: "",
+                    loginCustomerId: "",
+                  });
+                  setAuthCode("");
+                  setError(null);
+                }
+              }}
+            >
+              설정 초기화
+            </Button>
+          </div>
 
           <GoogleAdsSetupGuide />
 
@@ -443,59 +561,134 @@ export default function GoogleAdsTest() {
               {campaigns.map((campaign) => (
                 <div
                   key={campaign.id}
-                  className="flex items-center justify-between p-3 border rounded-lg"
+                  className="p-4 border rounded-lg hover:shadow-md transition-shadow"
                 >
-                  <div>
-                    <p className="font-medium">{campaign.name}</p>
-                    <p className="text-sm text-gray-600">ID: {campaign.id}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`px-2 py-1 text-sm rounded ${
-                        campaign.status === "ENABLED"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {campaign.status}
-                    </span>
-                    <Button
-                      color={
-                        campaign.status === "ENABLED" ? "danger" : "success"
-                      }
-                      size="sm"
-                      variant="flat"
-                      onPress={() => {
-                        // 캠페인 ON/OFF 토글
-                        const newStatus =
-                          campaign.status === "ENABLED" ? "PAUSED" : "ENABLED";
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="font-medium text-lg">{campaign.name}</p>
+                      <p className="text-sm text-gray-600">ID: {campaign.id}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`px-2 py-1 text-sm rounded ${
+                          campaign.status === "ENABLED"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {campaign.status}
+                      </span>
+                      <Button
+                        color={
+                          campaign.status === "ENABLED" ? "danger" : "success"
+                        }
+                        size="sm"
+                        variant="flat"
+                        onPress={() => {
+                          // 캠페인 ON/OFF 토글
+                          const newStatus =
+                            campaign.status === "ENABLED"
+                              ? "PAUSED"
+                              : "ENABLED";
 
-                        updateCampaignStatus(
+                          updateCampaignStatus(
+                            credentials,
+                            selectedAccountId,
+                            campaign.id,
+                            newStatus,
+                          )
+                            .then((result) => {
+                              if (result.success) {
+                                setCampaigns((prev) =>
+                                  prev.map((c) =>
+                                    c.id === campaign.id
+                                      ? { ...c, status: newStatus }
+                                      : c,
+                                  ),
+                                );
+                                log.info("Campaign status updated", {
+                                  campaignId: campaign.id,
+                                  newStatus,
+                                });
+                              } else {
+                                setError(
+                                  result.error || "캠페인 상태 변경 실패",
+                                );
+                              }
+                            })
+                            .catch((err) => {
+                              setError("캠페인 상태 변경 중 오류 발생");
+                              log.error("Campaign status update error", err);
+                            });
+                        }}
+                      >
+                        {campaign.status === "ENABLED" ? "일시정지" : "활성화"}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* 캠페인 메트릭 표시 */}
+                  {(campaign.impressions ||
+                    campaign.clicks ||
+                    campaign.costMicros) && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 pt-3 border-t">
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600">노출수</p>
+                        <p className="font-semibold">
+                          {parseInt(
+                            campaign.impressions || "0",
+                          ).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600">클릭수</p>
+                        <p className="font-semibold">
+                          {parseInt(campaign.clicks || "0").toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600">비용</p>
+                        <p className="font-semibold">
+                          $
+                          {(
+                            parseInt(campaign.costMicros || "0") / 1000000
+                          ).toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600">CTR</p>
+                        <p className="font-semibold">
+                          {parseFloat(campaign.ctr || "0").toFixed(2)}%
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 상세 메트릭 보기 버튼 */}
+                  <div className="mt-3 text-center">
+                    <Button
+                      size="sm"
+                      variant="light"
+                      onPress={async () => {
+                        const result = await fetchCampaignMetrics(
                           credentials,
                           selectedAccountId,
                           campaign.id,
-                          newStatus,
-                        )
-                          .then((result) => {
-                            if (result.success) {
-                              setCampaigns((prev) =>
-                                prev.map((c) =>
-                                  c.id === campaign.id
-                                    ? { ...c, status: newStatus }
-                                    : c,
-                                ),
-                              );
-                            } else {
-                              setError(result.error || "캠페인 상태 변경 실패");
-                            }
-                          })
-                          .catch((err) => {
-                            setError("캠페인 상태 변경 중 오류 발생");
-                            log.error("Campaign status update error", err);
+                          "LAST_7_DAYS",
+                        );
+
+                        if (result.success && result.metrics) {
+                          setApiResponse({
+                            campaignId: campaign.id,
+                            campaignName: campaign.name,
+                            metrics: result.metrics,
                           });
+                        } else {
+                          setError(result.error || "메트릭 조회 실패");
+                        }
                       }}
                     >
-                      {campaign.status === "ENABLED" ? "일시정지" : "활성화"}
+                      일별 성과 보기
                     </Button>
                   </div>
                 </div>
@@ -512,7 +705,14 @@ export default function GoogleAdsTest() {
               <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
                 <p className="font-semibold">오류:</p>
                 <p>{error}</p>
-                <pre>{JSON.stringify(apiResponse, null, 2)}</pre>
+                {apiResponse && !apiResponse.success && (
+                  <div className="mt-2">
+                    <p className="text-sm">상세 정보:</p>
+                    <pre className="text-xs overflow-auto mt-1">
+                      {JSON.stringify(apiResponse, null, 2)}
+                    </pre>
+                  </div>
+                )}
               </div>
             )}
 
@@ -526,6 +726,17 @@ export default function GoogleAdsTest() {
                   <Snippet color="primary">{apiResponse.authUrl}</Snippet>
                 </div>
               )}
+
+            {apiResponse && apiResponse.success && !error && (
+              <div className="p-3 bg-green-100 text-green-700 rounded">
+                <p className="font-semibold">성공!</p>
+                {"refreshToken" in apiResponse && apiResponse.refreshToken ? (
+                  <p className="text-sm mt-1">
+                    Refresh Token이 성공적으로 획득되었습니다.
+                  </p>
+                ) : null}
+              </div>
+            )}
           </CardBody>
         </Card>
       )}

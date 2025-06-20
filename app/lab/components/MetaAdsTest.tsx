@@ -545,7 +545,7 @@ export default function MetaAdsTest() {
                         );
                         setSelectedCampaigns(new Set());
                         if (result.results) {
-                          setApiResponse(result.results);
+                          setApiResponse({ results: result.results });
                         }
                       } else {
                         setError(result.error || "배치 처리 실패");
@@ -584,7 +584,7 @@ export default function MetaAdsTest() {
                         );
                         setSelectedCampaigns(new Set());
                         if (result.results) {
-                          setApiResponse(result.results);
+                          setApiResponse({ results: result.results });
                         }
                       } else {
                         setError(result.error || "배치 처리 실패");

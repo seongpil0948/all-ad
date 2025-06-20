@@ -43,6 +43,7 @@ export async function clientLogin(
 
     if (error) {
       log.error("Client login error:", error);
+
       return {
         success: false,
         error:
@@ -85,6 +86,7 @@ export async function clientLogin(
     };
   } catch (error) {
     log.error("Unexpected client login error:", error);
+
     return {
       success: false,
       error: "예기치 않은 오류가 발생했습니다. 다시 시도해주세요.",
@@ -130,6 +132,7 @@ export async function clientSignup(
 
     if (error) {
       log.error("Client signup error:", error);
+
       return {
         success: false,
         error: error.message,
@@ -163,6 +166,7 @@ export async function clientSignup(
     };
   } catch (error) {
     log.error("Unexpected client signup error:", error);
+
     return {
       success: false,
       error: "예기치 않은 오류가 발생했습니다. 다시 시도해주세요.",

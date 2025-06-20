@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { AuthError } from "@supabase/supabase-js";
 
 import { createClient } from "@/utils/supabase/server";
 import { ActionState } from "@/types/actions";
@@ -36,6 +35,7 @@ export async function login(
 
   if (error) {
     log.error("Login error:", error);
+
     return {
       errors: {
         general:
@@ -120,6 +120,7 @@ export async function signup(
 
   if (error) {
     log.error("Signup error:", { error: error.message, code: error.code });
+
     return {
       errors: {
         general: error.message,
@@ -136,6 +137,7 @@ export async function signup(
   // Check if user was created
   if (!data?.user) {
     log.error("No user returned from signup");
+
     return {
       errors: {
         general: "회원가입에 실패했습니다. 다시 시도해주세요.",
@@ -157,6 +159,7 @@ export async function signup(
 
   // User created but needs email confirmation
   log.info("User created, email confirmation required");
+
   return {
     success: true,
     errors: {

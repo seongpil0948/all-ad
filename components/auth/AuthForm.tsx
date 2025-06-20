@@ -107,10 +107,10 @@ export function AuthForm({
             )}
 
             <Button
-              color="primary"
               fullWidth
-              type="submit"
+              color="primary"
               isLoading={isSignupPending}
+              type="submit"
             >
               회원가입
             </Button>
@@ -147,8 +147,8 @@ export function AuthForm({
             {error && <div className="text-sm text-danger">{error}</div>}
 
             <Button
-              color="primary"
               fullWidth
+              color="primary"
               isDisabled={isLoading}
               isLoading={isLoading}
               type="submit"

@@ -45,11 +45,13 @@ export class CampaignControlService {
     customerId: string,
     updates: CampaignStatusUpdate[],
   ): Promise<GoogleAdsMutateResponse> {
-    const operations = updates.map(
-      (update) =>
-        ({
-          entity: "campaign",
-          operation: "update",
+    try {
+      // google-ads-api 라이브러리의 정확한 형식으로 operations 생성
+      const operations = updates.map((update) => {
+        // Resource enum 대신 string 사용
+        return {
+          entity: "campaign" as any,
+          operation: "update" as const,
           resource: {
             resource_name: `customers/${customerId}/campaigns/${update.campaignId}`,
             status: update.status,
@@ -57,13 +59,18 @@ export class CampaignControlService {
           update_mask: {
             paths: ["status"],
           },
-        }) as MutateOperation<Record<string, unknown>>,
-    );
+        };
+      });
 
-    try {
+      log.info("캠페인 상태 업데이트 시도", {
+        customerId,
+        count: updates.length,
+        operations: JSON.stringify(operations),
+      });
+
       const response = await this.googleAdsClient.mutate(
         customerId,
-        operations,
+        operations as any,
       );
 
       log.info("캠페인 상태 업데이트 성공", {
@@ -72,10 +79,16 @@ export class CampaignControlService {
       });
 
       return response;
-    } catch (error) {
-      log.error("캠페인 상태 업데이트 실패", error as Error, {
+    } catch (error: any) {
+      log.error("캠페인 상태 업데이트 실패", {
         customerId,
         updates,
+        error: {
+          message: error?.message,
+          code: error?.code,
+          details: error?.details,
+          errors: error?.errors,
+        },
       });
       throw error;
     }

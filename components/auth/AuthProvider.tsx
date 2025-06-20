@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (sessionError) {
           log.error("Error getting session:", sessionError);
           setUser(null);
+
           return;
         }
 
@@ -95,6 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const {
           data: { user },
         } = await supabase.auth.getUser();
+
         setUser(user);
       }
     });

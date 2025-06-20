@@ -39,12 +39,7 @@ const TestimonialCard = ({
         </div>
         <p className="text-default-600 flex-1">{content}</p>
         <div className="flex items-center gap-3">
-          <Avatar
-            className="shrink-0"
-            name={name}
-            size="sm"
-            src={avatarUrl}
-          />
+          <Avatar className="shrink-0" name={name} size="sm" src={avatarUrl} />
           <div>
             <p className="font-semibold text-sm">{name}</p>
             <p className="text-xs text-default-500">
