@@ -88,7 +88,7 @@ export default function Home() {
       <FAQSection />
 
       {/* CTA Section */}
-      <section className="px-6 py-20 bg-gradient-to-r from-primary to-secondary">
+      <section className="px-6 py-20 bg-linear-to-r from-primary to-secondary">
         <div className="max-w-4xl mx-auto text-center">
           <div>
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">

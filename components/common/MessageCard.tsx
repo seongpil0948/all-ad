@@ -42,7 +42,7 @@ export function MessageCard({ message, type, onClose }: MessageCardProps) {
     <Card className={`${bgColor} ${borderColor} border`}>
       <CardBody>
         <div className="flex items-center gap-3">
-          <Icon className={`${textColor} w-5 h-5 flex-shrink-0`} />
+          <Icon className={`${textColor} w-5 h-5 shrink-0`} />
           <p className={textColor}>{message}</p>
           {onClose && (
             <Button

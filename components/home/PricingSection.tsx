@@ -54,7 +54,7 @@ const PricingCard = ({ plan, index }: { plan: PricingPlan; index: number }) => {
           <ul className="space-y-3">
             {plan.features.map((feature, idx) => (
               <li key={idx} className="flex items-start gap-2">
-                <FaCheck className="text-success mt-0.5 flex-shrink-0" />
+                <FaCheck className="text-success mt-0.5 shrink-0" />
                 <span className="text-sm">{feature}</span>
               </li>
             ))}

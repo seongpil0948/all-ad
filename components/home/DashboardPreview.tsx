@@ -68,7 +68,7 @@ export const DashboardPreview = () => {
   return (
     <div className="relative">
       {/* Mock dashboard background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl" />
+      <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-secondary/5 rounded-xl" />
 
       {/* Dashboard content */}
       <div className="relative p-6 lg:p-8">

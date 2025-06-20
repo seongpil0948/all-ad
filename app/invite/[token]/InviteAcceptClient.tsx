@@ -141,7 +141,7 @@ export default function InviteAcceptClient({
           {error && (
             <div className="bg-danger-50 border border-danger-200 rounded-lg p-3">
               <div className="flex items-center gap-2">
-                <FaTimesCircle className="text-danger flex-shrink-0" />
+                <FaTimesCircle className="text-danger shrink-0" />
                 <p className="text-sm text-danger">{error}</p>
               </div>
             </div>

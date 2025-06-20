@@ -40,7 +40,7 @@ const TestimonialCard = ({
         <p className="text-default-600 flex-1">{content}</p>
         <div className="flex items-center gap-3">
           <Avatar
-            className="flex-shrink-0"
+            className="shrink-0"
             name={name}
             size="sm"
             src={avatarUrl}

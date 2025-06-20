@@ -498,7 +498,7 @@ export function TeamManagement() {
                   <SelectItem key={item.key} textValue={item.label}>
                     <div className="flex gap-2 items-center">
                       {createElement(item.icon, {
-                        className: "w-4 h-4 flex-shrink-0",
+                        className: "w-4 h-4 shrink-0",
                       })}
                       <div className="flex flex-col">
                         <span className="text-small">{item.label}</span>
