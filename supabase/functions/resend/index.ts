@@ -16,7 +16,7 @@ interface EmailRequest {
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const RESEND_API_URL = "https://api.resend.com/emails";
 
-Deno.serve(async (req) => {
+Deno.serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         error: "Internal server error",
-        message: error.message,
+        message: error instanceof Error ? error.message : String(error),
       }),
       {
         status: 500,

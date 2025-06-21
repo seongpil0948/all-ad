@@ -36,10 +36,9 @@ class Logger {
   }
 
   warn(message: string, context?: LogContext): void {
-    console.warn(this.formatMessage("WARN", message, context)); // eslint-disable-line no-console
+    console.warn(this.formatMessage("WARN", message, context));
   }
 
-  /* eslint-disable no-console */
   error(
     message: string,
     error?: Error | string | unknown,
@@ -68,7 +67,6 @@ class Logger {
       console.error(this.formatMessage("ERROR", errorMessage, context));
     }
   }
-  /* eslint-enable no-console */
 
   // HTTP request logging helper
   http(

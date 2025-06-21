@@ -26,11 +26,11 @@ interface GoogleAdsAccountRecord {
 }
 
 export class GoogleAdsScheduler {
-  // Vercel Cron을 사용하므로 node-cron 관련 코드 제거
-  // 스케줄링은 vercel.json에서 설정하고,
-  // /api/cron/google-ads-sync endpoint에서 처리
+  // Supabase Cron을 사용하므로 node-cron 관련 코드 제거
+  // 스케줄링은 Supabase의 pg_cron에서 설정하고,
+  // Supabase Edge Functions에서 처리
 
-  // 스케줄된 동기화 실행 (Vercel Cron에서 호출)
+  // 스케줄된 동기화 실행 (Supabase Cron에서 호출)
   async runScheduledSync(syncType: "FULL" | "INCREMENTAL"): Promise<void> {
     try {
       const accounts = await this.getActiveGoogleAdsAccounts();
@@ -196,22 +196,29 @@ export class GoogleAdsScheduler {
     await syncService.scheduleSyncForAccount(accountId, syncType);
   }
 
-  // 스케줄러 상태 조회 (Vercel Cron 사용)
+  // 스케줄러 상태 조회 (Supabase Cron 사용)
   getSchedulerStatus(): {
     isRunning: boolean;
-    cronJobs: { path: string; schedule: string }[];
+    cronJobs: { name: string; schedule: string; function: string }[];
   } {
-    // Vercel Cron 설정 정보 반환
+    // Supabase Cron 설정 정보 반환
     return {
-      isRunning: true, // Vercel Cron은 항상 활성화
+      isRunning: true, // Supabase Cron은 항상 활성화
       cronJobs: [
         {
-          path: "/api/cron/google-ads-sync",
+          name: "google-ads-sync-hourly",
           schedule: "0 * * * *", // 매시간
+          function: "google-ads-sync",
         },
         {
-          path: "/api/cron/refresh-tokens",
+          name: "google-ads-sync-full-daily",
+          schedule: "0 2 * * *", // 매일 새벽 2시
+          function: "google-ads-sync-full",
+        },
+        {
+          name: "refresh-oauth-tokens",
           schedule: "0 * * * *", // 매시간
+          function: "refresh-tokens",
         },
       ],
     };
