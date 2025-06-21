@@ -1,6 +1,6 @@
 // Simple logger implementation
 export interface LogContext {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // Logger implementation
@@ -18,24 +18,28 @@ class Logger {
 
   trace(message: string, context?: LogContext): void {
     if (process.env.NODE_ENV === "development") {
+      // eslint-disable-next-line no-console
       console.log(this.formatMessage("TRACE", message, context));
     }
   }
 
   debug(message: string, context?: LogContext): void {
     if (process.env.NODE_ENV === "development") {
+      // eslint-disable-next-line no-console
       console.log(this.formatMessage("DEBUG", message, context));
     }
   }
 
   info(message: string, context?: LogContext): void {
+    // eslint-disable-next-line no-console
     console.log(this.formatMessage("INFO", message, context));
   }
 
   warn(message: string, context?: LogContext): void {
-    console.warn(this.formatMessage("WARN", message, context));
+    console.warn(this.formatMessage("WARN", message, context)); // eslint-disable-line no-console
   }
 
+  /* eslint-disable no-console */
   error(
     message: string,
     error?: Error | string | unknown,
@@ -45,22 +49,26 @@ class Logger {
 
     if (error instanceof Error) {
       errorMessage = `${message}: ${error.message}`;
+
       console.error(this.formatMessage("ERROR", errorMessage, context));
       if (error.stack && process.env.NODE_ENV === "development") {
         console.error(error.stack);
       }
     } else if (typeof error === "string") {
       errorMessage = `${message}: ${error}`;
+
       console.error(this.formatMessage("ERROR", errorMessage, context));
     } else if (error !== undefined) {
       const serializedError = JSON.stringify(error, null, 2);
 
       errorMessage = `${message}: ${serializedError}`;
+
       console.error(this.formatMessage("ERROR", errorMessage, context));
     } else {
       console.error(this.formatMessage("ERROR", errorMessage, context));
     }
   }
+  /* eslint-enable no-console */
 
   // HTTP request logging helper
   http(

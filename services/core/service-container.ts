@@ -4,9 +4,9 @@
  */
 export class ServiceContainer {
   private static instance: ServiceContainer;
-  private services = new Map<string, any>();
-  private factories = new Map<string, () => any>();
-  private singletons = new Map<string, any>();
+  private services = new Map<string, unknown>();
+  private factories = new Map<string, () => unknown>();
+  private singletons = new Map<string, unknown>();
 
   private constructor() {}
 

@@ -8,7 +8,7 @@ export class ServiceError extends Error {
     public service: string,
     public operation: string,
     public originalError?: Error | unknown,
-    public context?: Record<string, any>,
+    public context?: Record<string, unknown>,
   ) {
     const errorMessage =
       originalError instanceof Error
@@ -25,13 +25,13 @@ export class ServiceError extends Error {
  */
 export function withErrorHandling(service: string, operation: string) {
   return function (
-    target: any,
+    target: object,
     propertyKey: string,
     descriptor: PropertyDescriptor,
   ) {
     const originalMethod = descriptor.value;
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (this: unknown, ...args: unknown[]) {
       const startTime = Date.now();
 
       try {
@@ -61,13 +61,13 @@ export function withErrorHandling(service: string, operation: string) {
  */
 export function withRetry(maxAttempts = 3, backoffMs = 1000) {
   return function (
-    target: any,
+    target: object,
     propertyKey: string,
     descriptor: PropertyDescriptor,
   ) {
     const originalMethod = descriptor.value;
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (this: unknown, ...args: unknown[]) {
       let lastError: Error | unknown;
 
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {

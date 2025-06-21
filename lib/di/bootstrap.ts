@@ -96,7 +96,23 @@ export async function bootstrapDI() {
         ServiceTokens.SUPABASE_CLIENT,
       );
 
-      return new PlatformDatabaseService(supabase, log);
+      // Create a logger adapter that matches the expected interface
+      const loggerAdapter = {
+        debug: (message: string, ...args: unknown[]) =>
+          log.debug(message, args[0] as Record<string, unknown>),
+        info: (message: string, ...args: unknown[]) =>
+          log.info(message, args[0] as Record<string, unknown>),
+        warn: (message: string, ...args: unknown[]) =>
+          log.warn(message, args[0] as Record<string, unknown>),
+        error: (message: string, ...args: unknown[]) =>
+          log.error(
+            message,
+            args[0] as Error | string | unknown,
+            args[1] as Record<string, unknown>,
+          ),
+      };
+
+      return new PlatformDatabaseService(supabase, loggerAdapter);
     },
   );
 
@@ -108,7 +124,27 @@ export async function bootstrapDI() {
       ServiceTokens.PLATFORM_DATABASE_SERVICE,
     );
 
-    return new PlatformSyncService(platformFactory, databaseService, log);
+    // Reuse the same logger adapter pattern
+    const loggerAdapter = {
+      debug: (message: string, ...args: unknown[]) =>
+        log.debug(message, args[0] as Record<string, unknown>),
+      info: (message: string, ...args: unknown[]) =>
+        log.info(message, args[0] as Record<string, unknown>),
+      warn: (message: string, ...args: unknown[]) =>
+        log.warn(message, args[0] as Record<string, unknown>),
+      error: (message: string, ...args: unknown[]) =>
+        log.error(
+          message,
+          args[0] as Error | string | unknown,
+          args[1] as Record<string, unknown>,
+        ),
+    };
+
+    return new PlatformSyncService(
+      platformFactory,
+      databaseService,
+      loggerAdapter,
+    );
   });
 
   container.registerSingleton(ServiceTokens.AD_SERVICE, () => {
