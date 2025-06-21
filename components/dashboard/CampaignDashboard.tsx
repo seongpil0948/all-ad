@@ -78,6 +78,7 @@ export function CampaignDashboard() {
       const items = filteredCampaigns.slice(start, start + ITEMS_PER_PAGE);
 
       const hasMoreItems = start + ITEMS_PER_PAGE < filteredCampaigns.length;
+
       setHasMore(hasMoreItems);
 
       return {
@@ -319,13 +320,13 @@ export function CampaignDashboard() {
       <InfiniteScrollTable
         aria-label="캠페인 목록"
         columns={columns}
-        items={campaignList}
-        renderCell={renderCell}
         emptyContent="캠페인이 없습니다"
-        isLoading={campaignList.isLoading && campaignList.items.length === 0}
         hasMore={hasMore}
-        onLoadMore={() => campaignList.loadMore()}
+        isLoading={campaignList.isLoading && campaignList.items.length === 0}
+        items={campaignList}
         maxHeight="600px"
+        renderCell={renderCell}
+        onLoadMore={() => campaignList.loadMore()}
       />
 
       {/* 예산 수정 모달 */}

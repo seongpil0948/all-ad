@@ -89,6 +89,7 @@ export function MultiAccountPlatformManager({
         const items = platformCreds.slice(start, start + ITEMS_PER_PAGE);
 
         const hasMore = start + ITEMS_PER_PAGE < platformCreds.length;
+
         setHasMoreItems((prev) => ({ ...prev, [platform]: hasMore }));
 
         return {
@@ -180,6 +181,7 @@ export function MultiAccountPlatformManager({
 
   const togglePlatformExpanded = (platform: PlatformType) => {
     const newExpanded = new Set(expandedPlatforms);
+
     if (newExpanded.has(platform)) {
       newExpanded.delete(platform);
     } else {
@@ -235,19 +237,20 @@ export function MultiAccountPlatformManager({
 
   const renderAccountsTable = (platform: PlatformType) => {
     const list = platformLists[platform as keyof typeof platformLists];
+
     if (!list) return null;
 
     return (
       <InfiniteScrollTable
         aria-label={`${platformConfig[platform].name} 계정 목록`}
         columns={columns}
-        items={list}
-        renderCell={renderCell}
         emptyContent="연동된 계정이 없습니다"
-        isLoading={list.isLoading && list.items.length === 0}
         hasMore={hasMoreItems[platform] || false}
-        onLoadMore={() => list.loadMore()}
+        isLoading={list.isLoading && list.items.length === 0}
+        items={list}
         maxHeight="300px"
+        renderCell={renderCell}
+        onLoadMore={() => list.loadMore()}
       />
     );
   };

@@ -100,6 +100,7 @@ export function TeamManagement() {
       const items = members.slice(start, start + ITEMS_PER_PAGE);
 
       const hasMore = start + ITEMS_PER_PAGE < members.length;
+
       setHasMoreMembers(hasMore);
 
       return {
@@ -118,6 +119,7 @@ export function TeamManagement() {
       const items = invitations.slice(start, start + ITEMS_PER_PAGE);
 
       const hasMore = start + ITEMS_PER_PAGE < invitations.length;
+
       setHasMoreInvitations(hasMore);
 
       return {
