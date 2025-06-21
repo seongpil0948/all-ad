@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/google-ads-sync",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/google-ads-sync-full",
+      "schedule": "0 2 * * *"
     }
   ]
 }

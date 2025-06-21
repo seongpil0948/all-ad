@@ -1,5 +1,3 @@
-import * as cron from "node-cron";
-
 import { GoogleAdsSyncService } from "../google-ads/sync/sync-strategy.service";
 import { GoogleAdsClient } from "../google-ads/core/google-ads-client";
 
@@ -28,51 +26,12 @@ interface GoogleAdsAccountRecord {
 }
 
 export class GoogleAdsScheduler {
-  private syncJobs: Map<string, cron.ScheduledTask> = new Map();
+  // Vercel Cron을 사용하므로 node-cron 관련 코드 제거
+  // 스케줄링은 vercel.json에서 설정하고,
+  // /api/cron/google-ads-sync endpoint에서 처리
 
-  // 스케줄러 시작
-  async startScheduledSync(): Promise<void> {
-    log.info("Google Ads 스케줄러 시작");
-
-    // 매시간 정각에 증분 동기화 실행
-    const incrementalJob = cron.schedule("0 * * * *", async () => {
-      log.info("Google Ads 증분 동기화 시작");
-      await this.runScheduledSync("INCREMENTAL");
-    });
-
-    // 매일 새벽 2시에 전체 동기화 실행
-    const fullSyncJob = cron.schedule("0 2 * * *", async () => {
-      log.info("Google Ads 전체 동기화 시작");
-      await this.runScheduledSync("FULL");
-    });
-
-    // 작업 시작
-    incrementalJob.start();
-    fullSyncJob.start();
-
-    // 작업 저장
-    this.syncJobs.set("incremental", incrementalJob);
-    this.syncJobs.set("full", fullSyncJob);
-
-    log.info("Google Ads 스케줄러 작업 등록 완료");
-  }
-
-  // 스케줄러 중지
-  stopScheduledSync(): void {
-    log.info("Google Ads 스케줄러 중지");
-
-    for (const [jobName, job] of Array.from(this.syncJobs.entries())) {
-      job.stop();
-      log.info(`스케줄 작업 중지: ${jobName}`);
-    }
-
-    this.syncJobs.clear();
-  }
-
-  // 스케줄된 동기화 실행
-  private async runScheduledSync(
-    syncType: "FULL" | "INCREMENTAL",
-  ): Promise<void> {
+  // 스케줄된 동기화 실행 (Vercel Cron에서 호출)
+  async runScheduledSync(syncType: "FULL" | "INCREMENTAL"): Promise<void> {
     try {
       const accounts = await this.getActiveGoogleAdsAccounts();
 
@@ -237,19 +196,24 @@ export class GoogleAdsScheduler {
     await syncService.scheduleSyncForAccount(accountId, syncType);
   }
 
-  // 스케줄러 상태 조회
+  // 스케줄러 상태 조회 (Vercel Cron 사용)
   getSchedulerStatus(): {
     isRunning: boolean;
-    jobs: { name: string; nextRun: Date | null }[];
+    cronJobs: { path: string; schedule: string }[];
   } {
-    const jobs = Array.from(this.syncJobs.entries()).map(([name, _job]) => ({
-      name,
-      nextRun: null, // node-cron doesn't provide next run time easily
-    }));
-
+    // Vercel Cron 설정 정보 반환
     return {
-      isRunning: this.syncJobs.size > 0,
-      jobs,
+      isRunning: true, // Vercel Cron은 항상 활성화
+      cronJobs: [
+        {
+          path: "/api/cron/google-ads-sync",
+          schedule: "0 * * * *", // 매시간
+        },
+        {
+          path: "/api/cron/refresh-tokens",
+          schedule: "0 * * * *", // 매시간
+        },
+      ],
     };
   }
 }

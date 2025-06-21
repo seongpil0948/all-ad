@@ -13,3 +13,4 @@ export * from "./TableActions";
 export * from "./SectionHeader";
 export * from "./DataProvider";
 export * from "./PlatformSetupGuide";
+export * from "./InfiniteScrollTable";

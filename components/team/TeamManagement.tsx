@@ -6,15 +6,6 @@ import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Chip } from "@heroui/chip";
 import { Select, SelectItem } from "@heroui/select";
-import { Spinner } from "@heroui/spinner";
-import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-} from "@heroui/table";
 import {
   Modal,
   ModalContent,
@@ -41,7 +32,13 @@ import {
   TeamInvitation,
 } from "@/types/database.types";
 import log from "@/utils/logger";
-import { LoadingState, SectionHeader, TableActions } from "@/components/common";
+import {
+  LoadingState,
+  SectionHeader,
+  TableActions,
+  InfiniteScrollTable,
+  InfiniteScrollTableColumn,
+} from "@/components/common";
 
 const roleConfig = {
   master: {
@@ -90,6 +87,8 @@ export function TeamManagement() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [hasMoreMembers, setHasMoreMembers] = useState(true);
+  const [hasMoreInvitations, setHasMoreInvitations] = useState(true);
 
   const ITEMS_PER_PAGE = 20;
 
@@ -100,12 +99,12 @@ export function TeamManagement() {
       const members = teamMembers || [];
       const items = members.slice(start, start + ITEMS_PER_PAGE);
 
+      const hasMore = start + ITEMS_PER_PAGE < members.length;
+      setHasMoreMembers(hasMore);
+
       return {
         items,
-        cursor:
-          start + ITEMS_PER_PAGE < members.length
-            ? String(start + ITEMS_PER_PAGE)
-            : undefined,
+        cursor: hasMore ? String(start + ITEMS_PER_PAGE) : undefined,
       };
     },
     getKey: (item) => item.id,
@@ -118,16 +117,35 @@ export function TeamManagement() {
       const invitations = teamInvitations || [];
       const items = invitations.slice(start, start + ITEMS_PER_PAGE);
 
+      const hasMore = start + ITEMS_PER_PAGE < invitations.length;
+      setHasMoreInvitations(hasMore);
+
       return {
         items,
-        cursor:
-          start + ITEMS_PER_PAGE < invitations.length
-            ? String(start + ITEMS_PER_PAGE)
-            : undefined,
+        cursor: hasMore ? String(start + ITEMS_PER_PAGE) : undefined,
       };
     },
     getKey: (item) => item.id,
   });
+
+  // Table columns definition
+  const canManageTeam = userRole === "master" || userRole === "team_mate";
+
+  const memberColumns: InfiniteScrollTableColumn<TeamMemberWithProfile>[] = [
+    { key: "member", label: "팀원" },
+    { key: "email", label: "이메일" },
+    { key: "role", label: "권한" },
+    { key: "joinDate", label: "가입일" },
+    ...(canManageTeam ? [{ key: "actions", label: "액션" }] : []),
+  ];
+
+  const invitationColumns: InfiniteScrollTableColumn<TeamInvitation>[] = [
+    { key: "email", label: "초대한 이메일" },
+    { key: "role", label: "권한" },
+    { key: "status", label: "상태" },
+    { key: "invitedBy", label: "초대자" },
+    { key: "expiresAt", label: "만료일" },
+  ];
 
   // Reload lists when data changes
   useEffect(() => {
@@ -226,7 +244,157 @@ export function TeamManagement() {
     [removeMember],
   );
 
-  const canManageTeam = userRole === "master" || userRole === "team_mate";
+  // Render cell content for members table
+  const renderMemberCell = (
+    member: TeamMemberWithProfile,
+    columnKey: string,
+  ) => {
+    const memberProfile = member.profiles;
+    const isCurrentUser = currentUser?.id === member.user_id;
+    const isMaster = currentTeam?.master_user_id === member.user_id;
+
+    switch (columnKey) {
+      case "member":
+        return (
+          <div className="flex items-center gap-3">
+            <Avatar
+              name={
+                memberProfile?.full_name || memberProfile?.email || "Unknown"
+              }
+              size="sm"
+            />
+            <div>
+              <p className="font-medium">
+                {memberProfile?.full_name || "이름 없음"}
+                {isCurrentUser && " (나)"}
+              </p>
+            </div>
+          </div>
+        );
+      case "email":
+        return <p className="text-sm">{memberProfile?.email}</p>;
+      case "role":
+        return editingMember === member.id ? (
+          <div className="flex items-center gap-2">
+            <Select
+              className="w-32"
+              selectedKeys={[editingRole]}
+              size="sm"
+              onChange={(e) => setEditingRole(e.target.value as UserRole)}
+            >
+              {Object.entries(roleConfig).map(([role, config]) => (
+                <SelectItem key={role}>{config.label}</SelectItem>
+              ))}
+            </Select>
+            <Button
+              color="primary"
+              size="sm"
+              onPress={() => handleRoleUpdate(member.id)}
+            >
+              저장
+            </Button>
+            <Button
+              size="sm"
+              variant="flat"
+              onPress={() => setEditingMember(null)}
+            >
+              취소
+            </Button>
+          </div>
+        ) : (
+          <Chip
+            color={roleConfig[member.role].color}
+            startContent={
+              <div className="w-4 h-4">
+                {createElement(roleConfig[member.role].icon, {
+                  className: "w-3 h-3",
+                })}
+              </div>
+            }
+            variant="flat"
+          >
+            {roleConfig[member.role].label}
+          </Chip>
+        );
+      case "joinDate":
+        return (
+          <p className="text-sm text-default-500">
+            {new Date(member.joined_at).toLocaleDateString()}
+          </p>
+        );
+      case "actions":
+        return !isMaster && !isCurrentUser && userRole === "master" ? (
+          <TableActions
+            actions={[
+              {
+                icon: <FaEdit />,
+                variant: "light",
+                isDisabled: editingMember !== null,
+                onPress: () => {
+                  setEditingMember(member.id);
+                  setEditingRole(member.role);
+                },
+              },
+              {
+                icon: <FaTrash />,
+                color: "danger",
+                variant: "light",
+                onPress: () =>
+                  handleRemoveMember(
+                    member.id,
+                    memberProfile?.full_name ||
+                      memberProfile?.email ||
+                      "Unknown",
+                  ),
+              },
+            ]}
+          />
+        ) : null;
+      default:
+        return null;
+    }
+  };
+
+  // Render cell content for invitations table
+  const renderInvitationCell = (
+    invitation: TeamInvitation,
+    columnKey: string,
+  ) => {
+    switch (columnKey) {
+      case "email":
+        return <p className="text-sm">{invitation.email}</p>;
+      case "role":
+        return (
+          <Chip
+            color={roleConfig[invitation.role].color}
+            size="sm"
+            variant="flat"
+          >
+            {roleConfig[invitation.role].label}
+          </Chip>
+        );
+      case "status":
+        return (
+          <Chip color="warning" size="sm" variant="flat">
+            대기 중
+          </Chip>
+        );
+      case "invitedBy":
+        return (
+          <p className="text-sm text-default-500">
+            {new Date(invitation.created_at).toLocaleDateString()}
+          </p>
+        );
+      case "expiresAt":
+        return (
+          <p className="text-sm text-default-500">
+            {new Date(invitation.expires_at).toLocaleDateString()}
+          </p>
+        );
+      default:
+        return null;
+    }
+  };
 
   if (isLoading && !currentTeam) {
     return <LoadingState message="팀 정보를 불러오는 중..." />;
@@ -318,167 +486,16 @@ export function TeamManagement() {
           <SectionHeader title="팀원 목록" />
         </CardHeader>
         <CardBody>
-          <Table
+          <InfiniteScrollTable
             aria-label="팀원 목록"
-            bottomContent={
-              membersList.loadingState === "loadingMore" ? (
-                <div className="flex w-full justify-center">
-                  <Spinner size="sm" />
-                </div>
-              ) : null
-            }
-            classNames={{
-              base: "max-h-[400px] overflow-auto",
-              table: "min-h-[100px]",
-            }}
-          >
-            <TableHeader>
-              <TableColumn>팀원</TableColumn>
-              <TableColumn>이메일</TableColumn>
-              <TableColumn>권한</TableColumn>
-              <TableColumn>가입일</TableColumn>
-              {canManageTeam ? <TableColumn>액션</TableColumn> : <></>}
-            </TableHeader>
-            <TableBody
-              emptyContent="팀원이 없습니다"
-              isLoading={
-                membersList.isLoading && membersList.items.length === 0
-              }
-              items={membersList.items}
-              loadingContent={<Spinner />}
-              onLoadMore={() => {
-                if (!membersList.isLoading) {
-                  membersList.loadMore();
-                }
-              }}
-            >
-              {(member) => {
-                const memberProfile = member.profiles;
-                const isCurrentUser = currentUser?.id === member.user_id;
-                const isMaster = currentTeam.master_user_id === member.user_id;
-
-                return (
-                  <TableRow key={member.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar
-                          name={
-                            memberProfile?.full_name ||
-                            memberProfile?.email ||
-                            "Unknown"
-                          }
-                          size="sm"
-                        />
-                        <div>
-                          <p className="font-medium">
-                            {memberProfile?.full_name || "이름 없음"}
-                            {isCurrentUser && " (나)"}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-
-                    <TableCell>
-                      <p className="text-sm">{memberProfile?.email}</p>
-                    </TableCell>
-
-                    <TableCell>
-                      {editingMember === member.id ? (
-                        <div className="flex items-center gap-2">
-                          <Select
-                            className="w-32"
-                            selectedKeys={[editingRole]}
-                            size="sm"
-                            onChange={(e) =>
-                              setEditingRole(e.target.value as UserRole)
-                            }
-                          >
-                            {Object.entries(roleConfig).map(
-                              ([role, config]) => (
-                                <SelectItem key={role}>
-                                  {config.label}
-                                </SelectItem>
-                              ),
-                            )}
-                          </Select>
-                          <Button
-                            color="primary"
-                            size="sm"
-                            onPress={() => handleRoleUpdate(member.id)}
-                          >
-                            저장
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="flat"
-                            onPress={() => setEditingMember(null)}
-                          >
-                            취소
-                          </Button>
-                        </div>
-                      ) : (
-                        <Chip
-                          color={roleConfig[member.role].color}
-                          startContent={
-                            <div className="w-4 h-4">
-                              {createElement(roleConfig[member.role].icon, {
-                                className: "w-3 h-3",
-                              })}
-                            </div>
-                          }
-                          variant="flat"
-                        >
-                          {roleConfig[member.role].label}
-                        </Chip>
-                      )}
-                    </TableCell>
-
-                    <TableCell>
-                      <p className="text-sm text-default-500">
-                        {new Date(member.joined_at).toLocaleDateString()}
-                      </p>
-                    </TableCell>
-
-                    {canManageTeam ? (
-                      <TableCell>
-                        {!isMaster &&
-                          !isCurrentUser &&
-                          userRole === "master" && (
-                            <TableActions
-                              actions={[
-                                {
-                                  icon: <FaEdit />,
-                                  variant: "light",
-                                  isDisabled: editingMember !== null,
-                                  onPress: () => {
-                                    setEditingMember(member.id);
-                                    setEditingRole(member.role);
-                                  },
-                                },
-                                {
-                                  icon: <FaTrash />,
-                                  color: "danger",
-                                  variant: "light",
-                                  onPress: () =>
-                                    handleRemoveMember(
-                                      member.id,
-                                      memberProfile?.full_name ||
-                                        memberProfile?.email ||
-                                        "Unknown",
-                                    ),
-                                },
-                              ]}
-                            />
-                          )}
-                      </TableCell>
-                    ) : (
-                      <> </>
-                    )}
-                  </TableRow>
-                );
-              }}
-            </TableBody>
-          </Table>
+            columns={memberColumns}
+            emptyContent="팀원이 없습니다"
+            hasMore={hasMoreMembers}
+            isLoading={membersList.isLoading && membersList.items.length === 0}
+            items={membersList}
+            renderCell={renderMemberCell}
+            onLoadMore={() => membersList.loadMore()}
+          />
         </CardBody>
       </Card>
 
@@ -489,81 +506,18 @@ export function TeamManagement() {
             <SectionHeader title="대기 중인 초대" />
           </CardHeader>
           <CardBody>
-            <Table
+            <InfiniteScrollTable
               aria-label="대기 중인 초대 목록"
-              bottomContent={
-                invitationsList.loadingState === "loadingMore" ? (
-                  <div className="flex w-full justify-center">
-                    <Spinner size="sm" />
-                  </div>
-                ) : null
+              columns={invitationColumns}
+              emptyContent="대기 중인 초대가 없습니다"
+              hasMore={hasMoreInvitations}
+              isLoading={
+                invitationsList.isLoading && invitationsList.items.length === 0
               }
-              classNames={{
-                base: "max-h-[400px] overflow-auto",
-                table: "min-h-[100px]",
-              }}
-            >
-              <TableHeader>
-                <TableColumn>이메일</TableColumn>
-                <TableColumn>권한</TableColumn>
-                <TableColumn>초대일</TableColumn>
-                <TableColumn>만료일</TableColumn>
-                {userRole === "master" ? (
-                  <TableColumn>액션</TableColumn>
-                ) : (
-                  <></>
-                )}
-              </TableHeader>
-              <TableBody
-                emptyContent="대기 중인 초대가 없습니다"
-                isLoading={
-                  invitationsList.isLoading &&
-                  invitationsList.items.length === 0
-                }
-                items={invitationsList.items}
-                loadingContent={<Spinner />}
-                onLoadMore={() => {
-                  if (!invitationsList.isLoading) {
-                    invitationsList.loadMore();
-                  }
-                }}
-              >
-                {(invitation) => (
-                  <TableRow key={invitation.id}>
-                    <TableCell>
-                      <p className="text-sm">{invitation.email}</p>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        color={roleConfig[invitation.role].color}
-                        startContent={
-                          <div className="w-4 h-4">
-                            {createElement(roleConfig[invitation.role].icon, {
-                              className: "w-3 h-3",
-                            })}
-                          </div>
-                        }
-                        variant="flat"
-                      >
-                        {roleConfig[invitation.role].label}
-                      </Chip>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-sm text-default-500">
-                        {new Date(invitation.created_at).toLocaleDateString()}
-                      </p>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-sm text-default-500">
-                        {new Date(invitation.expires_at).toLocaleDateString()}
-                      </p>
-                    </TableCell>
-
-                    {userRole === "master" ? <TableCell>-</TableCell> : <></>}
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+              items={invitationsList}
+              renderCell={renderInvitationCell}
+              onLoadMore={() => invitationsList.loadMore()}
+            />
           </CardBody>
         </Card>
       )}

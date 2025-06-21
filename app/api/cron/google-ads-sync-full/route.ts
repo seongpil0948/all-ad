@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleAdsScheduler } from "@/services/scheduler/google-ads-scheduler";
 import log from "@/utils/logger";
 
-// This endpoint is called by Vercel cron hourly
+// This endpoint is called by Vercel cron daily at 2 AM
 export async function GET(request: NextRequest) {
   // Verify the request is from a trusted source
   const authHeader = request.headers.get("authorization");
@@ -14,19 +14,19 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    log.info("Starting Google Ads incremental sync (hourly cron)");
+    log.info("Starting Google Ads full sync (daily cron)");
 
     const scheduler = new GoogleAdsScheduler();
 
-    await scheduler.runScheduledSync("INCREMENTAL");
+    await scheduler.runScheduledSync("FULL");
 
     return NextResponse.json({
       success: true,
-      syncType: "INCREMENTAL",
+      syncType: "FULL",
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    log.error("Google Ads incremental sync cron job failed:", error as Error);
+    log.error("Google Ads full sync cron job failed:", error as Error);
 
     return NextResponse.json(
       { error: "Internal server error" },

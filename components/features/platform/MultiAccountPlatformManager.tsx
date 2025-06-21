@@ -13,15 +13,6 @@ import {
   ModalFooter,
 } from "@heroui/modal";
 import { useDisclosure } from "@heroui/modal";
-import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-} from "@heroui/table";
-import { Spinner } from "@heroui/spinner";
 import { useAsyncList } from "@react-stately/data";
 import { FaPlus } from "react-icons/fa";
 
@@ -34,7 +25,12 @@ import { PlatformType } from "@/types";
 import { CredentialValues } from "@/types/credentials.types";
 import { Database } from "@/types/supabase.types";
 import { platformConfig } from "@/utils/platform-config";
-import { TableActions, SectionHeader } from "@/components/common";
+import {
+  TableActions,
+  SectionHeader,
+  InfiniteScrollTable,
+  InfiniteScrollTableColumn,
+} from "@/components/common";
 
 type PlatformCredential =
   Database["public"]["Tables"]["platform_credentials"]["Row"];
@@ -53,6 +49,15 @@ interface MultiAccountPlatformManagerProps {
 
 const ITEMS_PER_PAGE = 10;
 
+// Table columns definition
+const columns: InfiniteScrollTableColumn<PlatformCredential>[] = [
+  { key: "name", label: "계정명" },
+  { key: "accountId", label: "계정 ID" },
+  { key: "status", label: "상태" },
+  { key: "lastSync", label: "마지막 동기화" },
+  { key: "actions", label: "액션" },
+];
+
 export function MultiAccountPlatformManager({
   credentials,
   onSave,
@@ -69,95 +74,39 @@ export function MultiAccountPlatformManager({
   const [expandedPlatforms, setExpandedPlatforms] = useState<Set<PlatformType>>(
     new Set(),
   );
+  const [hasMoreItems, setHasMoreItems] = useState<
+    Record<PlatformType, boolean>
+  >({} as Record<PlatformType, boolean>);
+
+  // Create async list for a platform
+  const createPlatformList = (platform: PlatformType) => {
+    return useAsyncList<PlatformCredential>({
+      async load({ cursor }) {
+        const platformCreds = credentials.filter(
+          (c) => c.platform === platform,
+        );
+        const start = cursor ? parseInt(cursor) : 0;
+        const items = platformCreds.slice(start, start + ITEMS_PER_PAGE);
+
+        const hasMore = start + ITEMS_PER_PAGE < platformCreds.length;
+        setHasMoreItems((prev) => ({ ...prev, [platform]: hasMore }));
+
+        return {
+          items,
+          cursor: hasMore ? String(start + ITEMS_PER_PAGE) : undefined,
+        };
+      },
+      getKey: (item) => item.id,
+    });
+  };
 
   // Infinite scroll setup for each platform
   const platformLists = {
-    facebook: useAsyncList<PlatformCredential>({
-      async load({ cursor }) {
-        const platformCreds = credentials.filter(
-          (c) => c.platform === "facebook",
-        );
-        const start = cursor ? parseInt(cursor) : 0;
-        const items = platformCreds.slice(start, start + ITEMS_PER_PAGE);
-
-        return {
-          items,
-          cursor:
-            start + ITEMS_PER_PAGE < platformCreds.length
-              ? String(start + ITEMS_PER_PAGE)
-              : undefined,
-        };
-      },
-      getKey: (item) => item.id,
-    }),
-    google: useAsyncList<PlatformCredential>({
-      async load({ cursor }) {
-        const platformCreds = credentials.filter(
-          (c) => c.platform === "google",
-        );
-        const start = cursor ? parseInt(cursor) : 0;
-        const items = platformCreds.slice(start, start + ITEMS_PER_PAGE);
-
-        return {
-          items,
-          cursor:
-            start + ITEMS_PER_PAGE < platformCreds.length
-              ? String(start + ITEMS_PER_PAGE)
-              : undefined,
-        };
-      },
-      getKey: (item) => item.id,
-    }),
-    kakao: useAsyncList<PlatformCredential>({
-      async load({ cursor }) {
-        const platformCreds = credentials.filter((c) => c.platform === "kakao");
-        const start = cursor ? parseInt(cursor) : 0;
-        const items = platformCreds.slice(start, start + ITEMS_PER_PAGE);
-
-        return {
-          items,
-          cursor:
-            start + ITEMS_PER_PAGE < platformCreds.length
-              ? String(start + ITEMS_PER_PAGE)
-              : undefined,
-        };
-      },
-      getKey: (item) => item.id,
-    }),
-    naver: useAsyncList<PlatformCredential>({
-      async load({ cursor }) {
-        const platformCreds = credentials.filter((c) => c.platform === "naver");
-        const start = cursor ? parseInt(cursor) : 0;
-        const items = platformCreds.slice(start, start + ITEMS_PER_PAGE);
-
-        return {
-          items,
-          cursor:
-            start + ITEMS_PER_PAGE < platformCreds.length
-              ? String(start + ITEMS_PER_PAGE)
-              : undefined,
-        };
-      },
-      getKey: (item) => item.id,
-    }),
-    coupang: useAsyncList<PlatformCredential>({
-      async load({ cursor }) {
-        const platformCreds = credentials.filter(
-          (c) => c.platform === "coupang",
-        );
-        const start = cursor ? parseInt(cursor) : 0;
-        const items = platformCreds.slice(start, start + ITEMS_PER_PAGE);
-
-        return {
-          items,
-          cursor:
-            start + ITEMS_PER_PAGE < platformCreds.length
-              ? String(start + ITEMS_PER_PAGE)
-              : undefined,
-        };
-      },
-      getKey: (item) => item.id,
-    }),
+    facebook: createPlatformList("facebook"),
+    google: createPlatformList("google"),
+    kakao: createPlatformList("kakao"),
+    naver: createPlatformList("naver"),
+    coupang: createPlatformList("coupang"),
   };
 
   // Reload lists when credentials change
@@ -190,16 +139,11 @@ export function MultiAccountPlatformManager({
     };
 
     const oauthClient = new OAuthClient(platform, oauthConfig);
-
-    const state = Buffer.from(
-      JSON.stringify({
-        userId,
-        teamId,
-        platform,
-        timestamp: Date.now(),
-      }),
-    ).toString("base64");
-
+    const state = JSON.stringify({
+      userId,
+      teamId,
+      accountId: credentials.account_id || undefined,
+    });
     const authUrl = oauthClient.getAuthorizationUrl(state);
 
     window.location.href = authUrl;
@@ -210,28 +154,25 @@ export function MultiAccountPlatformManager({
 
     setIsLoading(true);
     try {
-      const config = platformConfig[selectedPlatform];
+      const platformInfo = platformConfig[selectedPlatform];
 
-      if (config.supportsOAuth) {
-        if (
-          "manual_refresh_token" in credentials &&
-          credentials.manual_refresh_token
-        ) {
-          const { manual_refresh_token, ...oauthCredentials } = credentials;
-
-          await onSave(selectedPlatform, {
-            ...oauthCredentials,
-            refresh_token: manual_refresh_token as string,
-            manual_token: true,
-          });
-          onOpenChange();
-        } else {
-          await handleOAuthConnect(selectedPlatform, credentials);
-        }
+      if (
+        (selectedPlatform === "facebook" ||
+          selectedPlatform === "google" ||
+          selectedPlatform === "kakao") &&
+        platformInfo.supportsOAuth
+      ) {
+        await handleOAuthConnect(selectedPlatform, credentials);
       } else {
         await onSave(selectedPlatform, credentials);
-        onOpenChange();
       }
+
+      onOpenChange();
+      if (selectedPlatform === "facebook" || selectedPlatform === "google") {
+        return;
+      }
+      await onSave(selectedPlatform, credentials);
+      onOpenChange();
     } finally {
       setIsLoading(false);
     }
@@ -239,7 +180,6 @@ export function MultiAccountPlatformManager({
 
   const togglePlatformExpanded = (platform: PlatformType) => {
     const newExpanded = new Set(expandedPlatforms);
-
     if (newExpanded.has(platform)) {
       newExpanded.delete(platform);
     } else {
@@ -252,81 +192,63 @@ export function MultiAccountPlatformManager({
     return credentials.filter((c) => c.platform === platform);
   };
 
+  // Render cell content
+  const renderCell = (item: PlatformCredential, columnKey: string) => {
+    switch (columnKey) {
+      case "name":
+        return <span>{item.account_name || "이름 없음"}</span>;
+      case "accountId":
+        return <span className="text-small">{item.account_id || "-"}</span>;
+      case "status":
+        return (
+          <Switch
+            isSelected={item.is_active || false}
+            size="sm"
+            onValueChange={(isActive) => onToggle(item.id, isActive)}
+          />
+        );
+      case "lastSync":
+        return (
+          <span className="text-small text-default-500">
+            {item.last_synced_at
+              ? new Date(item.last_synced_at).toLocaleDateString()
+              : "동기화 전"}
+          </span>
+        );
+      case "actions":
+        return (
+          <TableActions
+            actions={[
+              {
+                label: "삭제",
+                color: "danger",
+                variant: "light",
+                onPress: () => onDelete(item.id),
+              },
+            ]}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   const renderAccountsTable = (platform: PlatformType) => {
-    const list = platformLists[platform];
-    const hasMore = list.loadingState === "loadingMore";
+    const list = platformLists[platform as keyof typeof platformLists];
+    if (!list) return null;
 
     return (
-      <Table
-        aria-label={`${platform} accounts`}
-        bottomContent={
-          hasMore ? (
-            <div className="flex w-full justify-center">
-              <Spinner size="sm" />
-            </div>
-          ) : null
-        }
-        classNames={{
-          base: "max-h-[400px] overflow-auto",
-          table: "min-h-[100px]",
-        }}
-      >
-        <TableHeader>
-          <TableColumn>계정명</TableColumn>
-          <TableColumn>계정 ID</TableColumn>
-          <TableColumn>상태</TableColumn>
-          <TableColumn>마지막 동기화</TableColumn>
-          <TableColumn>작업</TableColumn>
-        </TableHeader>
-        <TableBody
-          emptyContent="연동된 계정이 없습니다"
-          isLoading={list.isLoading}
-          items={list.items}
-          loadingContent={<Spinner />}
-          onLoadMore={() => {
-            if (!list.isLoading) {
-              list.loadMore();
-            }
-          }}
-        >
-          {(item) => (
-            <TableRow key={item.id}>
-              <TableCell>{item.account_name || "이름 없음"}</TableCell>
-              <TableCell>
-                <span className="text-small text-default-500">
-                  {item.account_id || "ID 없음"}
-                </span>
-              </TableCell>
-              <TableCell>
-                <Switch
-                  isSelected={item.is_active || false}
-                  size="sm"
-                  onValueChange={(isActive) => onToggle(item.id, isActive)}
-                />
-              </TableCell>
-              <TableCell>
-                <span className="text-small text-default-500">
-                  {item.last_synced_at
-                    ? new Date(item.last_synced_at).toLocaleDateString()
-                    : "동기화 전"}
-                </span>
-              </TableCell>
-              <TableCell>
-                <TableActions
-                  actions={[
-                    {
-                      label: "삭제",
-                      color: "danger",
-                      variant: "light",
-                      onPress: () => onDelete(item.id),
-                    },
-                  ]}
-                />
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+      <InfiniteScrollTable
+        aria-label={`${platformConfig[platform].name} 계정 목록`}
+        columns={columns}
+        items={list}
+        renderCell={renderCell}
+        emptyContent="연동된 계정이 없습니다"
+        isLoading={list.isLoading && list.items.length === 0}
+        hasMore={hasMoreItems[platform] || false}
+        onLoadMore={() => list.loadMore()}
+        maxHeight="300px"
+      />
     );
   };
 

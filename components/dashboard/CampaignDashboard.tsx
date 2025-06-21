@@ -5,15 +5,6 @@ import { Card, CardBody } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Chip } from "@heroui/chip";
-import { Spinner } from "@heroui/spinner";
-import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-} from "@heroui/table";
 import { Tabs, Tab } from "@heroui/tabs";
 import {
   Modal,
@@ -42,6 +33,8 @@ import {
   StatCard,
   PlatformBadge,
   TableActions,
+  InfiniteScrollTable,
+  InfiniteScrollTableColumn,
 } from "@/components/common";
 import { getPlatformConfig } from "@/utils/platform-config";
 
@@ -67,6 +60,7 @@ export function CampaignDashboard() {
   const [selectedPlatform, setSelectedPlatform] = useState<
     PlatformType | "all"
   >("all");
+  const [hasMore, setHasMore] = useState(true);
 
   // Filter campaigns based on selected platform
   const filteredCampaigns = useMemo(() => {
@@ -83,16 +77,94 @@ export function CampaignDashboard() {
       const start = cursor ? parseInt(cursor) : 0;
       const items = filteredCampaigns.slice(start, start + ITEMS_PER_PAGE);
 
+      const hasMoreItems = start + ITEMS_PER_PAGE < filteredCampaigns.length;
+      setHasMore(hasMoreItems);
+
       return {
         items,
-        cursor:
-          start + ITEMS_PER_PAGE < filteredCampaigns.length
-            ? String(start + ITEMS_PER_PAGE)
-            : undefined,
+        cursor: hasMoreItems ? String(start + ITEMS_PER_PAGE) : undefined,
       };
     },
     getKey: (item) => item.id,
   });
+
+  // Table columns definition
+  const columns: InfiniteScrollTableColumn<Campaign>[] = [
+    { key: "platform", label: "플랫폼" },
+    { key: "name", label: "캠페인명" },
+    { key: "status", label: "상태" },
+    { key: "budget", label: "예산" },
+    { key: "active", label: "활성화" },
+    { key: "actions", label: "액션" },
+  ];
+
+  // Render cell content
+  const renderCell = (campaign: Campaign, columnKey: string) => {
+    switch (columnKey) {
+      case "platform":
+        return <PlatformBadge platform={campaign.platform} />;
+      case "name":
+        return (
+          <div>
+            <p className="font-medium">{campaign.name}</p>
+            <p className="text-xs text-default-500">
+              ID: {campaign.platformCampaignId}
+            </p>
+          </div>
+        );
+      case "status":
+        return (
+          <Chip
+            color={campaign.isActive ? "success" : "default"}
+            size="sm"
+            variant="flat"
+          >
+            {campaign.status || "Unknown"}
+          </Chip>
+        );
+      case "budget":
+        return (
+          <div className="flex items-center gap-1">
+            <span>₩{campaign.budget?.toLocaleString() || "0"}</span>
+            <Button
+              isIconOnly
+              size="sm"
+              variant="light"
+              onPress={() => handleBudgetEdit(campaign)}
+            >
+              <FaDollarSign className="w-3 h-3" />
+            </Button>
+          </div>
+        );
+      case "active":
+        return (
+          <Button
+            color={campaign.isActive ? "success" : "default"}
+            size="sm"
+            startContent={campaign.isActive ? <FaCheck /> : <FaPowerOff />}
+            variant="flat"
+            onPress={() => handleStatusToggle(campaign)}
+          >
+            {campaign.isActive ? "활성" : "비활성"}
+          </Button>
+        );
+      case "actions":
+        return (
+          <TableActions
+            actions={[
+              {
+                icon: <FaChartBar />,
+                label: "통계",
+                variant: "flat",
+                onPress: () => handleViewMetrics(campaign.id),
+              },
+            ]}
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
   // Reload list when campaigns or filter changes
   useEffect(() => {
@@ -244,111 +316,17 @@ export function CampaignDashboard() {
       </Tabs>
 
       {/* 캠페인 테이블 */}
-      <Table
+      <InfiniteScrollTable
         aria-label="캠페인 목록"
-        bottomContent={
-          campaignList.loadingState === "loadingMore" ? (
-            <div className="flex w-full justify-center">
-              <Spinner size="sm" />
-            </div>
-          ) : null
-        }
-        classNames={{
-          base: "max-h-[600px] overflow-auto",
-          table: "min-h-[100px]",
-        }}
-      >
-        <TableHeader>
-          <TableColumn>플랫폼</TableColumn>
-          <TableColumn>캠페인명</TableColumn>
-          <TableColumn>상태</TableColumn>
-          <TableColumn>예산</TableColumn>
-          <TableColumn>활성화</TableColumn>
-          <TableColumn>액션</TableColumn>
-        </TableHeader>
-        <TableBody
-          emptyContent="캠페인이 없습니다"
-          isLoading={campaignList.isLoading && campaignList.items.length === 0}
-          items={campaignList.items}
-          loadingContent={<Spinner />}
-          onLoadMore={() => {
-            if (
-              !campaignList.isLoading &&
-              campaignList.items.length < filteredCampaigns.length
-            ) {
-              campaignList.loadMore();
-            }
-          }}
-        >
-          {(campaign) => (
-            <TableRow key={campaign.id}>
-              <TableCell>
-                <PlatformBadge platform={campaign.platform} />
-              </TableCell>
-
-              <TableCell>
-                <div>
-                  <p className="font-medium">{campaign.name}</p>
-                  <p className="text-xs text-default-500">
-                    ID: {campaign.platformCampaignId}
-                  </p>
-                </div>
-              </TableCell>
-
-              <TableCell>
-                <Chip
-                  color={campaign.isActive ? "success" : "default"}
-                  size="sm"
-                  variant="flat"
-                >
-                  {campaign.status || "Unknown"}
-                </Chip>
-              </TableCell>
-
-              <TableCell>
-                <div className="flex items-center gap-1">
-                  <span>₩{campaign.budget?.toLocaleString() || "0"}</span>
-                  <Button
-                    isIconOnly
-                    size="sm"
-                    variant="light"
-                    onPress={() => handleBudgetEdit(campaign)}
-                  >
-                    <FaDollarSign className="w-3 h-3" />
-                  </Button>
-                </div>
-              </TableCell>
-
-              <TableCell>
-                <Button
-                  color={campaign.isActive ? "success" : "default"}
-                  size="sm"
-                  startContent={
-                    campaign.isActive ? <FaCheck /> : <FaPowerOff />
-                  }
-                  variant="flat"
-                  onPress={() => handleStatusToggle(campaign)}
-                >
-                  {campaign.isActive ? "활성" : "비활성"}
-                </Button>
-              </TableCell>
-
-              <TableCell>
-                <TableActions
-                  actions={[
-                    {
-                      icon: <FaChartBar />,
-                      label: "통계",
-                      variant: "flat",
-                      onPress: () => handleViewMetrics(campaign.id),
-                    },
-                  ]}
-                />
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+        columns={columns}
+        items={campaignList}
+        renderCell={renderCell}
+        emptyContent="캠페인이 없습니다"
+        isLoading={campaignList.isLoading && campaignList.items.length === 0}
+        hasMore={hasMore}
+        onLoadMore={() => campaignList.loadMore()}
+        maxHeight="600px"
+      />
 
       {/* 예산 수정 모달 */}
       <Modal
