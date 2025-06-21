@@ -787,13 +787,10 @@ export class GoogleAdsSyncService {
     return [];
   }
 }
+
+
 ```
 
-## 6. 배치 처리 스케줄러
-
-시간당 1회 동기화를 위한 스케줄러 구현입니다.
-
-```typescript
 // services/scheduler/google-ads-scheduler.ts
 import cron from "node-cron";
 import { GoogleAdsSyncService } from "../google-ads/sync/sync-strategy.service";

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Card, CardBody } from "@heroui/card";
 
 import { ResetPasswordForm } from "./ResetPasswordForm";
@@ -14,7 +15,9 @@ export default function ResetPasswordPage() {
             </p>
           </div>
 
-          <ResetPasswordForm />
+          <Suspense fallback={<div>Loading...</div>}>
+            <ResetPasswordForm />
+          </Suspense>
         </CardBody>
       </Card>
     </div>
