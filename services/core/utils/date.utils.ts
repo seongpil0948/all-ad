@@ -6,12 +6,15 @@ export class DateUtils {
   /**
    * Format date for API calls
    */
-  static formatForAPI(date: Date, format: 'YYYY-MM-DD' | 'YYYYMMDD' = 'YYYY-MM-DD'): string {
+  static formatForAPI(
+    date: Date,
+    format: "YYYY-MM-DD" | "YYYYMMDD" = "YYYY-MM-DD",
+  ): string {
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    
-    return format === 'YYYY-MM-DD' 
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return format === "YYYY-MM-DD"
       ? `${year}-${month}-${day}`
       : `${year}${month}${day}`;
   }
@@ -22,8 +25,9 @@ export class DateUtils {
   static getDateRange(days: number): { startDate: Date; endDate: Date } {
     const endDate = new Date();
     const startDate = new Date();
+
     startDate.setDate(startDate.getDate() - days);
-    
+
     return { startDate, endDate };
   }
 
@@ -33,6 +37,7 @@ export class DateUtils {
   static formatDateRange(startDate: Date, endDate: Date): string {
     const start = this.formatForAPI(startDate);
     const end = this.formatForAPI(endDate);
+
     return `${start} ~ ${end}`;
   }
 
@@ -41,7 +46,9 @@ export class DateUtils {
    */
   static getToday(): Date {
     const today = new Date();
+
     today.setHours(0, 0, 0, 0);
+
     return today;
   }
 
@@ -50,8 +57,10 @@ export class DateUtils {
    */
   static getYesterday(): Date {
     const yesterday = new Date();
+
     yesterday.setDate(yesterday.getDate() - 1);
     yesterday.setHours(0, 0, 0, 0);
+
     return yesterday;
   }
 
@@ -68,17 +77,18 @@ export class DateUtils {
   static parseDate(dateString: string): Date {
     // Handle YYYY-MM-DD format
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-      return new Date(dateString + 'T00:00:00');
+      return new Date(dateString + "T00:00:00");
     }
-    
+
     // Handle YYYYMMDD format
     if (/^\d{8}$/.test(dateString)) {
       const year = dateString.substring(0, 4);
       const month = dateString.substring(4, 6);
       const day = dateString.substring(6, 8);
+
       return new Date(`${year}-${month}-${day}T00:00:00`);
     }
-    
+
     // Default parsing
     return new Date(dateString);
   }

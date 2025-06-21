@@ -14,15 +14,20 @@ export class ServiceContainer {
     if (!ServiceContainer.instance) {
       ServiceContainer.instance = new ServiceContainer();
     }
+
     return ServiceContainer.instance;
   }
 
   /**
    * Register a service factory
    */
-  register<T>(token: string, factory: () => T, options?: { singleton?: boolean }): void {
+  register<T>(
+    token: string,
+    factory: () => T,
+    options?: { singleton?: boolean },
+  ): void {
     this.factories.set(token, factory);
-    
+
     if (options?.singleton) {
       // Pre-create singleton instances
       this.singletons.set(token, factory());
@@ -52,6 +57,7 @@ export class ServiceContainer {
 
     // Create from factory
     const factory = this.factories.get(token);
+
     if (!factory) {
       throw new Error(`Service "${token}" not registered`);
     }
@@ -63,7 +69,11 @@ export class ServiceContainer {
    * Check if a service is registered
    */
   has(token: string): boolean {
-    return this.services.has(token) || this.factories.has(token) || this.singletons.has(token);
+    return (
+      this.services.has(token) ||
+      this.factories.has(token) ||
+      this.singletons.has(token)
+    );
   }
 
   /**

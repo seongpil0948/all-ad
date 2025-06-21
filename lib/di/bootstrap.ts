@@ -95,9 +95,8 @@ export async function bootstrapDI() {
       const supabase = await container.resolve<SupabaseClient>(
         ServiceTokens.SUPABASE_CLIENT,
       );
-      const logger = await container.resolve<typeof log>(ServiceTokens.LOGGER);
 
-      return new PlatformDatabaseService(supabase, logger);
+      return new PlatformDatabaseService(supabase, log);
     },
   );
 
@@ -108,9 +107,8 @@ export async function bootstrapDI() {
     const databaseService = await container.resolve<PlatformDatabaseService>(
       ServiceTokens.PLATFORM_DATABASE_SERVICE,
     );
-    const logger = await container.resolve<typeof log>(ServiceTokens.LOGGER);
 
-    return new PlatformSyncService(platformFactory, databaseService, logger);
+    return new PlatformSyncService(platformFactory, databaseService, log);
   });
 
   container.registerSingleton(ServiceTokens.AD_SERVICE, () => {

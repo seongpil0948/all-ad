@@ -1,12 +1,18 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ILogger } from "@/infrastructure/monitoring/interfaces/logger.interface";
 
 import { Campaign, CampaignMetric, Team } from "@/types/database.types";
+
+export interface Logger {
+  debug: (message: string, ...args: any[]) => void;
+  info: (message: string, ...args: any[]) => void;
+  warn: (message: string, ...args: any[]) => void;
+  error: (message: string, ...args: any[]) => void;
+}
 
 export class PlatformDatabaseService {
   constructor(
     private client: SupabaseClient,
-    private log?: ILogger,
+    private log?: Logger,
   ) {}
 
   async upsertCampaign(

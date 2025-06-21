@@ -4,9 +4,9 @@ import { createClient } from "@/utils/supabase/server";
 import {
   getPlatformServiceFactory,
   getPlatformDatabaseService,
-  getLogger,
 } from "@/lib/di/service-resolver";
 import { PlatformType } from "@/types";
+import log from "@/utils/logger";
 
 export async function POST(
   request: NextRequest,
@@ -125,8 +125,6 @@ export async function POST(
       message: `Synced ${campaigns.length} campaigns for ${platformType}`,
     });
   } catch (error) {
-    const log = await getLogger();
-
     const { platform } = await params;
 
     log.error(

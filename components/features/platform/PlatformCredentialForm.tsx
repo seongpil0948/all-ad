@@ -25,7 +25,72 @@ export function PlatformCredentialForm({
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await onSubmit(values);
+      // Convert camelCase to snake_case for OAuth platforms
+      const submissionValues = { ...values };
+
+      // Map Google credentials
+      if (platform === "google") {
+        submissionValues.client_id = values.clientId;
+        submissionValues.client_secret = values.clientSecret;
+        submissionValues.developer_token = values.developerToken;
+        submissionValues.login_customer_id = values.loginCustomerId;
+        submissionValues.manual_refresh_token = values.refreshToken;
+
+        // Clean up camelCase versions
+        delete submissionValues.clientId;
+        delete submissionValues.clientSecret;
+        delete submissionValues.developerToken;
+        delete submissionValues.loginCustomerId;
+        delete submissionValues.refreshToken;
+      }
+
+      // Map Facebook credentials
+      if (platform === "facebook") {
+        submissionValues.client_id = values.appId;
+        submissionValues.client_secret = values.appSecret;
+        submissionValues.manual_refresh_token = values.accessToken;
+
+        // Clean up camelCase versions
+        delete submissionValues.appId;
+        delete submissionValues.appSecret;
+        delete submissionValues.accessToken;
+      }
+
+      // Map Kakao credentials
+      if (platform === "kakao") {
+        submissionValues.client_id = values.restApiKey;
+        submissionValues.client_secret = values.secretKey;
+        submissionValues.manual_refresh_token = values.refreshToken;
+
+        // Clean up camelCase versions
+        delete submissionValues.restApiKey;
+        delete submissionValues.secretKey;
+        delete submissionValues.refreshToken;
+      }
+
+      // Map Naver credentials
+      if (platform === "naver") {
+        submissionValues.client_id = values.clientId;
+        submissionValues.client_secret = values.clientSecret;
+        submissionValues.customer_id = values.customerId;
+
+        // Clean up camelCase versions
+        delete submissionValues.clientId;
+        delete submissionValues.clientSecret;
+        delete submissionValues.customerId;
+      }
+
+      // Map Coupang credentials
+      if (platform === "coupang") {
+        submissionValues.access_key = values.accessKey;
+        submissionValues.secret_key = values.secretKey;
+
+        // Clean up camelCase versions
+        delete submissionValues.accessKey;
+        delete submissionValues.secretKey;
+      }
+
+      await onSubmit(submissionValues);
     } finally {
       setIsSubmitting(false);
     }

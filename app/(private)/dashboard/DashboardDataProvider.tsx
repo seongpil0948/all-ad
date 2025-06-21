@@ -1,5 +1,7 @@
 "use client";
 
+import { useCallback } from "react";
+
 import { DataProvider } from "@/components/common";
 import { useCampaignStore } from "@/stores";
 import { Campaign as AppCampaign, CampaignStats } from "@/types/campaign.types";
@@ -23,10 +25,13 @@ export function DashboardDataProvider({
   const setCampaigns = useCampaignStore((state) => state.setCampaigns);
   const setStats = useCampaignStore((state) => state.setStats);
 
-  const handleDataMount = (data: DashboardData) => {
-    setCampaigns(data.campaigns);
-    setStats(data.stats);
-  };
+  const handleDataMount = useCallback(
+    (data: DashboardData) => {
+      setCampaigns(data.campaigns);
+      setStats(data.stats);
+    },
+    [setCampaigns, setStats],
+  );
 
   return (
     <DataProvider

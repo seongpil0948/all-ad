@@ -5,50 +5,60 @@ export interface LogContext {
 
 // Logger implementation
 class Logger {
-  private formatMessage(level: string, message: string, context?: LogContext): string {
+  private formatMessage(
+    level: string,
+    message: string,
+    context?: LogContext,
+  ): string {
     const timestamp = new Date().toISOString();
-    const contextStr = context ? ` ${JSON.stringify(context)}` : '';
+    const contextStr = context ? ` ${JSON.stringify(context)}` : "";
+
     return `[${timestamp}] [${level}] ${message}${contextStr}`;
   }
 
   trace(message: string, context?: LogContext): void {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(this.formatMessage('TRACE', message, context));
+    if (process.env.NODE_ENV === "development") {
+      console.log(this.formatMessage("TRACE", message, context));
     }
   }
 
   debug(message: string, context?: LogContext): void {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(this.formatMessage('DEBUG', message, context));
+    if (process.env.NODE_ENV === "development") {
+      console.log(this.formatMessage("DEBUG", message, context));
     }
   }
 
   info(message: string, context?: LogContext): void {
-    console.log(this.formatMessage('INFO', message, context));
+    console.log(this.formatMessage("INFO", message, context));
   }
 
   warn(message: string, context?: LogContext): void {
-    console.warn(this.formatMessage('WARN', message, context));
+    console.warn(this.formatMessage("WARN", message, context));
   }
 
-  error(message: string, error?: Error | string | unknown, context?: LogContext): void {
+  error(
+    message: string,
+    error?: Error | string | unknown,
+    context?: LogContext,
+  ): void {
     let errorMessage = message;
-    
+
     if (error instanceof Error) {
       errorMessage = `${message}: ${error.message}`;
-      console.error(this.formatMessage('ERROR', errorMessage, context));
-      if (error.stack && process.env.NODE_ENV === 'development') {
+      console.error(this.formatMessage("ERROR", errorMessage, context));
+      if (error.stack && process.env.NODE_ENV === "development") {
         console.error(error.stack);
       }
-    } else if (typeof error === 'string') {
+    } else if (typeof error === "string") {
       errorMessage = `${message}: ${error}`;
-      console.error(this.formatMessage('ERROR', errorMessage, context));
+      console.error(this.formatMessage("ERROR", errorMessage, context));
     } else if (error !== undefined) {
       const serializedError = JSON.stringify(error, null, 2);
+
       errorMessage = `${message}: ${serializedError}`;
-      console.error(this.formatMessage('ERROR', errorMessage, context));
+      console.error(this.formatMessage("ERROR", errorMessage, context));
     } else {
-      console.error(this.formatMessage('ERROR', errorMessage, context));
+      console.error(this.formatMessage("ERROR", errorMessage, context));
     }
   }
 
@@ -60,9 +70,9 @@ class Logger {
     duration?: number,
     context?: LogContext,
   ): void {
-    const level = statusCode && statusCode >= 400 ? 'ERROR' : 'INFO';
-    const message = `${method} ${url} - ${statusCode || 'pending'}`;
-    
+    const level = statusCode && statusCode >= 400 ? "ERROR" : "INFO";
+    const message = `${method} ${url} - ${statusCode || "pending"}`;
+
     const httpContext: LogContext = {
       ...context,
       method,
@@ -71,7 +81,7 @@ class Logger {
       duration,
     };
 
-    if (level === 'ERROR') {
+    if (level === "ERROR") {
       this.error(message, undefined, httpContext);
     } else {
       this.info(message, httpContext);
@@ -86,7 +96,7 @@ class Logger {
     context?: LogContext,
   ): void {
     const message = `DB ${operation} on ${table}`;
-    
+
     this.debug(message, {
       ...context,
       operation,
@@ -98,9 +108,9 @@ class Logger {
   // Performance logging helper
   perf(operation: string, duration: number, context?: LogContext): void {
     const message = `Performance: ${operation} took ${duration}ms`;
-    const level = duration > 1000 ? 'WARN' : 'DEBUG';
-    
-    if (level === 'WARN') {
+    const level = duration > 1000 ? "WARN" : "DEBUG";
+
+    if (level === "WARN") {
       this.warn(message, { ...context, operation, duration });
     } else {
       this.debug(message, { ...context, operation, duration });
@@ -114,29 +124,29 @@ class Logger {
     context?: LogContext,
   ): Promise<T> {
     const startTime = Date.now();
-    
+
     try {
       this.info(`Starting ${name}`, { ...context, spanName: name });
       const result = await operation();
-      
+
       const duration = Date.now() - startTime;
-      
+
       this.info(`Completed ${name}`, {
         ...context,
         spanName: name,
         duration,
       });
-      
+
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
-      
+
       this.error(`Failed ${name}`, error as Error, {
         ...context,
         spanName: name,
         duration,
       });
-      
+
       throw error;
     }
   }

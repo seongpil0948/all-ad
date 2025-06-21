@@ -59,7 +59,6 @@ export async function getGoogleAdsIntegrationService(): Promise<GoogleAdsIntegra
   );
 }
 
-
 export async function getRedisClient(): Promise<RedisClient> {
   await ensureBootstrapped();
 

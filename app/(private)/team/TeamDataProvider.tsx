@@ -1,5 +1,7 @@
 "use client";
 
+import { useCallback } from "react";
+
 import { DataProvider } from "@/components/common";
 import { useTeamStore } from "@/stores";
 import { Team, TeamMemberWithProfile, UserRole } from "@/types/database.types";
@@ -25,6 +27,13 @@ export function TeamDataProvider({
 }: TeamDataProviderProps) {
   const setInitialData = useTeamStore((state) => state.setInitialData);
 
+  const handleDataMount = useCallback(
+    (data: TeamData) => {
+      setInitialData(data);
+    },
+    [setInitialData],
+  );
+
   return (
     <DataProvider
       initialData={{
@@ -32,7 +41,7 @@ export function TeamDataProvider({
         userRole: initialUserRole,
         teamMembers: initialTeamMembers,
       }}
-      onMount={setInitialData}
+      onMount={handleDataMount}
     >
       {children}
     </DataProvider>

@@ -59,7 +59,7 @@ export function CampaignDashboard() {
   );
   const setFilters = useCampaignStore((state) => state.setFilters);
 
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen, onOpen, onClose, onOpenChange } = useDisclosure();
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(
     null,
   );
@@ -97,7 +97,7 @@ export function CampaignDashboard() {
   // Reload list when campaigns or filter changes
   useEffect(() => {
     campaignList.reload();
-  }, [filteredCampaigns]);
+  }, [selectedPlatform, campaigns.length]);
 
   useEffect(() => {
     fetchCampaigns().catch((err) => {
@@ -272,7 +272,10 @@ export function CampaignDashboard() {
           items={campaignList.items}
           loadingContent={<Spinner />}
           onLoadMore={() => {
-            if (!campaignList.isLoading) {
+            if (
+              !campaignList.isLoading &&
+              campaignList.items.length < filteredCampaigns.length
+            ) {
               campaignList.loadMore();
             }
           }}
@@ -348,34 +351,45 @@ export function CampaignDashboard() {
       </Table>
 
       {/* 예산 수정 모달 */}
-      <Modal isOpen={isOpen} onClose={onClose}>
+      <Modal
+        isDismissable={false}
+        isKeyboardDismissDisabled={true}
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+      >
         <ModalContent>
-          <ModalHeader>예산 수정</ModalHeader>
-          <ModalBody>
-            {selectedCampaign && (
-              <div className="space-y-4">
-                <p className="text-sm text-default-600">
-                  캠페인: {selectedCampaign.name}
-                </p>
-                <Input
-                  label="새 예산"
-                  placeholder="예산을 입력하세요"
-                  startContent={<span className="text-default-400">₩</span>}
-                  type="number"
-                  value={newBudget}
-                  onChange={(e) => setNewBudget(e.target.value)}
-                />
-              </div>
-            )}
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="light" onPress={onClose}>
-              취소
-            </Button>
-            <Button color="primary" onPress={handleBudgetUpdate}>
-              수정
-            </Button>
-          </ModalFooter>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">
+                예산 수정
+              </ModalHeader>
+              <ModalBody>
+                {selectedCampaign && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-default-600">
+                      캠페인: {selectedCampaign.name}
+                    </p>
+                    <Input
+                      label="새 예산"
+                      placeholder="예산을 입력하세요"
+                      startContent={<span className="text-default-400">₩</span>}
+                      type="number"
+                      value={newBudget}
+                      onChange={(e) => setNewBudget(e.target.value)}
+                    />
+                  </div>
+                )}
+              </ModalBody>
+              <ModalFooter>
+                <Button variant="light" onPress={onClose}>
+                  취소
+                </Button>
+                <Button color="primary" onPress={handleBudgetUpdate}>
+                  수정
+                </Button>
+              </ModalFooter>
+            </>
+          )}
         </ModalContent>
       </Modal>
 

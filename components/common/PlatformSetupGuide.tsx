@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  Accordion,
-  AccordionItem,
-} from "@heroui/accordion";
+import { Accordion, AccordionItem } from "@heroui/accordion";
 import { Card, CardBody } from "@heroui/card";
 import { Code } from "@heroui/code";
 import { Divider } from "@heroui/divider";
@@ -13,7 +10,7 @@ import React from "react";
 
 interface SetupGuideSection {
   title: string;
-  type?: 'error' | 'warning' | 'info' | 'success';
+  type?: "error" | "warning" | "info" | "success";
   content: React.ReactNode;
 }
 
@@ -23,7 +20,7 @@ interface QuickLink {
 }
 
 interface Note {
-  type: 'warning' | 'info';
+  type: "warning" | "info";
   content: string;
 }
 
@@ -31,7 +28,7 @@ export interface PlatformSetupGuideProps {
   platform: string;
   title: string;
   icon?: string;
-  themeColor: 'amber' | 'blue' | 'green' | 'purple' | 'red';
+  themeColor: "amber" | "blue" | "green" | "purple" | "red";
   sections: SetupGuideSection[];
   quickLinks?: QuickLink[];
   notes?: Note[];
@@ -39,29 +36,29 @@ export interface PlatformSetupGuideProps {
 }
 
 const colorMap = {
-  amber: 'bg-amber-50 border-amber-200',
-  blue: 'bg-blue-50 border-blue-200',
-  green: 'bg-green-50 border-green-200',
-  purple: 'bg-purple-50 border-purple-200',
-  red: 'bg-red-50 border-red-200',
+  amber: "bg-amber-50 border-amber-200",
+  blue: "bg-blue-50 border-blue-200",
+  green: "bg-green-50 border-green-200",
+  purple: "bg-purple-50 border-purple-200",
+  red: "bg-red-50 border-red-200",
 };
 
 const sectionColorMap = {
-  error: 'text-red-600',
-  warning: 'text-orange-600',
-  info: 'text-blue-600',
-  success: 'text-green-600',
+  error: "text-red-600",
+  warning: "text-orange-600",
+  info: "text-blue-600",
+  success: "text-green-600",
 };
 
 const noteColorMap = {
-  warning: 'bg-orange-50 border-orange-200 text-orange-800',
-  info: 'bg-blue-50 border-blue-200 text-blue-800',
+  warning: "bg-orange-50 border-orange-200 text-orange-800",
+  info: "bg-blue-50 border-blue-200 text-blue-800",
 };
 
 export function PlatformSetupGuide({
   platform,
   title,
-  icon = '🔧',
+  icon = "🔧",
   themeColor,
   sections,
   quickLinks,
@@ -92,8 +89,8 @@ export function PlatformSetupGuide({
                     <Link
                       key={index}
                       href={link.url}
-                      target="_blank"
                       rel="noopener noreferrer"
+                      target="_blank"
                     >
                       <Chip color="primary" variant="flat">
                         {link.label}
@@ -108,7 +105,9 @@ export function PlatformSetupGuide({
             {/* Sections */}
             {sections.map((section, index) => (
               <div key={index} className="space-y-2">
-                <h4 className={`font-semibold ${section.type ? sectionColorMap[section.type] : ''}`}>
+                <h4
+                  className={`font-semibold ${section.type ? sectionColorMap[section.type] : ""}`}
+                >
                   {section.title}
                 </h4>
                 <div className="space-y-2">{section.content}</div>
@@ -144,11 +143,19 @@ export function GuideCodeBlock({ children }: { children: string }) {
   return <Code className="text-xs">{children}</Code>;
 }
 
-export function GuideList({ items, ordered = false }: { items: React.ReactNode[]; ordered?: boolean }) {
-  const Tag = ordered ? 'ol' : 'ul';
-  
+export function GuideList({
+  items,
+  ordered = false,
+}: {
+  items: React.ReactNode[];
+  ordered?: boolean;
+}) {
+  const Tag = ordered ? "ol" : "ul";
+
   return (
-    <Tag className={`${ordered ? 'list-decimal' : 'list-disc'} list-inside space-y-1 text-sm`}>
+    <Tag
+      className={`${ordered ? "list-decimal" : "list-disc"} list-inside space-y-1 text-sm`}
+    >
       {items.map((item, index) => (
         <li key={index}>{item}</li>
       ))}

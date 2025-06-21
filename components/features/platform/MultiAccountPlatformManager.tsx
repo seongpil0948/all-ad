@@ -163,7 +163,7 @@ export function MultiAccountPlatformManager({
   // Reload lists when credentials change
   useEffect(() => {
     Object.values(platformLists).forEach((list) => list.reload());
-  }, [credentials]);
+  }, [credentials.length]);
 
   const handleAddAccount = (platform: PlatformType) => {
     setSelectedPlatform(platform);
@@ -346,12 +346,12 @@ export function MultiAccountPlatformManager({
             return (
               <Card key={platform} className="border">
                 <CardBody>
-                  <button
-                    className="flex items-center justify-between cursor-pointer w-full text-left bg-transparent border-none p-0"
-                    type="button"
-                    onClick={() => togglePlatformExpanded(platform)}
-                  >
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-between w-full">
+                    <button
+                      className="flex items-center gap-3 flex-1 text-left bg-transparent border-none p-0 cursor-pointer"
+                      type="button"
+                      onClick={() => togglePlatformExpanded(platform)}
+                    >
                       <div
                         className={`p-2 rounded-lg text-white ${config.bgColor}`}
                       >
@@ -371,7 +371,7 @@ export function MultiAccountPlatformManager({
                           )}
                         </div>
                       </div>
-                    </div>
+                    </button>
 
                     <Button
                       color={config.color}
@@ -384,7 +384,7 @@ export function MultiAccountPlatformManager({
                     >
                       계정 추가
                     </Button>
-                  </button>
+                  </div>
 
                   {isExpanded && platformCredentials.length > 0 && (
                     <div className="mt-4">{renderAccountsTable(platform)}</div>

@@ -1,7 +1,5 @@
-import type { ILogger } from "@/infrastructure/monitoring/interfaces/logger.interface";
-
 import { PlatformServiceFactory } from "./platforms/platform-service-factory";
-import { PlatformDatabaseService } from "./platform-database.service";
+import { PlatformDatabaseService, Logger } from "./platform-database.service";
 
 import { Campaign as DBCampaign, PlatformType } from "@/types/database.types";
 import { PlatformCampaign, PlatformCampaignMetrics } from "@/types/platform";
@@ -20,7 +18,7 @@ export class PlatformSyncService {
   constructor(
     private platformServiceFactory: PlatformServiceFactory,
     private databaseService: PlatformDatabaseService,
-    private log: ILogger,
+    private log: Logger,
   ) {}
   async syncAllPlatforms(
     teamId: string,
