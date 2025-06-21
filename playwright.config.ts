@@ -47,12 +47,12 @@ export default defineConfig({
       } as Partial<IExcelConfig>,
     ],
   ],
-  // webServer: {
-  //   command: "pnpm run dev",
-  //   url: baseURL,
-  //   timeout: 30 * 1000,
-  //   reuseExistingServer: !process.env.CI,
-  // },
+  webServer: {
+    command: "pnpm run dev",
+    url: baseURL,
+    timeout: 60 * 1000,
+    reuseExistingServer: !process.env.CI,
+  },
 
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   // globalSetup: require.resolve('./tests/global-setup'),

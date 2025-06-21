@@ -99,6 +99,23 @@ pnpm build
 pnpm start
 ```
 
+### 테스트 실행
+
+```bash
+# 테스트용 환경 변수 설정
+cp .env.test.example .env.test
+# .env.test 파일을 열어 TEST_USER_ID와 TEST_USER_PASSWORD 설정
+
+# Playwright 테스트 실행
+pnpm exec playwright test
+
+# UI 모드로 테스트 실행
+pnpm exec playwright test --ui
+
+# 특정 테스트 파일만 실행
+pnpm exec playwright test tests/auth/login.spec.ts
+```
+
 ### 데이터베이스 마이그레이션
 
 ```bash
