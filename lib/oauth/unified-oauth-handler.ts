@@ -138,16 +138,18 @@ export async function handleUnifiedOAuthCallback(
       }
     }
 
-    // Parse state to get team ID
+    // Parse state to get team ID and user ID
     let teamId: string;
+    let userId: string;
 
     try {
       const stateData = JSON.parse(Buffer.from(state, "base64").toString());
 
       teamId = stateData.teamId;
+      userId = stateData.userId;
 
-      if (!teamId) {
-        throw new Error("Team ID not found in state");
+      if (!teamId || !userId) {
+        throw new Error("Team ID or User ID not found in state");
       }
     } catch (error) {
       log.error(`${params.platform} OAuth state parsing error`, error);
@@ -187,7 +189,11 @@ export async function handleUnifiedOAuthCallback(
       // Save token to database
       const oauthManager = new OAuthManager(params.platform, oauthConfig);
 
-      await oauthManager.storeTokens(teamId, params.platform, {
+      // For Google Ads, we need to get the customer ID later
+      // For now, we'll use a temporary account ID
+      const accountId = `${params.platform}_${teamId}_${Date.now()}`;
+
+      await oauthManager.storeTokens(userId, accountId, {
         access_token: tokenData.access_token,
         refresh_token: tokenData.refresh_token,
         expires_in: tokenData.expires_in || 3600,
@@ -196,6 +202,8 @@ export async function handleUnifiedOAuthCallback(
 
       log.info(`${params.platform} OAuth successful`, {
         teamId,
+        userId,
+        accountId,
         hasRefreshToken: !!tokenData.refresh_token,
       });
 

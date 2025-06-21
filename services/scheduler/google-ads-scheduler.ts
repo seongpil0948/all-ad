@@ -23,6 +23,8 @@ interface GoogleAdsAccountRecord {
   };
   is_active: boolean;
   customer_id: string;
+  user_id?: string;
+  created_by?: string;
 }
 
 export class GoogleAdsScheduler {
@@ -87,10 +89,51 @@ export class GoogleAdsScheduler {
             loginCustomerId: account.credentials.login_customer_id,
           } as GoogleAdsCredentials;
 
+          // Get valid access token using OAuth Manager
+          const { OAuthManager } = await import("@/lib/oauth/oauth-manager");
+          const { getOAuthConfigWithCredentials } = await import(
+            "@/lib/oauth/platform-configs"
+          );
+
+          const oauthConfig = await getOAuthConfigWithCredentials(
+            "google",
+            account.team_id,
+          );
+
+          if (!oauthConfig) {
+            log.warn(
+              `Skipping Google Ads account without OAuth config: ${account.id}`,
+            );
+            continue;
+          }
+
+          const oauthManager = new OAuthManager("google", oauthConfig);
+          const userId = account.user_id || account.created_by;
+
+          if (!userId) {
+            log.warn(
+              `Skipping Google Ads account without user_id: ${account.id}`,
+            );
+            continue;
+          }
+
+          const accessToken = await oauthManager.getValidAccessToken(
+            userId,
+            account.account_id,
+          );
+
+          if (!accessToken) {
+            log.warn(
+              `Failed to get access token for Google Ads account: ${account.id}`,
+            );
+            continue;
+          }
+
           const googleAdsClient = new GoogleAdsClient({
             clientId: credentials.clientId,
             clientSecret: credentials.clientSecret,
             refreshToken: credentials.refreshToken,
+            accessToken: accessToken,
             developerToken: credentials.developerToken,
             loginCustomerId: credentials.loginCustomerId,
           });
