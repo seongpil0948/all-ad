@@ -5,7 +5,6 @@ import type { PlatformSyncService } from "@/services/platform-sync.service";
 import type { PlatformDatabaseService } from "@/services/platform-database.service";
 import type { AdService } from "@/services/ads/ad-service";
 import type { GoogleAdsIntegrationService } from "@/services/google-ads/google-ads-integration.service";
-import type { ILogger } from "@/infrastructure/monitoring/interfaces/logger.interface";
 import type { RedisClient } from "@/types/redis";
 
 import { bootstrapDI } from "./bootstrap";
@@ -60,11 +59,6 @@ export async function getGoogleAdsIntegrationService(): Promise<GoogleAdsIntegra
   );
 }
 
-export async function getLogger(): Promise<ILogger> {
-  await ensureBootstrapped();
-
-  return container.resolve<ILogger>(ServiceTokens.LOGGER);
-}
 
 export async function getRedisClient(): Promise<RedisClient> {
   await ensureBootstrapped();

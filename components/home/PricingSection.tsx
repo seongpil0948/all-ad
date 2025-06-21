@@ -125,7 +125,7 @@ export const PricingSection = () => {
   ];
 
   return (
-    <section className="px-6 py-20 bg-default-50">
+    <section className="px-6 py-20 bg-default-50" data-testid="pricing-section">
       <div className="max-w-7xl mx-auto">
         <motion.div
           className="text-center mb-12"

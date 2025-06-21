@@ -204,6 +204,76 @@ export async function togglePlatformCredentials(
   revalidatePath("/settings");
 }
 
+// Multi-account support actions
+export async function deletePlatformCredentialById(credentialId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
+  // Get user's team
+  const dbService = await getPlatformDatabaseService();
+  const team = await dbService.getUserTeam(user.id);
+
+  if (!team) {
+    throw new Error("User has no team");
+  }
+
+  // Delete by ID instead of platform
+  const { error } = await supabase
+    .from("platform_credentials")
+    .delete()
+    .eq("id", credentialId)
+    .eq("team_id", team.id);
+
+  if (error) {
+    throw new Error("Failed to delete credentials");
+  }
+
+  revalidatePath("/settings");
+  revalidatePath("/dashboard");
+}
+
+export async function togglePlatformCredentialById(
+  credentialId: string,
+  isActive: boolean,
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
+  // Get user's team
+  const dbService = await getPlatformDatabaseService();
+  const team = await dbService.getUserTeam(user.id);
+
+  if (!team) {
+    throw new Error("User has no team");
+  }
+
+  // Update the is_active status by ID
+  const { error } = await supabase
+    .from("platform_credentials")
+    .update({ is_active: isActive })
+    .eq("id", credentialId)
+    .eq("team_id", team.id);
+
+  if (error) {
+    throw new Error("Failed to toggle platform credentials");
+  }
+
+  revalidatePath("/settings");
+  revalidatePath("/dashboard");
+}
+
 export async function getTeamCredentials() {
   const supabase = await createClient();
   const {

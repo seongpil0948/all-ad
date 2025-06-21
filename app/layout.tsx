@@ -6,8 +6,8 @@ import { Providers } from "./providers";
 
 import { siteConfig } from "@/config/site";
 import { fontMono, nanumMyeongjo, notoSerifKr } from "@/config/fonts";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
+import { Navbar } from "@/components/layouts/navbar";
+import { Footer } from "@/components/layouts/footer";
 
 export const metadata: Metadata = {
   title: {

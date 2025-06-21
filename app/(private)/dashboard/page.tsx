@@ -2,11 +2,18 @@ import { redirect } from "next/navigation";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 import { DashboardDataProvider } from "./DashboardDataProvider";
+import {
+  getTeamCredentials,
+  savePlatformCredentials,
+  deletePlatformCredentialById,
+  togglePlatformCredentialById,
+} from "./actions";
 
 import { createClient } from "@/utils/supabase/server";
 import { CampaignDashboard } from "@/components/dashboard/CampaignDashboard";
 import { SyncButton } from "@/components/dashboard/SyncButton";
 import { PageHeader } from "@/components/common";
+import { MultiAccountPlatformManager } from "@/components/features/platform/MultiAccountPlatformManager";
 import log from "@/utils/logger";
 import { Database } from "@/types/supabase.types";
 import { Campaign as AppCampaign, CampaignStats } from "@/types/campaign.types";
@@ -142,6 +149,7 @@ export default async function DashboardPage() {
 
   // Fetch initial data
   const campaigns = await getCampaignData(supabase, teamId);
+  const credentials = await getTeamCredentials();
 
   // Calculate statistics
   const stats: CampaignStats = {
@@ -169,6 +177,20 @@ export default async function DashboardPage() {
         />
         <SyncButton />
       </div>
+
+      {/* Platform connection section - shown when no campaigns */}
+      {campaigns.length === 0 && (
+        <div className="mb-8">
+          <MultiAccountPlatformManager
+            credentials={credentials}
+            teamId={teamId!}
+            userId={user.id}
+            onDelete={deletePlatformCredentialById}
+            onSave={savePlatformCredentials}
+            onToggle={togglePlatformCredentialById}
+          />
+        </div>
+      )}
 
       <DashboardDataProvider initialCampaigns={campaigns} initialStats={stats}>
         <CampaignDashboard />

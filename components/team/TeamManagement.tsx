@@ -6,6 +6,7 @@ import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Chip } from "@heroui/chip";
 import { Select, SelectItem } from "@heroui/select";
+import { Spinner } from "@heroui/spinner";
 import {
   Table,
   TableHeader,
@@ -23,6 +24,7 @@ import {
   useDisclosure,
 } from "@heroui/modal";
 import { Avatar } from "@heroui/avatar";
+import { useAsyncList } from "@react-stately/data";
 import {
   FaUserPlus,
   FaCrown,
@@ -33,9 +35,13 @@ import {
 } from "react-icons/fa";
 
 import { useTeamStore, useAuthStore } from "@/stores";
-import { UserRole } from "@/types/database.types";
+import {
+  UserRole,
+  TeamMemberWithProfile,
+  TeamInvitation,
+} from "@/types/database.types";
 import log from "@/utils/logger";
-import { LoadingState } from "@/components/common";
+import { LoadingState, SectionHeader, TableActions } from "@/components/common";
 
 const roleConfig = {
   master: {
@@ -84,6 +90,53 @@ export function TeamManagement() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+
+  const ITEMS_PER_PAGE = 20;
+
+  // Infinite scroll setup for team members
+  const membersList = useAsyncList<TeamMemberWithProfile>({
+    async load({ cursor }) {
+      const start = cursor ? parseInt(cursor) : 0;
+      const members = teamMembers || [];
+      const items = members.slice(start, start + ITEMS_PER_PAGE);
+
+      return {
+        items,
+        cursor:
+          start + ITEMS_PER_PAGE < members.length
+            ? String(start + ITEMS_PER_PAGE)
+            : undefined,
+      };
+    },
+    getKey: (item) => item.id,
+  });
+
+  // Infinite scroll setup for invitations
+  const invitationsList = useAsyncList<TeamInvitation>({
+    async load({ cursor }) {
+      const start = cursor ? parseInt(cursor) : 0;
+      const invitations = teamInvitations || [];
+      const items = invitations.slice(start, start + ITEMS_PER_PAGE);
+
+      return {
+        items,
+        cursor:
+          start + ITEMS_PER_PAGE < invitations.length
+            ? String(start + ITEMS_PER_PAGE)
+            : undefined,
+      };
+    },
+    getKey: (item) => item.id,
+  });
+
+  // Reload lists when data changes
+  useEffect(() => {
+    membersList.reload();
+  }, [teamMembers]);
+
+  useEffect(() => {
+    invitationsList.reload();
+  }, [teamInvitations]);
 
   // Clear messages after 3 seconds
   useEffect(() => {
@@ -238,7 +291,7 @@ export function TeamManagement() {
       {/* 현재 사용자 정보 */}
       <Card>
         <CardHeader>
-          <h3 className="text-lg font-semibold">내 권한</h3>
+          <SectionHeader title="내 권한" />
         </CardHeader>
         <CardBody>
           <div className="flex items-center gap-3">
@@ -262,10 +315,23 @@ export function TeamManagement() {
       {/* 팀원 목록 */}
       <Card>
         <CardHeader>
-          <h3 className="text-lg font-semibold">팀원 목록</h3>
+          <SectionHeader title="팀원 목록" />
         </CardHeader>
         <CardBody>
-          <Table aria-label="팀원 목록">
+          <Table
+            aria-label="팀원 목록"
+            bottomContent={
+              membersList.loadingState === "loadingMore" ? (
+                <div className="flex w-full justify-center">
+                  <Spinner size="sm" />
+                </div>
+              ) : null
+            }
+            classNames={{
+              base: "max-h-[400px] overflow-auto",
+              table: "min-h-[100px]",
+            }}
+          >
             <TableHeader>
               <TableColumn>팀원</TableColumn>
               <TableColumn>이메일</TableColumn>
@@ -273,7 +339,19 @@ export function TeamManagement() {
               <TableColumn>가입일</TableColumn>
               {canManageTeam ? <TableColumn>액션</TableColumn> : <></>}
             </TableHeader>
-            <TableBody items={teamMembers ?? []}>
+            <TableBody
+              emptyContent="팀원이 없습니다"
+              isLoading={
+                membersList.isLoading && membersList.items.length === 0
+              }
+              items={membersList.items}
+              loadingContent={<Spinner />}
+              onLoadMore={() => {
+                if (!membersList.isLoading) {
+                  membersList.loadMore();
+                }
+              }}
+            >
               {(member) => {
                 const memberProfile = member.profiles;
                 const isCurrentUser = currentUser?.id === member.user_id;
@@ -366,34 +444,31 @@ export function TeamManagement() {
                         {!isMaster &&
                           !isCurrentUser &&
                           userRole === "master" && (
-                            <div className="flex items-center gap-2">
-                              <Button
-                                isDisabled={editingMember !== null}
-                                size="sm"
-                                variant="light"
-                                onPress={() => {
-                                  setEditingMember(member.id);
-                                  setEditingRole(member.role);
-                                }}
-                              >
-                                <FaEdit />
-                              </Button>
-                              <Button
-                                color="danger"
-                                size="sm"
-                                variant="light"
-                                onPress={() =>
-                                  handleRemoveMember(
-                                    member.id,
-                                    memberProfile?.full_name ||
-                                      memberProfile?.email ||
-                                      "Unknown",
-                                  )
-                                }
-                              >
-                                <FaTrash />
-                              </Button>
-                            </div>
+                            <TableActions
+                              actions={[
+                                {
+                                  icon: <FaEdit />,
+                                  variant: "light",
+                                  isDisabled: editingMember !== null,
+                                  onPress: () => {
+                                    setEditingMember(member.id);
+                                    setEditingRole(member.role);
+                                  },
+                                },
+                                {
+                                  icon: <FaTrash />,
+                                  color: "danger",
+                                  variant: "light",
+                                  onPress: () =>
+                                    handleRemoveMember(
+                                      member.id,
+                                      memberProfile?.full_name ||
+                                        memberProfile?.email ||
+                                        "Unknown",
+                                    ),
+                                },
+                              ]}
+                            />
                           )}
                       </TableCell>
                     ) : (
@@ -411,10 +486,23 @@ export function TeamManagement() {
       {teamInvitations && teamInvitations.length > 0 && (
         <Card>
           <CardHeader>
-            <h3 className="text-lg font-semibold">대기 중인 초대</h3>
+            <SectionHeader title="대기 중인 초대" />
           </CardHeader>
           <CardBody>
-            <Table aria-label="대기 중인 초대 목록">
+            <Table
+              aria-label="대기 중인 초대 목록"
+              bottomContent={
+                invitationsList.loadingState === "loadingMore" ? (
+                  <div className="flex w-full justify-center">
+                    <Spinner size="sm" />
+                  </div>
+                ) : null
+              }
+              classNames={{
+                base: "max-h-[400px] overflow-auto",
+                table: "min-h-[100px]",
+              }}
+            >
               <TableHeader>
                 <TableColumn>이메일</TableColumn>
                 <TableColumn>권한</TableColumn>
@@ -426,7 +514,20 @@ export function TeamManagement() {
                   <></>
                 )}
               </TableHeader>
-              <TableBody items={teamInvitations}>
+              <TableBody
+                emptyContent="대기 중인 초대가 없습니다"
+                isLoading={
+                  invitationsList.isLoading &&
+                  invitationsList.items.length === 0
+                }
+                items={invitationsList.items}
+                loadingContent={<Spinner />}
+                onLoadMore={() => {
+                  if (!invitationsList.isLoading) {
+                    invitationsList.loadMore();
+                  }
+                }}
+              >
                 {(invitation) => (
                   <TableRow key={invitation.id}>
                     <TableCell>

@@ -1,19 +1,11 @@
 import type { Campaign, CampaignMetrics, PlatformType } from "@/types";
+import type { GoogleAdsCredentials } from "@/types/credentials.types";
 
 import { PlatformService } from "./platform-service.interface";
 
 import { GoogleAdsClient } from "@/services/google-ads/core/google-ads-client";
 import { CampaignControlService } from "@/services/google-ads/campaign/campaign-control.service";
 import log from "@/utils/logger";
-
-interface GoogleAdsCredentials {
-  clientId: string;
-  clientSecret: string;
-  developerToken: string;
-  refreshToken: string;
-  loginCustomerId?: string;
-  customerId: string; // 작업할 대상 계정 ID
-}
 
 export class GoogleAdsPlatformService implements PlatformService {
   platform: PlatformType = "google";

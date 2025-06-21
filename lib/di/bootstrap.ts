@@ -33,7 +33,6 @@ export async function bootstrapDI() {
     ServiceTokens.SUPABASE_CLIENT,
     async () => await createSupabaseClient(),
   );
-  container.registerSingleton(ServiceTokens.LOGGER, () => log);
 
   // Platform Services
   container.registerSingleton(

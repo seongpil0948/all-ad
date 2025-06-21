@@ -5,7 +5,7 @@ import { Card, CardBody } from "@heroui/card";
 import { FaChartBar, FaKey, FaUsers } from "react-icons/fa";
 
 import { CampaignDashboard } from "@/components/dashboard/CampaignDashboard";
-import { PlatformCredentialsManager } from "@/components/platform/PlatformCredentialsManager";
+import { PlatformCredentialsManager } from "@/components/features/platform/PlatformCredentialsManager";
 import { TeamManagement } from "@/components/team/TeamManagement";
 import { usePlatformStore, useTeamStore, useAuthStore } from "@/stores";
 import { CredentialValues } from "@/types/credentials.types";

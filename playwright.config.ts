@@ -12,8 +12,8 @@ import config from "./tests/config";
 // import path from 'path';
 // dotenv.config({ path: path.resolve(__dirname, '.env') });
 
-// Use process.env.PORT by default and fallback to port 3000
-const PORT = process.env.PORT || 3000;
+// Use process.env.PORT by default and fallback to port 3001
+const PORT = process.env.PORT || 3001;
 
 // Set webServer.url and use.baseURL with the location of the WebServer respecting the correct set port
 const baseURL = `http://localhost:${PORT}`;
@@ -47,12 +47,12 @@ export default defineConfig({
       } as Partial<IExcelConfig>,
     ],
   ],
-  webServer: {
-    command: "pnpm run local",
-    url: baseURL,
-    timeout: 30 * 1000,
-    reuseExistingServer: !process.env.CI,
-  },
+  // webServer: {
+  //   command: "pnpm run dev",
+  //   url: baseURL,
+  //   timeout: 30 * 1000,
+  //   reuseExistingServer: !process.env.CI,
+  // },
 
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   // globalSetup: require.resolve('./tests/global-setup'),

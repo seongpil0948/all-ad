@@ -1,7 +1,7 @@
 import { Card, CardBody, CardHeader } from "@heroui/card";
 
 import { title } from "@/components/primitives";
-import { AuthForm } from "@/components/auth/AuthForm";
+import { AuthForm } from "@/components/features/auth/AuthForm";
 
 export default async function SignupPage({
   searchParams,

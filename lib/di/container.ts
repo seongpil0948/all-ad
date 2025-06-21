@@ -54,7 +54,6 @@ export const ServiceTokens = {
   // Infrastructure
   REDIS_CLIENT: Symbol("REDIS_CLIENT"),
   SUPABASE_CLIENT: Symbol("SUPABASE_CLIENT"),
-  LOGGER: Symbol("LOGGER"),
 
   // Platform Services
   GOOGLE_PLATFORM_SERVICE: Symbol("GOOGLE_PLATFORM_SERVICE"),

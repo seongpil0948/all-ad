@@ -6,12 +6,12 @@ import { redirect } from "next/navigation";
 import {
   getTeamCredentials,
   savePlatformCredentials,
-  deletePlatformCredentials,
-  togglePlatformCredentials,
+  deletePlatformCredentialById,
+  togglePlatformCredentialById,
 } from "./actions";
 
 import { createClient } from "@/utils/supabase/server";
-import { PlatformCredentialsManager } from "@/components/platform/PlatformCredentialsManager";
+import { MultiAccountPlatformManager } from "@/components/features/platform/MultiAccountPlatformManager";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -46,13 +46,13 @@ export default async function SettingsPage() {
 
       <div className="space-y-6">
         {/* Platform Credentials Section */}
-        <PlatformCredentialsManager
+        <MultiAccountPlatformManager
           credentials={credentials}
           teamId={teamMember.team_id}
           userId={user.id}
-          onDelete={deletePlatformCredentials}
+          onDelete={deletePlatformCredentialById}
           onSave={savePlatformCredentials}
-          onToggle={togglePlatformCredentials}
+          onToggle={togglePlatformCredentialById}
         />
 
         {/* Notification Settings */}

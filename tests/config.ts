@@ -1,6 +1,9 @@
 import dotenv from "dotenv";
+import path from "path";
 
-// Load environment variables from .env file
+// Load environment variables from .env.test file if it exists, otherwise from .env
+dotenv.config({ path: path.resolve(process.cwd(), ".env.test") });
+// Fall back to .env if .env.test doesn't exist
 dotenv.config();
 
 // You might want to validate the required environment variables

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardBody } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Chip } from "@heroui/chip";
+import { Spinner } from "@heroui/spinner";
 import {
   Table,
   TableHeader,
@@ -23,39 +24,28 @@ import {
   useDisclosure,
 } from "@heroui/modal";
 import { addToast } from "@heroui/toast";
+import { useAsyncList } from "@react-stately/data";
 import {
-  FaFacebook,
-  FaGoogle,
   FaFilter,
   FaDollarSign,
   FaPowerOff,
   FaCheck,
   FaChartBar,
 } from "react-icons/fa";
-import { SiNaver, SiKakaotalk } from "react-icons/si";
-import { MdStorefront } from "react-icons/md";
 
 import { useCampaignStore } from "@/stores";
 import { Campaign } from "@/types/campaign.types";
 import { PlatformType } from "@/types";
 import log from "@/utils/logger";
-import { LoadingState } from "@/components/common";
+import {
+  LoadingState,
+  StatCard,
+  PlatformBadge,
+  TableActions,
+} from "@/components/common";
+import { getPlatformConfig } from "@/utils/platform-config";
 
-const platformIcons = {
-  facebook: FaFacebook,
-  google: FaGoogle,
-  kakao: SiKakaotalk,
-  naver: SiNaver,
-  coupang: MdStorefront,
-};
-
-const platformColors = {
-  facebook: "primary",
-  google: "danger",
-  kakao: "warning",
-  naver: "success",
-  coupang: "secondary",
-} as const;
+const ITEMS_PER_PAGE = 20;
 
 export function CampaignDashboard() {
   const campaigns = useCampaignStore((state) => state.campaigns) || [];
@@ -77,6 +67,37 @@ export function CampaignDashboard() {
   const [selectedPlatform, setSelectedPlatform] = useState<
     PlatformType | "all"
   >("all");
+
+  // Filter campaigns based on selected platform
+  const filteredCampaigns = useMemo(() => {
+    if (selectedPlatform === "all") {
+      return campaigns;
+    }
+
+    return campaigns.filter((c) => c.platform === selectedPlatform);
+  }, [campaigns, selectedPlatform]);
+
+  // Infinite scroll setup
+  const campaignList = useAsyncList<Campaign>({
+    async load({ cursor }) {
+      const start = cursor ? parseInt(cursor) : 0;
+      const items = filteredCampaigns.slice(start, start + ITEMS_PER_PAGE);
+
+      return {
+        items,
+        cursor:
+          start + ITEMS_PER_PAGE < filteredCampaigns.length
+            ? String(start + ITEMS_PER_PAGE)
+            : undefined,
+      };
+    },
+    getKey: (item) => item.id,
+  });
+
+  // Reload list when campaigns or filter changes
+  useEffect(() => {
+    campaignList.reload();
+  }, [filteredCampaigns]);
 
   useEffect(() => {
     fetchCampaigns().catch((err) => {
@@ -180,28 +201,16 @@ export function CampaignDashboard() {
 
       {/* 전체 통계 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardBody>
-            <p className="text-default-500 text-sm">전체 캠페인</p>
-            <p className="text-2xl font-bold">{totalStats.totalCampaigns}</p>
-          </CardBody>
-        </Card>
-        <Card>
-          <CardBody>
-            <p className="text-default-500 text-sm">활성 캠페인</p>
-            <p className="text-2xl font-bold text-success">
-              {totalStats.activeCampaigns}
-            </p>
-          </CardBody>
-        </Card>
-        <Card>
-          <CardBody>
-            <p className="text-default-500 text-sm">총 예산</p>
-            <p className="text-2xl font-bold">
-              ₩{totalStats.totalBudget.toLocaleString()}
-            </p>
-          </CardBody>
-        </Card>
+        <StatCard label="전체 캠페인" value={totalStats.totalCampaigns} />
+        <StatCard
+          label="활성 캠페인"
+          value={totalStats.activeCampaigns}
+          valueClassName="text-2xl font-bold text-success"
+        />
+        <StatCard
+          label="총 예산"
+          value={`₩${totalStats.totalBudget.toLocaleString()}`}
+        />
       </div>
 
       {/* 플랫폼 탭 */}
@@ -212,23 +221,43 @@ export function CampaignDashboard() {
         }
       >
         <Tab key="all" title={`전체 (${campaigns.length})`} />
-        {Object.entries(platformIcons).map(([platform, Icon]) => (
-          <Tab
-            key={platform}
-            title={
-              <div className="flex items-center gap-2">
-                <Icon className="w-4 h-4" />
-                <span>
-                  {platform} ({campaignCounts[platform as PlatformType] || 0})
-                </span>
-              </div>
-            }
-          />
-        ))}
+        {(
+          ["facebook", "google", "kakao", "naver", "coupang"] as PlatformType[]
+        ).map((platform) => {
+          const config = getPlatformConfig(platform);
+          const Icon = config.icon;
+
+          return (
+            <Tab
+              key={platform}
+              title={
+                <div className="flex items-center gap-2">
+                  <Icon className="w-4 h-4" />
+                  <span>
+                    {config.name} ({campaignCounts[platform] || 0})
+                  </span>
+                </div>
+              }
+            />
+          );
+        })}
       </Tabs>
 
       {/* 캠페인 테이블 */}
-      <Table aria-label="캠페인 목록">
+      <Table
+        aria-label="캠페인 목록"
+        bottomContent={
+          campaignList.loadingState === "loadingMore" ? (
+            <div className="flex w-full justify-center">
+              <Spinner size="sm" />
+            </div>
+          ) : null
+        }
+        classNames={{
+          base: "max-h-[600px] overflow-auto",
+          table: "min-h-[100px]",
+        }}
+      >
         <TableHeader>
           <TableColumn>플랫폼</TableColumn>
           <TableColumn>캠페인명</TableColumn>
@@ -237,82 +266,84 @@ export function CampaignDashboard() {
           <TableColumn>활성화</TableColumn>
           <TableColumn>액션</TableColumn>
         </TableHeader>
-        <TableBody>
-          {campaigns.map((campaign) => {
-            const Icon = platformIcons[campaign.platform];
-            const color = platformColors[campaign.platform];
+        <TableBody
+          emptyContent="캠페인이 없습니다"
+          isLoading={campaignList.isLoading && campaignList.items.length === 0}
+          items={campaignList.items}
+          loadingContent={<Spinner />}
+          onLoadMore={() => {
+            if (!campaignList.isLoading) {
+              campaignList.loadMore();
+            }
+          }}
+        >
+          {(campaign) => (
+            <TableRow key={campaign.id}>
+              <TableCell>
+                <PlatformBadge platform={campaign.platform} />
+              </TableCell>
 
-            return (
-              <TableRow key={campaign.id}>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <div className={`p-1 rounded bg-${color}-100`}>
-                      <Icon className={`w-4 h-4 text-${color}`} />
-                    </div>
-                    <span className="text-sm">{campaign.platform}</span>
-                  </div>
-                </TableCell>
+              <TableCell>
+                <div>
+                  <p className="font-medium">{campaign.name}</p>
+                  <p className="text-xs text-default-500">
+                    ID: {campaign.platformCampaignId}
+                  </p>
+                </div>
+              </TableCell>
 
-                <TableCell>
-                  <div>
-                    <p className="font-medium">{campaign.name}</p>
-                    <p className="text-xs text-default-500">
-                      ID: {campaign.platformCampaignId}
-                    </p>
-                  </div>
-                </TableCell>
+              <TableCell>
+                <Chip
+                  color={campaign.isActive ? "success" : "default"}
+                  size="sm"
+                  variant="flat"
+                >
+                  {campaign.status || "Unknown"}
+                </Chip>
+              </TableCell>
 
-                <TableCell>
-                  <Chip
-                    color={campaign.isActive ? "success" : "default"}
-                    size="sm"
-                    variant="flat"
-                  >
-                    {campaign.status || "Unknown"}
-                  </Chip>
-                </TableCell>
-
-                <TableCell>
-                  <div className="flex items-center gap-1">
-                    <span>₩{campaign.budget?.toLocaleString() || "0"}</span>
-                    <Button
-                      isIconOnly
-                      size="sm"
-                      variant="light"
-                      onPress={() => handleBudgetEdit(campaign)}
-                    >
-                      <FaDollarSign className="w-3 h-3" />
-                    </Button>
-                  </div>
-                </TableCell>
-
-                <TableCell>
+              <TableCell>
+                <div className="flex items-center gap-1">
+                  <span>₩{campaign.budget?.toLocaleString() || "0"}</span>
                   <Button
-                    color={campaign.isActive ? "success" : "default"}
+                    isIconOnly
                     size="sm"
-                    startContent={
-                      campaign.isActive ? <FaCheck /> : <FaPowerOff />
-                    }
-                    variant="flat"
-                    onPress={() => handleStatusToggle(campaign)}
+                    variant="light"
+                    onPress={() => handleBudgetEdit(campaign)}
                   >
-                    {campaign.isActive ? "활성" : "비활성"}
+                    <FaDollarSign className="w-3 h-3" />
                   </Button>
-                </TableCell>
+                </div>
+              </TableCell>
 
-                <TableCell>
-                  <Button
-                    size="sm"
-                    startContent={<FaChartBar />}
-                    variant="flat"
-                    onPress={() => handleViewMetrics(campaign.id)}
-                  >
-                    통계
-                  </Button>
-                </TableCell>
-              </TableRow>
-            );
-          })}
+              <TableCell>
+                <Button
+                  color={campaign.isActive ? "success" : "default"}
+                  size="sm"
+                  startContent={
+                    campaign.isActive ? <FaCheck /> : <FaPowerOff />
+                  }
+                  variant="flat"
+                  onPress={() => handleStatusToggle(campaign)}
+                >
+                  {campaign.isActive ? "활성" : "비활성"}
+                </Button>
+              </TableCell>
+
+              <TableCell>
+                <TableActions
+                  actions={[
+                    {
+                      icon: <FaChartBar />,
+                      label: "통계",
+                      variant: "flat",
+                      onPress: () => handleViewMetrics(campaign.id),
+                    },
+                  ]}
+                />
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
 
@@ -348,15 +379,17 @@ export function CampaignDashboard() {
         </ModalContent>
       </Modal>
 
-      {campaigns.length === 0 && !isLoading && (
-        <Card>
-          <CardBody className="text-center py-10">
-            <p className="text-default-500">
-              캠페인이 없습니다. 플랫폼을 연동하고 동기화를 진행하세요.
-            </p>
-          </CardBody>
-        </Card>
-      )}
+      {campaignList.items.length === 0 &&
+        !campaignList.isLoading &&
+        filteredCampaigns.length === 0 && (
+          <Card>
+            <CardBody className="text-center py-10">
+              <p className="text-default-500">
+                캠페인이 없습니다. 플랫폼을 연동하고 동기화를 진행하세요.
+              </p>
+            </CardBody>
+          </Card>
+        )}
     </div>
   );
 }

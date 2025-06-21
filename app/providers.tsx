@@ -5,7 +5,7 @@ import { HeroUIProvider } from "@heroui/system";
 import { useRouter } from "next/navigation";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 
-import { AuthProvider } from "@/components/auth/AuthProvider";
+import { AuthProvider } from "@/components/features/auth/AuthProvider";
 import { ProvidersProps } from "@/types/components";
 
 declare module "@react-types/shared" {

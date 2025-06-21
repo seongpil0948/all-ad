@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
-
+import { DataProvider } from "@/components/common";
 import { useCampaignStore } from "@/stores";
 import { Campaign as AppCampaign, CampaignStats } from "@/types/campaign.types";
 
@@ -9,6 +8,11 @@ interface DashboardDataProviderProps {
   initialCampaigns: AppCampaign[];
   initialStats: CampaignStats;
   children: React.ReactNode;
+}
+
+interface DashboardData {
+  campaigns: AppCampaign[];
+  stats: CampaignStats;
 }
 
 export function DashboardDataProvider({
@@ -19,11 +23,17 @@ export function DashboardDataProvider({
   const setCampaigns = useCampaignStore((state) => state.setCampaigns);
   const setStats = useCampaignStore((state) => state.setStats);
 
-  useEffect(() => {
-    // Set initial data from server
-    setCampaigns(initialCampaigns);
-    setStats(initialStats);
-  }, []);
+  const handleDataMount = (data: DashboardData) => {
+    setCampaigns(data.campaigns);
+    setStats(data.stats);
+  };
 
-  return <>{children}</>;
+  return (
+    <DataProvider
+      initialData={{ campaigns: initialCampaigns, stats: initialStats }}
+      onMount={handleDataMount}
+    >
+      {children}
+    </DataProvider>
+  );
 }
