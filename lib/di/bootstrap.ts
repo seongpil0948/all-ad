@@ -5,7 +5,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { container, ServiceTokens } from "./container";
 
 import { PlatformServiceFactory } from "@/services/platforms/platform-service-factory";
-import { GooglePlatformService } from "@/services/platforms/google-platform.service";
+import { GoogleAdsPlatformService } from "@/services/platforms/google-ads-platform.service";
 import { FacebookPlatformService } from "@/services/platforms/facebook-platform.service";
 import { NaverPlatformService } from "@/services/platforms/naver-platform.service";
 import { KakaoPlatformService } from "@/services/platforms/kakao-platform.service";
@@ -38,7 +38,7 @@ export async function bootstrapDI() {
   // Platform Services
   container.registerSingleton(
     ServiceTokens.GOOGLE_PLATFORM_SERVICE,
-    () => new GooglePlatformService(),
+    () => new GoogleAdsPlatformService(),
   );
   container.registerSingleton(
     ServiceTokens.FACEBOOK_PLATFORM_SERVICE,

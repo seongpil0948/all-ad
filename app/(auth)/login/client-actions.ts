@@ -1,5 +1,7 @@
 "use client";
 
+import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+
 import { createClient } from "@/utils/supabase/client";
 import { useAuthStore } from "@/stores/useAuthStore";
 import log from "@/utils/logger";
@@ -13,7 +15,7 @@ export async function clientLogin(
   email: string,
   password: string,
   returnUrl?: string,
-  router?: any, // Router passed from component
+  router?: AppRouterInstance,
 ): Promise<ClientLoginResult> {
   const supabase = createClient();
   const setUser = useAuthStore.getState().setUser;
@@ -98,7 +100,7 @@ export async function clientSignup(
   email: string,
   password: string,
   inviteToken?: string,
-  router?: any,
+  router?: AppRouterInstance,
 ): Promise<ClientLoginResult> {
   const supabase = createClient();
   const setUser = useAuthStore.getState().setUser;
@@ -174,7 +176,7 @@ export async function clientSignup(
   }
 }
 
-export async function clientLogout(router?: any): Promise<void> {
+export async function clientLogout(router?: AppRouterInstance): Promise<void> {
   const supabase = createClient();
   const setUser = useAuthStore.getState().setUser;
   const setIsInitialized = useAuthStore.getState().setIsInitialized;

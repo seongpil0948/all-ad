@@ -5,6 +5,7 @@ import type {
   GoogleAdsAccountInfo,
   GoogleOAuthTokenResponse,
 } from "@/types/google-ads-api.types";
+import type { MutateOperation } from "google-ads-api";
 
 import { GoogleAdsApi } from "google-ads-api";
 
@@ -419,7 +420,7 @@ export async function updateCampaignStatus(
 ): Promise<{
   success: boolean;
   error?: string;
-  details?: any;
+  details?: unknown;
 }> {
   try {
     log.info("Starting campaign status update", {
@@ -455,7 +456,7 @@ export async function updateCampaignStatus(
       // Google Ads API v20의 정확한 mutation 형식
       const operations = [
         {
-          entity: "campaign" as any,
+          entity: "campaign",
           operation: "update" as const,
           resource: {
             resource_name: `customers/${customerId}/campaigns/${campaignId}`,
@@ -464,7 +465,7 @@ export async function updateCampaignStatus(
           update_mask: {
             paths: ["status"],
           },
-        },
+        } as MutateOperation<Record<string, unknown>>,
       ];
 
       log.info("Executing mutation with operations", {
@@ -472,17 +473,23 @@ export async function updateCampaignStatus(
       });
 
       // mutateResources 메서드 사용 - 타입 캐스팅
-      mutateResponse = await customer.mutateResources(operations as any);
+      mutateResponse = await customer.mutateResources(operations);
 
       log.info("Mutation response", {
         response: JSON.stringify(mutateResponse),
       });
-    } catch (mutateError: any) {
+    } catch (mutateError) {
+      const error = mutateError as {
+        message?: string;
+        details?: unknown;
+        errors?: unknown;
+      };
+
       log.error("Mutation error details", {
         error: mutateError,
-        message: mutateError?.message,
-        details: mutateError?.details,
-        errors: mutateError?.errors,
+        message: error?.message,
+        details: error?.details,
+        errors: error?.errors,
       });
       throw mutateError;
     }
@@ -494,15 +501,23 @@ export async function updateCampaignStatus(
     });
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     // 더 자세한 에러 정보 로깅
+    const err = error as {
+      message?: string;
+      code?: string;
+      details?: unknown;
+      errors?: Array<{ message: string }>;
+      response?: unknown;
+      stack?: string;
+    };
     const errorDetails = {
-      message: error?.message || "Unknown error",
-      code: error?.code,
-      details: error?.details,
-      errors: error?.errors,
-      response: error?.response,
-      stack: error?.stack,
+      message: err?.message || "Unknown error",
+      code: err?.code,
+      details: err?.details,
+      errors: err?.errors,
+      response: err?.response,
+      stack: err?.stack,
     };
 
     log.error("Failed to update campaign status", {
@@ -515,10 +530,10 @@ export async function updateCampaignStatus(
     // Google Ads API 특정 에러 메시지 파싱
     let errorMessage = "캠페인 상태 업데이트 실패";
 
-    if (error?.errors?.length > 0) {
-      errorMessage = error.errors.map((e: any) => e.message).join(", ");
-    } else if (error?.message) {
-      errorMessage = error.message;
+    if (err?.errors && err.errors.length > 0) {
+      errorMessage = err.errors.map((e) => e.message).join(", ");
+    } else if (err?.message) {
+      errorMessage = err.message;
     }
 
     return {

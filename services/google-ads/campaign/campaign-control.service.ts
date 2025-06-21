@@ -50,7 +50,7 @@ export class CampaignControlService {
       const operations = updates.map((update) => {
         // Resource enum 대신 string 사용
         return {
-          entity: "campaign" as any,
+          entity: "campaign",
           operation: "update" as const,
           resource: {
             resource_name: `customers/${customerId}/campaigns/${update.campaignId}`,
@@ -70,7 +70,7 @@ export class CampaignControlService {
 
       const response = await this.googleAdsClient.mutate(
         customerId,
-        operations as any,
+        operations as MutateOperation<Record<string, unknown>>[],
       );
 
       log.info("캠페인 상태 업데이트 성공", {
@@ -79,15 +79,22 @@ export class CampaignControlService {
       });
 
       return response;
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as {
+        message?: string;
+        code?: string;
+        details?: unknown;
+        errors?: unknown;
+      };
+
       log.error("캠페인 상태 업데이트 실패", {
         customerId,
         updates,
         error: {
-          message: error?.message,
-          code: error?.code,
-          details: error?.details,
-          errors: error?.errors,
+          message: err?.message,
+          code: err?.code,
+          details: err?.details,
+          errors: err?.errors,
         },
       });
       throw error;

@@ -4,7 +4,7 @@ import { Campaign, CampaignMetrics, PlatformType } from "@/types";
 import { formatDateToYYYYMMDD } from "@/utils/date-formatter";
 import log from "@/utils/logger";
 
-export abstract class BasePlatformService<TService = any>
+export abstract class BasePlatformService<TService = unknown>
   implements PlatformService
 {
   abstract platform: PlatformType;

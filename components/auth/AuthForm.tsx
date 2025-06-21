@@ -53,7 +53,7 @@ export function AuthForm({
       if (!result.success && result.error) {
         setError(result.error);
       }
-    } catch (err) {
+    } catch {
       setError("예기치 않은 오류가 발생했습니다.");
     } finally {
       setIsLoading(false);
