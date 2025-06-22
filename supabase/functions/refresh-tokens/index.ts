@@ -235,7 +235,10 @@ serve(async (req: Request) => {
     console.error("Token refresh cron job failed:", error);
 
     return new Response(
-      JSON.stringify({ success: false, error: error instanceof Error ? error.message : String(error) }),
+      JSON.stringify({
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,

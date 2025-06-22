@@ -4,6 +4,21 @@ const nextConfig: NextConfig = {
   // reactStrictMode: false,
   cleanDistDir: true,
 
+  // Suppress Supabase realtime-js critical dependency warnings
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.ignoreWarnings = [
+        {
+          module: /@supabase\/realtime-js/,
+          message:
+            /Critical dependency: the request of a dependency is an expression/,
+        },
+      ];
+    }
+
+    return config;
+  },
+
   // Security headers
   async headers() {
     return [

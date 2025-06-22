@@ -49,20 +49,22 @@ SQL 에디터에서 실행:
 SELECT * FROM cron.job;
 
 -- 최근 실행 기록 확인
-SELECT * FROM cron.job_run_details 
-ORDER BY start_time DESC 
+SELECT * FROM cron.job_run_details
+ORDER BY start_time DESC
 LIMIT 20;
 ```
 
 ## 4. Cron Jobs 관리
 
 ### 수동 실행
+
 ```sql
 -- 특정 job 수동 실행
 SELECT cron.run_job((SELECT jobid FROM cron.job WHERE jobname = 'refresh-oauth-tokens'));
 ```
 
 ### 활성화/비활성화
+
 ```sql
 -- 비활성화
 SELECT cron.alter_job(
@@ -78,6 +80,7 @@ SELECT cron.alter_job(
 ```
 
 ### 스케줄 변경
+
 ```sql
 -- 스케줄 변경 (예: 30분마다 실행)
 SELECT cron.alter_job(
@@ -89,24 +92,28 @@ SELECT cron.alter_job(
 ## 5. 모니터링
 
 ### 관리자 페이지
+
 `/admin/cron-jobs`에서 UI로 모니터링 가능
 
 ### 로그 확인
+
 Supabase 대시보드 > Logs > Edge Functions에서 실행 로그 확인
 
 ## 6. 문제 해결
 
 ### Cron job이 실행되지 않는 경우
+
 1. pg_cron extension이 활성화되어 있는지 확인
 2. Edge Function이 정상적으로 배포되었는지 확인
 3. 환경 변수가 올바르게 설정되었는지 확인
 
 ### 에러 확인
+
 ```sql
 -- 실패한 job 확인
-SELECT * FROM cron.job_run_details 
-WHERE status != 'succeeded' 
-ORDER BY start_time DESC 
+SELECT * FROM cron.job_run_details
+WHERE status != 'succeeded'
+ORDER BY start_time DESC
 LIMIT 10;
 ```
 

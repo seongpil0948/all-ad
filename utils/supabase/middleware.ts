@@ -43,13 +43,16 @@ export async function updateSession(request: NextRequest) {
   const publicRoutes = [
     "/",
     "/login",
+    "/signup",
     "/auth",
     "/pricing",
     "/contact",
     "/support",
     "/demo",
     "/forgot-password",
+    "/reset-password",
     "/confirm",
+    "/intro",
   ];
 
   const isPublicRoute = publicRoutes.some(
