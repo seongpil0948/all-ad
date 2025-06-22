@@ -29,13 +29,16 @@ import { Campaign } from "@/types/campaign.types";
 import { PlatformType } from "@/types";
 import log from "@/utils/logger";
 import {
-  LoadingState,
   StatCard,
   PlatformBadge,
   TableActions,
   InfiniteScrollTable,
   InfiniteScrollTableColumn,
 } from "@/components/common";
+import {
+  TableSkeleton,
+  MetricCardSkeleton,
+} from "@/components/common/skeletons";
 import { getPlatformConfig } from "@/utils/platform-config";
 
 const ITEMS_PER_PAGE = 20;
@@ -259,10 +262,6 @@ export function CampaignDashboard() {
     totalBudget: campaigns.reduce((sum, c) => sum + (c.budget || 0), 0),
   };
 
-  if (isLoading && campaigns.length === 0) {
-    return <LoadingState message="캠페인 데이터를 불러오는 중..." />;
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -273,18 +272,26 @@ export function CampaignDashboard() {
       </div>
 
       {/* 전체 통계 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard label="전체 캠페인" value={totalStats.totalCampaigns} />
-        <StatCard
-          label="활성 캠페인"
-          value={totalStats.activeCampaigns}
-          valueClassName="text-2xl font-bold text-success"
-        />
-        <StatCard
-          label="총 예산"
-          value={`₩${totalStats.totalBudget.toLocaleString()}`}
-        />
-      </div>
+      {isLoading && campaigns.length === 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <MetricCardSkeleton />
+          <MetricCardSkeleton />
+          <MetricCardSkeleton />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <StatCard label="전체 캠페인" value={totalStats.totalCampaigns} />
+          <StatCard
+            label="활성 캠페인"
+            value={totalStats.activeCampaigns}
+            valueClassName="text-2xl font-bold text-success"
+          />
+          <StatCard
+            label="총 예산"
+            value={`₩${totalStats.totalBudget.toLocaleString()}`}
+          />
+        </div>
+      )}
 
       {/* 플랫폼 탭 */}
       <Tabs
@@ -317,17 +324,21 @@ export function CampaignDashboard() {
       </Tabs>
 
       {/* 캠페인 테이블 */}
-      <InfiniteScrollTable
-        aria-label="캠페인 목록"
-        columns={columns}
-        emptyContent="캠페인이 없습니다"
-        hasMore={hasMore}
-        isLoading={campaignList.isLoading && campaignList.items.length === 0}
-        items={campaignList}
-        maxHeight="600px"
-        renderCell={renderCell}
-        onLoadMore={() => campaignList.loadMore()}
-      />
+      {isLoading && campaigns.length === 0 ? (
+        <TableSkeleton columns={6} rows={5} />
+      ) : (
+        <InfiniteScrollTable
+          aria-label="캠페인 목록"
+          columns={columns}
+          emptyContent="캠페인이 없습니다"
+          hasMore={hasMore}
+          isLoading={campaignList.isLoading}
+          items={campaignList}
+          maxHeight="600px"
+          renderCell={renderCell}
+          onLoadMore={() => campaignList.loadMore()}
+        />
+      )}
 
       {/* 예산 수정 모달 */}
       <Modal

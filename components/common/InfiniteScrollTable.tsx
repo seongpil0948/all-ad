@@ -11,6 +11,7 @@ import {
   TableColumnProps,
 } from "@heroui/table";
 import { Spinner } from "@heroui/spinner";
+import { Skeleton } from "@heroui/skeleton";
 import { useInfiniteScroll } from "@heroui/use-infinite-scroll";
 import { AsyncListData } from "@react-stately/data";
 
@@ -50,7 +51,7 @@ export function InfiniteScrollTable<T extends { id: string | number }>({
   items,
   renderCell,
   emptyContent = "데이터가 없습니다",
-  loadingContent = <Spinner size="lg" />,
+  loadingContent,
   bottomContent,
   "aria-label": ariaLabel,
   classNames,
@@ -70,6 +71,23 @@ export function InfiniteScrollTable<T extends { id: string | number }>({
         <Spinner size="sm" />
       </div>
     ) : null;
+
+  // Default loading content with skeleton rows
+  const defaultLoadingContent = loadingContent || (
+    <>
+      {Array.from({ length: 5 }).map((_, index) => (
+        <TableRow key={`skeleton-${index}`}>
+          {columns.map((column) => (
+            <TableCell key={`skeleton-${index}-${column.key}`}>
+              <Skeleton className="w-full rounded-lg">
+                <div className="h-3 w-full rounded-lg bg-default-200" />
+              </Skeleton>
+            </TableCell>
+          ))}
+        </TableRow>
+      ))}
+    </>
+  );
 
   return (
     <div
@@ -108,7 +126,7 @@ export function InfiniteScrollTable<T extends { id: string | number }>({
           emptyContent={emptyContent}
           isLoading={isLoading && items.items.length === 0}
           items={items.items}
-          loadingContent={loadingContent}
+          loadingContent={defaultLoadingContent}
         >
           {(item) => (
             <TableRow key={item.id}>

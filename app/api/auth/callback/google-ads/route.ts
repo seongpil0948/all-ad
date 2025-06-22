@@ -114,6 +114,7 @@ export async function GET(request: NextRequest) {
             // Move tokens to the correct account ID in Redis
             if (fullTokenData && typeof fullTokenData === "string") {
               const newTokenKey = `oauth:google:${userId}:${accountId}:tokens`;
+
               await setToken(newTokenKey, fullTokenData, 3600);
 
               // Note: The temporary token will expire automatically (TTL)

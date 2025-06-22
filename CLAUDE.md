@@ -12,7 +12,7 @@ This is a Next.js 15 multi-tenant advertising platform that integrates multiple 
 - 틱톡, 구글, 메타, 아마존등 통합에 필요한 문서들은 docs 에 위치하고 있어, API 연동 관련된 문서들은 반드시 참조해줘
 - 플랫폼 별 여러 계정을 연동 할 수 있어야해
 - 작업전 STRUCTURE.md 파일, 프로젝트지식(프로젝트 정책 및 유저 워크플로우)을 확인하여 중복 코드 방지 및 기존 코드를 활용해줘, 작업후 구조 변경시 STRUCTURE.md 도 업데이트 되어야해
-- 작업 후 pnpm format, pnpm lint, pnpm build 를 통해 문제 없음을 검증하도록 해줘
+- 작업 후 pnpm format, pnpm lint, pnpm build 를 통해 문제 없음을 검증하도록 해줘( 일단 any로 빌드가 되도록 하지마)
 - 작업 전후로 playwright 테스트 코드를 작성, 수정, 삭제등 최신화 해야해 ( pnpm exec playwright test
   Runs the end-to-end tests.
   pnpm exec playwright test --ui

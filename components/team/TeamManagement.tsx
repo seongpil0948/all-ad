@@ -39,6 +39,7 @@ import {
   InfiniteScrollTable,
   InfiniteScrollTableColumn,
 } from "@/components/common";
+import { TableSkeleton, CardSkeleton } from "@/components/common/skeletons";
 
 const roleConfig = {
   master: {
@@ -459,28 +460,32 @@ export function TeamManagement() {
       )}
 
       {/* 현재 사용자 정보 */}
-      <Card>
-        <CardHeader>
-          <SectionHeader title="내 권한" />
-        </CardHeader>
-        <CardBody>
-          <div className="flex items-center gap-3">
-            {userRole && (
-              <>
-                {createElement(roleConfig[userRole].icon, {
-                  className: `w-5 h-5 text-${roleConfig[userRole].color}`,
-                })}
-                <div>
-                  <p className="font-medium">{roleConfig[userRole].label}</p>
-                  <p className="text-sm text-default-500">
-                    {roleConfig[userRole].description}
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
-        </CardBody>
-      </Card>
+      {isLoading && !userRole ? (
+        <CardSkeleton className="h-32" showIcon={false} />
+      ) : (
+        <Card>
+          <CardHeader>
+            <SectionHeader title="내 권한" />
+          </CardHeader>
+          <CardBody>
+            <div className="flex items-center gap-3">
+              {userRole && (
+                <>
+                  {createElement(roleConfig[userRole].icon, {
+                    className: `w-5 h-5 text-${roleConfig[userRole].color}`,
+                  })}
+                  <div>
+                    <p className="font-medium">{roleConfig[userRole].label}</p>
+                    <p className="text-sm text-default-500">
+                      {roleConfig[userRole].description}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          </CardBody>
+        </Card>
+      )}
 
       {/* 팀원 목록 */}
       <Card>
@@ -488,38 +493,49 @@ export function TeamManagement() {
           <SectionHeader title="팀원 목록" />
         </CardHeader>
         <CardBody>
-          <InfiniteScrollTable
-            aria-label="팀원 목록"
-            columns={memberColumns}
-            emptyContent="팀원이 없습니다"
-            hasMore={hasMoreMembers}
-            isLoading={membersList.isLoading && membersList.items.length === 0}
-            items={membersList}
-            renderCell={renderMemberCell}
-            onLoadMore={() => membersList.loadMore()}
-          />
+          {isLoading && (!teamMembers || teamMembers.length === 0) ? (
+            <TableSkeleton columns={4} rows={3} />
+          ) : (
+            <InfiniteScrollTable
+              aria-label="팀원 목록"
+              columns={memberColumns}
+              emptyContent="팀원이 없습니다"
+              hasMore={hasMoreMembers}
+              isLoading={
+                membersList.isLoading && membersList.items.length === 0
+              }
+              items={membersList}
+              renderCell={renderMemberCell}
+              onLoadMore={() => membersList.loadMore()}
+            />
+          )}
         </CardBody>
       </Card>
 
       {/* 대기 중인 초대 */}
-      {teamInvitations && teamInvitations.length > 0 && (
+      {(isLoading || (teamInvitations && teamInvitations.length > 0)) && (
         <Card>
           <CardHeader>
             <SectionHeader title="대기 중인 초대" />
           </CardHeader>
           <CardBody>
-            <InfiniteScrollTable
-              aria-label="대기 중인 초대 목록"
-              columns={invitationColumns}
-              emptyContent="대기 중인 초대가 없습니다"
-              hasMore={hasMoreInvitations}
-              isLoading={
-                invitationsList.isLoading && invitationsList.items.length === 0
-              }
-              items={invitationsList}
-              renderCell={renderInvitationCell}
-              onLoadMore={() => invitationsList.loadMore()}
-            />
+            {isLoading && !teamInvitations ? (
+              <TableSkeleton columns={4} rows={2} />
+            ) : (
+              <InfiniteScrollTable
+                aria-label="대기 중인 초대 목록"
+                columns={invitationColumns}
+                emptyContent="대기 중인 초대가 없습니다"
+                hasMore={hasMoreInvitations}
+                isLoading={
+                  invitationsList.isLoading &&
+                  invitationsList.items.length === 0
+                }
+                items={invitationsList}
+                renderCell={renderInvitationCell}
+                onLoadMore={() => invitationsList.loadMore()}
+              />
+            )}
           </CardBody>
         </Card>
       )}
