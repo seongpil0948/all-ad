@@ -82,17 +82,24 @@ export async function GET(
 
     const teamId = profile.current_team_id;
     const platformLower = platformParam.toLowerCase() as PlatformType;
-    
+
     // Get user's OAuth credentials
-    const oauthCredentials = await getPlatformOAuthCredentials(teamId, platformLower);
-    
+    const oauthCredentials = await getPlatformOAuthCredentials(
+      teamId,
+      platformLower,
+    );
+
     if (!oauthCredentials) {
-      log.error("OAuth credentials not found", { platform: platformLower, teamId });
+      log.error("OAuth credentials not found", {
+        platform: platformLower,
+        teamId,
+      });
+
       return redirect(
         `/settings/integrations?error=oauth_credentials_missing&platform=${platformLower}`,
       );
     }
-    
+
     // Important: Use the exact same redirect URI that was used during OAuth initiation
     // This must match the registered redirect URI in Google Console
     const redirectUri = oauthCredentials.redirectUri;
@@ -139,7 +146,7 @@ export async function GET(
         scope: tokens.scope,
       },
     );
-    
+
     if (!success) {
       log.error("Failed to update OAuth connection", {
         platform: platformLower,
@@ -215,16 +222,22 @@ export async function POST(
     }
 
     const teamId = profile.current_team_id;
-    
+
     // Get user's OAuth credentials
     const { getPlatformOAuthCredentials } = await import(
       "@/lib/auth/oauth-client-handler"
     );
-    const oauthCredentials = await getPlatformOAuthCredentials(teamId, platform);
-    
+    const oauthCredentials = await getPlatformOAuthCredentials(
+      teamId,
+      platform,
+    );
+
     if (!oauthCredentials) {
       return NextResponse.json(
-        { error: "OAuth credentials not configured. Please add your API credentials first." },
+        {
+          error:
+            "OAuth credentials not configured. Please add your API credentials first.",
+        },
         { status: 400 },
       );
     }

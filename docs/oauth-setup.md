@@ -49,6 +49,7 @@ All-AD 플랫폼은 각 사용자(팀)가 자신의 광고 플랫폼 API 인증 
 이 에러는 OAuth 콜백 URL이 Google Console에 등록된 URL과 정확히 일치하지 않을 때 발생합니다.
 
 **해결 방법:**
+
 1. Google Cloud Console > Credentials에서 OAuth 2.0 Client ID 수정
 2. Authorized redirect URIs에 정확한 URL 추가:
    - 개발: `http://localhost:3000/api/auth/oauth/google/callback`
@@ -60,6 +61,7 @@ All-AD 플랫폼은 각 사용자(팀)가 자신의 광고 플랫폼 API 인증 
 Refresh token이 없거나 만료된 경우 발생합니다.
 
 **해결 방법:**
+
 1. OAuth URL 생성 시 `access_type=offline` 파라미터 확인
 2. `prompt=consent` 파라미터로 강제 재동의 유도
 3. 사용자가 플랫폼 연결을 다시 진행하도록 안내

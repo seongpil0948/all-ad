@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Get token refresh status
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     // Get current user and team
     const supabase = await createClient();
@@ -105,6 +105,45 @@ export async function GET(_request: NextRequest) {
     }
 
     const teamId = profile.current_team_id;
+
+    // Get query parameters
+    const url = new URL(request.url);
+    const platform = url.searchParams.get("platform") as PlatformType | null;
+    const accountId = url.searchParams.get("accountId");
+
+    // If checking a specific account, validate its token
+    if (platform && accountId) {
+      try {
+        const { data: credential } = await supabase
+          .from("platform_credentials")
+          .select("*")
+          .eq("team_id", teamId)
+          .eq("platform", platform)
+          .eq("account_id", accountId)
+          .single();
+
+        if (!credential) {
+          return NextResponse.json({
+            success: false,
+            error: "Credential not found",
+          });
+        }
+
+        // Check if credential needs refresh
+        const { needsRefresh } = await import("@/lib/auth/platform-auth");
+        const credentialNeedsRefresh = needsRefresh(credential);
+
+        return NextResponse.json({
+          success: !credentialNeedsRefresh,
+          hasValidToken: !credentialNeedsRefresh,
+        });
+      } catch (error) {
+        return NextResponse.json({
+          success: false,
+          error: "Token validation failed",
+        });
+      }
+    }
 
     // Get platform credentials that need refresh
     const { getPlatformCredentials, needsRefresh } = await import(

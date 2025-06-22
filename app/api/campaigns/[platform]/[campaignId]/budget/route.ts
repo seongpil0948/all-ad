@@ -58,7 +58,23 @@ export const PATCH = withAuth(
       const platformService =
         platformServiceFactory.createService(platformType);
 
-      await platformService.setCredentials(credential.credentials);
+      // Use MCC/System User/Business Center for multi-account access
+      if (
+        credential.credentials.is_mcc ||
+        credential.credentials.is_system_user ||
+        credential.credentials.is_business_center
+      ) {
+        if (platformService.setMultiAccountCredentials) {
+          await platformService.setMultiAccountCredentials(
+            credential.credentials,
+          );
+        } else {
+          // Fallback to regular credentials if multi-account method not available
+          await platformService.setCredentials(credential.credentials);
+        }
+      } else {
+        await platformService.setCredentials(credential.credentials);
+      }
 
       try {
         const success = await platformService.updateCampaignBudget(

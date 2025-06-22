@@ -276,7 +276,10 @@ export async function getCredentialsNeedingRefresh(): Promise<
       .eq("is_active", true)
       .not("credentials->refresh_token", "is", null)
       .not("credentials->expires_at", "is", null)
-      .lt("credentials->expires_at", new Date(Date.now() + 5 * 60 * 1000).toISOString()); // Expires within 5 minutes
+      .lt(
+        "credentials->expires_at",
+        new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+      ); // Expires within 5 minutes
 
     if (error) {
       log.error("Failed to fetch credentials needing refresh", error);

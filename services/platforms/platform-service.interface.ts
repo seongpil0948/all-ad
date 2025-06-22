@@ -7,6 +7,9 @@ export interface PlatformService {
   // Set credentials for the service
   setCredentials(credentials: Record<string, unknown>): void;
 
+  // Set multi-account credentials (MCC, System User, Business Center)
+  setMultiAccountCredentials?(credentials: Record<string, unknown>): void;
+
   // Validate credentials
   validateCredentials(): Promise<boolean>;
 

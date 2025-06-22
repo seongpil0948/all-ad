@@ -89,6 +89,7 @@ export class GoogleAdsSyncService {
     const errors: SyncError[] = [];
     let recordsProcessed = 0;
     let successCount = 0;
+    const startTime = new Date();
 
     try {
       // 마지막 동기화 시점 조회
@@ -114,25 +115,13 @@ export class GoogleAdsSyncService {
       // 데이터베이스 업데이트
       for (const campaign of modifiedCampaigns) {
         try {
-          await this.updateCampaignData(accountId, {
-            ...campaign,
-            budgetAmountMicros: campaign.budgetAmountMicros?.toString(),
-            metrics: campaign.metrics
-              ? {
-                  impressions: campaign.metrics.impressions?.toString(),
-                  clicks: campaign.metrics.clicks?.toString(),
-                  costMicros: campaign.metrics.costMicros?.toString(),
-                  conversions: campaign.metrics.conversions?.toString(),
-                  conversionValue: campaign.metrics.conversionValue?.toString(),
-                }
-              : undefined,
-          });
+          await this.updateCampaignData(accountId, campaign);
           successCount++;
         } catch (error) {
           errors.push({
-            campaignId: campaign.id,
+            accountId: accountId,
             error: (error as Error).message,
-            timestamp: new Date().toISOString(),
+            timestamp: new Date(),
           });
         }
       }
@@ -152,12 +141,11 @@ export class GoogleAdsSyncService {
 
       const result: SyncResult = {
         accountId,
-        syncType: "INCREMENTAL",
+        success: errors.length === 0,
         recordsProcessed,
-        successCount,
-        errorCount: errors.length,
-        errors: errors.length > 0 ? errors : undefined,
-        completedAt: new Date().toISOString(),
+        errors: errors,
+        startTime: startTime,
+        endTime: new Date(),
       };
 
       log.info("증분 동기화 완료", { ...result });
@@ -175,6 +163,7 @@ export class GoogleAdsSyncService {
     const errors: SyncError[] = [];
     let recordsProcessed = 0;
     let successCount = 0;
+    const startTime = new Date();
 
     try {
       // 모든 캠페인 조회
@@ -185,25 +174,25 @@ export class GoogleAdsSyncService {
       // 데이터베이스 업데이트
       for (const campaign of campaigns) {
         try {
-          await this.updateCampaignData(accountId, {
-            ...campaign,
-            budgetAmountMicros: campaign.budgetAmountMicros?.toString(),
-            metrics: campaign.metrics
-              ? {
-                  impressions: campaign.metrics.impressions?.toString(),
-                  clicks: campaign.metrics.clicks?.toString(),
-                  costMicros: campaign.metrics.costMicros?.toString(),
-                  conversions: campaign.metrics.conversions?.toString(),
-                  conversionValue: campaign.metrics.conversionValue?.toString(),
-                }
-              : undefined,
-          });
+          // Convert GoogleAdsCampaign to GoogleAdsCampaignData format
+          const campaignData: GoogleAdsCampaignData = {
+            "campaign.id": campaign.id,
+            "campaign.name": campaign.name,
+            "campaign.status": campaign.status,
+            "campaign_budget.amount_micros":
+              campaign.budgetAmountMicros?.toString(),
+            "metrics.impressions": campaign.impressions?.toString(),
+            "metrics.clicks": campaign.clicks?.toString(),
+            "metrics.cost_micros": campaign.costMicros?.toString(),
+          };
+
+          await this.updateCampaignData(accountId, campaignData);
           successCount++;
         } catch (error) {
           errors.push({
-            campaignId: campaign.id,
+            accountId: accountId,
             error: (error as Error).message,
-            timestamp: new Date().toISOString(),
+            timestamp: new Date(),
           });
         }
       }
@@ -223,12 +212,11 @@ export class GoogleAdsSyncService {
 
       const result: SyncResult = {
         accountId,
-        syncType: "FULL",
+        success: errors.length === 0,
         recordsProcessed,
-        successCount,
-        errorCount: errors.length,
-        errors: errors.length > 0 ? errors : undefined,
-        completedAt: new Date().toISOString(),
+        errors: errors,
+        startTime: startTime,
+        endTime: new Date(),
       };
 
       log.info("전체 동기화 완료", { ...result });

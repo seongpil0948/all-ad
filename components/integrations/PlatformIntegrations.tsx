@@ -99,14 +99,16 @@ export function PlatformIntegrations() {
     if (success === "platform_connected" && platform && account) {
       log.info("Platform connected successfully", { platform, account });
       // Show success notification using a toast or alert
-      alert(`${getPlatformDisplayName(platform.toUpperCase() as PlatformType)} 연결 성공!\n계정: ${decodeURIComponent(account)}`);
+      alert(
+        `${getPlatformDisplayName(platform.toUpperCase() as PlatformType)} 연결 성공!\n계정: ${decodeURIComponent(account)}`,
+      );
       // Clear URL params
       window.history.replaceState({}, "", window.location.pathname);
       // Refresh data
       fetchRefreshStatus();
     } else if (error && platform) {
       let errorMessage = "플랫폼 연결에 실패했습니다.";
-      
+
       switch (error) {
         case "oauth_cancelled":
           errorMessage = "OAuth 인증이 취소되었습니다.";
@@ -118,15 +120,19 @@ export function PlatformIntegrations() {
           errorMessage = "팀을 찾을 수 없습니다.";
           break;
         case "oauth_failed":
-          errorMessage = message ? decodeURIComponent(message) : "OAuth 인증에 실패했습니다.";
+          errorMessage = message
+            ? decodeURIComponent(message)
+            : "OAuth 인증에 실패했습니다.";
           break;
         default:
           errorMessage = message ? decodeURIComponent(message) : errorMessage;
       }
-      
+
       log.error("Platform connection failed", { error, platform, message });
       // Show error notification
-      alert(`${getPlatformDisplayName(platform.toUpperCase() as PlatformType)} 연결 실패!\n${errorMessage}`);
+      alert(
+        `${getPlatformDisplayName(platform.toUpperCase() as PlatformType)} 연결 실패!\n${errorMessage}`,
+      );
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, []);
@@ -543,19 +549,6 @@ export function PlatformIntegrations() {
           </ModalFooter>
         </ModalContent>
       </Modal>
-
-      {/* Platform Credentials Modal */}
-      {selectedPlatform && (
-        <PlatformCredentialsModal
-          isOpen={isCredentialsModalOpen}
-          onClose={() => {
-            onCredentialsModalClose();
-            setSelectedPlatform(null);
-          }}
-          platform={selectedPlatform}
-          onSubmit={handleCredentialsSubmit}
-        />
-      )}
     </div>
   );
 }

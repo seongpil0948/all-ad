@@ -10,7 +10,6 @@ import {
 } from "@heroui/modal";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
-import { Textarea } from "@heroui/textarea";
 import { Card, CardBody } from "@heroui/card";
 import { Link } from "@heroui/link";
 import {
@@ -19,6 +18,7 @@ import {
   FaExternalLinkAlt,
   FaEye,
   FaEyeSlash,
+  FaShoppingCart,
 } from "react-icons/fa";
 import { SiKakao, SiNaver } from "react-icons/si";
 
@@ -90,6 +90,18 @@ const PLATFORM_SETUP_GUIDES = {
     ],
     fields: ["clientId", "clientSecret"],
   },
+  coupang: {
+    icon: FaShoppingCart,
+    name: "쿠팡 애즈",
+    setupUrl: "https://ads.coupang.com/",
+    guide: [
+      "쿠팡 애즈 계정 생성",
+      "API 접근 권한 신청",
+      "Client ID와 Client Secret 발급 대기",
+      "API 문서 참조하여 연동 설정",
+    ],
+    fields: ["clientId", "clientSecret"],
+  },
 };
 
 export function PlatformCredentialsModal({
@@ -112,22 +124,22 @@ export function PlatformCredentialsModal({
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
-      
+
       // Add redirect URI for OAuth
       const fullCredentials = {
         ...credentials,
         redirectUri,
       };
-      
+
       await onSubmit(fullCredentials);
-      
+
       // Reset form
       setCredentials({
         clientId: "",
         clientSecret: "",
         developerToken: "",
       });
-      
+
       onClose();
     } catch (error) {
       log.error("Failed to save platform credentials", { platform, error });
@@ -143,12 +155,7 @@ export function PlatformCredentialsModal({
   const Icon = platformGuide.icon;
 
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={onClose}
-      size="2xl"
-      scrollBehavior="inside"
-    >
+    <Modal isOpen={isOpen} scrollBehavior="inside" size="2xl" onClose={onClose}>
       <ModalContent>
         <ModalHeader className="flex items-center gap-3">
           <Icon className="w-6 h-6" />
@@ -166,9 +173,9 @@ export function PlatformCredentialsModal({
                   ))}
                 </ol>
                 <Link
+                  className="mt-3 flex items-center gap-2"
                   href={platformGuide.setupUrl}
                   target="_blank"
-                  className="mt-3 flex items-center gap-2"
                 >
                   {platformGuide.name} 개발자 콘솔로 이동
                   <FaExternalLinkAlt className="w-3 h-3" />
@@ -181,7 +188,8 @@ export function PlatformCredentialsModal({
               <CardBody>
                 <h4 className="font-semibold mb-2">OAuth 리디렉션 URI</h4>
                 <p className="text-sm text-default-600 mb-2">
-                  아래 URI를 {platformGuide.name} 콘솔의 승인된 리디렉션 URI에 추가하세요:
+                  아래 URI를 {platformGuide.name} 콘솔의 승인된 리디렉션 URI에
+                  추가하세요:
                 </p>
                 <code className="text-xs bg-default-100 p-2 rounded block break-all">
                   {redirectUri}
@@ -193,23 +201,36 @@ export function PlatformCredentialsModal({
             <div className="space-y-4">
               {platformGuide.fields.includes("clientId") && (
                 <Input
+                  required
                   label={platform === "facebook" ? "앱 ID" : "Client ID"}
                   placeholder={
-                    platform === "facebook" 
-                      ? "Facebook 앱 ID 입력" 
+                    platform === "facebook"
+                      ? "Facebook 앱 ID 입력"
                       : "Client ID 입력"
                   }
                   value={credentials.clientId}
                   onChange={(e) =>
                     setCredentials({ ...credentials, clientId: e.target.value })
                   }
-                  required
                 />
               )}
 
               {platformGuide.fields.includes("clientSecret") && (
                 <Input
-                  label={platform === "facebook" ? "앱 시크릿" : "Client Secret"}
+                  required
+                  endContent={
+                    <Button
+                      isIconOnly
+                      size="sm"
+                      variant="light"
+                      onPress={() => setShowSecrets(!showSecrets)}
+                    >
+                      {showSecrets ? <FaEyeSlash /> : <FaEye />}
+                    </Button>
+                  }
+                  label={
+                    platform === "facebook" ? "앱 시크릿" : "Client Secret"
+                  }
                   placeholder={
                     platform === "facebook"
                       ? "Facebook 앱 시크릿 입력"
@@ -218,31 +239,17 @@ export function PlatformCredentialsModal({
                   type={showSecrets ? "text" : "password"}
                   value={credentials.clientSecret}
                   onChange={(e) =>
-                    setCredentials({ ...credentials, clientSecret: e.target.value })
+                    setCredentials({
+                      ...credentials,
+                      clientSecret: e.target.value,
+                    })
                   }
-                  endContent={
-                    <Button
-                      isIconOnly
-                      size="sm"
-                      variant="light"
-                      onPress={() => setShowSecrets(!showSecrets)}
-                    >
-                      {showSecrets ? <FaEyeSlash /> : <FaEye />}
-                    </Button>
-                  }
-                  required
                 />
               )}
 
               {platformGuide.fields.includes("developerToken") && (
                 <Input
-                  label="Developer Token"
-                  placeholder="Google Ads Developer Token 입력"
-                  type={showSecrets ? "text" : "password"}
-                  value={credentials.developerToken}
-                  onChange={(e) =>
-                    setCredentials({ ...credentials, developerToken: e.target.value })
-                  }
+                  required
                   endContent={
                     <Button
                       isIconOnly
@@ -253,7 +260,16 @@ export function PlatformCredentialsModal({
                       {showSecrets ? <FaEyeSlash /> : <FaEye />}
                     </Button>
                   }
-                  required
+                  label="Developer Token"
+                  placeholder="Google Ads Developer Token 입력"
+                  type={showSecrets ? "text" : "password"}
+                  value={credentials.developerToken}
+                  onChange={(e) =>
+                    setCredentials({
+                      ...credentials,
+                      developerToken: e.target.value,
+                    })
+                  }
                 />
               )}
             </div>
@@ -262,8 +278,9 @@ export function PlatformCredentialsModal({
             <Card className="bg-warning-50 border border-warning-200">
               <CardBody>
                 <p className="text-sm text-warning-800">
-                  <strong>보안 안내:</strong> 입력하신 인증 정보는 암호화되어 안전하게 저장됩니다.
-                  인증 정보는 광고 플랫폼 API 접근에만 사용되며, 제3자와 공유되지 않습니다.
+                  <strong>보안 안내:</strong> 입력하신 인증 정보는 암호화되어
+                  안전하게 저장됩니다. 인증 정보는 광고 플랫폼 API 접근에만
+                  사용되며, 제3자와 공유되지 않습니다.
                 </p>
               </CardBody>
             </Card>
@@ -275,12 +292,12 @@ export function PlatformCredentialsModal({
           </Button>
           <Button
             color="primary"
-            isLoading={isSubmitting}
             isDisabled={
               !credentials.clientId ||
               !credentials.clientSecret ||
               (platform === "google" && !credentials.developerToken)
             }
+            isLoading={isSubmitting}
             onPress={handleSubmit}
           >
             저장 및 연결

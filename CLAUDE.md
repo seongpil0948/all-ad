@@ -1928,6 +1928,274 @@ export class GoogleAdsIntegrationService {
 
 ---
 
+## 8. 광고 API 통합을 위한 최적화된 인증 접근법
+
+### OAuth 피로를 최소화하면서 보안을 유지하는 방법
+
+여러 계정을 관리하는 광고 API 통합을 구축할 때 직면하는 핵심 과제는 사용자가 연결하려는 각 계정에 대해 반복적으로 인증해야 한다는 점입니다. Google Ads, Meta, TikTok의 인증 패턴과 Supermetrics, Hootsuite 같은 성공적인 플랫폼들의 접근 방식을 분석한 결과, 보안과 규정 준수를 유지하면서 인증 부담을 줄이는 명확한 패턴들이 발견되었습니다.
+
+핵심 인사이트는 광고 플랫폼들이 이 문제를 해결하기 위해 특별히 설계된 다중 계정 관리 구조를 제공한다는 것입니다 - Google의 Manager Customer Center (MCC), Facebook의 Business Manager, TikTok의 Business Center. 이들을 최신 OAuth 패턴 및 전략적 아키텍처 선택과 결합하면 "한 번 인증, 모든 계정 접근" 경험을 구현할 수 있습니다.
+
+### 플랫폼별 다중 계정 인증 솔루션
+
+#### Google Ads MCC - 반복적인 OAuth 흐름 제거
+
+Google의 Manager Customer Center는 다중 계정 관리를 위한 가장 성숙한 솔루션입니다. **MCC 계정에 대한 단일 OAuth 인증으로 연결된 모든 클라이언트 계정에 프로그래밍 방식으로 접근할 수 있습니다** - 개별 인증 없이 수천 개의 계정에 접근 가능합니다.
+
+```typescript
+// services/platforms/google/auth/mcc-auth.service.ts
+export class GoogleMCCAuthService {
+  // 단일 인증으로 모든 클라이언트 계정에 접근
+  async authenticateMCC(credentials: {
+    developerToken: string;
+    refreshToken: string; // MCC용 단일 토큰
+    loginCustomerId: string; // MCC 계정 ID
+  }) {
+    // MCC 인증 후 클라이언트 계정 접근
+    const client = new GoogleAdsApi({
+      developer_token: credentials.developerToken,
+      login_customer_id: credentials.loginCustomerId,
+    });
+
+    return client;
+  }
+
+  // 재인증 없이 클라이언트 계정 접근
+  async accessClientAccount(mccClient: GoogleAdsApi, clientAccountId: string) {
+    const customer = mccClient.Customer({
+      customer_id: clientAccountId,
+      refresh_token: this.mccRefreshToken,
+      login_customer_id: this.mccAccountId,
+    });
+
+    return customer;
+  }
+}
+```
+
+MCC 계정은 최대 **85,000개의 비관리자 계정**을 지원하며, 활성 계정 제한은 월별 지출에 따라 결정됩니다.
+
+#### Meta의 시스템 사용자 - 영구 인증 제공
+
+Facebook Business Manager는 **시스템 사용자**를 통해 다른 접근 방식을 취합니다. 60일 후 만료되는 표준 사용자 토큰과 달리, 시스템 사용자 토큰은 수동으로 취소할 때까지 무기한 유효합니다.
+
+```typescript
+// services/platforms/meta/auth/system-user-auth.service.ts
+export class MetaSystemUserAuthService {
+  // 2단계 Business Manager 패턴으로 정교한 에이전시 설정 가능
+  async createChildBusinessManager(
+    parentSystemUserToken: string,
+    clientName: string,
+  ) {
+    const childBM = await this.api.post("/business", {
+      name: `${clientName} Business Manager`,
+      access_token: parentSystemUserToken,
+    });
+
+    // 시스템 사용자는 재인증 없이 영구 접근 제공
+    const systemToken = await this.generateSystemUserToken({
+      business_id: childBM.id,
+      scope: ["ads_management", "business_management"],
+    });
+
+    return { childBM, systemToken };
+  }
+}
+```
+
+이 아키텍처는 **Business Manager당 최대 250개의 광고 계정** 관리를 지원하며, 시스템 사용자는 토큰 갱신 복잡성을 완전히 제거합니다.
+
+#### TikTok Business Center - 중앙 집중식 관리
+
+TikTok의 Business Center는 세분화된 권한 제어와 함께 최대 **4,000명의 멤버**에 대한 통합 관리를 제공합니다. QR 코드 기반 클라이언트 온보딩 같은 고유한 기능이 인증 프로세스를 간소화합니다.
+
+### OAuth 패턴으로 인증 마찰 최소화
+
+#### 토큰 교환으로 정교한 위임 구현
+
+RFC 8693의 OAuth Token Exchange 사양은 다중 테넌트 플랫폼을 위한 강력한 패턴을 제공합니다:
+
+```typescript
+// services/auth/token-exchange.service.ts
+export class TokenExchangeService {
+  // 사용자는 한 번만 인증
+  async getUserAuthentication(): Promise<string> {
+    // OAuth 흐름 구현
+    return userToken;
+  }
+
+  // 플랫폼은 필요에 따라 서비스별 토큰으로 교환
+  async exchangeToken(params: {
+    subjectToken: string;
+    audience: string;
+  }): Promise<string> {
+    const response = await this.oauth.post("/token", {
+      grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
+      subject_token: params.subjectToken,
+      audience: params.audience,
+    });
+
+    return response.access_token;
+  }
+
+  // 실제 사용 예시
+  async getServiceTokens(userToken: string) {
+    const [googleAdsToken, facebookAdsToken] = await Promise.all([
+      this.exchangeToken({
+        subjectToken: userToken,
+        audience: "https://www.googleapis.com/auth/adwords",
+      }),
+      this.exchangeToken({
+        subjectToken: userToken,
+        audience: "https://graph.facebook.com",
+      }),
+    ]);
+
+    return { googleAdsToken, facebookAdsToken };
+  }
+}
+```
+
+#### Backend for Frontend 패턴으로 토큰 복잡성 중앙화
+
+BFF 패턴은 클라이언트 애플리케이션에서 인증 복잡성을 격리합니다:
+
+```typescript
+// services/auth/bff-auth.service.ts
+export class BFFAuthService {
+  async getUnifiedData(userId: string, tenantId: string) {
+    // BFF가 내부적으로 모든 토큰 관리를 처리
+    const tokens = await this.refreshTokensIfNeeded(userId, tenantId);
+
+    // 적절한 토큰으로 병렬 데이터 가져오기
+    const [googleData, metaData, tiktokData] = await Promise.all([
+      this.fetchGoogleAdsData(tokens.google),
+      this.fetchMetaAdsData(tokens.meta),
+      this.fetchTikTokAdsData(tokens.tiktok),
+    ]);
+
+    return this.combineResults(googleData, metaData, tiktokData);
+  }
+
+  private async refreshTokensIfNeeded(userId: string, tenantId: string) {
+    // 토큰 만료 확인 및 자동 갱신
+    const tokens = await this.tokenStore.getTokens(userId, tenantId);
+
+    for (const [platform, token] of Object.entries(tokens)) {
+      if (this.isTokenExpiring(token)) {
+        tokens[platform] = await this.refreshToken(platform, token);
+      }
+    }
+
+    return tokens;
+  }
+}
+```
+
+### 성공적인 플랫폼들의 구현 방식
+
+#### Supermetrics - 링크 기반 인증 공유
+
+Supermetrics Hub는 혁신적인 패턴을 도입했습니다: **공유 가능한 인증 링크**. 팀 멤버가 개인적으로 관리하지 않는 계정에 접근해야 할 때:
+
+1. 관리자가 Supermetrics Hub에서 인증 요청 생성
+2. 시스템이 시간 제한이 있는 익명 URL 생성
+3. 계정 소유자가 링크를 클릭하고 표준 OAuth로 인증
+4. 연결이 요청한 팀 멤버에게 제공됨
+
+#### Hootsuite - 조직 중심 모델
+
+Hootsuite의 아키텍처는 계정을 개인 소유가 아닌 조직 자산으로 취급합니다:
+
+- **조직 수준 소유권**으로 모든 연결된 계정 관리
+- **역할 기반 접근 제어**와 세분화된 권한
+- **자동 토큰 갱신**과 사전 재인증 알림
+- **SAML SSO 통합**으로 엔터프라이즈 인증
+- 에이전시를 위한 **대량 계정 관리**
+
+### 보안 및 규정 준수 고려사항
+
+#### 법적 프레임워크 요구사항
+
+GDPR, CCPA 및 플랫폼별 이용 약관은 제3자 계정 접근에 대한 명확한 사용자 승인을 요구합니다:
+
+```typescript
+// components/auth/consent-manager.tsx
+export function ConsentManager({ platforms }: { platforms: Platform[] }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>광고 계정 접근 권한</CardTitle>
+      </CardHeader>
+      <CardBody>
+        <div className="space-y-4">
+          {platforms.map((platform) => (
+            <div key={platform.id} className="flex items-start space-x-3">
+              <Checkbox id={platform.id} />
+              <label htmlFor={platform.id} className="text-sm">
+                <strong>{platform.name}</strong> 계정에 대한 다음 권한을 허용합니다:
+                <ul className="mt-2 ml-4 list-disc text-xs text-gray-600">
+                  <li>캠페인 데이터 읽기</li>
+                  <li>캠페인 상태 변경 (ON/OFF)</li>
+                  <li>성과 보고서 생성</li>
+                </ul>
+              </label>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 text-xs text-gray-500">
+          이 권한은 언제든지 설정에서 취소할 수 있습니다.
+        </div>
+      </CardBody>
+    </Card>
+  );
+}
+```
+
+### 실용적인 구현 권장사항
+
+#### 1. 플랫폼 네이티브 다중 계정 구조로 시작
+
+복잡한 인증 시스템을 구축하기 전에 네이티브 플랫폼 기능을 활용하세요:
+
+- **Google Ads**: 여러 광고주 관리를 위한 MCC 계정 설정
+- **Meta**: 시스템 사용자가 있는 Business Manager 생성
+- **TikTok**: 적절한 팀 구조로 Business Center 구축
+
+#### 2. 전략적 토큰 관리 구현
+
+최소한의 사용자 마찰을 위한 토큰 아키텍처 설계:
+
+```typescript
+// services/auth/token-manager.service.ts
+export class TokenManager {
+  async getAccessToken(platform: string, accountId: string) {
+    // 캐시 먼저 확인
+    const cached = await this.cache.get(`${platform}:${accountId}`);
+    if (cached && !this.isExpiring(cached)) return cached;
+
+    // 가능한 경우 갱신 시도
+    if (this.hasRefreshToken(platform, accountId)) {
+      return await this.refreshAccessToken(platform, accountId);
+    }
+
+    // 필요한 경우에만 재인증으로 폴백
+    return await this.requestNewAuthentication(platform, accountId);
+  }
+}
+```
+
+#### 3. 팀 협업 기능 구축
+
+자격 증명 노출 없이 계정 공유 활성화:
+
+- 관리자가 접근을 요청할 수 있는 **인증 요청 워크플로**
+- 누가 무엇에 접근할 수 있는지 보여주는 **위임된 접근 대시보드**
+- 자동 만료가 있는 **시간 제한 접근 권한**
+- 사용자를 대신하여 수행된 작업을 추적하는 **활동 모니터링**
+
+---
+
 ## Project 정책
 
 목표: 신규 사용자가 서비스에 가입하고, 광고 플랫폼 계정을 처음 연동하여 대시보드에서 데이터를 확인.

@@ -1,6 +1,6 @@
 import type { OAuthConfig } from "@/types/oauth";
 
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import {
   handleUnifiedOAuthCallback,
@@ -12,6 +12,20 @@ import { OAuthManager } from "@/lib/oauth/oauth-manager";
 import log from "@/utils/logger";
 
 export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+  const state = searchParams.get("state");
+  const error = searchParams.get("error");
+
+  // Check for OAuth errors first
+  if (error) {
+    log.error("Google Ads OAuth error:", { error });
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+    return NextResponse.redirect(
+      `${baseUrl}/integrated?error=oauth_denied&platform=google`,
+    );
+  }
+
   // First, let the unified handler process the OAuth callback
   const response = await handleUnifiedOAuthCallback(request, {
     platform: "google",
@@ -30,17 +44,16 @@ export async function GET(request: NextRequest) {
     },
   });
 
-  // If OAuth was successful, we need to fetch Google Ads accounts
-  const url = new URL(response.url);
+  // Check if OAuth was successful by looking at the response headers
+  const location = response.headers.get("location");
 
-  if (url.searchParams.get("success") === "oauth_connected") {
+  if (location && location.includes("success=oauth_connected")) {
     try {
       // Parse the state to get user and team info
-      const state = request.nextUrl.searchParams.get("state");
-
       if (!state) return response;
 
-      const stateData = JSON.parse(Buffer.from(state, "base64").toString());
+      // State parameter comes as URL-encoded JSON, not base64
+      const stateData = JSON.parse(decodeURIComponent(state));
       const { userId, teamId } = stateData;
 
       // Get the OAuth config with credentials

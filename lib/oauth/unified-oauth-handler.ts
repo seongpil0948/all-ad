@@ -143,7 +143,8 @@ export async function handleUnifiedOAuthCallback(
     let userId: string;
 
     try {
-      const stateData = JSON.parse(Buffer.from(state, "base64").toString());
+      // State parameter comes as URL-encoded JSON, not base64
+      const stateData = JSON.parse(decodeURIComponent(state));
 
       teamId = stateData.teamId;
       userId = stateData.userId;

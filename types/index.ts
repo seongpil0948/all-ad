@@ -23,7 +23,8 @@ export * from "./dashboard";
 
 // Re-export google ads types (excluding conflicting types)
 export type {
-  GoogleAdsApiCredentials,
+  GoogleAdsCredentials,
+  GoogleAdsCredentials as GoogleAdsApiCredentials,
   GoogleAdsAccount,
   GoogleAdsCampaign,
   GoogleAdsMetrics,

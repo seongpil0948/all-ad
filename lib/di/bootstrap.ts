@@ -20,7 +20,7 @@ import { GoogleAdsSyncService } from "@/services/google-ads/sync/sync-strategy.s
 import { GoogleAdsIntegrationService } from "@/services/google-ads/google-ads-integration.service";
 import { getRedisClient } from "@/lib/redis";
 import { createClient as createSupabaseClient } from "@/utils/supabase/server";
-import { GoogleAdsApiCredentials } from "@/types/google-ads.types";
+import { GoogleAdsCredentials } from "@/types/google-ads.types";
 import log from "@/utils/logger";
 
 // 서비스 등록 함수
@@ -154,7 +154,7 @@ export async function bootstrapDI() {
   // Google Ads Services
   container.register(ServiceTokens.GOOGLE_ADS_CLIENT, () => {
     // 이 서비스는 credentials가 필요하므로 팩토리 패턴 사용
-    return (credentials: GoogleAdsApiCredentials) =>
+    return (credentials: GoogleAdsCredentials) =>
       new GoogleAdsClient(credentials);
   });
 
@@ -180,7 +180,7 @@ export async function bootstrapDI() {
     ServiceTokens.GOOGLE_ADS_INTEGRATION_SERVICE,
     () => {
       // GoogleAdsIntegrationService requires credentials
-      return (credentials: GoogleAdsApiCredentials) =>
+      return (credentials: GoogleAdsCredentials) =>
         new GoogleAdsIntegrationService(credentials);
     },
   );

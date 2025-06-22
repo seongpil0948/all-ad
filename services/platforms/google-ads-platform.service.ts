@@ -1,10 +1,16 @@
-import type { Campaign, CampaignMetrics, PlatformType } from "@/types";
+import type {
+  Campaign,
+  CampaignMetrics,
+  PlatformType,
+  CampaignStatus,
+} from "@/types";
 import type { GoogleAdsCredentials } from "@/types/credentials.types";
 
 import { PlatformService } from "./platform-service.interface";
 
 import { GoogleAdsClient } from "@/services/google-ads/core/google-ads-client";
 import { CampaignControlService } from "@/services/google-ads/campaign/campaign-control.service";
+import { GoogleMCCAuthService } from "@/services/platforms/google/auth/mcc-auth.service";
 import log from "@/utils/logger";
 
 export class GoogleAdsPlatformService implements PlatformService {
@@ -12,6 +18,8 @@ export class GoogleAdsPlatformService implements PlatformService {
   private credentials: GoogleAdsCredentials | null = null;
   private googleAdsClient: GoogleAdsClient | null = null;
   private campaignService: CampaignControlService | null = null;
+  private mccAuthService: GoogleMCCAuthService | null = null;
+  private isMultiAccountMode: boolean = false;
 
   setCredentials(credentials: Record<string, unknown>): void {
     this.credentials = credentials as unknown as GoogleAdsCredentials;
@@ -39,6 +47,32 @@ export class GoogleAdsPlatformService implements PlatformService {
     this.campaignService = new CampaignControlService(this.googleAdsClient);
   }
 
+  async setMultiAccountCredentials(
+    credentials: Record<string, unknown>,
+  ): Promise<void> {
+    this.credentials = credentials as unknown as GoogleAdsCredentials;
+    this.isMultiAccountMode = true;
+
+    // MCC 계정인 경우
+    if (credentials.is_mcc) {
+      this.mccAuthService = new GoogleMCCAuthService();
+
+      await this.mccAuthService.authenticateMCC({
+        developerToken: this.credentials.developerToken,
+        refreshToken: this.credentials.refreshToken,
+        loginCustomerId:
+          this.credentials.loginCustomerId || this.credentials.customerId,
+      });
+
+      log.info("Google Ads MCC 모드로 초기화됨", {
+        mccAccountId: this.credentials.loginCustomerId,
+      });
+    } else {
+      // 일반 계정이지만 multi-account 플래그가 있는 경우
+      this.setCredentials(credentials);
+    }
+  }
+
   async validateCredentials(): Promise<boolean> {
     if (!this.credentials || !this.googleAdsClient) {
       return false;
@@ -59,6 +93,61 @@ export class GoogleAdsPlatformService implements PlatformService {
   }
 
   async fetchCampaigns(): Promise<Campaign[]> {
+    if (this.isMultiAccountMode && this.mccAuthService) {
+      // MCC 모드: 모든 클라이언트 계정의 캠페인 조회
+      try {
+        const clientAccounts = await this.mccAuthService.listClientAccounts();
+        const allCampaigns: Campaign[] = [];
+
+        for (const account of clientAccounts) {
+          if (!account.customer_client) continue;
+
+          const clientId = String(account.customer_client.id);
+          const clientName = account.customer_client.descriptive_name || "";
+          const campaigns =
+            await this.mccAuthService.getClientCampaigns(clientId);
+
+          // Google Ads 캠페인을 공통 Campaign 타입으로 변환
+          const mappedCampaigns = campaigns.map((campaign: any) => ({
+            id: campaign.id,
+            teamId: clientId,
+            platformCampaignId: campaign.id,
+            name: campaign.name,
+            platform: "google" as PlatformType,
+            status: (campaign.status === "ENABLED"
+              ? "active"
+              : "paused") as CampaignStatus,
+            isActive: campaign.status === "ENABLED",
+            budget: campaign.budget?.amount_micros
+              ? campaign.budget.amount_micros / 1000000
+              : 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            accountName: clientName,
+            metrics: campaign.metrics
+              ? {
+                  impressions: campaign.metrics.impressions,
+                  clicks: campaign.metrics.clicks,
+                  cost: campaign.metrics.cost_micros / 1000000,
+                  conversions: campaign.metrics.conversions,
+                  ctr: campaign.metrics.ctr,
+                  cpc: campaign.metrics.average_cpc / 1000000,
+                  cpm: campaign.metrics.average_cpm / 1000,
+                }
+              : undefined,
+          }));
+
+          allCampaigns.push(...mappedCampaigns);
+        }
+
+        return allCampaigns;
+      } catch (error) {
+        log.error("Failed to fetch campaigns via MCC", error as Error);
+        throw error;
+      }
+    }
+
+    // 일반 모드: 단일 계정 캠페인 조회
     if (!this.campaignService || !this.credentials) {
       throw new Error("Google Ads service not initialized");
     }
@@ -78,21 +167,24 @@ export class GoogleAdsPlatformService implements PlatformService {
         platform: "google" as PlatformType,
         status: campaign.status === "ENABLED" ? "active" : "paused",
         isActive: campaign.status === "ENABLED",
-        budget: campaign.budgetAmountMicros / 1000000, // micros to currency
+        budget: campaign.budgetAmountMicros
+          ? campaign.budgetAmountMicros / 1000000
+          : 0, // micros to currency
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         // 메트릭 데이터 포함
-        metrics: campaign.metrics
-          ? {
-              impressions: campaign.metrics.impressions,
-              clicks: campaign.metrics.clicks,
-              cost: campaign.metrics.costMicros / 1000000,
-              conversions: campaign.metrics.conversions,
-              ctr: campaign.metrics.ctr,
-              cpc: campaign.metrics.averageCpc / 1000000,
-              cpm: campaign.metrics.averageCpm / 1000,
-            }
-          : undefined,
+        metrics:
+          campaign.impressions !== undefined
+            ? {
+                impressions: campaign.impressions,
+                clicks: campaign.clicks || 0,
+                cost: (campaign.costMicros || 0) / 1000000,
+                conversions: 0,
+                ctr: 0,
+                cpc: 0,
+                cpm: 0,
+              }
+            : undefined,
       }));
     } catch (error) {
       log.error("Failed to fetch Google Ads campaigns", error as Error);
@@ -118,19 +210,21 @@ export class GoogleAdsPlatformService implements PlatformService {
       );
 
       // Google Ads 메트릭을 공통 CampaignMetrics 타입으로 변환
-      return metrics.map((metric) => ({
+      return metrics.map((metric, index) => ({
         campaignId,
-        date: metric.date || new Date().toISOString(),
+        date: new Date(
+          startDate.getTime() + index * 24 * 60 * 60 * 1000,
+        ).toISOString(),
         impressions: metric.impressions,
         clicks: metric.clicks,
         cost: metric.costMicros / 1000000,
-        conversions: metric.conversions,
-        revenue: metric.conversionValue,
-        ctr: metric.ctr,
-        cpc: metric.averageCpc / 1000000,
-        cpm: metric.averageCpm / 1000,
+        conversions: metric.conversions || 0,
+        revenue: metric.conversionValue || 0,
+        ctr: metric.ctr || 0,
+        cpc: metric.averageCpc ? metric.averageCpc / 1000000 : 0,
+        cpm: metric.averageCpm ? metric.averageCpm / 1000 : 0,
         roas:
-          metric.conversionValue > 0
+          metric.conversionValue && metric.costMicros > 0
             ? metric.conversionValue / (metric.costMicros / 1000000)
             : 0,
       }));
@@ -143,7 +237,47 @@ export class GoogleAdsPlatformService implements PlatformService {
   async updateCampaignBudget(
     campaignId: string,
     budget: number,
+    clientAccountId?: string,
   ): Promise<boolean> {
+    if (this.isMultiAccountMode && this.mccAuthService && clientAccountId) {
+      // MCC 모드: 클라이언트 계정을 통해 업데이트
+      try {
+        const customer =
+          await this.mccAuthService.accessClientAccount(clientAccountId);
+        const budgetMicros = Math.round(budget * 1000000);
+
+        // MCC를 통해 클라이언트 계정의 캠페인 예산 업데이트
+        const mutation = {
+          entity: "campaign" as any,
+          operation: "update" as const,
+          resource: {
+            resource_name: `customers/${clientAccountId}/campaigns/${campaignId}`,
+            budget: {
+              amount_micros: budgetMicros,
+            },
+          },
+          update_mask: {
+            paths: ["budget.amount_micros"],
+          },
+        };
+
+        await customer.mutateResources([mutation]);
+
+        log.info("MCC를 통한 캠페인 예산 업데이트 성공", {
+          clientAccountId,
+          campaignId,
+          budget,
+        });
+
+        return true;
+      } catch (error) {
+        log.error("MCC를 통한 캠페인 예산 업데이트 실패", error as Error);
+
+        return false;
+      }
+    }
+
+    // 일반 모드: 직접 업데이트
     if (!this.campaignService || !this.credentials) {
       throw new Error("Google Ads service not initialized");
     }

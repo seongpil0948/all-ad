@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+
 import { createClient } from "@/utils/supabase/server";
 import { storePlatformOAuthCredentials } from "@/lib/auth/oauth-client-handler";
 import { PlatformType } from "@/types";
@@ -8,7 +9,8 @@ import log from "@/utils/logger";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { platform, clientId, clientSecret, developerToken, redirectUri } = body;
+    const { platform, clientId, clientSecret, developerToken, redirectUri } =
+      body;
 
     if (!platform || !clientId || !clientSecret) {
       return NextResponse.json(

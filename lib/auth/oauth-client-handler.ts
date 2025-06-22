@@ -36,12 +36,14 @@ export async function storePlatformOAuthCredentials(
 
     if (error) {
       log.error("Failed to store OAuth credentials", { platform, error });
+
       return { success: false, error: error.message };
     }
 
     return { success: true };
   } catch (error) {
     log.error("Error storing OAuth credentials", { platform, error });
+
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
@@ -71,7 +73,7 @@ export async function getPlatformOAuthCredentials(
     }
 
     const creds = data.credentials as any;
-    
+
     return {
       clientId: creds.client_id,
       clientSecret: creds.client_secret,
@@ -80,6 +82,7 @@ export async function getPlatformOAuthCredentials(
     };
   } catch (error) {
     log.error("Error getting OAuth credentials", { platform, error });
+
     return null;
   }
 }
@@ -122,12 +125,14 @@ export async function updatePlatformOAuthConnection(
 
     if (error) {
       log.error("Failed to update OAuth connection", { platform, error });
+
       return { success: false, error: error.message };
     }
 
     return { success: true };
   } catch (error) {
     log.error("Error updating OAuth connection", { platform, error });
+
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",

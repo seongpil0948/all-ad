@@ -187,7 +187,7 @@ export default defineConfig([
   },
   // TypeScript-specific configuration
   {
-    files: ["**/*.ts", "**/*.tsx"],
+    files: ["**/*.ts", "**/*.tsx", "**/*.d.ts"],
     ignores: ["supabase/functions/**/*.ts"],
     languageOptions: {
       parser: tsParser,

@@ -294,3 +294,9 @@ export async function getTeamCredentials() {
 
   return await dbService.getTeamCredentials(team.id);
 }
+
+export async function refreshCredentials() {
+  revalidatePath("/settings");
+  revalidatePath("/dashboard");
+  revalidatePath("/integrated");
+}

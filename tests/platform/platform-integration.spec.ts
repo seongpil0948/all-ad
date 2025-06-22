@@ -50,6 +50,12 @@ test.describe("Platform Integration", () => {
       await expect(page.getByLabel("Client Secret")).toBeVisible();
       await expect(page.getByLabel("Developer Token")).toBeVisible();
 
+      // MCC 계정 옵션 확인 (새로운 기능)
+      const mccCheckbox = page.getByRole("checkbox", { name: /MCC/i });
+      if (await mccCheckbox.isVisible()) {
+        await expect(page.getByText(/최대 85,000개 계정/i)).toBeVisible();
+      }
+
       // 리디렉션 URI 표시 확인
       await expect(page.getByText(/redirect_uri/i)).toBeVisible();
 
@@ -78,6 +84,16 @@ test.describe("Platform Integration", () => {
       // 필수 입력 필드 확인
       await expect(page.getByLabel("App ID")).toBeVisible();
       await expect(page.getByLabel("App Secret")).toBeVisible();
+
+      // System User 옵션 확인 (새로운 기능)
+      const systemUserCheckbox = page.getByRole("checkbox", {
+        name: /System User/i,
+      });
+      if (await systemUserCheckbox.isVisible()) {
+        await systemUserCheckbox.check();
+        await expect(page.getByLabel(/System.*Token/i)).toBeVisible();
+        await expect(page.getByText(/영구 토큰/i)).toBeVisible();
+      }
 
       // 수동 토큰 입력 옵션 확인
       const manualTokenCheckbox = page.getByRole("checkbox", {

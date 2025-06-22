@@ -162,9 +162,16 @@ export class TokenRefreshService {
 
       // Get client credentials from stored data
       const storedCreds = credential.credentials;
-      if (!storedCreds || !storedCreds.client_id || !storedCreds.client_secret) {
+
+      if (
+        !storedCreds ||
+        !storedCreds.client_id ||
+        !storedCreds.client_secret
+      ) {
         const error = "Client credentials not found";
+
         await markCredentialFailed(credential.id, error);
+
         return { success: false, error };
       }
 

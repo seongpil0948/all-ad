@@ -14,7 +14,7 @@ import {
 } from "@heroui/modal";
 import { useDisclosure } from "@heroui/modal";
 import { useAsyncList } from "@react-stately/data";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaSync, FaExclamationTriangle } from "react-icons/fa";
 
 import { PlatformCredentialForm } from "./PlatformCredentialForm";
 import { CoupangManualCampaignManager } from "./coupang/CoupangManualCampaignManager";
@@ -77,6 +77,10 @@ export function MultiAccountPlatformManager({
   const [hasMoreItems, setHasMoreItems] = useState<
     Record<PlatformType, boolean>
   >({} as Record<PlatformType, boolean>);
+  const [tokenStatus, setTokenStatus] = useState<
+    Record<string, "valid" | "invalid" | "checking">
+  >({});
+  const [reAuthLoading, setReAuthLoading] = useState<Set<string>>(new Set());
 
   // Create async list for a platform
   const createPlatformList = (platform: PlatformType) => {
@@ -113,7 +117,42 @@ export function MultiAccountPlatformManager({
   // Reload lists when credentials change
   useEffect(() => {
     Object.values(platformLists).forEach((list) => list.reload());
+    checkTokensStatus();
   }, [credentials.length]);
+
+  // Check token status for OAuth platforms
+  const checkTokensStatus = async () => {
+    for (const credential of credentials) {
+      if (
+        (credential.platform === "google" ||
+          credential.platform === "facebook" ||
+          credential.platform === "kakao") &&
+        credential.is_active
+      ) {
+        setTokenStatus((prev) => ({
+          ...prev,
+          [credential.id]: "checking",
+        }));
+
+        try {
+          const response = await fetch(
+            `/api/auth/refresh?platform=${credential.platform}&accountId=${credential.account_id}`,
+          );
+          const result = await response.json();
+
+          setTokenStatus((prev) => ({
+            ...prev,
+            [credential.id]: result.success ? "valid" : "invalid",
+          }));
+        } catch (error) {
+          setTokenStatus((prev) => ({
+            ...prev,
+            [credential.id]: "invalid",
+          }));
+        }
+      }
+    }
+  };
 
   const handleAddAccount = (platform: PlatformType) => {
     setSelectedPlatform(platform);
@@ -150,6 +189,31 @@ export function MultiAccountPlatformManager({
     window.location.href = authUrl;
   };
 
+  const handleReAuthenticate = async (credential: PlatformCredential) => {
+    setReAuthLoading((prev) => new Set([...prev, credential.id]));
+
+    try {
+      if (!credential.credentials) {
+        throw new Error("Credential data not found");
+      }
+
+      const credentialData = credential.credentials as any;
+      const credentialValues: CredentialValues = {
+        client_id: credentialData.client_id,
+        client_secret: credentialData.client_secret,
+        account_id: credential.account_id || undefined,
+      };
+
+      await handleOAuthConnect(
+        credential.platform as PlatformType,
+        credentialValues,
+      );
+    } catch (error) {
+      console.error("Re-authentication failed:", error);
+      // Keep the loading state until page reload from OAuth
+    }
+  };
+
   const handleSave = async (credentials: CredentialValues) => {
     if (!selectedPlatform) return;
 
@@ -157,23 +221,23 @@ export function MultiAccountPlatformManager({
     try {
       const platformInfo = platformConfig[selectedPlatform];
 
+      // Ensure is_active is set to true for new credentials
+      const credentialsWithActiveStatus = {
+        ...credentials,
+        is_active: true,
+      };
+
       if (
         (selectedPlatform === "facebook" ||
           selectedPlatform === "google" ||
           selectedPlatform === "kakao") &&
         platformInfo.supportsOAuth
       ) {
-        await handleOAuthConnect(selectedPlatform, credentials);
+        await handleOAuthConnect(selectedPlatform, credentialsWithActiveStatus);
       } else {
-        await onSave(selectedPlatform, credentials);
+        await onSave(selectedPlatform, credentialsWithActiveStatus);
+        onOpenChange();
       }
-
-      onOpenChange();
-      if (selectedPlatform === "facebook" || selectedPlatform === "google") {
-        return;
-      }
-      await onSave(selectedPlatform, credentials);
-      onOpenChange();
     } finally {
       setIsLoading(false);
     }
@@ -196,18 +260,44 @@ export function MultiAccountPlatformManager({
 
   // Render cell content
   const renderCell = (item: PlatformCredential, columnKey: string) => {
+    const isOAuthPlatform =
+      item.platform === "google" ||
+      item.platform === "facebook" ||
+      item.platform === "kakao";
+    const currentTokenStatus = tokenStatus[item.id];
+    const isReAuthLoading = reAuthLoading.has(item.id);
+
     switch (columnKey) {
       case "name":
-        return <span>{item.account_name || "이름 없음"}</span>;
+        return (
+          <div className="flex items-center gap-2">
+            <span>{item.account_name || "이름 없음"}</span>
+            {isOAuthPlatform && currentTokenStatus === "invalid" && (
+              <Chip
+                color="warning"
+                size="sm"
+                startContent={<FaExclamationTriangle size={12} />}
+                variant="flat"
+              >
+                토큰 만료
+              </Chip>
+            )}
+          </div>
+        );
       case "accountId":
         return <span className="text-small">{item.account_id || "-"}</span>;
       case "status":
         return (
-          <Switch
-            isSelected={item.is_active || false}
-            size="sm"
-            onValueChange={(isActive) => onToggle(item.id, isActive)}
-          />
+          <div className="flex items-center gap-2">
+            <Switch
+              isSelected={item.is_active || false}
+              size="sm"
+              onValueChange={(isActive) => onToggle(item.id, isActive)}
+            />
+            {isOAuthPlatform && currentTokenStatus === "checking" && (
+              <span className="text-tiny text-default-400">확인 중...</span>
+            )}
+          </div>
         );
       case "lastSync":
         return (
@@ -217,19 +307,34 @@ export function MultiAccountPlatformManager({
               : "동기화 전"}
           </span>
         );
-      case "actions":
+      case "actions": {
+        const actions = [
+          {
+            label: "삭제",
+            color: "danger" as const,
+            variant: "light" as const,
+            onPress: () => onDelete(item.id),
+          },
+        ];
+
         return (
-          <TableActions
-            actions={[
-              {
-                label: "삭제",
-                color: "danger",
-                variant: "light",
-                onPress: () => onDelete(item.id),
-              },
-            ]}
-          />
+          <div className="flex items-center gap-2">
+            <TableActions actions={actions} />
+            {isOAuthPlatform && currentTokenStatus === "invalid" && (
+              <Button
+                color="warning"
+                isLoading={isReAuthLoading}
+                size="sm"
+                startContent={<FaSync size={12} />}
+                variant="flat"
+                onPress={() => handleReAuthenticate(item)}
+              >
+                재연동
+              </Button>
+            )}
+          </div>
         );
+      }
       default:
         return null;
     }
