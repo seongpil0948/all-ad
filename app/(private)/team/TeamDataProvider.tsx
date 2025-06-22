@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import { useShallow } from "zustand/shallow";
 
 import { DataProvider } from "@/components/common";
 import { useTeamStore } from "@/stores";
@@ -25,7 +26,9 @@ export function TeamDataProvider({
   initialTeamMembers,
   children,
 }: TeamDataProviderProps) {
-  const setInitialData = useTeamStore((state) => state.setInitialData);
+  const setInitialData = useTeamStore(
+    useShallow((state) => state.setInitialData),
+  );
 
   const handleDataMount = useCallback(
     (data: TeamData) => {

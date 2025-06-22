@@ -1,10 +1,16 @@
 "use client";
 
+import { useShallow } from "zustand/shallow";
+
 import { useAuthStore } from "@/stores/useAuthStore";
 
 export function useAuth() {
-  const user = useAuthStore((state) => state.user);
-  const isLoading = useAuthStore((state) => state.isLoading);
+  const { user, isLoading } = useAuthStore(
+    useShallow((state) => ({
+      user: state.user,
+      isLoading: state.isLoading,
+    })),
+  );
 
   return {
     user,

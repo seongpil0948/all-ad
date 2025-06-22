@@ -140,7 +140,7 @@ export const createCampaignActionsSlice: StateCreator<
 
       // Update local state
       const updatedCampaigns = get().campaigns.map((c) =>
-        c.id === campaignId ? { ...c, is_active: isActive } : c,
+        c.id === campaignId ? { ...c, isActive } : c,
       );
 
       set({

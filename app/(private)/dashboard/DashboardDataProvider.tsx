@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback } from "react";
+import { useEffect, useRef } from "react";
+import { useShallow } from "zustand/shallow";
 
-import { DataProvider } from "@/components/common";
 import { useCampaignStore } from "@/stores";
 import { Campaign as AppCampaign, CampaignStats } from "@/types/campaign.types";
 
@@ -12,33 +12,31 @@ interface DashboardDataProviderProps {
   children: React.ReactNode;
 }
 
-interface DashboardData {
-  campaigns: AppCampaign[];
-  stats: CampaignStats;
-}
-
 export function DashboardDataProvider({
   initialCampaigns,
   initialStats,
   children,
 }: DashboardDataProviderProps) {
-  const setCampaigns = useCampaignStore((state) => state.setCampaigns);
-  const setStats = useCampaignStore((state) => state.setStats);
+  const isInitialized = useRef(false);
 
-  const handleDataMount = useCallback(
-    (data: DashboardData) => {
-      setCampaigns(data.campaigns);
-      setStats(data.stats);
-    },
-    [setCampaigns, setStats],
+  // Use useShallow to prevent unnecessary re-renders
+  const { setCampaigns, setStats, setLastSync } = useCampaignStore(
+    useShallow((state) => ({
+      setCampaigns: state.setCampaigns,
+      setStats: state.setStats,
+      setLastSync: state.setLastSync,
+    })),
   );
 
-  return (
-    <DataProvider
-      initialData={{ campaigns: initialCampaigns, stats: initialStats }}
-      onMount={handleDataMount}
-    >
-      {children}
-    </DataProvider>
-  );
+  // Initialize store only once on mount
+  useEffect(() => {
+    if (!isInitialized.current) {
+      setCampaigns(initialCampaigns);
+      setStats(initialStats);
+      setLastSync(new Date());
+      isInitialized.current = true;
+    }
+  }, []); // Empty dependency array - run only once
+
+  return <>{children}</>;
 }

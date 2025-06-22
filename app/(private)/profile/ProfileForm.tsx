@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useCallback, memo } from "react";
 import { Button } from "@heroui/button";
 import { Divider } from "@heroui/divider";
 import { Input } from "@heroui/input";
@@ -21,7 +21,7 @@ interface ProfileFormProps {
   ) => Promise<{ success: boolean; message: string }>;
 }
 
-function SubmitButton() {
+const SubmitButton = memo(() => {
   const { pending } = useFormStatus();
 
   return (
@@ -29,7 +29,9 @@ function SubmitButton() {
       저장
     </Button>
   );
-}
+});
+
+SubmitButton.displayName = "SubmitButton";
 
 export function ProfileForm({
   user,
@@ -46,30 +48,36 @@ export function ProfileForm({
     email: profile?.email || user.email || "",
   });
 
-  const handleSubmit = async (formData: FormData) => {
-    setMessage(null);
-    const result = await updateProfileAction(formData);
+  const handleSubmit = useCallback(
+    async (formData: FormData) => {
+      setMessage(null);
+      const result = await updateProfileAction(formData);
 
-    setMessage({
-      type: result.success ? "success" : "error",
-      text: result.message,
-    });
-  };
+      setMessage({
+        type: result.success ? "success" : "error",
+        text: result.message,
+      });
+    },
+    [updateProfileAction],
+  );
 
-  const handleAvatarUpload = async (url: string) => {
-    startTransition(async () => {
-      const result = await updateAvatarAction(url);
+  const handleAvatarUpload = useCallback(
+    async (url: string) => {
+      startTransition(async () => {
+        const result = await updateAvatarAction(url);
 
-      if (!result.success) {
-        setMessage({
-          type: "error",
-          text: "아바타 업데이트 중 오류가 발생했습니다.",
-        });
-      }
-    });
-  };
+        if (!result.success) {
+          setMessage({
+            type: "error",
+            text: "아바타 업데이트 중 오류가 발생했습니다.",
+          });
+        }
+      });
+    },
+    [startTransition],
+  );
 
-  const handleAvatarDelete = async () => {
+  const handleAvatarDelete = useCallback(async () => {
     startTransition(async () => {
       const result = await updateAvatarAction(null);
 
@@ -80,7 +88,14 @@ export function ProfileForm({
         });
       }
     });
-  };
+  }, [startTransition]);
+
+  const handleNameChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setFormData((prev) => ({ ...prev, full_name: e.target.value }));
+    },
+    [],
+  );
 
   return (
     <>
@@ -107,9 +122,7 @@ export function ProfileForm({
             name="full_name"
             placeholder="이름을 입력하세요"
             value={formData.full_name}
-            onChange={(e) =>
-              setFormData({ ...formData, full_name: e.target.value })
-            }
+            onChange={handleNameChange}
           />
 
           <Input

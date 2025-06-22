@@ -7,6 +7,8 @@ import { PlatformType } from "@/types";
 export interface CampaignFilters {
   platform?: PlatformType;
   status?: string;
+  search?: string;
+  isActive?: boolean;
   dateRange?: {
     start: Date;
     end: Date;

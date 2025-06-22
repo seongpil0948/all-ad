@@ -1,15 +1,20 @@
 "use client";
 
 import { useEffect } from "react";
+import { useShallow } from "zustand/shallow";
 
 import { useAuthStore } from "@/stores/useAuthStore";
 import { createClient } from "@/utils/supabase/client";
 import log from "@/utils/logger";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const setUser = useAuthStore((state) => state.setUser);
-  const setIsLoading = useAuthStore((state) => state.setIsLoading);
-  const setIsInitialized = useAuthStore((state) => state.setIsInitialized);
+  const { setUser, setIsLoading, setIsInitialized } = useAuthStore(
+    useShallow((state) => ({
+      setUser: state.setUser,
+      setIsLoading: state.setIsLoading,
+      setIsInitialized: state.setIsInitialized,
+    })),
+  );
 
   useEffect(() => {
     const supabase = createClient();

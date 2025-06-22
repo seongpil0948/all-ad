@@ -14,6 +14,7 @@ import { Skeleton } from "@heroui/skeleton";
 import { link as linkStyles } from "@heroui/theme";
 import NextLink from "next/link";
 import clsx from "clsx";
+import { useShallow } from "zustand/shallow";
 
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
@@ -21,9 +22,13 @@ import { UserDropdown } from "@/components/user-dropdown";
 import { useAuthStore } from "@/stores/useAuthStore";
 
 export const Navbar = () => {
-  const user = useAuthStore((state) => state.user);
-  const isLoading = useAuthStore((state) => state.isLoading);
-  const isInitialized = useAuthStore((state) => state.isInitialized);
+  const { user, isLoading, isInitialized } = useAuthStore(
+    useShallow((state) => ({
+      user: state.user,
+      isLoading: state.isLoading,
+      isInitialized: state.isInitialized,
+    })),
+  );
 
   const UserOrLogin = () =>
     !isInitialized || isLoading ? (

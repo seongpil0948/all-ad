@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useMemo } from "react";
 import { Button } from "@heroui/button";
 import { Tooltip } from "@heroui/tooltip";
 import { FaSync } from "react-icons/fa";
 import { addToast } from "@heroui/toast";
+import { useShallow } from "zustand/shallow";
 
 import { usePlatformStore } from "@/stores";
 import log from "@/utils/logger";
@@ -30,15 +31,28 @@ export function SyncButton({
   showLabel = true,
   className,
 }: SyncButtonProps) {
-  const { credentials, syncAllPlatforms, syncProgress } = usePlatformStore();
-  const [isLoading, setIsLoading] = useState(false);
+  // Use useShallow to optimize re-renders
+  const { credentials, syncAllPlatforms, syncProgress, isLoading } =
+    usePlatformStore(
+      useShallow((state) => ({
+        credentials: state.credentials,
+        syncAllPlatforms: state.syncAllPlatforms,
+        syncProgress: state.syncProgress,
+        isLoading: state.isLoading,
+      })),
+    );
 
-  const activeCredentials = credentials.filter((c) => c.is_active);
-  const isSyncing = Object.values(syncProgress).some(
-    (progress) => progress > 0,
+  const activeCredentials = useMemo(
+    () => credentials.filter((c) => c.is_active),
+    [credentials],
   );
 
-  const handleSync = async () => {
+  const isSyncing = useMemo(
+    () => Object.values(syncProgress).some((progress) => progress > 0),
+    [syncProgress],
+  );
+
+  const handleSync = useCallback(async () => {
     if (activeCredentials.length === 0) {
       addToast({
         title: "오류",
@@ -50,7 +64,6 @@ export function SyncButton({
       return;
     }
 
-    setIsLoading(true);
     try {
       await syncAllPlatforms();
       addToast({
@@ -65,18 +78,16 @@ export function SyncButton({
         description: "동기화 중 오류가 발생했습니다",
         color: "danger",
       });
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [activeCredentials.length, syncAllPlatforms]);
 
-  const syncProgressText = () => {
+  const syncProgressText = useMemo(() => {
     const progressValues = Object.entries(syncProgress)
       .filter(([_, progress]) => progress > 0)
       .map(([platform, progress]) => `${platform}: ${progress}%`);
 
     return progressValues.length > 0 ? progressValues.join(", ") : "";
-  };
+  }, [syncProgress]);
 
   const buttonContent = (
     <Button
@@ -93,9 +104,9 @@ export function SyncButton({
     </Button>
   );
 
-  if (isSyncing && syncProgressText()) {
+  if (isSyncing && syncProgressText) {
     return (
-      <Tooltip content={syncProgressText()} placement="bottom">
+      <Tooltip content={syncProgressText} placement="bottom">
         {buttonContent}
       </Tooltip>
     );

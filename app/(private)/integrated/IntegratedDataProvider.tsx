@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { User } from "@supabase/supabase-js";
+import { useShallow } from "zustand/shallow";
 
 import {
   useCampaignStore,
@@ -41,9 +42,18 @@ export function IntegratedDataProvider({
   children,
   initialData,
 }: IntegratedDataProviderProps) {
-  const { setCampaigns, setStats } = useCampaignStore();
-  const { setCredentials } = usePlatformStore();
-  const { setInitialData } = useTeamStore();
+  const { setCampaigns, setStats } = useCampaignStore(
+    useShallow((state) => ({
+      setCampaigns: state.setCampaigns,
+      setStats: state.setStats,
+    })),
+  );
+  const setCredentials = usePlatformStore(
+    useShallow((state) => state.setCredentials),
+  );
+  const setInitialData = useTeamStore(
+    useShallow((state) => state.setInitialData),
+  );
 
   useEffect(() => {
     // Set initial data to stores (user data is already handled by auth context)

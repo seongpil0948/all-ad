@@ -117,6 +117,8 @@ all-ad/
 │   │   ├── MessageCard.tsx      # 메시지 표시 컴포넌트
 │   │   ├── MetricCard.tsx
 │   │   ├── PageHeader.tsx
+│   │   ├── InfiniteScrollTable.tsx  # 무한 스크롤 테이블
+│   │   ├── VirtualScrollTable.tsx   # 가상 스크롤 테이블 ✅ NEW (@tanstack/react-virtual)
 │   │   └── index.ts
 │   ├── dashboard/                # 대시보드 컴포넌트
 │   │   ├── CampaignDashboard.tsx
@@ -529,7 +531,16 @@ all-ad/
 
 ## 주요 리팩토링 내용 (2025-01-13)
 
-### 1. Coupang 수동 관리 시스템 구현
+### 1. VirtualScrollTable 컴포넌트 추가
+
+- **새로운 가상 스크롤 테이블 구현**:
+  - `/components/common/VirtualScrollTable.tsx` - @tanstack/react-virtual 기반
+  - 대용량 데이터셋에 최적화된 성능
+  - InfiniteScrollTable과 동일한 props 인터페이스로 쉬운 마이그레이션
+  - 메모이제이션과 가상화를 통한 렌더링 최적화
+  - TypeScript 타입 안전성 보장
+
+### 2. Coupang 수동 관리 시스템 구현
 
 - **데이터베이스 스키마**:
 

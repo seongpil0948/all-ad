@@ -13,12 +13,17 @@ import {
   createPlatformActionsSlice,
   PlatformActionsSlice,
 } from "./slices/platformActionsSlice";
+import {
+  createPlatformFilterSlice,
+  PlatformFilterSlice,
+} from "./slices/platformFilterSlice";
 
 // Combined store type
 export type PlatformStoreState = LoadingSlice &
   ErrorSlice &
   PlatformDataSlice &
-  PlatformActionsSlice;
+  PlatformActionsSlice &
+  PlatformFilterSlice;
 
 // Create the store
 export const usePlatformStore = create<PlatformStoreState>()(
@@ -30,6 +35,7 @@ export const usePlatformStore = create<PlatformStoreState>()(
         ...createErrorSlice(set, get, api),
         ...createPlatformDataSlice(set, get, api),
         ...createPlatformActionsSlice(set, get, api),
+        ...createPlatformFilterSlice(set, get, api),
       }),
       {
         name: "platform-store",

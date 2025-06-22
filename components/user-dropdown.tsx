@@ -17,13 +17,14 @@ import {
   FiBarChart2,
   FiUsers,
 } from "react-icons/fi";
+import { useShallow } from "zustand/shallow";
 
 import { useAuthStore } from "@/stores/useAuthStore";
 import { clientLogout } from "@/app/(auth)/login/client-actions";
 
 export function UserDropdown() {
   const router = useRouter();
-  const user = useAuthStore((state) => state.user);
+  const user = useAuthStore(useShallow((state) => state.user));
 
   if (!user) return null;
 

@@ -3,6 +3,7 @@
 import { Tabs, Tab } from "@heroui/tabs";
 import { Card, CardBody } from "@heroui/card";
 import { FaChartBar, FaKey, FaUsers } from "react-icons/fa";
+import { useShallow } from "zustand/shallow";
 
 import { CampaignDashboard } from "@/components/dashboard/CampaignDashboard";
 import { PlatformCredentialsManager } from "@/components/features/platform/PlatformCredentialsManager";
@@ -16,10 +17,17 @@ export default function IntegratedTabsClient() {
     addCredential,
     deleteCredential,
     toggleCredentialStatus,
-  } = usePlatformStore();
+  } = usePlatformStore(
+    useShallow((state) => ({
+      credentials: state.credentials,
+      addCredential: state.addCredential,
+      deleteCredential: state.deleteCredential,
+      toggleCredentialStatus: state.toggleCredentialStatus,
+    })),
+  );
 
-  const { currentTeam } = useTeamStore();
-  const { user } = useAuthStore();
+  const currentTeam = useTeamStore(useShallow((state) => state.currentTeam));
+  const user = useAuthStore(useShallow((state) => state.user));
 
   return (
     <Tabs
