@@ -1,9 +1,6 @@
 import { NextRequest } from "next/server";
 
-import {
-  handleUnifiedOAuthCallback,
-  standardTokenExchange,
-} from "@/lib/oauth/unified-oauth-handler";
+import { handleUnifiedOAuthCallback } from "@/lib/oauth/unified-oauth-handler";
 import { createClient } from "@/utils/supabase/server";
 
 export async function GET(request: NextRequest) {
@@ -38,12 +35,10 @@ export async function GET(request: NextRequest) {
       };
     },
 
-    exchangeCodeForToken: async (code, config) => {
-      return standardTokenExchange(
-        code,
-        config,
-        "https://graph.facebook.com/v23.0/oauth/access_token",
-      );
+    exchangeCodeForToken: async (_code, _config) => {
+      // Legacy OAuth token exchange removed
+      // TODO: Implement token exchange
+      throw new Error("Token exchange not implemented");
     },
   });
 }

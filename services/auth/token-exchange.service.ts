@@ -161,7 +161,7 @@ export class TokenExchangeService {
    * Google Ads 토큰 획득 (시뮬레이션)
    * 실제로는 Google OAuth 서버와 통신
    */
-  private async getGoogleAdsToken(subjectToken: string): Promise<string> {
+  private async getGoogleAdsToken(_subjectToken: string): Promise<string> {
     // 실제 구현에서는 Google OAuth 서버로 토큰 교환 요청
     const supabase = await createClient();
 
@@ -178,7 +178,7 @@ export class TokenExchangeService {
    * Meta Ads 토큰 획득 (시뮬레이션)
    * 실제로는 Facebook OAuth 서버와 통신
    */
-  private async getMetaAdsToken(subjectToken: string): Promise<string> {
+  private async getMetaAdsToken(_subjectToken: string): Promise<string> {
     // 실제 구현에서는 Facebook OAuth 서버로 토큰 교환 요청
     const supabase = await createClient();
 
@@ -195,7 +195,7 @@ export class TokenExchangeService {
    * TikTok Ads 토큰 획득 (시뮬레이션)
    * 실제로는 TikTok OAuth 서버와 통신
    */
-  private async getTikTokAdsToken(subjectToken: string): Promise<string> {
+  private async getTikTokAdsToken(_subjectToken: string): Promise<string> {
     // 실제 구현에서는 TikTok OAuth 서버로 토큰 교환 요청
     const supabase = await createClient();
 

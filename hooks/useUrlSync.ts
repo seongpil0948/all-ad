@@ -18,7 +18,7 @@ interface UrlSyncConfig<T> {
  * Hook to synchronize store state with URL parameters
  * @param config Configuration object with store and parameter mappings
  */
-export function useUrlSync<T extends Record<string, any>>(
+export function useUrlSync<T extends Record<string, unknown>>(
   config: UrlSyncConfig<T>,
 ) {
   const router = useRouter();
@@ -59,14 +59,11 @@ export function useUrlSync<T extends Record<string, any>>(
 
           if (config.store[storeKey] !== value) {
             // Update store only if value is different
-            if (
-              typeof config.store[
-                `set${storeKey.charAt(0).toUpperCase()}${storeKey.slice(1)}`
-              ] === "function"
-            ) {
-              config.store[
-                `set${storeKey.charAt(0).toUpperCase()}${storeKey.slice(1)}`
-              ](value);
+            const setterName = `set${storeKey.charAt(0).toUpperCase()}${storeKey.slice(1)}`;
+            const setter = (config.store as any)[setterName];
+
+            if (typeof setter === "function") {
+              setter(value);
             }
           }
         }

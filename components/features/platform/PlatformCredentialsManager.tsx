@@ -16,8 +16,6 @@ import { PlatformCredentialForm } from "./PlatformCredentialForm";
 import { CoupangManualCampaignManager } from "./coupang/CoupangManualCampaignManager";
 import { PlatformCredentialItem } from "./PlatformCredentialItem";
 
-import { OAuthClient } from "@/lib/oauth/oauth-client";
-import { getOAuthConfig } from "@/lib/oauth/platform-configs.client";
 import { PlatformCredential, PlatformType } from "@/types";
 import { CredentialValues } from "@/types/credentials.types";
 import { platformConfig } from "@/constants/platform-config";
@@ -40,7 +38,7 @@ function PlatformCredentialsManagerComponent({
   onDelete,
   onToggle,
   teamId,
-  userId,
+  userId: _userId,
 }: PlatformCredentialsManagerProps) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformType | null>(
@@ -50,50 +48,34 @@ function PlatformCredentialsManagerComponent({
 
   const handleAddOrEdit = useCallback(
     (platform: PlatformType) => {
-      // All platforms now show the form (OAuth platforms need credentials first)
+      const config = platformConfig[platform];
+
+      // For OAuth platforms with All-AD credentials, redirect directly
+      if (
+        config.supportsOAuth &&
+        ["google", "facebook", "kakao"].includes(platform)
+      ) {
+        // Redirect to OAuth flow
+        const oauthRoutes = {
+          google: "/api/auth/google-ads",
+          facebook: "/api/auth/facebook-ads",
+          kakao: "/api/auth/kakao-ads",
+        };
+
+        const route = oauthRoutes[platform as keyof typeof oauthRoutes];
+
+        if (route) {
+          window.location.href = route;
+
+          return;
+        }
+      }
+
+      // For API key platforms (Naver, Coupang), show the form
       setSelectedPlatform(platform);
       onOpen();
     },
     [onOpen],
-  );
-
-  const handleOAuthConnect = useCallback(
-    async (platform: PlatformType, credentials: CredentialValues) => {
-      // Store the OAuth credentials first
-      await onSave(platform, credentials);
-
-      // Create OAuth config with user-provided credentials
-      if (!credentials.client_id || !credentials.client_secret) {
-        throw new Error("Client ID and Client Secret are required for OAuth");
-      }
-
-      const oauthConfig = {
-        clientId: credentials.client_id,
-        clientSecret: credentials.client_secret,
-        redirectUri: `${window.location.origin}/api/auth/callback/${platform}-ads`,
-        scope: getOAuthConfig(platform)?.scope || [],
-        authorizationUrl: getOAuthConfig(platform)?.authorizationUrl || "",
-        tokenUrl: getOAuthConfig(platform)?.tokenUrl || "",
-      };
-
-      const oauthClient = new OAuthClient(platform, oauthConfig);
-
-      // Create state for OAuth flow
-      const state = Buffer.from(
-        JSON.stringify({
-          userId,
-          teamId,
-          platform,
-          timestamp: Date.now(),
-        }),
-      ).toString("base64");
-
-      // Redirect to OAuth authorization URL
-      const authUrl = oauthClient.getAuthorizationUrl(state);
-
-      window.location.href = authUrl;
-    },
-    [onSave, teamId, userId],
   );
 
   const handleSave = useCallback(
@@ -102,43 +84,15 @@ function PlatformCredentialsManagerComponent({
 
       setIsLoading(true);
       try {
-        const config = platformConfig[selectedPlatform];
-
-        if (config.supportsOAuth) {
-          // Check if manual refresh token is provided
-          if (
-            "manual_refresh_token" in credentials &&
-            credentials.manual_refresh_token
-          ) {
-            // Save credentials with manual refresh token
-            const { manual_refresh_token, ...oauthCredentials } = credentials;
-
-            await onSave(selectedPlatform, {
-              ...oauthCredentials,
-              refresh_token: manual_refresh_token as string,
-              manual_token: true,
-            });
-            onOpenChange();
-          } else {
-            // For OAuth platforms, save credentials and then initiate OAuth flow
-            await handleOAuthConnect(selectedPlatform, credentials);
-          }
-        } else {
-          // For API key platforms, just save the credentials
-          await onSave(selectedPlatform, credentials);
-          onOpenChange();
-        }
+        // For API key platforms (Naver, Coupang), save the credentials
+        // OAuth platforms are handled by redirect in handleAddOrEdit
+        await onSave(selectedPlatform, credentials);
+        onOpenChange();
       } finally {
         setIsLoading(false);
       }
     },
-    [
-      selectedPlatform,
-      platformConfig,
-      onSave,
-      handleOAuthConnect,
-      onOpenChange,
-    ],
+    [selectedPlatform, onSave, onOpenChange],
   );
 
   const handleToggle = useCallback(

@@ -39,7 +39,7 @@ export class GoogleAdsScheduler {
 
       for (const account of accounts) {
         try {
-          const credentials = {
+          const _credentials = {
             clientId: account.credentials.client_id,
             clientSecret: account.credentials.client_secret,
             refreshToken: account.credentials.refresh_token,
@@ -48,46 +48,15 @@ export class GoogleAdsScheduler {
             loginCustomerId: account.credentials.login_customer_id,
           } as GoogleAdsCredentials;
 
-          // Get valid access token using OAuth Manager
-          const { OAuthManager } = await import("@/lib/oauth/oauth-manager");
-          const { getOAuthConfigWithCredentials } = await import(
-            "@/lib/oauth/platform-configs"
+          // Legacy OAuth manager removed - access token retrieval needs reimplementation
+          // TODO: Implement access token retrieval
+          log.warn(
+            `Skipping Google Ads account - OAuth implementation removed: ${account.id}`,
           );
+          continue;
 
-          const oauthConfig = await getOAuthConfigWithCredentials(
-            "google",
-            account.team_id,
-          );
-
-          if (!oauthConfig) {
-            log.warn(
-              `Skipping Google Ads account without OAuth config: ${account.id}`,
-            );
-            continue;
-          }
-
-          const oauthManager = new OAuthManager("google", oauthConfig);
-          const userId = account.user_id || account.created_by;
-
-          if (!userId) {
-            log.warn(
-              `Skipping Google Ads account without user_id: ${account.id}`,
-            );
-            continue;
-          }
-
-          const accessToken = await oauthManager.getValidAccessToken(
-            userId,
-            account.account_id,
-          );
-
-          if (!accessToken) {
-            log.warn(
-              `Failed to get access token for Google Ads account: ${account.id}`,
-            );
-            continue;
-          }
-
+          // Unreachable code due to OAuth removal - commented out
+          /*
           const googleAdsClient = new GoogleAdsClient({
             clientId: credentials.clientId,
             clientSecret: credentials.clientSecret,
@@ -107,6 +76,7 @@ export class GoogleAdsScheduler {
             accountId: account.customer_id,
             syncType,
           });
+          */
         } catch (error) {
           log.error(
             `계정 동기화 스케줄링 실패: ${account.account_name}`,

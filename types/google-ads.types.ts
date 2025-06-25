@@ -83,7 +83,7 @@ export interface SyncError {
   timestamp: Date;
   accountId: string;
   error: string;
-  details?: any;
+  details?: unknown;
 }
 
 export interface GoogleAdsQuery {
@@ -93,7 +93,7 @@ export interface GoogleAdsQuery {
   pageToken?: string;
 }
 
-export interface GoogleAdsApiResponse<T = any> {
+export interface GoogleAdsApiResponse<T = unknown> {
   results: T[];
   fieldMask?: string;
   totalResultsCount?: number;
@@ -103,10 +103,10 @@ export interface GoogleAdsApiResponse<T = any> {
 export interface GoogleAdsError {
   code: number;
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
-export interface BatchOperation<T = any> {
+export interface BatchOperation<T = unknown> {
   create?: T;
   update?: T;
   remove?: string;
@@ -139,11 +139,11 @@ export interface ChangeEvent {
   changeResourceType: string;
   changeResourceId: string;
   changeType: "ADDED" | "CHANGED" | "REMOVED";
-  oldResource?: any;
-  newResource?: any;
+  oldResource?: unknown;
+  newResource?: unknown;
 }
 
-export interface QueueJob<T = any> {
+export interface QueueJob<T = unknown> {
   id: string;
   type: string;
   payload: T;

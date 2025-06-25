@@ -25,20 +25,13 @@ describe("Credential Field Mapping", () => {
     };
 
     // Simulate the mapping logic from PlatformCredentialForm
-    const submissionValues = { ...formValues };
+    const submissionValues: any = {};
 
     submissionValues.client_id = formValues.clientId;
     submissionValues.client_secret = formValues.clientSecret;
     submissionValues.developer_token = formValues.developerToken;
     submissionValues.login_customer_id = formValues.loginCustomerId;
     submissionValues.manual_refresh_token = formValues.refreshToken;
-
-    // Clean up camelCase versions
-    delete submissionValues.clientId;
-    delete submissionValues.clientSecret;
-    delete submissionValues.developerToken;
-    delete submissionValues.loginCustomerId;
-    delete submissionValues.refreshToken;
 
     // Verify the mapping
     expect(submissionValues).toEqual(expectedOutput);
@@ -57,15 +50,11 @@ describe("Credential Field Mapping", () => {
       manual_refresh_token: "fb-access-token",
     };
 
-    const submissionValues = { ...formValues };
+    const submissionValues: any = {};
 
     submissionValues.client_id = formValues.appId;
     submissionValues.client_secret = formValues.appSecret;
     submissionValues.manual_refresh_token = formValues.accessToken;
-
-    delete submissionValues.appId;
-    delete submissionValues.appSecret;
-    delete submissionValues.accessToken;
 
     expect(submissionValues).toEqual(expectedOutput);
   });

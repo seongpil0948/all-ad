@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { createClient } from "@/utils/supabase/server";
-import { OAuthManager } from "@/lib/oauth/oauth-manager";
-import { getOAuthConfigWithCredentials } from "@/lib/oauth/platform-configs";
-import { getRedisClient } from "@/lib/redis";
-import log from "@/utils/logger";
+// Legacy OAuth manager removed
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
+  // Legacy OAuth test endpoint - needs reimplementation
+  return NextResponse.json(
+    {
+      error:
+        "Token refresh test endpoint has been disabled - OAuth implementation removed",
+    },
+    { status: 501 },
+  );
+
+  /* Original implementation removed due to legacy OAuth removal
   try {
     const supabase = await createClient();
 
@@ -159,4 +165,5 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
+  */
 }

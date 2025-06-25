@@ -57,30 +57,12 @@ export async function savePlatformCredentials(
     // Check if using manual refresh token
     if (manual_refresh_token || manual_token) {
       // Store with manual refresh token
-      const oauthManager = await import("@/lib/oauth/oauth-manager").then(
-        (m) => m.OAuthManager,
-      );
-      const manager = new oauthManager(platform, {
-        clientId: client_id,
-        clientSecret: client_secret,
-        redirectUri: "", // Not needed for manual tokens
-        scope: [],
-        authorizationUrl: "",
-        tokenUrl: "",
-      });
+      // Legacy OAuth manager removed - manual token storage needs reimplementation
+      // TODO: Implement manual token storage
+      console.warn("Manual token storage needs to be reimplemented");
 
       // Generate a unique account ID for manual token
       const accountId = `${platform}_manual_${Date.now()}`;
-
-      // Store the manual token in Redis
-      await manager.storeTokens(user.id, accountId, {
-        access_token: manual_refresh_token || "",
-        refresh_token: manual_refresh_token || "",
-        expires_in: Date.now() + 365 * 24 * 60 * 60 * 1000, // 1 year expiry for manual tokens
-        refresh_token_expires_in: Date.now() + 365 * 24 * 60 * 60 * 1000, // 1 year expiry for manual tokens
-        scope: "",
-        token_type: "Bearer",
-      });
 
       // Save credentials with manual token flag
       const success = await dbService.savePlatformCredentials(

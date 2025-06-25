@@ -72,13 +72,18 @@ export async function getPlatformOAuthCredentials(
       return null;
     }
 
-    const creds = data.credentials as any;
+    const creds = data.credentials as {
+      client_id: string;
+      client_secret: string;
+      developer_token?: string;
+      redirect_uri?: string;
+    };
 
     return {
       clientId: creds.client_id,
       clientSecret: creds.client_secret,
       developerToken: creds.developer_token,
-      redirectUri: creds.redirect_uri,
+      redirectUri: creds.redirect_uri || "",
     };
   } catch (error) {
     log.error("Error getting OAuth credentials", { platform, error });

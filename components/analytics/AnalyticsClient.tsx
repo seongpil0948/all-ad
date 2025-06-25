@@ -51,7 +51,7 @@ const metricOptions = [
 type MetricKey = keyof TimeSeriesData;
 
 export function AnalyticsClient({
-  initialSummary,
+  initialSummary: _initialSummary,
   initialPlatformData,
 }: AnalyticsClientProps) {
   const [isPending, startTransition] = useTransition();
@@ -69,7 +69,6 @@ export function AnalyticsClient({
 
   // Use Zustand store with useShallow
   const {
-    summary = initialSummary,
     platformData = initialPlatformData,
     timeSeriesData,
     isLoading,

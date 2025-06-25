@@ -250,7 +250,12 @@ export class TikTokBusinessCenterAuthService {
       return null;
     }
 
-    const creds = data.credentials as any;
+    const creds = data.credentials as {
+      business_center_id: string;
+      access_token: string;
+      app_id: string;
+      app_secret: string;
+    };
 
     return {
       businessCenterId: creds.business_center_id,

@@ -6,6 +6,7 @@ import { container, ServiceTokens } from "./container";
 
 import { PlatformServiceFactory } from "@/services/platforms/platform-service-factory";
 import { GoogleAdsPlatformService } from "@/services/platforms/google-ads-platform.service";
+import { GoogleAdsOAuthPlatformService } from "@/services/platforms/google-ads-oauth-platform.service";
 import { FacebookPlatformService } from "@/services/platforms/facebook-platform.service";
 import { NaverPlatformService } from "@/services/platforms/naver-platform.service";
 import { KakaoPlatformService } from "@/services/platforms/kakao-platform.service";
@@ -35,10 +36,15 @@ export async function bootstrapDI() {
   );
 
   // Platform Services
-  container.registerSingleton(
-    ServiceTokens.GOOGLE_PLATFORM_SERVICE,
-    () => new GoogleAdsPlatformService(),
-  );
+  container.registerSingleton(ServiceTokens.GOOGLE_PLATFORM_SERVICE, () => {
+    // Use OAuth version for simplified authentication
+    const useOAuth =
+      process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET;
+
+    return useOAuth
+      ? new GoogleAdsOAuthPlatformService()
+      : new GoogleAdsPlatformService();
+  });
   container.registerSingleton(
     ServiceTokens.FACEBOOK_PLATFORM_SERVICE,
     () => new FacebookPlatformService(),

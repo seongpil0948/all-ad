@@ -1,5 +1,5 @@
 import { test, expect, AnnotationType } from "../tester";
-import { waitForApiResponse, fillForm } from "../helpers/test-utils";
+import { waitForAPIResponse, fillForm } from "../helpers/test-utils";
 
 /**
  * 캠페인 관리 워크플로우 테스트

@@ -337,6 +337,12 @@ export async function savePlatformCredentials(
   const oauthPlatforms = ["google", "facebook", "kakao"];
 
   if (oauthPlatforms.includes(platform)) {
+    // Check if using simplified OAuth (Google Ads with env vars)
+    const isSimplifiedOAuth =
+      platform === "google" &&
+      process.env.GOOGLE_CLIENT_ID &&
+      process.env.GOOGLE_CLIENT_SECRET;
+
     // For OAuth platforms, save the OAuth app credentials
     const {
       client_id,
@@ -346,42 +352,33 @@ export async function savePlatformCredentials(
       manual_token,
     } = credentials;
 
-    if (!client_id || !client_secret) {
+    // Only require client_id and client_secret if not using simplified OAuth
+    if (!isSimplifiedOAuth && (!client_id || !client_secret)) {
       throw new Error("Client ID and Client Secret are required");
     }
 
-    // For Google, developer token is also required
-    if (platform === "google" && !developer_token) {
+    // For Google, developer token is also required (unless using simplified OAuth)
+    if (platform === "google" && !isSimplifiedOAuth && !developer_token) {
       throw new Error("Developer Token is required for Google Ads");
     }
 
     // Generate a unique account ID for multiple accounts
     const accountId = `${platform}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
+    // For simplified OAuth (Google Ads with env vars), we don't save credentials
+    // The OAuth flow will handle everything
+    if (isSimplifiedOAuth) {
+      // For simplified OAuth, we don't need to save any credentials
+      // The OAuth callback will create the platform_credentials record
+      return;
+    }
+
     // Check if using manual refresh token
     if (manual_refresh_token || manual_token) {
       // Store with manual refresh token
-      const oauthManager = await import("@/lib/oauth/oauth-manager").then(
-        (m) => m.OAuthManager,
-      );
-      const manager = new oauthManager(platform, {
-        clientId: client_id,
-        clientSecret: client_secret,
-        redirectUri: "", // Not needed for manual tokens
-        scope: [],
-        authorizationUrl: "",
-        tokenUrl: "",
-      });
-
-      // Store the manual token in Redis
-      await manager.storeTokens(user.id, accountId, {
-        access_token: manual_refresh_token || "",
-        refresh_token: manual_refresh_token || "",
-        expires_in: Date.now() + 365 * 24 * 60 * 60 * 1000, // 1 year expiry for manual tokens
-        refresh_token_expires_in: Date.now() + 365 * 24 * 60 * 60 * 1000, // 1 year expiry for manual tokens
-        scope: "",
-        token_type: "Bearer",
-      });
+      // Legacy OAuth manager removed - manual token storage needs reimplementation
+      // TODO: Implement manual token storage
+      console.warn("Manual token storage needs to be reimplemented");
 
       // Save credentials with manual token flag (allowing multiple accounts)
       const { error } = await supabase.from("platform_credentials").insert({

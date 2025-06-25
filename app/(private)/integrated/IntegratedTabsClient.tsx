@@ -6,10 +6,15 @@ import { FaChartBar, FaKey, FaUsers } from "react-icons/fa";
 import { useShallow } from "zustand/shallow";
 
 import { CampaignDashboard } from "@/components/dashboard/CampaignDashboard";
-import { PlatformCredentialsManager } from "@/components/features/platform/PlatformCredentialsManager";
+import { MultiAccountPlatformManager } from "@/components/features/platform/MultiAccountPlatformManager";
 import { TeamManagement } from "@/components/team/TeamManagement";
 import { usePlatformStore, useTeamStore, useAuthStore } from "@/stores";
 import { CredentialValues } from "@/types/credentials.types";
+import { PlatformType } from "@/types";
+import { Database } from "@/types/supabase.types";
+
+type PlatformCredentialRow =
+  Database["public"]["Tables"]["platform_credentials"]["Row"];
 
 export default function IntegratedTabsClient() {
   const {
@@ -28,6 +33,29 @@ export default function IntegratedTabsClient() {
 
   const currentTeam = useTeamStore(useShallow((state) => state.currentTeam));
   const user = useAuthStore(useShallow((state) => state.user));
+
+  // Map credentials to the format expected by MultiAccountPlatformManager
+  const mappedCredentials: PlatformCredentialRow[] = credentials.map(
+    (cred) => ({
+      id: cred.id,
+      team_id: cred.team_id,
+      platform: cred.platform,
+      credentials: cred.credentials as any,
+      is_active: cred.is_active,
+      created_by: cred.created_by || null,
+      created_at: cred.created_at,
+      updated_at: cred.updated_at,
+      synced_at: cred.synced_at || null,
+      last_sync_at: cred.last_sync_at || null,
+      // Map additional fields that might be expected
+      account_id: (cred.credentials as any)?.account_id || cred.id,
+      account_name:
+        (cred.credentials as any)?.account_name || `${cred.platform} Account`,
+      data: cred.credentials as any,
+      last_synced_at: cred.last_sync_at || null,
+      user_id: cred.created_by || user?.id || null,
+    }),
+  );
 
   return (
     <Tabs
@@ -67,45 +95,22 @@ export default function IntegratedTabsClient() {
           </div>
         }
       >
-        <Card className="mt-6">
-          <CardBody>
-            <PlatformCredentialsManager
-              credentials={credentials
-                .filter((c) => c.created_by !== undefined)
-                .map((c) => ({
-                  id: c.id,
-                  teamId: c.team_id,
-                  platform: c.platform,
-                  credentials: c.credentials as CredentialValues,
-                  isActive: c.is_active,
-                  createdAt: c.created_at,
-                  updatedAt: c.updated_at,
-                  lastSyncAt: c.synced_at || null,
-                }))}
-              teamId={currentTeam?.id || ""}
-              userId={user?.id || ""}
-              onDelete={async (platform) => {
-                const credential = credentials.find(
-                  (c) => c.platform === platform,
-                );
-
-                if (credential) {
-                  await deleteCredential(credential.id);
-                }
-              }}
-              onSave={addCredential}
-              onToggle={async (platform, _isActive) => {
-                const credential = credentials.find(
-                  (c) => c.platform === platform,
-                );
-
-                if (credential) {
-                  await toggleCredentialStatus(credential.id);
-                }
-              }}
-            />
-          </CardBody>
-        </Card>
+        <div className="mt-6">
+          <MultiAccountPlatformManager
+            credentials={mappedCredentials}
+            teamId={currentTeam?.id || ""}
+            userId={user?.id || ""}
+            onDelete={async (credentialId: string) => {
+              await deleteCredential(credentialId);
+            }}
+            onSave={async (platform: PlatformType, creds: CredentialValues) => {
+              await addCredential(platform, creds);
+            }}
+            onToggle={async (credentialId: string, isActive: boolean) => {
+              await toggleCredentialStatus(credentialId);
+            }}
+          />
+        </div>
       </Tab>
 
       <Tab

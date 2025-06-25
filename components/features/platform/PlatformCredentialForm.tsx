@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
+import { Chip } from "@heroui/chip";
 
 import { PlatformType } from "@/types";
 import { CredentialValues } from "@/types/credentials.types";
@@ -25,67 +26,37 @@ export function PlatformCredentialForm({
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      // Convert camelCase to snake_case for OAuth platforms
       const submissionValues = { ...values };
 
-      // Map Google credentials
-      if (platform === "google") {
-        submissionValues.client_id = values.clientId;
-        submissionValues.client_secret = values.clientSecret;
-        submissionValues.developer_token = values.developerToken;
-        submissionValues.login_customer_id = values.loginCustomerId;
-        submissionValues.manual_refresh_token = values.refreshToken;
+      // For OAuth platforms (Google, Facebook, Kakao), we don't need manual credentials anymore
+      // These will be handled by All-AD's OAuth flow
+      if (
+        platform === "google" ||
+        platform === "facebook" ||
+        platform === "kakao"
+      ) {
+        // OAuth platforms don't need manual credentials
+        await onSubmit({});
 
-        // Clean up camelCase versions
-        delete submissionValues.clientId;
-        delete submissionValues.clientSecret;
-        delete submissionValues.developerToken;
-        delete submissionValues.loginCustomerId;
-        delete submissionValues.refreshToken;
+        return;
       }
 
-      // Map Facebook credentials
-      if (platform === "facebook") {
-        submissionValues.client_id = values.appId;
-        submissionValues.client_secret = values.appSecret;
-        submissionValues.manual_refresh_token = values.accessToken;
-
-        // Clean up camelCase versions
-        delete submissionValues.appId;
-        delete submissionValues.appSecret;
-        delete submissionValues.accessToken;
-      }
-
-      // Map Kakao credentials
-      if (platform === "kakao") {
-        submissionValues.client_id = values.restApiKey;
-        submissionValues.client_secret = values.secretKey;
-        submissionValues.manual_refresh_token = values.refreshToken;
-
-        // Clean up camelCase versions
-        delete submissionValues.restApiKey;
-        delete submissionValues.secretKey;
-        delete submissionValues.refreshToken;
-      }
-
-      // Map Naver credentials
+      // Map Naver credentials (still uses API key authentication)
       if (platform === "naver") {
         submissionValues.client_id = values.clientId;
         submissionValues.client_secret = values.clientSecret;
         submissionValues.customer_id = values.customerId;
 
-        // Clean up camelCase versions
         delete submissionValues.clientId;
         delete submissionValues.clientSecret;
         delete submissionValues.customerId;
       }
 
-      // Map Coupang credentials
+      // Map Coupang credentials (still uses API key authentication)
       if (platform === "coupang") {
         submissionValues.access_key = values.accessKey;
         submissionValues.secret_key = values.secretKey;
 
-        // Clean up camelCase versions
         delete submissionValues.accessKey;
         delete submissionValues.secretKey;
       }
@@ -97,139 +68,50 @@ export function PlatformCredentialForm({
   };
 
   const renderFields = () => {
+    // OAuth platforms (Google, Facebook, Kakao) - show info message only
+    if (
+      platform === "google" ||
+      platform === "facebook" ||
+      platform === "kakao"
+    ) {
+      return (
+        <div className="space-y-4">
+          <div className="bg-primary-50 dark:bg-primary-900/20 p-4 rounded-lg">
+            <p className="text-sm text-primary-700 dark:text-primary-300">
+              이 플랫폼은 OAuth 인증을 사용합니다. &quot;연동하기&quot; 버튼을
+              클릭하면{" "}
+              {platform === "google"
+                ? "Google"
+                : platform === "facebook"
+                  ? "Facebook"
+                  : "Kakao"}{" "}
+              로그인 페이지로 이동합니다.
+            </p>
+          </div>
+          <Chip color="success" size="sm" variant="flat">
+            OAuth 인증 지원
+          </Chip>
+        </div>
+      );
+    }
+
     switch (platform) {
-      case "google":
-        return (
-          <>
-            <Input
-              required
-              label="Client ID"
-              placeholder="Google OAuth Client ID"
-              value={values.clientId || ""}
-              onChange={(e) =>
-                setValues({ ...values, clientId: e.target.value })
-              }
-            />
-            <Input
-              required
-              label="Client Secret"
-              placeholder="Google OAuth Client Secret"
-              type="password"
-              value={values.clientSecret || ""}
-              onChange={(e) =>
-                setValues({ ...values, clientSecret: e.target.value })
-              }
-            />
-            <Input
-              label="Developer Token"
-              placeholder="Google Ads Developer Token"
-              value={values.developerToken || ""}
-              onChange={(e) =>
-                setValues({ ...values, developerToken: e.target.value })
-              }
-            />
-            <Input
-              label="MCC Account ID (Manager Customer ID)"
-              placeholder="123-456-7890 (대시 없이)"
-              value={values.loginCustomerId || ""}
-              onChange={(e) =>
-                setValues({
-                  ...values,
-                  loginCustomerId: e.target.value.replace(/-/g, ""),
-                })
-              }
-            />
-            <Input
-              label="Refresh Token (Optional)"
-              placeholder="수동으로 얻은 Refresh Token"
-              value={values.refreshToken || ""}
-              onChange={(e) =>
-                setValues({ ...values, refreshToken: e.target.value })
-              }
-            />
-          </>
-        );
-
-      case "facebook":
-        return (
-          <>
-            <Input
-              required
-              label="App ID"
-              placeholder="Facebook App ID"
-              value={values.appId || ""}
-              onChange={(e) => setValues({ ...values, appId: e.target.value })}
-            />
-            <Input
-              required
-              label="App Secret"
-              placeholder="Facebook App Secret"
-              type="password"
-              value={values.appSecret || ""}
-              onChange={(e) =>
-                setValues({ ...values, appSecret: e.target.value })
-              }
-            />
-            <Input
-              label="Access Token (Optional)"
-              placeholder="수동으로 얻은 Access Token"
-              value={values.accessToken || ""}
-              onChange={(e) =>
-                setValues({ ...values, accessToken: e.target.value })
-              }
-            />
-          </>
-        );
-
-      case "kakao":
-        return (
-          <>
-            <Input
-              required
-              label="REST API Key"
-              placeholder="Kakao REST API Key"
-              value={values.restApiKey || ""}
-              onChange={(e) =>
-                setValues({ ...values, restApiKey: e.target.value })
-              }
-            />
-            <Input
-              required
-              label="Secret Key"
-              placeholder="Kakao Secret Key"
-              type="password"
-              value={values.secretKey || ""}
-              onChange={(e) =>
-                setValues({ ...values, secretKey: e.target.value })
-              }
-            />
-            <Input
-              label="Refresh Token (Optional)"
-              placeholder="수동으로 얻은 Refresh Token"
-              value={values.refreshToken || ""}
-              onChange={(e) =>
-                setValues({ ...values, refreshToken: e.target.value })
-              }
-            />
-          </>
-        );
-
       case "naver":
         return (
           <>
             <Input
-              required
-              label="Client ID"
-              placeholder="Naver Client ID"
+              isRequired
+              label="API Key"
+              placeholder="네이버 검색광고 API Key"
               value={values.clientId || ""}
               onChange={(e) =>
                 setValues({ ...values, clientId: e.target.value })
               }
             />
             <Input
-              required
-              label="Client Secret"
-              placeholder="Naver Client Secret"
+              isRequired
+              label="Secret Key"
+              placeholder="Secret Key"
               type="password"
               value={values.clientSecret || ""}
               onChange={(e) =>
@@ -237,8 +119,9 @@ export function PlatformCredentialForm({
               }
             />
             <Input
+              isRequired
               label="Customer ID"
-              placeholder="Naver Ads Customer ID"
+              placeholder="고객 ID"
               value={values.customerId || ""}
               onChange={(e) =>
                 setValues({ ...values, customerId: e.target.value })
@@ -251,18 +134,18 @@ export function PlatformCredentialForm({
         return (
           <>
             <Input
-              required
+              isRequired
               label="Access Key"
-              placeholder="Coupang Access Key"
+              placeholder="쿠팡 Access Key"
               value={values.accessKey || ""}
               onChange={(e) =>
                 setValues({ ...values, accessKey: e.target.value })
               }
             />
             <Input
-              required
+              isRequired
               label="Secret Key"
-              placeholder="Coupang Secret Key"
+              placeholder="쿠팡 Secret Key"
               type="password"
               value={values.secretKey || ""}
               onChange={(e) =>
@@ -277,17 +160,22 @@ export function PlatformCredentialForm({
     }
   };
 
+  // Don't show submit button for OAuth platforms
+  const showSubmitButton = !["google", "facebook", "kakao"].includes(platform);
+
   return (
     <form className="space-y-4" id="credential-form" onSubmit={handleSubmit}>
       {renderFields()}
-      <Button
-        className="hidden"
-        color="primary"
-        isLoading={isSubmitting}
-        type="submit"
-      >
-        저장
-      </Button>
+      {showSubmitButton && (
+        <Button
+          className="w-full"
+          color="primary"
+          isLoading={isSubmitting}
+          type="submit"
+        >
+          저장
+        </Button>
+      )}
     </form>
   );
 }

@@ -3,7 +3,7 @@ import type { PlatformType } from "@/types";
 
 import { NextRequest, NextResponse } from "next/server";
 
-import { OAuthManager } from "@/lib/oauth/oauth-manager";
+// Legacy OAuth manager removed
 import log from "@/utils/logger";
 
 export type OAuthEnvironment = "production" | "lab";
@@ -187,19 +187,13 @@ export async function handleUnifiedOAuthCallback(
     try {
       const tokenData = await params.exchangeCodeForToken(code, oauthConfig);
 
-      // Save token to database
-      const oauthManager = new OAuthManager(params.platform, oauthConfig);
+      // Legacy OAuth manager removed - token storage needs reimplementation
+      // TODO: Implement token storage
+      console.warn("Token storage needs to be reimplemented");
 
       // For Google Ads, we need to get the customer ID later
       // For now, we'll use a temporary account ID
       const accountId = `${params.platform}_${teamId}_${Date.now()}`;
-
-      await oauthManager.storeTokens(userId, accountId, {
-        access_token: tokenData.access_token,
-        refresh_token: tokenData.refresh_token,
-        expires_in: tokenData.expires_in || 3600,
-        token_type: "Bearer",
-      });
 
       log.info(`${params.platform} OAuth successful`, {
         teamId,
@@ -241,6 +235,6 @@ export async function handleUnifiedOAuthCallback(
 
 /**
  * Standard OAuth token exchange
- * (Re-exported from oauth-callback-handler for backward compatibility)
+ * (Removed - legacy OAuth implementation)
  */
-export { standardTokenExchange } from "./oauth-callback-handler";
+// export { standardTokenExchange } from "./oauth-callback-handler";

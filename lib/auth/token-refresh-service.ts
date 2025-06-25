@@ -149,7 +149,7 @@ export class TokenRefreshService {
     access_token: string;
     account_name?: string;
     team_id?: string;
-    credentials?: any;
+    credentials?: Record<string, unknown>;
   }): Promise<TokenRefreshResult> {
     try {
       if (!credential.refresh_token) {
@@ -161,7 +161,10 @@ export class TokenRefreshService {
       }
 
       // Get client credentials from stored data
-      const storedCreds = credential.credentials;
+      const storedCreds = credential.credentials as {
+        client_id?: string;
+        client_secret?: string;
+      };
 
       if (
         !storedCreds ||

@@ -1,5 +1,5 @@
 import { test, expect, AnnotationType } from "../tester";
-import { waitForApiResponse } from "../helpers/test-utils";
+import { waitForAPIResponse } from "../helpers/test-utils";
 
 /**
  * 에러 처리 및 예외 상황 테스트
@@ -197,7 +197,7 @@ test.describe("에러 처리 및 예외 상황 테스트", () => {
     let foundAuthExpired = false;
     for (const handling of authExpiredHandling.slice(0, -1)) {
       // URL 체크 제외
-      if (await handling.isVisible()) {
+      if (typeof handling !== "boolean" && (await handling.isVisible())) {
         foundAuthExpired = true;
         break;
       }
@@ -573,25 +573,32 @@ test.describe("에러 처리 및 예외 상황 테스트", () => {
     }
   });
 
-  test("브라우저 호환성 오류 처리", async ({ page, pushAnnotation }) => {
+  test("브라우저 호환성 오류 처리", async ({
+    page,
+    pushAnnotation,
+    browser,
+  }) => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "브라우저 호환성");
 
     // 1. 오래된 브라우저 시뮬레이션 (User-Agent 변경)
-    await page.setUserAgent(
-      "Mozilla/5.0 (Windows NT 6.1; Trident/7.0; rv:11.0) like Gecko",
-    ); // IE 11
+    // Create a new context with custom user agent
+    const context = await browser.newContext({
+      userAgent:
+        "Mozilla/5.0 (Windows NT 6.1; Trident/7.0; rv:11.0) like Gecko", // IE 11
+    });
+    const newPage = await context.newPage();
 
     // 2. 메인 페이지 로드
-    await page.goto("/");
-    await page.waitForTimeout(3000);
+    await newPage.goto("/");
+    await newPage.waitForTimeout(3000);
 
     // 3. 브라우저 호환성 경고 확인
     const compatibilityWarnings = [
-      page.getByText(/브라우저.*지원.*하지.*않/i),
-      page.getByText(/최신.*브라우저.*사용/i),
-      page.getByText(/browser.*not.*supported/i),
-      page.getByText(/chrome.*firefox.*safari/i),
-      page.getByText(/업데이트.*권장/i),
+      newPage.getByText(/브라우저.*지원.*하지.*않/i),
+      newPage.getByText(/최신.*브라우저.*사용/i),
+      newPage.getByText(/browser.*not.*supported/i),
+      newPage.getByText(/chrome.*firefox.*safari/i),
+      newPage.getByText(/업데이트.*권장/i),
     ];
 
     let foundCompatibilityWarning = false;
@@ -604,9 +611,9 @@ test.describe("에러 처리 및 예외 상황 테스트", () => {
 
     // 4. 기능 제한 안내 확인
     const featureLimitations = [
-      page.getByText(/일부.*기능.*제한/i),
-      page.getByText(/제한된.*기능/i),
-      page.getByText(/완전한.*경험.*위해/i),
+      newPage.getByText(/일부.*기능.*제한/i),
+      newPage.getByText(/제한된.*기능/i),
+      newPage.getByText(/완전한.*경험.*위해/i),
     ];
 
     let foundFeatureLimitation = false;
@@ -619,9 +626,9 @@ test.describe("에러 처리 및 예외 상황 테스트", () => {
 
     // 5. 대체 UI 또는 기본 기능 확인
     const basicFunctionality = [
-      page.getByText(/기본.*모드/i),
-      page.getByText(/단순.*버전/i),
-      page.locator('[data-testid*="fallback"]'),
+      newPage.getByText(/기본.*모드/i),
+      newPage.getByText(/단순.*버전/i),
+      newPage.locator('[data-testid*="fallback"]'),
     ];
 
     let foundBasicMode = false;
@@ -637,7 +644,10 @@ test.describe("에러 처리 및 예외 상황 테스트", () => {
       foundCompatibilityWarning ||
         foundFeatureLimitation ||
         foundBasicMode ||
-        page.locator("body").isVisible(),
+        newPage.locator("body").isVisible(),
     ).toBeTruthy();
+
+    // Clean up the browser context
+    await context.close();
   });
 });

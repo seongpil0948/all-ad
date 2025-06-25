@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
           success: !credentialNeedsRefresh,
           hasValidToken: !credentialNeedsRefresh,
         });
-      } catch (error) {
+      } catch (_error) {
         return NextResponse.json({
           success: false,
           error: "Token validation failed",

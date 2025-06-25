@@ -296,7 +296,11 @@ export class MetaSystemUserAuthService {
       return null;
     }
 
-    const creds = data.credentials as any;
+    const creds = data.credentials as {
+      system_user_id: string;
+      access_token: string;
+      business_id: string;
+    };
 
     return {
       systemUserId: creds.system_user_id,

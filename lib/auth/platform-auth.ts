@@ -265,7 +265,7 @@ export async function updateLastSync(credentialId: string): Promise<void> {
 
 // Get credentials that need token refresh
 export async function getCredentialsNeedingRefresh(): Promise<
-  Array<PlatformCredential & { credentials: any }>
+  Array<PlatformCredential & { credentials: Record<string, unknown> }>
 > {
   const supabase = await createClient();
 
@@ -286,7 +286,9 @@ export async function getCredentialsNeedingRefresh(): Promise<
       throw error;
     }
 
-    return data as Array<PlatformCredential & { credentials: any }>;
+    return data as Array<
+      PlatformCredential & { credentials: Record<string, unknown> }
+    >;
   } catch (error) {
     log.error("Error in getCredentialsNeedingRefresh", error);
     throw error;

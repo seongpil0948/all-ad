@@ -3,8 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
-import { OAuthClient } from "@/lib/oauth/oauth-client";
-import { getOAuthConfig } from "@/lib/oauth/platform-configs.client";
+// Legacy OAuth imports removed
 import log from "@/utils/logger";
 
 export async function startGoogleAdsAuth() {
@@ -29,30 +28,19 @@ export async function startGoogleAdsAuth() {
       throw new Error("Team not found");
     }
 
-    // Get OAuth config for Google Ads
-    const config = getOAuthConfig("google");
+    // Legacy OAuth implementation removed
+    // TODO: Implement new OAuth flow
+    log.error("Google Ads OAuth needs to be reimplemented");
+    throw new Error("OAuth flow not implemented");
 
-    if (!config) {
-      throw new Error("Google Ads OAuth config not found");
-    }
-
-    // Create OAuth client instance
-    const oauthClient = new OAuthClient("google", config);
-
-    // Generate state with team ID
-    const state = Buffer.from(
-      JSON.stringify({ teamId: teamMember.team_id, platform: "google" }),
-    ).toString("base64");
-
-    // Generate OAuth URL
-    const authUrl = oauthClient.getAuthorizationUrl(state);
-
+    /*
     log.info("Starting Google Ads OAuth flow", {
       userId: user.id,
       teamId: teamMember.team_id,
     });
 
     redirect(authUrl);
+    */
   } catch (error) {
     log.error("Failed to start Google Ads auth", error as Error);
     redirect("/integrated?error=auth_failed&platform=google");

@@ -19,8 +19,7 @@ import { FaPlus, FaSync, FaExclamationTriangle } from "react-icons/fa";
 import { PlatformCredentialForm } from "./PlatformCredentialForm";
 import { CoupangManualCampaignManager } from "./coupang/CoupangManualCampaignManager";
 
-import { OAuthClient } from "@/lib/oauth/oauth-client";
-import { getOAuthConfig } from "@/lib/oauth/platform-configs.client";
+// OAuth imports removed - legacy OAuth implementation
 import { PlatformType } from "@/types";
 import { CredentialValues } from "@/types/credentials.types";
 import { Database } from "@/types/supabase.types";
@@ -64,7 +63,7 @@ export function MultiAccountPlatformManager({
   onDelete,
   onToggle,
   teamId,
-  userId,
+  userId: _userId,
 }: MultiAccountPlatformManagerProps) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformType | null>(
@@ -144,7 +143,7 @@ export function MultiAccountPlatformManager({
             ...prev,
             [credential.id]: result.success ? "valid" : "invalid",
           }));
-        } catch (error) {
+        } catch (_error) {
           setTokenStatus((prev) => ({
             ...prev,
             [credential.id]: "invalid",
@@ -161,53 +160,36 @@ export function MultiAccountPlatformManager({
 
   const handleOAuthConnect = async (
     platform: PlatformType,
-    credentials: CredentialValues,
+    _credentials: CredentialValues,
   ) => {
-    await onSave(platform, credentials);
+    // For Google Ads, use simplified OAuth flow
+    if (platform === "google") {
+      // Redirect to OAuth flow directly
+      window.location.href = "/api/auth/google-ads";
 
-    if (!credentials.client_id || !credentials.client_secret) {
-      throw new Error("Client ID and Client Secret are required for OAuth");
+      return;
     }
 
-    const oauthConfig = {
-      clientId: credentials.client_id,
-      clientSecret: credentials.client_secret,
-      redirectUri: `${window.location.origin}/api/auth/callback/${platform}-ads`,
-      scope: getOAuthConfig(platform)?.scope || [],
-      authorizationUrl: getOAuthConfig(platform)?.authorizationUrl || "",
-      tokenUrl: getOAuthConfig(platform)?.tokenUrl || "",
-    };
-
-    const oauthClient = new OAuthClient(platform, oauthConfig);
-    const state = JSON.stringify({
-      userId,
-      teamId,
-      accountId: credentials.account_id || undefined,
-    });
-    const authUrl = oauthClient.getAuthorizationUrl(state);
-
-    window.location.href = authUrl;
+    // For other OAuth platforms (Facebook, Kakao), handle accordingly
+    // TODO: Implement OAuth flow for other platforms
+    console.warn("OAuth connection needs to be implemented for", platform);
   };
 
   const handleReAuthenticate = async (credential: PlatformCredential) => {
     setReAuthLoading((prev) => new Set([...prev, credential.id]));
 
     try {
-      if (!credential.credentials) {
-        throw new Error("Credential data not found");
+      // For OAuth platforms, just redirect to the OAuth flow
+      const platform = credential.platform as PlatformType;
+
+      if (platform === "google") {
+        window.location.href = "/api/auth/google-ads";
+
+        return;
       }
 
-      const credentialData = credential.credentials as any;
-      const credentialValues: CredentialValues = {
-        client_id: credentialData.client_id,
-        client_secret: credentialData.client_secret,
-        account_id: credential.account_id || undefined,
-      };
-
-      await handleOAuthConnect(
-        credential.platform as PlatformType,
-        credentialValues,
-      );
+      // For other OAuth platforms
+      await handleOAuthConnect(platform, {});
     } catch (error) {
       console.error("Re-authentication failed:", error);
       // Keep the loading state until page reload from OAuth

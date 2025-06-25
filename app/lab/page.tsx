@@ -6,7 +6,6 @@ import { Tabs, Tab } from "@heroui/tabs";
 import { Badge } from "@heroui/badge";
 import { FaGoogle, FaFacebook, FaAmazon, FaTiktok } from "react-icons/fa";
 
-import GoogleAdsTest from "./components/GoogleAdsTest";
 import MetaAdsTest from "./components/MetaAdsTest";
 import AmazonAdsTest from "./components/AmazonAdsTest";
 import TikTokAdsTest from "./components/TikTokAdsTest";
@@ -57,7 +56,9 @@ export default function LabPage() {
           }
         >
           <div className="mt-6">
-            <GoogleAdsTest />
+            <div className="text-center text-gray-500">
+              Google Ads test component has been removed
+            </div>
           </div>
         </Tab>
 

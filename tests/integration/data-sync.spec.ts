@@ -1,5 +1,5 @@
 import { test, expect, AnnotationType } from "../tester";
-import { waitForApiResponse } from "../helpers/test-utils";
+import { waitForAPIResponse } from "../helpers/test-utils";
 
 /**
  * 데이터 동기화 통합 테스트

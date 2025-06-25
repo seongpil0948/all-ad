@@ -21,8 +21,8 @@ export class GoogleMCCAuthService {
     try {
       // MCC 인증 후 클라이언트 계정 접근
       this.mccClient = new GoogleAdsApi({
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_ADS_CLIENT_ID!,
-        client_secret: process.env.GOOGLE_ADS_CLIENT_SECRET!,
+        client_id: process.env.GOOGLE_CLIENT_ID!,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET!,
         developer_token: credentials.developerToken,
       });
 

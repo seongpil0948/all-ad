@@ -88,6 +88,24 @@ export async function fillFormField(
 }
 
 /**
+ * Fill form helper function
+ */
+export async function fillForm(
+  page: Page,
+  formData: Record<string, string>,
+  options?: { delay?: number },
+) {
+  const { delay = 100 } = options || {};
+
+  for (const [selector, value] of Object.entries(formData)) {
+    await fillFormField(page, selector, value);
+    if (delay > 0) {
+      await page.waitForTimeout(delay);
+    }
+  }
+}
+
+/**
  * Check if element is visible with retry
  */
 export async function isElementVisible(

@@ -1,5 +1,5 @@
 import { test, expect, AnnotationType } from "../tester";
-import { waitForApiResponse } from "../helpers/test-utils";
+import { waitForAPIResponse } from "../helpers/test-utils";
 
 /**
  * API 연동 통합 테스트
@@ -17,9 +17,12 @@ test.describe("API 연동 통합 테스트", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "Google Ads API");
 
     // API 호출 모니터링 시작
-    const apiPromise = waitForApiResponse(
+    const apiPromise = waitForAPIResponse(
       page,
       "**/api/platforms/google-ads/**",
+      async () => {
+        // Trigger API call action here
+      },
     );
 
     // 수동 동기화 버튼 클릭

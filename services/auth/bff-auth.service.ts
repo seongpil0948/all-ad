@@ -6,10 +6,29 @@ import { TokenExchangeService } from "./token-exchange.service";
 import log from "@/utils/logger";
 import { createClient } from "@/utils/supabase/server";
 
+interface Credential {
+  id: string;
+  team_id: string;
+  platform: string;
+  credentials: {
+    is_mcc?: boolean;
+    is_system_user?: boolean;
+    developer_token?: string;
+    refresh_token?: string;
+    login_customer_id?: string;
+    access_token?: string;
+    client_id?: string;
+    client_secret?: string;
+  };
+  data?: {
+    token_expires_at?: string;
+  };
+}
+
 interface UnifiedData {
-  google?: any;
-  meta?: any;
-  tiktok?: any;
+  google?: Record<string, unknown> | null;
+  meta?: Record<string, unknown> | null;
+  tiktok?: Record<string, unknown> | null;
   error?: string;
 }
 
@@ -99,15 +118,15 @@ export class BFFAuthService {
    * Google Ads 토큰 처리 - MCC 계정 활용
    */
   private async handleGoogleToken(
-    credential: any,
+    credential: Credential,
   ): Promise<string | undefined> {
     try {
       if (credential.credentials?.is_mcc) {
         // MCC 계정인 경우 재사용
         await this.googleMCCAuth.authenticateMCC({
-          developerToken: credential.credentials.developer_token,
-          refreshToken: credential.credentials.refresh_token,
-          loginCustomerId: credential.credentials.login_customer_id,
+          developerToken: credential.credentials.developer_token || "",
+          refreshToken: credential.credentials.refresh_token || "",
+          loginCustomerId: credential.credentials.login_customer_id || "",
         });
 
         return credential.credentials.refresh_token;
@@ -129,7 +148,9 @@ export class BFFAuthService {
   /**
    * Meta Ads 토큰 처리 - 시스템 사용자 활용
    */
-  private async handleMetaToken(credential: any): Promise<string | undefined> {
+  private async handleMetaToken(
+    credential: Credential,
+  ): Promise<string | undefined> {
     try {
       if (credential.credentials?.is_system_user) {
         // 시스템 사용자 토큰은 만료되지 않음
@@ -153,7 +174,7 @@ export class BFFAuthService {
    * TikTok 토큰 처리
    */
   private async handleTikTokToken(
-    credential: any,
+    credential: Credential,
   ): Promise<string | undefined> {
     try {
       // TikTok은 24시간 토큰 수명이므로 자주 갱신 필요
@@ -173,10 +194,10 @@ export class BFFAuthService {
    * 토큰 만료 여부 확인
    */
   private isTokenExpiring(
-    credential: any,
+    credential: Credential,
     bufferTime: number = 5 * 60 * 1000, // 기본 5분
   ): boolean {
-    const expiresAt = credential.credentials?.expires_at;
+    const expiresAt = credential.data?.token_expires_at;
 
     if (!expiresAt) return false;
 
@@ -188,7 +209,14 @@ export class BFFAuthService {
   /**
    * Google Ads 데이터 가져오기
    */
-  private async fetchGoogleAdsData(token?: string): Promise<any> {
+  private async fetchGoogleAdsData(token?: string): Promise<
+    | {
+        accountId: string;
+        accountName: string;
+        campaigns: unknown[];
+      }[]
+    | null
+  > {
     if (!token) return null;
 
     try {
@@ -221,7 +249,9 @@ export class BFFAuthService {
   /**
    * Meta Ads 데이터 가져오기
    */
-  private async fetchMetaAdsData(token?: string): Promise<any> {
+  private async fetchMetaAdsData(
+    token?: string,
+  ): Promise<Record<string, unknown> | null> {
     if (!token) return null;
 
     try {
@@ -253,7 +283,7 @@ export class BFFAuthService {
         });
       }
 
-      return allCampaigns;
+      return { accounts: allCampaigns } as Record<string, unknown>;
     } catch (error) {
       log.error("Meta Ads 데이터 조회 실패", { error });
 
@@ -264,7 +294,9 @@ export class BFFAuthService {
   /**
    * TikTok Ads 데이터 가져오기
    */
-  private async fetchTikTokAdsData(token?: string): Promise<any> {
+  private async fetchTikTokAdsData(
+    token?: string,
+  ): Promise<Record<string, unknown> | null> {
     if (!token) return null;
 
     // TikTok Business Center API 호출
@@ -279,12 +311,16 @@ export class BFFAuthService {
    * 플랫폼별 데이터 통합
    */
   private combineResults(
-    googleData: any,
-    metaData: any,
-    tiktokData: any,
+    googleData:
+      | { accountId: string; accountName: string; campaigns: unknown[] }[]
+      | null,
+    metaData: Record<string, unknown> | null,
+    tiktokData: Record<string, unknown> | null,
   ): UnifiedData {
+    const processedGoogleData = googleData ? { accounts: googleData } : null;
+
     return {
-      google: googleData,
+      google: processedGoogleData,
       meta: metaData,
       tiktok: tiktokData,
     };
@@ -293,10 +329,10 @@ export class BFFAuthService {
   /**
    * Google 토큰 갱신
    */
-  private async refreshGoogleToken(credential: any): Promise<string> {
+  private async refreshGoogleToken(credential: Credential): Promise<string> {
     // Google OAuth2 토큰 갱신 로직
     // 실제 구현은 Google OAuth2 문서 참조
-    log.info("Google 토큰 갱신", { accountId: credential.account_id });
+    log.info("Google 토큰 갱신", { credentialId: credential.id });
 
     return `refreshed_google_token_${Date.now()}`;
   }
@@ -304,10 +340,10 @@ export class BFFAuthService {
   /**
    * Meta 토큰 갱신
    */
-  private async refreshMetaToken(credential: any): Promise<string> {
+  private async refreshMetaToken(credential: Credential): Promise<string> {
     // Meta OAuth2 토큰 갱신 로직
     // 실제 구현은 Meta OAuth2 문서 참조
-    log.info("Meta 토큰 갱신", { accountId: credential.account_id });
+    log.info("Meta 토큰 갱신", { credentialId: credential.id });
 
     return `refreshed_meta_token_${Date.now()}`;
   }
@@ -315,10 +351,10 @@ export class BFFAuthService {
   /**
    * TikTok 토큰 갱신
    */
-  private async refreshTikTokToken(credential: any): Promise<string> {
+  private async refreshTikTokToken(credential: Credential): Promise<string> {
     // TikTok OAuth2 토큰 갱신 로직
     // 실제 구현은 TikTok OAuth2 문서 참조
-    log.info("TikTok 토큰 갱신", { accountId: credential.account_id });
+    log.info("TikTok 토큰 갱신", { credentialId: credential.id });
 
     return `refreshed_tiktok_token_${Date.now()}`;
   }

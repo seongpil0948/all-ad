@@ -5,6 +5,7 @@ import type {
   CampaignStatus,
 } from "@/types";
 import type { GoogleAdsCredentials } from "@/types/credentials.types";
+import type { GoogleAdsQueryResponseRow } from "@/types/google-ads-api.types";
 
 import { PlatformService } from "./platform-service.interface";
 
@@ -99,43 +100,67 @@ export class GoogleAdsPlatformService implements PlatformService {
         const clientAccounts = await this.mccAuthService.listClientAccounts();
         const allCampaigns: Campaign[] = [];
 
-        for (const account of clientAccounts) {
+        for (const account of clientAccounts as GoogleAdsQueryResponseRow[]) {
           if (!account.customer_client) continue;
 
           const clientId = String(account.customer_client.id);
-          const clientName = account.customer_client.descriptive_name || "";
           const campaigns =
             await this.mccAuthService.getClientCampaigns(clientId);
 
           // Google Ads 캠페인을 공통 Campaign 타입으로 변환
-          const mappedCampaigns = campaigns.map((campaign: any) => ({
-            id: campaign.id,
-            teamId: clientId,
-            platformCampaignId: campaign.id,
-            name: campaign.name,
-            platform: "google" as PlatformType,
-            status: (campaign.status === "ENABLED"
-              ? "active"
-              : "paused") as CampaignStatus,
-            isActive: campaign.status === "ENABLED",
-            budget: campaign.budget?.amount_micros
-              ? campaign.budget.amount_micros / 1000000
-              : 0,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            accountName: clientName,
-            metrics: campaign.metrics
-              ? {
-                  impressions: campaign.metrics.impressions,
-                  clicks: campaign.metrics.clicks,
-                  cost: campaign.metrics.cost_micros / 1000000,
-                  conversions: campaign.metrics.conversions,
-                  ctr: campaign.metrics.ctr,
-                  cpc: campaign.metrics.average_cpc / 1000000,
-                  cpm: campaign.metrics.average_cpm / 1000,
-                }
-              : undefined,
-          }));
+          const mappedCampaigns: Campaign[] = [];
+
+          for (const row of campaigns) {
+            const campaign = row.campaign;
+            const metrics = row.metrics;
+            const campaignBudget = row.campaign_budget;
+
+            if (!campaign) {
+              continue;
+            }
+
+            const mappedCampaign: Campaign = {
+              id: String(campaign.id || ""),
+              teamId: clientId,
+              platformCampaignId: String(campaign.id || ""),
+              name: campaign.name || "",
+              platform: "google" as PlatformType,
+              status: (campaign.status === "ENABLED"
+                ? "active"
+                : "paused") as CampaignStatus,
+              isActive: campaign.status === "ENABLED",
+              budget: campaignBudget?.amount_micros
+                ? Number(campaignBudget.amount_micros) / 1000000
+                : 0,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              metrics: metrics
+                ? {
+                    impressions: Number(metrics.impressions || 0),
+                    clicks: Number(metrics.clicks || 0),
+                    cost: Number(metrics.cost_micros || 0) / 1000000,
+                    conversions: Number(metrics.conversions || 0),
+                    ctr: Number(metrics.ctr || 0),
+                    cpc: metrics.average_cpc
+                      ? Number(metrics.average_cpc) / 1000000
+                      : 0,
+                    cpm: metrics.average_cpm
+                      ? Number(metrics.average_cpm) / 1000
+                      : 0,
+                  }
+                : {
+                    impressions: 0,
+                    clicks: 0,
+                    cost: 0,
+                    conversions: 0,
+                    ctr: 0,
+                    cpc: 0,
+                    cpm: 0,
+                  },
+            };
+
+            mappedCampaigns.push(mappedCampaign);
+          }
 
           allCampaigns.push(...mappedCampaigns);
         }
@@ -248,7 +273,7 @@ export class GoogleAdsPlatformService implements PlatformService {
 
         // MCC를 통해 클라이언트 계정의 캠페인 예산 업데이트
         const mutation = {
-          entity: "campaign" as any,
+          entity: "campaign" as const,
           operation: "update" as const,
           resource: {
             resource_name: `customers/${clientAccountId}/campaigns/${campaignId}`,

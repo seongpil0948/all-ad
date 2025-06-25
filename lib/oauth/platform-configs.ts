@@ -3,16 +3,21 @@ import type { OAuthConfig } from "@/types/oauth";
 
 import { createClient } from "@/utils/supabase/server";
 
-// Re-export client config for convenience
-export { getOAuthConfig } from "./platform-configs.client";
+// Client config export removed - legacy OAuth implementation
 
 // Base OAuth configurations (without client credentials)
 const baseOAuthConfigs = {
   google: {
     redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback/google-ads`,
-    scope: ["https://www.googleapis.com/auth/adwords"],
+    scope: [
+      "https://www.googleapis.com/auth/adwords",
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile",
+    ],
     authorizationUrl: "https://accounts.google.com/o/oauth2/v2/auth",
     tokenUrl: "https://oauth2.googleapis.com/token",
+    accessType: "offline",
+    prompt: "consent select_account",
   },
   facebook: {
     redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback/facebook-ads`,
@@ -99,6 +104,53 @@ export async function getOAuthConfigWithCredentials(
     // Include developer token for Google Ads
     ...(platform === "google" && developer_token
       ? { developerToken: developer_token }
+      : {}),
+  };
+}
+
+// Get OAuth config with All-AD's own credentials (for simplified OAuth)
+export async function getAllAdOAuthConfig(
+  platform: string,
+): Promise<OAuthConfig | null> {
+  const baseConfig =
+    baseOAuthConfigs[platform as keyof typeof baseOAuthConfigs];
+
+  if (!baseConfig) {
+    return null;
+  }
+
+  // Use All-AD's own OAuth credentials from environment variables
+  const credentialMap = {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      developerToken: process.env.GOOGLE_DEVELOPER_TOKEN,
+    },
+    facebook: {
+      clientId: process.env.META_CLIENT_ID,
+      clientSecret: process.env.META_CLIENT_SECRET,
+    },
+    meta: {
+      clientId: process.env.META_CLIENT_ID,
+      clientSecret: process.env.META_CLIENT_SECRET,
+    },
+    // Add more platforms as needed
+  };
+
+  const platformCreds = credentialMap[platform as keyof typeof credentialMap];
+
+  if (!platformCreds?.clientId || !platformCreds?.clientSecret) {
+    return null;
+  }
+
+  return {
+    ...baseConfig,
+    clientId: platformCreds.clientId,
+    clientSecret: platformCreds.clientSecret,
+    ...(platform === "google" &&
+    "developerToken" in platformCreds &&
+    platformCreds.developerToken
+      ? { developerToken: platformCreds.developerToken }
       : {}),
   };
 }
