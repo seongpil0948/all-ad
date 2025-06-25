@@ -1,11 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
 import { ActionState } from "@/types/actions";
 import log from "@/utils/logger";
+import { redirectWithToast } from "@/utils/server-toast";
 
 export type { ActionState };
 
@@ -74,10 +74,14 @@ export async function login(
   revalidatePath("/dashboard");
 
   // Redirect to returnUrl if provided and valid, otherwise to dashboard
-  if (returnUrl && returnUrl.startsWith("/")) {
-    redirect(returnUrl);
-  }
-  redirect("/dashboard");
+  const redirectPath =
+    returnUrl && returnUrl.startsWith("/") ? returnUrl : "/dashboard";
+
+  redirectWithToast(redirectPath, {
+    type: "success",
+    message: "로그인되었습니다",
+    description: "환영합니다!",
+  });
 }
 
 export async function signup(
@@ -151,10 +155,14 @@ export async function signup(
     revalidatePath("/", "layout");
 
     // Redirect to returnUrl if provided and valid, otherwise to dashboard
-    if (returnUrl && returnUrl.startsWith("/")) {
-      redirect(returnUrl);
-    }
-    redirect("/dashboard");
+    const redirectPath =
+      returnUrl && returnUrl.startsWith("/") ? returnUrl : "/dashboard";
+
+    redirectWithToast(redirectPath, {
+      type: "success",
+      message: "회원가입이 완료되었습니다",
+      description: "All-AD에 오신 것을 환영합니다!",
+    });
   }
 
   // User created but needs email confirmation

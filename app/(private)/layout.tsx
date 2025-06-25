@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { createClient } from "@/utils/supabase/server";
+import { ToastHandler } from "@/components/toast/ToastHandler";
 
 export default async function PrivateLayout({
   children,
@@ -16,5 +18,12 @@ export default async function PrivateLayout({
     redirect("/login");
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <Suspense fallback={null}>
+        <ToastHandler />
+      </Suspense>
+      {children}
+    </>
+  );
 }

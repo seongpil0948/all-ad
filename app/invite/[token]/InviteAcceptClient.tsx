@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Chip } from "@heroui/chip";
-import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import { FaCheckCircle } from "react-icons/fa";
 
 import { createClient } from "@/utils/supabase/client";
 import log from "@/utils/logger";
 import { AcceptTeamInvitationResult } from "@/types/database.types";
+import { toast } from "@/utils/toast";
 
 interface InviteAcceptClientProps {
   token: string;
@@ -34,7 +35,6 @@ export default function InviteAcceptClient({
 }: InviteAcceptClientProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   const handleAccept = async () => {
@@ -48,7 +48,6 @@ export default function InviteAcceptClient({
     }
 
     setIsLoading(true);
-    setError(null);
 
     try {
       const supabase = createClient();
@@ -78,13 +77,21 @@ export default function InviteAcceptClient({
 
       setSuccess(true);
 
+      toast.success({
+        title: "초대 수락 성공",
+        description: "팀에 성공적으로 가입했습니다. 대시보드로 이동합니다...",
+      });
+
       // Redirect to dashboard after 2 seconds
       setTimeout(() => {
         router.push("/dashboard");
       }, 2000);
     } catch (err) {
       log.error("Error accepting invitation", err as Error);
-      setError(err instanceof Error ? err.message : "An error occurred");
+      toast.error({
+        title: "초대 수락 실패",
+        description: err instanceof Error ? err.message : "오류가 발생했습니다",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -136,15 +143,6 @@ export default function InviteAcceptClient({
             <p className="text-sm text-default-500 text-center">
               You&apos;ll need to create an account to accept this invitation.
             </p>
-          )}
-
-          {error && (
-            <div className="bg-danger-50 border border-danger-200 rounded-lg p-3">
-              <div className="flex items-center gap-2">
-                <FaTimesCircle className="text-danger shrink-0" />
-                <p className="text-sm text-danger">{error}</p>
-              </div>
-            </div>
           )}
 
           <div className="flex gap-3 pt-4">

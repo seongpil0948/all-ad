@@ -11,7 +11,7 @@ import { updateAvatarAction } from "./actions";
 
 import { AvatarUpload } from "@/components/avatar-upload";
 import { Profile } from "@/types/database.types";
-import { MessageCard } from "@/components/common";
+import { toast } from "@/utils/toast";
 
 interface ProfileFormProps {
   user: User;
@@ -39,10 +39,6 @@ export function ProfileForm({
   updateProfileAction,
 }: ProfileFormProps) {
   const [, startTransition] = useTransition();
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || "",
     email: profile?.email || user.email || "",
@@ -50,13 +46,17 @@ export function ProfileForm({
 
   const handleSubmit = useCallback(
     async (formData: FormData) => {
-      setMessage(null);
       const result = await updateProfileAction(formData);
 
-      setMessage({
-        type: result.success ? "success" : "error",
-        text: result.message,
-      });
+      if (result.success) {
+        toast.success({
+          title: result.message,
+        });
+      } else {
+        toast.error({
+          title: result.message,
+        });
+      }
     },
     [updateProfileAction],
   );
@@ -66,10 +66,13 @@ export function ProfileForm({
       startTransition(async () => {
         const result = await updateAvatarAction(url);
 
-        if (!result.success) {
-          setMessage({
-            type: "error",
-            text: "아바타 업데이트 중 오류가 발생했습니다.",
+        if (result.success) {
+          toast.success({
+            title: "프로필 사진이 업데이트되었습니다.",
+          });
+        } else {
+          toast.error({
+            title: "아바타 업데이트 중 오류가 발생했습니다.",
           });
         }
       });
@@ -81,10 +84,13 @@ export function ProfileForm({
     startTransition(async () => {
       const result = await updateAvatarAction(null);
 
-      if (!result.success) {
-        setMessage({
-          type: "error",
-          text: "아바타 삭제 중 오류가 발생했습니다.",
+      if (result.success) {
+        toast.success({
+          title: "프로필 사진이 삭제되었습니다.",
+        });
+      } else {
+        toast.error({
+          title: "아바타 삭제 중 오류가 발생했습니다.",
         });
       }
     });
@@ -112,8 +118,6 @@ export function ProfileForm({
       </div>
 
       <Divider className="my-6" />
-
-      {message && <MessageCard message={message.text} type={message.type} />}
 
       <form action={handleSubmit}>
         <div className="space-y-6">

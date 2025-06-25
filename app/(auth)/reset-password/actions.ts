@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import log from "@/utils/logger";
+import { redirectWithToast } from "@/utils/server-toast";
 
 export interface ResetPasswordState {
   errors?: {
@@ -54,11 +55,9 @@ export async function updatePassword(
     };
   }
 
-  return {
-    success: true,
-    errors: {
-      general:
-        "비밀번호가 성공적으로 변경되었습니다. 잠시 후 로그인 페이지로 이동합니다.",
-    },
-  };
+  redirectWithToast("/login", {
+    type: "success",
+    message: "비밀번호 변경 성공",
+    description: "비밀번호가 성공적으로 변경되었습니다. 로그인해주세요.",
+  });
 }

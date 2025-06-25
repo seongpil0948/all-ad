@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 
 import { clientLogin } from "@/app/(auth)/login/client-actions";
 import { signup, type ActionState } from "@/app/(auth)/login/actions";
+import { toast } from "@/utils/toast";
 
 interface AuthFormProps {
   initialMode?: "login" | "signup";
@@ -27,7 +28,6 @@ export function AuthForm({
 }: AuthFormProps) {
   const [isSignUp, setIsSignUp] = useState(initialMode === "signup");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   // For signup, we use server action with useActionState
@@ -41,7 +41,6 @@ export function AuthForm({
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    setError(null);
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
@@ -51,10 +50,16 @@ export function AuthForm({
       const result = await clientLogin(email, password, returnUrl, router);
 
       if (!result.success && result.error) {
-        setError(result.error);
+        toast.error({
+          title: "로그인 실패",
+          description: result.error,
+        });
       }
     } catch {
-      setError("예기치 않은 오류가 발생했습니다.");
+      toast.error({
+        title: "오류 발생",
+        description: "예기치 않은 오류가 발생했습니다.",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -148,8 +153,6 @@ export function AuthForm({
               type="password"
               variant="bordered"
             />
-
-            {error && <div className="text-sm text-danger">{error}</div>}
 
             <Button
               fullWidth

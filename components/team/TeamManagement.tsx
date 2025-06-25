@@ -41,6 +41,7 @@ import {
   InfiniteScrollTableColumn,
 } from "@/components/common";
 import { TableSkeleton, CardSkeleton } from "@/components/common/skeletons";
+import { toast } from "@/utils/toast";
 
 const roleConfig = {
   master: {
@@ -106,8 +107,6 @@ export function TeamManagement() {
   const [inviteRole, setInviteRole] = useState<UserRole>("viewer");
   const [editingMember, setEditingMember] = useState<string | null>(null);
   const [editingRole, setEditingRole] = useState<UserRole>("viewer");
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasMoreMembers, setHasMoreMembers] = useState(true);
   const [hasMoreInvitations, setHasMoreInvitations] = useState(true);
 
@@ -221,53 +220,30 @@ export function TeamManagement() {
     });
   }, [teamInvitations?.length]);
 
-  // Effect 5: Clear success message after 3 seconds - separate concern
-  useEffect(() => {
-    if (successMessage) {
-      const timer = setTimeout(() => {
-        startTransition(() => {
-          setSuccessMessage(null);
-        });
-      }, 3000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [successMessage]);
-
-  // Effect 6: Clear error message after 3 seconds - separate concern
-  useEffect(() => {
-    if (errorMessage) {
-      const timer = setTimeout(() => {
-        startTransition(() => {
-          setErrorMessage(null);
-        });
-      }, 3000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [errorMessage]);
-
   const handleInvite = useCallback(async () => {
     if (!inviteEmail) {
-      log.warn("팀원 초대 실패: 이메일이 입력되지 않음");
-      setErrorMessage("초대할 팀원의 이메일을 입력해주세요.");
+      toast.error({
+        title: "초대할 팀원의 이메일을 입력해주세요.",
+      });
 
       return;
     }
 
     try {
       await inviteTeamMember(inviteEmail, inviteRole);
-      log.info(`팀원 초대 성공: ${inviteEmail}`);
+      toast.success({
+        title: "초대 완료",
+        description: `${inviteEmail}님에게 초대장을 보냈습니다.`,
+      });
       startTransition(() => {
-        setSuccessMessage(`${inviteEmail}님에게 초대장을 보냈습니다.`);
         setInviteEmail("");
         setInviteRole("viewer");
       });
       onClose();
     } catch (error) {
-      log.error(`팀원 초대 실패: ${JSON.stringify(error)}`);
-      startTransition(() => {
-        setErrorMessage("초대 중 오류가 발생했습니다. 다시 시도해주세요.");
+      toast.error({
+        title: "초대 실패",
+        description: "초대 중 오류가 발생했습니다. 다시 시도해주세요.",
       });
     }
   }, [inviteEmail, inviteRole, inviteTeamMember, onClose]);
@@ -276,17 +252,17 @@ export function TeamManagement() {
     async (memberId: string) => {
       try {
         await updateMemberRole(memberId, editingRole);
-        log.info(`팀원 권한 변경 성공: ${roleConfig[editingRole].label}`);
+        toast.success({
+          title: "권한 변경 완료",
+          description: `팀원의 권한이 ${roleConfig[editingRole].label}로 변경되었습니다.`,
+        });
         startTransition(() => {
-          setSuccessMessage(
-            `팀원의 권한이 ${roleConfig[editingRole].label}로 변경되었습니다.`,
-          );
           setEditingMember(null);
         });
       } catch (error) {
-        log.error(`팀원 권한 변경 실패: ${JSON.stringify(error)}`);
-        startTransition(() => {
-          setErrorMessage("권한 변경에 실패했습니다. 다시 시도해주세요.");
+        toast.error({
+          title: "권한 변경 실패",
+          description: "권한 변경에 실패했습니다. 다시 시도해주세요.",
         });
       }
     },
@@ -298,14 +274,14 @@ export function TeamManagement() {
       if (confirm(`${memberName}님을 팀에서 제거하시겠습니까?`)) {
         try {
           await removeMember(memberId);
-          log.info(`팀원 제거 성공: ${memberName}`);
-          startTransition(() => {
-            setSuccessMessage(`${memberName}님이 팀에서 제거되었습니다.`);
+          toast.success({
+            title: "팀원 제거 완료",
+            description: `${memberName}님이 팀에서 제거되었습니다.`,
           });
         } catch (error) {
-          log.error(`팀원 제거 실패: ${JSON.stringify(error)}`);
-          startTransition(() => {
-            setErrorMessage("팀원 제거 중 오류가 발생했습니다.");
+          toast.error({
+            title: "팀원 제거 실패",
+            description: "팀원 제거 중 오류가 발생했습니다.",
           });
         }
       }
@@ -548,23 +524,6 @@ export function TeamManagement() {
             </CardBody>
           </Card>
         )
-      )}
-
-      {/* 성공/에러 메시지 */}
-      {successMessage && (
-        <Card>
-          <CardBody>
-            <p className="text-success">{successMessage}</p>
-          </CardBody>
-        </Card>
-      )}
-
-      {errorMessage && (
-        <Card>
-          <CardBody>
-            <p className="text-danger">{errorMessage}</p>
-          </CardBody>
-        </Card>
       )}
 
       {/* 팀원 목록 */}
