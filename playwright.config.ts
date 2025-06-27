@@ -16,7 +16,7 @@ import config from "./tests/config";
 const PORT = process.env.PORT || 3001;
 
 // Set webServer.url and use.baseURL with the location of the WebServer respecting the correct set port
-const baseURL = `http://localhost:${PORT}`;
+const baseURL = process.env.BASE_URL || `http://localhost:${PORT}`;
 
 /**
  * See https://playwright.dev/docs/test-configuration.
