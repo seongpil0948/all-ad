@@ -1,3 +1,4 @@
+
 export type Json =
   | string
   | number
@@ -36,7 +37,7 @@ export type Database = {
     Tables: {
       campaign_metrics: {
         Row: {
-          campaign_id: string | null
+          campaign_id: string
           clicks: number | null
           conversions: number | null
           cost: number | null
@@ -48,7 +49,7 @@ export type Database = {
           revenue: number | null
         }
         Insert: {
-          campaign_id?: string | null
+          campaign_id: string
           clicks?: number | null
           conversions?: number | null
           cost?: number | null
@@ -60,7 +61,7 @@ export type Database = {
           revenue?: number | null
         }
         Update: {
-          campaign_id?: string | null
+          campaign_id?: string
           clicks?: number | null
           conversions?: number | null
           cost?: number | null
@@ -90,10 +91,11 @@ export type Database = {
           name: string
           platform: Database["public"]["Enums"]["platform_type"]
           platform_campaign_id: string
+          platform_credential_id: string | null
           raw_data: Json | null
           status: string | null
           synced_at: string | null
-          team_id: string | null
+          team_id: string
           updated_at: string
         }
         Insert: {
@@ -104,10 +106,11 @@ export type Database = {
           name: string
           platform: Database["public"]["Enums"]["platform_type"]
           platform_campaign_id: string
+          platform_credential_id?: string | null
           raw_data?: Json | null
           status?: string | null
           synced_at?: string | null
-          team_id?: string | null
+          team_id: string
           updated_at?: string
         }
         Update: {
@@ -118,13 +121,21 @@ export type Database = {
           name?: string
           platform?: Database["public"]["Enums"]["platform_type"]
           platform_campaign_id?: string
+          platform_credential_id?: string | null
           raw_data?: Json | null
           status?: string | null
           synced_at?: string | null
-          team_id?: string | null
+          team_id?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "campaigns_platform_credential_id_fkey"
+            columns: ["platform_credential_id"]
+            isOneToOne: false
+            referencedRelation: "platform_credentials"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "campaigns_team_id_fkey"
             columns: ["team_id"]
@@ -134,49 +145,214 @@ export type Database = {
           },
         ]
       }
+      manual_campaign_metrics: {
+        Row: {
+          clicks: number | null
+          conversions: number | null
+          created_at: string | null
+          created_by: string | null
+          date: string
+          id: string
+          impressions: number | null
+          manual_campaign_id: string
+          revenue: number | null
+          spent: number | null
+        }
+        Insert: {
+          clicks?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          date: string
+          id?: string
+          impressions?: number | null
+          manual_campaign_id: string
+          revenue?: number | null
+          spent?: number | null
+        }
+        Update: {
+          clicks?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          date?: string
+          id?: string
+          impressions?: number | null
+          manual_campaign_id?: string
+          revenue?: number | null
+          spent?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_campaign_metrics_manual_campaign_id_fkey"
+            columns: ["manual_campaign_id"]
+            isOneToOne: false
+            referencedRelation: "manual_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manual_campaigns: {
+        Row: {
+          budget: number | null
+          clicks: number | null
+          conversions: number | null
+          created_at: string | null
+          created_by: string | null
+          external_id: string
+          id: string
+          impressions: number | null
+          last_updated_at: string | null
+          name: string
+          notes: string | null
+          platform: string
+          revenue: number | null
+          spent: number | null
+          status: string
+          team_id: string
+          updated_by: string | null
+        }
+        Insert: {
+          budget?: number | null
+          clicks?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          external_id: string
+          id?: string
+          impressions?: number | null
+          last_updated_at?: string | null
+          name: string
+          notes?: string | null
+          platform: string
+          revenue?: number | null
+          spent?: number | null
+          status: string
+          team_id: string
+          updated_by?: string | null
+        }
+        Update: {
+          budget?: number | null
+          clicks?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          external_id?: string
+          id?: string
+          impressions?: number | null
+          last_updated_at?: string | null
+          name?: string
+          notes?: string | null
+          platform?: string
+          revenue?: number | null
+          spent?: number | null
+          status?: string
+          team_id?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_campaigns_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oauth_states: {
+        Row: {
+          created_at: string
+          id: string
+          platform: string
+          state: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          platform: string
+          state: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          platform?: string
+          state?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oauth_states_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_credentials: {
         Row: {
-          account_id: string | null
+          access_token: string | null
+          account_id: string
           account_name: string | null
           created_at: string
           created_by: string | null
           credentials: Json
           data: Json | null
+          error_message: string | null
+          expires_at: string | null
           id: string
           is_active: boolean | null
           last_synced_at: string | null
           platform: Database["public"]["Enums"]["platform_type"]
-          team_id: string | null
+          refresh_token: string | null
+          scope: string | null
+          team_id: string
           updated_at: string
           user_id: string | null
         }
         Insert: {
-          account_id?: string | null
-          account_name?: string | null
-          created_at?: string
-          created_by?: string | null
-          credentials: Json
-          data?: Json | null
-          id?: string
-          is_active?: boolean | null
-          last_synced_at?: string | null
-          platform: Database["public"]["Enums"]["platform_type"]
-          team_id?: string | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          account_id?: string | null
+          access_token?: string | null
+          account_id: string
           account_name?: string | null
           created_at?: string
           created_by?: string | null
           credentials?: Json
           data?: Json | null
+          error_message?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_synced_at?: string | null
+          platform: Database["public"]["Enums"]["platform_type"]
+          refresh_token?: string | null
+          scope?: string | null
+          team_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          account_id?: string
+          account_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          credentials?: Json
+          data?: Json | null
+          error_message?: string | null
+          expires_at?: string | null
           id?: string
           is_active?: boolean | null
           last_synced_at?: string | null
           platform?: Database["public"]["Enums"]["platform_type"]
-          team_id?: string | null
+          refresh_token?: string | null
+          scope?: string | null
+          team_id?: string
           updated_at?: string
           user_id?: string | null
         }
@@ -193,29 +369,85 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
-          created_at: string
-          email: string
+          created_at: string | null
+          email: string | null
           full_name: string | null
           id: string
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
-          created_at?: string
-          email: string
+          created_at?: string | null
+          email?: string | null
           full_name?: string | null
           id: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
-          created_at?: string
-          email?: string
+          created_at?: string | null
+          email?: string | null
           full_name?: string | null
           id?: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: []
+      }
+      sync_logs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_count: number | null
+          error_message: string | null
+          id: string
+          last_sync_at: string | null
+          platform: Database["public"]["Enums"]["platform_type"]
+          records_processed: number | null
+          started_at: string
+          status: string | null
+          success_count: number | null
+          sync_type: string
+          team_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_count?: number | null
+          error_message?: string | null
+          id?: string
+          last_sync_at?: string | null
+          platform: Database["public"]["Enums"]["platform_type"]
+          records_processed?: number | null
+          started_at?: string
+          status?: string | null
+          success_count?: number | null
+          sync_type: string
+          team_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_count?: number | null
+          error_message?: string | null
+          id?: string
+          last_sync_at?: string | null
+          platform?: Database["public"]["Enums"]["platform_type"]
+          records_processed?: number | null
+          started_at?: string
+          status?: string | null
+          success_count?: number | null
+          sync_type?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_logs_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       team_invitations: {
         Row: {
@@ -226,7 +458,7 @@ export type Database = {
           id: string
           invited_by: string
           role: Database["public"]["Enums"]["user_role"]
-          status: string | null
+          status: Database["public"]["Enums"]["invitation_status"]
           team_id: string
           token: string
         }
@@ -237,8 +469,8 @@ export type Database = {
           expires_at?: string
           id?: string
           invited_by: string
-          role?: Database["public"]["Enums"]["user_role"]
-          status?: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          status?: Database["public"]["Enums"]["invitation_status"]
           team_id: string
           token?: string
         }
@@ -250,7 +482,7 @@ export type Database = {
           id?: string
           invited_by?: string
           role?: Database["public"]["Enums"]["user_role"]
-          status?: string | null
+          status?: Database["public"]["Enums"]["invitation_status"]
           team_id?: string
           token?: string
         }
@@ -332,73 +564,40 @@ export type Database = {
         Args: { invitation_token: string }
         Returns: Json
       }
-      can_invite_team_members: {
-        Args: { check_user_id: string; check_team_id: string }
-        Returns: boolean
-      }
       check_team_member_limit: {
         Args: { team_id_param: string }
         Returns: boolean
+      }
+      cleanup_old_oauth_states: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       create_team_for_user: {
         Args: { user_id: string }
         Returns: string
       }
-      debug_get_all_invitation_tokens: {
+      get_cron_job_status: {
         Args: Record<PropertyKey, never>
         Returns: {
-          token: string
-          email: string
-          status: string
+          jobid: number
+          jobname: string
+          schedule: string
+          command: string
+          active: boolean
+          last_run: string
+          last_status: string
+          last_duration: unknown
         }[]
-      }
-      decline_team_invitation: {
-        Args: { invitation_token: string }
-        Returns: Json
       }
       get_invitation_by_token: {
         Args: { invitation_token: string }
         Returns: Json
       }
-      get_team_details: {
-        Args: { team_id_param: string }
-        Returns: {
-          id: string
-          name: string
-          master_user_id: string
-          created_at: string
-          updated_at: string
-          member_count: number
-        }[]
-      }
-      get_team_members_with_profiles: {
-        Args: { team_id_param: string }
-        Returns: {
-          id: string
-          team_id: string
-          user_id: string
-          role: Database["public"]["Enums"]["user_role"]
-          invited_by: string
-          joined_at: string
-          profile_id: string
-          email: string
-          full_name: string
-          avatar_url: string
-        }[]
-      }
-      is_team_master: {
-        Args: { check_team_id: string; check_user_id?: string }
-        Returns: boolean
-      }
-      is_team_member: {
-        Args: { check_team_id: string; check_user_id?: string }
-        Returns: boolean
-      }
     }
     Enums: {
       invitation_status: "pending" | "accepted" | "expired" | "cancelled"
       platform_type: "facebook" | "google" | "kakao" | "naver" | "coupang"
-      user_role: "master" | "viewer" | "team_mate"
+      user_role: "master" | "team_mate" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -519,7 +718,7 @@ export const Constants = {
     Enums: {
       invitation_status: ["pending", "accepted", "expired", "cancelled"],
       platform_type: ["facebook", "google", "kakao", "naver", "coupang"],
-      user_role: ["master", "viewer", "team_mate"],
+      user_role: ["master", "team_mate", "viewer"],
     },
   },
 } as const

@@ -3,11 +3,10 @@
 import {
   useEffect,
   useState,
-  useMemo,
   useCallback,
   useTransition,
+  useMemo,
 } from "react";
-import { Card, CardBody } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Chip } from "@heroui/chip";
@@ -21,8 +20,6 @@ import {
   useDisclosure,
 } from "@heroui/modal";
 import { addToast } from "@heroui/toast";
-import { useAsyncList } from "@react-stately/data";
-import { useShallow } from "zustand/shallow";
 import {
   FaFilter,
   FaDollarSign,
@@ -31,7 +28,11 @@ import {
   FaChartBar,
 } from "react-icons/fa";
 
-import { useCampaignStore } from "@/stores";
+import {
+  useCampaigns,
+  useCampaignMutation,
+  useCampaignBudgetMutation,
+} from "@/hooks/useCampaigns";
 import { Campaign } from "@/types/campaign.types";
 import { PlatformType } from "@/types";
 import log from "@/utils/logger";
@@ -52,62 +53,47 @@ const ITEMS_PER_PAGE = 20;
 
 export function CampaignDashboard() {
   const [isPending, startTransition] = useTransition();
+  const [selectedPlatform, setSelectedPlatform] = useState<
+    PlatformType | "all"
+  >("all");
 
-  // Use useShallow to optimize re-renders
-  const {
-    campaigns = [],
-    isLoading,
-    fetchCampaigns,
-    updateCampaignBudget,
-    updateCampaignStatus,
-    setFilters,
-  } = useCampaignStore(
-    useShallow((state) => ({
-      campaigns: state.campaigns,
-      isLoading: state.isLoading,
-      fetchCampaigns: state.fetchCampaigns,
-      updateCampaignBudget: state.updateCampaignBudget,
-      updateCampaignStatus: state.updateCampaignStatus,
-      setFilters: state.setFilters,
-    })),
-  );
+  // SWR hooks for data fetching and mutations
+  const { campaigns, stats, isLoading } = useCampaigns(selectedPlatform);
+  const { updateStatus, isUpdatingStatus } = useCampaignMutation();
+  const { updateBudget, isUpdatingBudget } = useCampaignBudgetMutation();
+
+  // Debug logging
+  useEffect(() => {
+    log.debug("Campaign data updated:", {
+      campaignsLength: campaigns.length,
+      isLoading,
+      selectedPlatform,
+      campaigns: campaigns.slice(0, 2), // Log first 2 campaigns for debugging
+    });
+  }, [campaigns, isLoading, selectedPlatform]);
 
   const { isOpen, onOpen, onClose, onOpenChange } = useDisclosure();
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(
     null,
   );
   const [newBudget, setNewBudget] = useState("");
-  const [selectedPlatform, setSelectedPlatform] = useState<
-    PlatformType | "all"
-  >("all");
-  const [hasMore, setHasMore] = useState(true);
+  const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE);
 
-  // Filter campaigns based on selected platform
-  const filteredCampaigns = useMemo(() => {
-    if (selectedPlatform === "all") {
-      return campaigns;
-    }
+  // Filter campaigns are handled by SWR query parameters
+  const filteredCampaigns = campaigns;
 
-    return campaigns.filter((c) => c.platform === selectedPlatform);
-  }, [campaigns, selectedPlatform]);
+  // Displayed campaigns with pagination
+  const displayedCampaigns = useMemo(() => {
+    return filteredCampaigns.slice(0, displayCount);
+  }, [filteredCampaigns, displayCount]);
 
-  // Infinite scroll setup
-  const campaignList = useAsyncList<Campaign>({
-    async load({ cursor }) {
-      const start = cursor ? parseInt(cursor) : 0;
-      const items = filteredCampaigns.slice(start, start + ITEMS_PER_PAGE);
+  const hasMore = displayCount < filteredCampaigns.length;
 
-      const hasMoreItems = start + ITEMS_PER_PAGE < filteredCampaigns.length;
-
-      setHasMore(hasMoreItems);
-
-      return {
-        items,
-        cursor: hasMoreItems ? String(start + ITEMS_PER_PAGE) : undefined,
-      };
-    },
-    getKey: (item) => item.id,
-  });
+  const handleLoadMore = useCallback(() => {
+    setDisplayCount((prev) =>
+      Math.min(prev + ITEMS_PER_PAGE, filteredCampaigns.length),
+    );
+  }, [filteredCampaigns.length]);
 
   // Table columns definition
   const columns: InfiniteScrollTableColumn<Campaign>[] = [
@@ -119,41 +105,24 @@ export function CampaignDashboard() {
     { key: "actions", label: "액션" },
   ];
 
-  // Effect 1: Reload list when filter changes - separate concern
+  // Effect: Reset display count when platform filter changes
   useEffect(() => {
-    startTransition(() => {
-      campaignList.reload();
-    });
+    setDisplayCount(ITEMS_PER_PAGE);
   }, [selectedPlatform]);
 
-  // Effect 2: Reload list when campaigns change - separate concern
+  // Effect: Reset display count when campaigns data changes
   useEffect(() => {
-    startTransition(() => {
-      campaignList.reload();
-    });
-  }, [campaigns.length]);
-
-  // Effect 3: Initial data fetch - runs once
-  useEffect(() => {
-    fetchCampaigns().catch((err) => {
-      log.error("Failed to fetch campaigns", err);
-    });
-  }, [fetchCampaigns]);
+    if (!isLoading) {
+      setDisplayCount(ITEMS_PER_PAGE);
+    }
+  }, [campaigns.length, isLoading]);
 
   // Optimized callbacks with useCallback
-  const handlePlatformFilter = useCallback(
-    (platform: PlatformType | "all") => {
-      startTransition(() => {
-        setSelectedPlatform(platform);
-        if (platform === "all") {
-          setFilters({});
-        } else {
-          setFilters({ platform });
-        }
-      });
-    },
-    [setFilters],
-  );
+  const handlePlatformFilter = useCallback((platform: PlatformType | "all") => {
+    startTransition(() => {
+      setSelectedPlatform(platform);
+    });
+  }, []);
 
   const handleBudgetEdit = useCallback(
     (campaign: Campaign) => {
@@ -168,8 +137,9 @@ export function CampaignDashboard() {
     if (!selectedCampaign || !newBudget) return;
 
     try {
-      startTransition(() => {
-        updateCampaignBudget(selectedCampaign.id, parseFloat(newBudget));
+      await updateBudget({
+        campaignId: selectedCampaign.id,
+        budget: parseFloat(newBudget),
       });
 
       addToast({
@@ -180,7 +150,7 @@ export function CampaignDashboard() {
       onClose();
     } catch (error) {
       log.error(
-        `예산 업데이트 중 오류가 발생했습니다 : ${JSON.stringify(error)}`,
+        `예산 업데이트 중 오류가 발생했습니다: ${JSON.stringify(error)}`,
       );
       addToast({
         title: "오류",
@@ -188,16 +158,14 @@ export function CampaignDashboard() {
         color: "danger",
       });
     }
-  }, [selectedCampaign, newBudget, updateCampaignBudget, onClose]);
+  }, [selectedCampaign, newBudget, updateBudget, onClose]);
 
   const handleStatusToggle = useCallback(
     async (campaign: Campaign) => {
       try {
-        startTransition(() => {
-          updateCampaignStatus(
-            campaign.id,
-            campaign.isActive ? "PAUSED" : "ENABLED",
-          );
+        await updateStatus({
+          campaignId: campaign.id,
+          status: campaign.isActive ? "PAUSED" : "ENABLED",
         });
 
         addToast({
@@ -206,9 +174,7 @@ export function CampaignDashboard() {
           color: "success",
         });
       } catch (error) {
-        log.error(
-          `상태 변경 중 오류가 발생했습니다 : ${JSON.stringify(error)}`,
-        );
+        log.error(`상태 변경 중 오류가 발생했습니다: ${JSON.stringify(error)}`);
         addToast({
           title: "오류",
           description: "상태 변경 중 오류가 발생했습니다.",
@@ -216,7 +182,7 @@ export function CampaignDashboard() {
         });
       }
     },
-    [updateCampaignStatus],
+    [updateStatus],
   );
 
   const handleViewMetrics = useCallback((campaignId: string) => {
@@ -242,11 +208,11 @@ export function CampaignDashboard() {
         case "status":
           return (
             <Chip
-              color={campaign.isActive ? "success" : "default"}
+              color={campaign.status === "active" ? "success" : "default"}
               size="sm"
               variant="flat"
             >
-              {campaign.status || "Unknown"}
+              {campaign.status}
             </Chip>
           );
         case "budget":
@@ -267,6 +233,7 @@ export function CampaignDashboard() {
           return (
             <Button
               color={campaign.isActive ? "success" : "default"}
+              isLoading={isUpdatingStatus}
               size="sm"
               startContent={campaign.isActive ? <FaCheck /> : <FaPowerOff />}
               variant="flat"
@@ -292,7 +259,7 @@ export function CampaignDashboard() {
           return null;
       }
     },
-    [handleBudgetEdit, handleStatusToggle, handleViewMetrics],
+    [handleBudgetEdit, handleStatusToggle, handleViewMetrics, isUpdatingStatus],
   );
 
   // 플랫폼별 캠페인 수 계산
@@ -305,11 +272,15 @@ export function CampaignDashboard() {
     {} as Record<PlatformType, number>,
   );
 
-  // 전체 통계 계산
-  const totalStats = {
+  // 전체 통계 계산 (use SWR stats or fallback to calculated stats)
+  const totalStats = stats || {
     totalCampaigns: campaigns.length,
     activeCampaigns: campaigns.filter((c) => c.isActive).length,
-    totalBudget: campaigns.reduce((sum, c) => sum + (c.budget || 0), 0),
+    totalSpend: 0,
+    totalClicks: 0,
+    totalImpressions: 0,
+    averageCTR: 0,
+    averageCPC: 0,
   };
 
   return (
@@ -337,8 +308,8 @@ export function CampaignDashboard() {
             valueClassName="text-2xl font-bold text-success"
           />
           <StatCard
-            label="총 예산"
-            value={`₩${totalStats.totalBudget.toLocaleString()}`}
+            label="총 비용"
+            value={`₩${totalStats.totalSpend.toLocaleString()}`}
           />
         </div>
       )}
@@ -351,20 +322,17 @@ export function CampaignDashboard() {
         }
       >
         <Tab key="all" title={`전체 (${campaigns.length})`} />
-        {(
-          ["facebook", "google", "kakao", "naver", "coupang"] as PlatformType[]
-        ).map((platform) => {
-          const config = getPlatformConfig(platform);
-          const Icon = config.icon;
+        {Object.entries(campaignCounts).map(([platform, count]) => {
+          const config = getPlatformConfig(platform as PlatformType);
 
           return (
             <Tab
               key={platform}
               title={
                 <div className="flex items-center gap-2">
-                  <Icon className="w-4 h-4" />
+                  <config.icon />
                   <span>
-                    {config.name} ({campaignCounts[platform] || 0})
+                    {config.name} ({count})
                   </span>
                 </div>
               }
@@ -377,19 +345,25 @@ export function CampaignDashboard() {
       {isLoading && campaigns.length === 0 ? (
         <TableSkeleton columns={6} rows={5} />
       ) : (
-        <VirtualScrollTable
-          aria-label="캠페인 목록"
-          columns={columns}
-          emptyContent="캠페인이 없습니다"
-          estimateSize={60}
-          hasMore={hasMore}
-          isLoading={campaignList.isLoading || isPending}
-          items={campaignList}
-          maxHeight="600px"
-          overscan={5}
-          renderCell={renderCell}
-          onLoadMore={() => campaignList.loadMore()}
-        />
+        <>
+          <div className="text-xs text-default-500 mb-2">
+            총 {campaigns.length}개 캠페인 중 {filteredCampaigns.length}개
+            필터됨, 로드된 항목: {displayedCampaigns.length}
+          </div>
+          <VirtualScrollTable
+            aria-label="캠페인 목록"
+            columns={columns}
+            emptyContent="캠페인이 없습니다"
+            estimateSize={60}
+            hasMore={hasMore}
+            isLoading={isLoading || isPending}
+            items={displayedCampaigns}
+            maxHeight="600px"
+            overscan={5}
+            renderCell={renderCell}
+            onLoadMore={handleLoadMore}
+          />
+        </>
       )}
 
       {/* 예산 수정 모달 */}
@@ -426,26 +400,18 @@ export function CampaignDashboard() {
                 <Button variant="light" onPress={onClose}>
                   취소
                 </Button>
-                <Button color="primary" onPress={handleBudgetUpdate}>
-                  수정
+                <Button
+                  color="primary"
+                  isLoading={isUpdatingBudget}
+                  onPress={handleBudgetUpdate}
+                >
+                  저장
                 </Button>
               </ModalFooter>
             </>
           )}
         </ModalContent>
       </Modal>
-
-      {campaignList.items.length === 0 &&
-        !campaignList.isLoading &&
-        filteredCampaigns.length === 0 && (
-          <Card>
-            <CardBody className="text-center py-10">
-              <p className="text-default-500">
-                캠페인이 없습니다. 플랫폼을 연동하고 동기화를 진행하세요.
-              </p>
-            </CardBody>
-          </Card>
-        )}
     </div>
   );
 }

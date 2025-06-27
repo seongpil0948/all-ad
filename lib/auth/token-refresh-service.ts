@@ -27,34 +27,12 @@ export class TokenRefreshService {
     return TokenRefreshService.instance;
   }
 
-  // Start the token refresh service
-  start(intervalMinutes = 30): void {
-    if (this.isRunning) {
-      log.warn("Token refresh service is already running");
-
-      return;
-    }
-
-    this.isRunning = true;
-
-    log.info("Starting token refresh service", { intervalMinutes });
-
-    // Run immediately on start
-    this.refreshExpiredTokens().catch((error) => {
-      log.error("Initial token refresh failed", error);
-    });
-
-    // Schedule periodic refresh
-    this.refreshInterval = setInterval(
-      async () => {
-        try {
-          await this.refreshExpiredTokens();
-        } catch (error) {
-          log.error("Periodic token refresh failed", error);
-        }
-      },
-      intervalMinutes * 60 * 1000,
-    );
+  // Start the token refresh service (disabled for now)
+  start(_intervalMinutes = 30): void {
+    // Disabled automatic token refresh to avoid request context issues
+    // Token refresh should be triggered manually via API endpoints
+    log.info("Token refresh service is disabled - use manual refresh via API");
+    this.isRunning = false;
   }
 
   // Stop the token refresh service
@@ -68,16 +46,23 @@ export class TokenRefreshService {
     log.info("Token refresh service stopped");
   }
 
-  // Manually trigger token refresh
-  async refreshExpiredTokens(): Promise<{
+  // Manually trigger token refresh (requires teamId)
+  async refreshExpiredTokens(teamId?: string): Promise<{
     successful: number;
     failed: number;
     errors: Array<{ credentialId: string; error: string }>;
   }> {
-    log.info("Starting token refresh cycle");
+    if (!teamId) {
+      log.warn("Token refresh called without teamId - skipping");
+
+      return { successful: 0, failed: 0, errors: [] };
+    }
+
+    log.info("Starting token refresh cycle", { teamId });
 
     try {
-      const credentialsNeedingRefresh = await getCredentialsNeedingRefresh();
+      const credentialsNeedingRefresh =
+        await getCredentialsNeedingRefresh(teamId);
 
       if (credentialsNeedingRefresh.length === 0) {
         log.info("No credentials need token refresh");
@@ -142,7 +127,7 @@ export class TokenRefreshService {
   }
 
   // Refresh a single credential
-  private async refreshSingleCredential(credential: {
+  async refreshSingleCredential(credential: {
     id: string;
     platform: PlatformType;
     refresh_token?: string;
@@ -160,17 +145,31 @@ export class TokenRefreshService {
         return { success: false, error };
       }
 
-      // Get client credentials from stored data
-      const storedCreds = credential.credentials as {
-        client_id?: string;
-        client_secret?: string;
-      };
+      // Get client credentials
+      let clientId: string | undefined;
+      let clientSecret: string | undefined;
 
+      // For Google, check if we're using simplified OAuth (env vars)
       if (
-        !storedCreds ||
-        !storedCreds.client_id ||
-        !storedCreds.client_secret
+        credential.platform === "google" &&
+        process.env.GOOGLE_CLIENT_ID &&
+        process.env.GOOGLE_CLIENT_SECRET
       ) {
+        clientId = process.env.GOOGLE_CLIENT_ID;
+        clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+        log.info("Using simplified OAuth credentials for Google");
+      } else {
+        // Get client credentials from stored data
+        const storedCreds = credential.credentials as {
+          client_id?: string;
+          client_secret?: string;
+        };
+
+        clientId = storedCreds?.client_id;
+        clientSecret = storedCreds?.client_secret;
+      }
+
+      if (!clientId || !clientSecret) {
         const error = "Client credentials not found";
 
         await markCredentialFailed(credential.id, error);
@@ -182,8 +181,8 @@ export class TokenRefreshService {
       const refreshedTokens = await refreshAccessToken(
         credential.platform,
         credential.refresh_token,
-        storedCreds.client_id,
-        storedCreds.client_secret,
+        clientId,
+        clientSecret,
       );
 
       // Calculate expiry time
@@ -228,16 +227,13 @@ export class TokenRefreshService {
     errors: Array<{ credentialId: string; error: string }>;
   }> {
     try {
-      // Get all credentials for the team that need refresh
-      const allCredentials = await getCredentialsNeedingRefresh();
+      // Get credentials for the team that need refresh
+      const allCredentials = await getCredentialsNeedingRefresh(teamId);
 
-      // Filter by team and platform if specified
-      const credentialsToRefresh = allCredentials.filter((cred) => {
-        const matchesTeam = cred.team_id === teamId;
-        const matchesPlatform = !platform || cred.platform === platform;
-
-        return matchesTeam && matchesPlatform;
-      });
+      // Filter by platform if specified
+      const credentialsToRefresh = platform
+        ? allCredentials.filter((cred) => cred.platform === platform)
+        : allCredentials;
 
       if (credentialsToRefresh.length === 0) {
         return { successful: 0, failed: 0, errors: [] };
@@ -306,15 +302,15 @@ export class TokenRefreshService {
 // Export singleton instance
 export const tokenRefreshService = TokenRefreshService.getInstance();
 
-// Helper function to initialize the service in production
+// Helper function to initialize the service
 export function initializeTokenRefreshService(): void {
-  if (process.env.NODE_ENV === "production") {
-    tokenRefreshService.start(30); // Run every 30 minutes in production
+  const intervalMinutes = process.env.NODE_ENV === "production" ? 30 : 5; // 5 minutes in dev, 30 in prod
 
-    log.info("Token refresh service initialized for production");
-  } else {
-    log.info("Token refresh service skipped in development");
-  }
+  tokenRefreshService.start(intervalMinutes);
+
+  log.info(
+    `Token refresh service initialized (interval: ${intervalMinutes} minutes)`,
+  );
 }
 
 // Graceful shutdown

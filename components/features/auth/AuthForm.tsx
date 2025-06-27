@@ -126,7 +126,7 @@ export function AuthForm({
         </Form>
       ) : (
         // Login form using client action
-        <form onSubmit={handleLogin}>
+        <form data-test-id="login-form" onSubmit={handleLogin}>
           <div className="flex flex-col gap-4 items-center w-full min-w-sm mx-auto">
             <Input
               isRequired

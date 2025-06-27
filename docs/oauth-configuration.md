@@ -20,7 +20,6 @@ All-AD supports two methods for connecting advertising platforms:
 ### Setup Steps
 
 1. **Create OAuth 2.0 Credentials**
-
    - Go to [Google Cloud Console](https://console.cloud.google.com)
    - Navigate to APIs & Services > Credentials
    - Create OAuth 2.0 Client ID (Web application)
@@ -31,12 +30,10 @@ All-AD supports two methods for connecting advertising platforms:
      ```
 
 2. **Enable Google Ads API**
-
    - In Google Cloud Console, go to APIs & Services > Library
    - Search for "Google Ads API" and enable it
 
 3. **Get Developer Token**
-
    - Visit [Google Ads API Center](https://ads.google.com/aw/apicenter)
    - Apply for a developer token if you don't have one
 
@@ -66,13 +63,11 @@ If OAuth fails, you can generate a refresh token manually:
 ### Setup Steps
 
 1. **Create Facebook App**
-
    - Go to [Facebook Developers](https://developers.facebook.com)
    - Create a new app (Business type)
    - Add Marketing API product
 
 2. **Configure OAuth Settings**
-
    - In your app settings, go to Facebook Login > Settings
    - Add the following redirect URI:
      ```
@@ -106,13 +101,11 @@ If OAuth fails, you can generate an access token manually:
 ### Setup Steps
 
 1. **Create Kakao App**
-
    - Go to [Kakao Developers](https://developers.kakao.com)
    - Create a new application
    - Enable Kakao Login
 
 2. **Configure OAuth Settings**
-
    - In app settings, go to Platform > Web
    - Add your domain
    - In Kakao Login > Redirect URI, add:
@@ -122,7 +115,6 @@ If OAuth fails, you can generate an access token manually:
      ```
 
 3. **Enable Client Secret**
-
    - Go to Security settings
    - Generate and enable Client Secret
 

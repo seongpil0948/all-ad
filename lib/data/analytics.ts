@@ -51,21 +51,21 @@ export const getAnalyticsData = cache(
         return [];
       }
 
-      // Get analytics data from campaign_metrics table which is populated by sync
+      // Get analytics data from campaign_metrics joined with campaigns to get platform info
       const { data, error } = await supabase
         .from("campaign_metrics")
         .select(
           `
           date,
-          platform,
           impressions,
           clicks,
           cost,
           conversions,
-          revenue
+          revenue,
+          campaigns!inner(platform)
         `,
         )
-        .eq("team_id", teamId)
+        .eq("campaigns.team_id", teamId)
         .gte("date", dateRange.start.toISOString().split("T")[0])
         .lte("date", dateRange.end.toISOString().split("T")[0])
         .order("date", { ascending: true });
@@ -79,7 +79,8 @@ export const getAnalyticsData = cache(
       const dataMap = new Map<string, AnalyticsData>();
 
       data?.forEach((row) => {
-        const key = `${row.date}-${row.platform}`;
+        const platform = (row as any).campaigns?.platform as PlatformType;
+        const key = `${row.date}-${platform}`;
         const existing = dataMap.get(key);
 
         if (existing) {
@@ -92,7 +93,7 @@ export const getAnalyticsData = cache(
         } else {
           dataMap.set(key, {
             date: row.date,
-            platform: row.platform as PlatformType,
+            platform: platform,
             impressions: row.impressions || 0,
             clicks: row.clicks || 0,
             cost: row.cost || 0,

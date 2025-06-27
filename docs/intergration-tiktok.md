@@ -378,13 +378,11 @@ const makeRequestWithRetry = async (url, options, maxRetries = 5) => {
 ### 단계별 설정
 
 1. **TikTok Developers 등록**
-
    - https://developers.tiktok.com 방문
    - OTP 코드로 이메일 인증
    - 이용약관 동의
 
 2. **Business API 액세스 생성**
-
    - https://business-api.tiktok.com 에서도 등록
    - 비즈니스 검증 완료
    - 승인 대기 (2-7일)

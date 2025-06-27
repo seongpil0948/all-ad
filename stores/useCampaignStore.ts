@@ -14,6 +14,10 @@ import {
   CampaignFilterSlice,
 } from "./slices/campaignFilterSlice";
 import {
+  createPaginationSlice,
+  PaginationSlice,
+} from "./slices/paginationSlice";
+import {
   createCampaignActionsSlice,
   CampaignActionsSlice,
 } from "./slices/campaignActionsSlice";
@@ -23,7 +27,8 @@ export type CampaignStoreState = LoadingSlice &
   ErrorSlice &
   CampaignDataSlice &
   CampaignFilterSlice &
-  CampaignActionsSlice;
+  CampaignActionsSlice &
+  PaginationSlice;
 
 // Create the store
 export const useCampaignStore = create<CampaignStoreState>()(
@@ -36,6 +41,7 @@ export const useCampaignStore = create<CampaignStoreState>()(
         ...createCampaignDataSlice(set, get, api),
         ...createCampaignFilterSlice(set, get, api),
         ...createCampaignActionsSlice(set, get, api),
+        ...createPaginationSlice(set, get, api),
       }),
       {
         name: "campaign-store",
@@ -43,6 +49,7 @@ export const useCampaignStore = create<CampaignStoreState>()(
         partialize: (state) => ({
           filters: state.filters,
           lastSync: state.lastSync,
+          pagination: state.pagination,
         }),
       },
     ),

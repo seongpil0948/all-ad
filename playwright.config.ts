@@ -32,6 +32,12 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
+  /* Global timeout for each test */
+  timeout: 60 * 1000, // 60 seconds
+  /* Global timeout for expect() */
+  expect: {
+    timeout: 10 * 1000, // 10 seconds
+  },
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ["dot"],
@@ -50,8 +56,10 @@ export default defineConfig({
   webServer: {
     command: "pnpm run dev",
     url: baseURL,
-    timeout: 60 * 1000,
+    timeout: 120 * 1000, // 2 minutes for server startup
     reuseExistingServer: !process.env.CI,
+    stdout: "pipe",
+    stderr: "pipe",
   },
 
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */

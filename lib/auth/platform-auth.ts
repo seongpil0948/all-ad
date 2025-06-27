@@ -264,22 +264,28 @@ export async function updateLastSync(credentialId: string): Promise<void> {
 }
 
 // Get credentials that need token refresh
-export async function getCredentialsNeedingRefresh(): Promise<
+export async function getCredentialsNeedingRefresh(
+  teamId?: string,
+): Promise<
   Array<PlatformCredential & { credentials: Record<string, unknown> }>
 > {
   const supabase = await createClient();
 
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from("platform_credentials")
       .select("*, credentials")
       .eq("is_active", true)
-      .not("credentials->refresh_token", "is", null)
-      .not("credentials->expires_at", "is", null)
-      .lt(
-        "credentials->expires_at",
-        new Date(Date.now() + 5 * 60 * 1000).toISOString(),
-      ); // Expires within 5 minutes
+      .not("refresh_token", "is", null)
+      .not("expires_at", "is", null)
+      .lt("expires_at", new Date(Date.now() + 5 * 60 * 1000).toISOString()); // Expires within 5 minutes
+
+    // If teamId is provided, filter by team
+    if (teamId) {
+      query = query.eq("team_id", teamId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       log.error("Failed to fetch credentials needing refresh", error);

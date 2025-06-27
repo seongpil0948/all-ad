@@ -80,12 +80,10 @@ npm run gen:type:supabase  # Generate types from Supabase
 ### Key Architectural Decisions
 
 1. **Platform Abstraction**
-
    - Interface: `/services/platforms/platform-service.interface.ts`
    - Factory: `/services/platforms/platform-service-factory.ts`
 
 2. **Auth & Authorization**
-
    - Supabase Auth with RLS
    - Roles: master, team_mate, viewer
    - Middleware handles sessions
@@ -154,7 +152,6 @@ export async function actionName(data: FormData) {
 All-AD now uses its own OAuth credentials, eliminating the need for users to input Client IDs:
 
 1. **User Flow**:
-
    - Click "Google Ads 연동하기" button
    - Redirected to Google OAuth consent screen
    - Approve permissions

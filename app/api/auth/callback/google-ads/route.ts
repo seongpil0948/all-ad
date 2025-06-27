@@ -142,21 +142,31 @@ export async function GET(request: NextRequest) {
       .eq("data->>user_id", userInfo.id)
       .single();
 
+    const expiryDate =
+      tokens.expiry_date || Date.now() + tokens.expires_in * 1000;
+    const expiresAt = new Date(expiryDate).toISOString();
+
     const credentialData = {
       team_id: stateData.team_id,
-      platform: "google",
+      platform: "google" as const,
       account_id: accountId,
       account_name: userInfo.email || "Google Ads Account",
       is_active: true,
       credentials: {
         // No longer storing client credentials - using All-AD's
       },
+      // Store tokens as top-level columns for token refresh service
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      expires_at: expiresAt,
+      scope: tokens.scope,
       data: {
+        // Also store in data column for backward compatibility
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
+        expires_at: expiresAt,
+        expiry_date: expiryDate,
         token_type: tokens.token_type,
-        expiry_date:
-          tokens.expiry_date || Date.now() + tokens.expires_in * 1000,
         scope: tokens.scope,
         user_email: userInfo.email,
         user_id: userInfo.id,
@@ -185,6 +195,43 @@ export async function GET(request: NextRequest) {
       if (insertError) {
         throw insertError;
       }
+    }
+
+    // Try to get Google Ads customer ID after saving credentials
+    try {
+      const { getGoogleAdsCustomerId } = await import(
+        "@/lib/google-ads/get-customer-id"
+      );
+
+      // Get the customer ID using the tokens
+      const googleAdsCustomerId = await getGoogleAdsCustomerId(
+        tokens.access_token,
+        tokens.refresh_token || "",
+      );
+
+      if (googleAdsCustomerId) {
+        log.info("Found Google Ads customer ID", {
+          customerId: googleAdsCustomerId,
+        });
+
+        // Update the account_id with the actual customer ID
+        const { error: updateError } = await supabase
+          .from("platform_credentials")
+          .update({
+            account_id: googleAdsCustomerId,
+            account_name: `Google Ads - ${googleAdsCustomerId}`,
+          })
+          .eq("team_id", stateData.team_id)
+          .eq("platform", "google")
+          .eq("data->>user_id", userInfo.id);
+
+        if (updateError) {
+          log.error("Failed to update customer ID", updateError);
+        }
+      }
+    } catch (error) {
+      log.error("Failed to get Google Ads customer ID", error as Error);
+      // Continue anyway - the sync will fail but at least OAuth is connected
     }
 
     log.info("Google Ads OAuth completed successfully", {

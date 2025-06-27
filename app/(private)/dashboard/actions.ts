@@ -10,6 +10,7 @@ import {
 import log from "@/utils/logger";
 import { PlatformType } from "@/types";
 import { CredentialValues } from "@/types/credentials.types";
+import { getUserTeamInfo, hasActionPermission } from "@/utils/team-helpers";
 
 export async function updateCampaignBudgetAction(
   campaignId: string,
@@ -27,13 +28,9 @@ export async function updateCampaignBudgetAction(
     }
 
     // Check permissions
-    const { data: teamMember } = await supabase
-      .from("team_members")
-      .select("role")
-      .eq("user_id", user.id)
-      .single();
+    const teamInfo = await getUserTeamInfo(supabase, user.id);
 
-    if (!teamMember || teamMember.role === "viewer") {
+    if (!teamInfo || !hasActionPermission(teamInfo.userRole)) {
       throw new Error("Insufficient permissions");
     }
 
@@ -119,13 +116,9 @@ export async function toggleCampaignStatusAction(campaignId: string) {
     }
 
     // Check permissions
-    const { data: teamMember } = await supabase
-      .from("team_members")
-      .select("role")
-      .eq("user_id", user.id)
-      .single();
+    const teamInfo = await getUserTeamInfo(supabase, user.id);
 
-    if (!teamMember || teamMember.role === "viewer") {
+    if (!teamInfo || !hasActionPermission(teamInfo.userRole)) {
       throw new Error("Insufficient permissions");
     }
 

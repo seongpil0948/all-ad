@@ -272,9 +272,6 @@ abstract class BasePlatformSyncService {
 
     // Prepare metrics data for insertion
     const metricsInserts = metrics.map((metric) => ({
-      team_id: teamId,
-      credential_id: credentialId,
-      platform: this.platform,
       campaign_id: metric.campaignId,
       date: metric.date,
       impressions: metric.impressions || 0,
@@ -289,7 +286,7 @@ abstract class BasePlatformSyncService {
     const { error } = await supabase
       .from("campaign_metrics")
       .upsert(metricsInserts, {
-        onConflict: "team_id,platform,campaign_id,date",
+        onConflict: "campaign_id,date",
       });
 
     if (error) {

@@ -139,7 +139,7 @@ export function dbCredentialToAppCredential(
     isActive: dbCred.is_active,
     createdAt: dbCred.created_at,
     updatedAt: dbCred.updated_at,
-    lastSyncAt: dbCred.last_sync_at,
+    lastSyncAt: dbCred.last_synced_at,
   };
 }
 
@@ -153,6 +153,6 @@ export function appCredentialToDbCredential(
     platform: appCred.platform,
     credentials: appCred.credentials,
     is_active: appCred.isActive,
-    last_sync_at: appCred.lastSyncAt,
+    last_synced_at: appCred.lastSyncAt,
   };
 }

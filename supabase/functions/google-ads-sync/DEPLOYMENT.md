@@ -9,13 +9,11 @@ This Edge Function has been fixed and is ready for deployment. The boot error wa
 ## Fixed Issues
 
 1. **Updated Dependencies**
-
    - Deno std library: `0.168.0` → `0.224.0`
    - Redis client: `redis@v0.31.0` → `@redis/client@1.6.0`
    - Supabase client: `2.50.0` → `2.45.0`
 
 2. **Schema Corrections**
-
    - `developer_token` and `refresh_token` are now correctly read from the `data` field
    - Customer ID is extracted from the `account_id` field pattern
    - Added proper TypeScript types for all variables

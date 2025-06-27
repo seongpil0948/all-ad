@@ -5,6 +5,7 @@ import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.
 import { createClient } from "@/utils/supabase/client";
 import { useAuthStore } from "@/stores/useAuthStore";
 import log from "@/utils/logger";
+import { toast } from "@/utils/toast";
 
 export interface ClientLoginResult {
   success: boolean;
@@ -69,6 +70,12 @@ export async function clientLogin(
     log.info("Client login successful:", {
       userId: data.user.id,
       email: data.user.email,
+    });
+
+    // Show success toast
+    toast.success({
+      title: "로그인되었습니다",
+      description: "환영합니다!",
     });
 
     // Handle redirection if router is provided

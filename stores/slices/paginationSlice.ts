@@ -50,8 +50,11 @@ export const createPaginationSlice: StateCreator<
         ...state.pagination,
         ...pagination,
         totalPages:
-          pagination.total && pagination.limit
-            ? Math.ceil(pagination.total / pagination.limit)
+          pagination.total !== undefined &&
+          (pagination.limit || state.pagination.limit)
+            ? Math.ceil(
+                pagination.total / (pagination.limit || state.pagination.limit),
+              )
             : state.pagination.totalPages,
       },
     })),

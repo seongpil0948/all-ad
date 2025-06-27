@@ -205,7 +205,7 @@ export class GoogleMCCAuthService {
         campaign.id,
         campaign.name,
         campaign.status,
-        campaign.budget.amount_micros,
+        campaign_budget.amount_micros,
         metrics.impressions,
         metrics.clicks,
         metrics.cost_micros

@@ -7,19 +7,16 @@ This project uses ESLint 9 with the flat config format (`eslint.config.mjs`) and
 ### Key Features
 
 1. **Next.js Integration**
-
    - Uses `@next/eslint-plugin-next` for Next.js specific rules
    - Includes Core Web Vitals rules for performance optimization
    - Proper handling of React globals (no need to import React)
 
 2. **TypeScript Support**
-
    - Full TypeScript ESLint integration
    - `@typescript-eslint/no-explicit-any` set to warning level
    - Proper parser configuration for TypeScript files
 
 3. **Code Quality**
-
    - React hooks rules enforcement
    - JSX accessibility rules (jsx-a11y)
    - Import ordering rules

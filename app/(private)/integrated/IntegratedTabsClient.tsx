@@ -5,7 +5,7 @@ import { Card, CardBody } from "@heroui/card";
 import { FaChartBar, FaKey, FaUsers } from "react-icons/fa";
 import { useShallow } from "zustand/shallow";
 
-import { CampaignDashboard } from "@/components/dashboard/CampaignDashboard";
+import { CampaignDashboardSWR } from "@/components/dashboard/CampaignDashboardSWR";
 import { MultiAccountPlatformManager } from "@/components/features/platform/MultiAccountPlatformManager";
 import { TeamManagement } from "@/components/team/TeamManagement";
 import { usePlatformStore, useTeamStore, useAuthStore } from "@/stores";
@@ -40,20 +40,21 @@ export default function IntegratedTabsClient() {
       id: cred.id,
       team_id: cred.team_id,
       platform: cred.platform,
+      account_id: cred.account_id,
+      account_name: cred.account_name || null,
       credentials: cred.credentials as any,
+      data: (cred.data || {}) as any,
+      access_token: cred.access_token || null,
+      refresh_token: cred.refresh_token || null,
+      expires_at: cred.expires_at || null,
+      scope: cred.scope || null,
+      error_message: cred.error_message || null,
       is_active: cred.is_active,
+      user_id: cred.user_id || null,
       created_by: cred.created_by || null,
+      last_synced_at: cred.last_synced_at || null,
       created_at: cred.created_at,
       updated_at: cred.updated_at,
-      synced_at: cred.synced_at || null,
-      last_sync_at: cred.last_sync_at || null,
-      // Map additional fields that might be expected
-      account_id: (cred.credentials as any)?.account_id || cred.id,
-      account_name:
-        (cred.credentials as any)?.account_name || `${cred.platform} Account`,
-      data: cred.credentials as any,
-      last_synced_at: cred.last_sync_at || null,
-      user_id: cred.created_by || user?.id || null,
     }),
   );
 
@@ -81,7 +82,7 @@ export default function IntegratedTabsClient() {
       >
         <Card className="mt-6">
           <CardBody>
-            <CampaignDashboard />
+            <CampaignDashboardSWR />
           </CardBody>
         </Card>
       </Tab>
@@ -106,7 +107,7 @@ export default function IntegratedTabsClient() {
             onSave={async (platform: PlatformType, creds: CredentialValues) => {
               await addCredential(platform, creds);
             }}
-            onToggle={async (credentialId: string, isActive: boolean) => {
+            onToggle={async (credentialId: string, _isActive: boolean) => {
               await toggleCredentialStatus(credentialId);
             }}
           />

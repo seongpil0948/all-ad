@@ -6,6 +6,7 @@ import {
   useCallback,
   useTransition,
   useMemo,
+  memo,
 } from "react";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Button } from "@heroui/button";
@@ -50,7 +51,7 @@ const metricOptions = [
 
 type MetricKey = keyof TimeSeriesData;
 
-export function AnalyticsClient({
+const AnalyticsClient = memo(function AnalyticsClient({
   initialSummary: _initialSummary,
   initialPlatformData,
 }: AnalyticsClientProps) {
@@ -373,4 +374,6 @@ export function AnalyticsClient({
       </Card>
     </div>
   );
-}
+});
+
+export { AnalyticsClient };

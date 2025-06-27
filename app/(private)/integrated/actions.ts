@@ -41,30 +41,47 @@ export async function getIntegratedData(): Promise<IntegratedData> {
       throw new Error("User not authenticated");
     }
 
-    // Get team
-    const { data: teamMember } = await supabase
-      .from("team_members")
-      .select(
-        `
-        team:teams(
-          id,
-          name,
-          created_at
-        ),
-        role
-      `,
-      )
-      .eq("user_id", user.id)
-      .single();
+    // First, check if user is a team master
+    const { data: masterTeam } = await supabase
+      .from("teams")
+      .select("*")
+      .eq("master_user_id", user.id)
+      .maybeSingle();
 
-    if (!teamMember?.team) {
-      throw new Error("No team found");
+    let teamId: string;
+    let userRole: UserRole = "master";
+
+    if (masterTeam) {
+      // User is a team master
+      teamId = masterTeam.id;
+    } else {
+      // Check if user is a team member
+      const { data: teamMember } = await supabase
+        .from("team_members")
+        .select(
+          `
+          team:teams(
+            id,
+            name,
+            created_at
+          ),
+          role
+        `,
+        )
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!teamMember?.team) {
+        throw new Error("No team found");
+      }
+
+      const team = Array.isArray(teamMember.team)
+        ? teamMember.team[0]
+        : teamMember.team;
+
+      teamId = team.id;
+      userRole = teamMember.role;
     }
-
-    const team = Array.isArray(teamMember.team)
-      ? teamMember.team[0]
-      : teamMember.team;
-    const teamId = team.id;
 
     // Ensure we have the full team object
     const { data: fullTeam } = await supabase
@@ -167,7 +184,7 @@ export async function getIntegratedData(): Promise<IntegratedData> {
       campaigns: appCampaigns,
       teamMembers: teamMembersWithProfiles || [],
       stats,
-      userRole: teamMember.role,
+      userRole: userRole,
     };
   } catch (error) {
     log.error("Failed to get integrated data", error as Error, {
@@ -190,29 +207,44 @@ export async function syncAllPlatformsAction() {
       throw new Error("User not authenticated");
     }
 
-    // Get team
-    const { data: teams } = await supabase
-      .from("team_members")
-      .select("team_id")
-      .eq("user_id", user.id)
-      .single();
+    // First, check if user is a team master
+    const { data: masterTeam } = await supabase
+      .from("teams")
+      .select("id")
+      .eq("master_user_id", user.id)
+      .maybeSingle();
 
-    if (!teams?.team_id) {
-      throw new Error("No team found");
+    let teamId: string;
+
+    if (masterTeam) {
+      // User is a team master
+      teamId = masterTeam.id;
+    } else {
+      // Check if user is a team member
+      const { data: teams } = await supabase
+        .from("team_members")
+        .select("team_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!teams?.team_id) {
+        throw new Error("No team found");
+      }
+      teamId = teams.team_id;
     }
 
     // Get active credentials
     const { data: credentials } = await supabase
       .from("platform_credentials")
       .select("platform")
-      .eq("team_id", teams.team_id)
+      .eq("team_id", teamId)
       .eq("is_active", true);
 
     if (!credentials || credentials.length === 0) {
       log.warn("No active platforms to sync", {
         module: "integrated/actions",
         action: "syncAllPlatformsAction",
-        teamId: teams.team_id,
+        teamId: teamId,
       });
 
       return;
@@ -228,7 +260,7 @@ export async function syncAllPlatformsAction() {
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ teamId: teams.team_id }),
+            body: JSON.stringify({ teamId: teamId }),
           },
         );
 

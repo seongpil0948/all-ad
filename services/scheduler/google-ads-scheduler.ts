@@ -39,14 +39,15 @@ export class GoogleAdsScheduler {
 
       for (const account of accounts) {
         try {
-          const _credentials = {
-            clientId: account.credentials.client_id,
-            clientSecret: account.credentials.client_secret,
-            refreshToken: account.credentials.refresh_token,
-            developerToken: account.credentials.developer_token,
-            customerId: account.customer_id,
-            loginCustomerId: account.credentials.login_customer_id,
-          } as GoogleAdsCredentials;
+          // Credentials object for future use
+          // const credentials = {
+          //   clientId: account.credentials.client_id,
+          //   clientSecret: account.credentials.client_secret,
+          //   refreshToken: account.credentials.refresh_token,
+          //   developerToken: account.credentials.developer_token,
+          //   customerId: account.customer_id,
+          //   loginCustomerId: account.credentials.login_customer_id,
+          // } as GoogleAdsCredentials;
 
           // Legacy OAuth manager removed - access token retrieval needs reimplementation
           // TODO: Implement access token retrieval

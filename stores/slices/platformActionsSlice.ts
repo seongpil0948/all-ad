@@ -50,19 +50,40 @@ export const createPlatformActionsSlice: StateCreator<
 
       if (!user) throw new Error("No user logged in");
 
-      // Get user's team
-      const { data: teamMember } = await supabase
-        .from("team_members")
-        .select("team_id")
-        .eq("user_id", user.id)
+      // Get user's team - check if user is master first
+      let teamId: string | null = null;
+
+      const { data: masterTeam } = await supabase
+        .from("teams")
+        .select("id")
+        .eq("master_user_id", user.id)
         .single();
 
-      if (!teamMember?.team_id) throw new Error("No team found");
+      if (masterTeam) {
+        teamId = masterTeam.id;
+      } else {
+        const { data: teamMember } = await supabase
+          .from("team_members")
+          .select("team_id")
+          .eq("user_id", user.id)
+          .single();
+
+        if (teamMember) {
+          teamId = teamMember.team_id;
+        }
+      }
+
+      if (!teamId) {
+        // Return empty credentials if no team
+        set({ credentials: [], isLoading: false });
+
+        return;
+      }
 
       const { data, error } = await supabase
         .from("platform_credentials")
         .select("*")
-        .eq("team_id", teamMember.team_id)
+        .eq("team_id", teamId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -89,23 +110,44 @@ export const createPlatformActionsSlice: StateCreator<
 
       if (!user) throw new Error("No user logged in");
 
-      const { data: teamMember } = await supabase
-        .from("team_members")
-        .select("team_id, role")
-        .eq("user_id", user.id)
+      // Get user's team and role - check if user is master first
+      let teamId: string | null = null;
+      let userRole: string = "viewer";
+
+      const { data: masterTeam } = await supabase
+        .from("teams")
+        .select("id")
+        .eq("master_user_id", user.id)
         .single();
 
-      if (!teamMember) throw new Error("No team found");
-      if (teamMember.role === "viewer") {
+      if (masterTeam) {
+        teamId = masterTeam.id;
+        userRole = "master";
+      } else {
+        const { data: teamMember } = await supabase
+          .from("team_members")
+          .select("team_id, role")
+          .eq("user_id", user.id)
+          .single();
+
+        if (teamMember) {
+          teamId = teamMember.team_id;
+          userRole = teamMember.role;
+        }
+      }
+
+      if (!teamId) throw new Error("No team found");
+      if (userRole === "viewer") {
         throw new Error("Viewers cannot add credentials");
       }
 
       const { error } = await supabase.from("platform_credentials").insert({
-        team_id: teamMember.team_id,
+        team_id: teamId,
         platform,
+        account_id: (credentials.account_id as string) || "default",
         credentials: credentials as Json,
         created_by: user.id,
-      });
+      } as any);
 
       if (error) throw error;
 
@@ -218,6 +260,11 @@ export const createPlatformActionsSlice: StateCreator<
       set((state) => ({
         syncProgress: { ...state.syncProgress, [platform]: 100 },
       }));
+
+      // Refresh campaigns after successful sync
+      const { useCampaignStore } = await import("../useCampaignStore");
+
+      await useCampaignStore.getState().fetchCampaigns();
 
       // Reset progress after 2 seconds
       setTimeout(() => {

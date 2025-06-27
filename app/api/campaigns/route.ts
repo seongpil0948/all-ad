@@ -17,18 +17,37 @@ export async function GET(request: Request) {
     }
 
     // Get user's team
-    const { data: teamMember, error: teamError } = await supabase
-      .from("team_members")
-      .select("team_id")
-      .eq("user_id", user.id)
-      .single();
+    let teamId: string | null = null;
 
-    if (teamError || !teamMember) {
-      log.error("Team not found for user", {
+    // First check if user is a master of any team
+    const { data: masterTeam } = await supabase
+      .from("teams")
+      .select("id")
+      .eq("master_user_id", user.id)
+      .maybeSingle();
+
+    if (masterTeam) {
+      teamId = masterTeam.id;
+    } else {
+      // Check if user is a member of any team
+      const { data: teamMember } = await supabase
+        .from("team_members")
+        .select("team_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (teamMember) {
+        teamId = teamMember.team_id;
+      }
+    }
+
+    if (!teamId) {
+      log.info("No team found for user, returning empty campaigns", {
         userId: user.id,
-        error: teamError,
       });
-      throw ApiErrors.TEAM_NOT_FOUND();
+
+      // Return empty array if user has no team yet
+      return successResponse([]);
     }
 
     // Parse query parameters
@@ -37,10 +56,7 @@ export async function GET(request: Request) {
     const status = searchParams.get("status");
 
     // Build query
-    let query = supabase
-      .from("campaigns")
-      .select("*")
-      .eq("team_id", teamMember.team_id);
+    let query = supabase.from("campaigns").select("*").eq("team_id", teamId);
 
     if (platform) {
       query = query.eq("platform", platform);

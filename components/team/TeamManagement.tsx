@@ -240,7 +240,7 @@ export function TeamManagement() {
         setInviteRole("viewer");
       });
       onClose();
-    } catch (error) {
+    } catch {
       toast.error({
         title: "초대 실패",
         description: "초대 중 오류가 발생했습니다. 다시 시도해주세요.",
@@ -259,7 +259,7 @@ export function TeamManagement() {
         startTransition(() => {
           setEditingMember(null);
         });
-      } catch (error) {
+      } catch {
         toast.error({
           title: "권한 변경 실패",
           description: "권한 변경에 실패했습니다. 다시 시도해주세요.",
@@ -278,7 +278,7 @@ export function TeamManagement() {
             title: "팀원 제거 완료",
             description: `${memberName}님이 팀에서 제거되었습니다.`,
           });
-        } catch (error) {
+        } catch {
           toast.error({
             title: "팀원 제거 실패",
             description: "팀원 제거 중 오류가 발생했습니다.",

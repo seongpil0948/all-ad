@@ -65,10 +65,11 @@ export const toast = {
     messages: {
       loading: string;
       success: string | ((data: T) => string);
-      error: string | ((error: any) => string);
+      error: string | ((error: Error) => string);
     },
   ): Promise<T> => {
-    const loadingToast = heroUIAddToast({
+    // Show loading toast
+    heroUIAddToast({
       title: messages.loading,
       color: "default",
       variant: "flat",
@@ -93,7 +94,9 @@ export const toast = {
     } catch (error) {
       const errorMessage =
         typeof messages.error === "function"
-          ? messages.error(error)
+          ? messages.error(
+              error instanceof Error ? error : new Error(String(error)),
+            )
           : messages.error;
 
       heroUIAddToast({

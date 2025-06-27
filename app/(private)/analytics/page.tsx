@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { createClient } from "@/utils/supabase/server";
 import { getTeamId } from "@/utils/auth/server";
 import { AnalyticsServer } from "@/components/analytics/AnalyticsServer";
-import { AnalyticsCharts } from "@/components/analytics/AnalyticsCharts";
+import { AnalyticsCharts } from "@/components/analytics/AnalyticsChartsWrapper";
 import {
   MetricCardSkeleton,
   ChartSkeleton,

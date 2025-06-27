@@ -8,9 +8,10 @@ interface GoogleAdsCampaignResult {
     id: string;
     name: string;
     status: string;
-    budget?: {
-      amount_micros?: string;
-    };
+  };
+  campaign_budget?: {
+    amount_micros?: string;
+    type?: string;
   };
   metrics: {
     impressions: number;
@@ -55,7 +56,7 @@ export class GoogleAdsOAuthIntegrationService {
         campaign.id,
         campaign.name,
         campaign.status,
-        campaign.budget.amount_micros,
+        campaign_budget.amount_micros,
         campaign_budget.type,
         metrics.impressions,
         metrics.clicks,
@@ -90,8 +91,8 @@ export class GoogleAdsOAuthIntegrationService {
         name: result.campaign.name,
         platform: "google" as const,
         status: this.mapCampaignStatus(result.campaign.status),
-        budget: result.campaign.budget?.amount_micros
-          ? Number(result.campaign.budget.amount_micros) / 1_000_000
+        budget: result.campaign_budget?.amount_micros
+          ? Number(result.campaign_budget.amount_micros) / 1_000_000
           : 0,
         impressions,
         clicks,

@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { createClient } from "@/utils/supabase/server";
 import { ToastHandler } from "@/components/toast/ToastHandler";
+import { SWRProvider } from "@/app/swr-provider";
 
 export default async function PrivateLayout({
   children,
@@ -19,11 +20,11 @@ export default async function PrivateLayout({
   }
 
   return (
-    <>
+    <SWRProvider>
       <Suspense fallback={null}>
         <ToastHandler />
       </Suspense>
       {children}
-    </>
+    </SWRProvider>
   );
 }

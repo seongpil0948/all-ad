@@ -24,6 +24,8 @@ import { PlatformType } from "@/types";
 import { CredentialValues } from "@/types/credentials.types";
 import { Database } from "@/types/supabase.types";
 import { platformConfig } from "@/utils/platform-config";
+import { toast } from "@/utils/toast";
+import log from "@/utils/logger";
 import {
   TableActions,
   SectionHeader,
@@ -134,16 +136,57 @@ export function MultiAccountPlatformManager({
         }));
 
         try {
-          const response = await fetch(
+          // First check if token is valid
+          const checkResponse = await fetch(
             `/api/auth/refresh?platform=${credential.platform}&accountId=${credential.account_id}`,
           );
-          const result = await response.json();
+          const checkResult = await checkResponse.json();
 
-          setTokenStatus((prev) => ({
-            ...prev,
-            [credential.id]: result.success ? "valid" : "invalid",
-          }));
-        } catch (_error) {
+          if (!checkResult.success || !checkResult.hasValidToken) {
+            // If token is invalid, try to refresh it
+            log.info(
+              `Token invalid for ${credential.account_name}, attempting refresh...`,
+            );
+
+            const refreshResponse = await fetch("/api/auth/refresh", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                platform: credential.platform,
+                accountId: credential.account_id,
+              }),
+            });
+
+            const refreshResult = await refreshResponse.json();
+
+            setTokenStatus((prev) => ({
+              ...prev,
+              [credential.id]: refreshResult.success ? "valid" : "invalid",
+            }));
+
+            if (refreshResult.success) {
+              log.info(
+                `Token refreshed successfully for ${credential.account_name}`,
+              );
+            } else {
+              log.error(
+                `Token refresh failed for ${credential.account_name}:`,
+                refreshResult.error,
+              );
+            }
+          } else {
+            setTokenStatus((prev) => ({
+              ...prev,
+              [credential.id]: "valid",
+            }));
+          }
+        } catch (error) {
+          log.error(
+            `Error checking/refreshing token for ${credential.account_name}:`,
+            error,
+          );
           setTokenStatus((prev) => ({
             ...prev,
             [credential.id]: "invalid",
@@ -179,20 +222,75 @@ export function MultiAccountPlatformManager({
     setReAuthLoading((prev) => new Set([...prev, credential.id]));
 
     try {
-      // For OAuth platforms, just redirect to the OAuth flow
-      const platform = credential.platform as PlatformType;
+      // First try to refresh the token
+      const refreshResponse = await fetch("/api/auth/refresh", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          platform: credential.platform,
+          accountId: credential.account_id,
+        }),
+      });
 
-      if (platform === "google") {
-        window.location.href = "/api/auth/google-ads";
+      const refreshResult = await refreshResponse.json();
 
-        return;
+      if (refreshResult.success) {
+        // Token refreshed successfully
+        toast.success({
+          title: "토큰 갱신 성공",
+          description: `${credential.account_name} 계정의 토큰이 갱신되었습니다.`,
+        });
+
+        setTokenStatus((prev) => ({
+          ...prev,
+          [credential.id]: "valid",
+        }));
+
+        setReAuthLoading((prev) => {
+          const newSet = new Set(prev);
+
+          newSet.delete(credential.id);
+
+          return newSet;
+        });
+
+        // Refresh the tokens status
+        await checkTokensStatus();
+      } else {
+        // Token refresh failed, redirect to OAuth flow
+        log.error(
+          "Token refresh failed, redirecting to OAuth:",
+          refreshResult.error,
+        );
+
+        const platform = credential.platform as PlatformType;
+
+        if (platform === "google") {
+          window.location.href = "/api/auth/google-ads";
+
+          return;
+        }
+
+        // For other OAuth platforms
+        await handleOAuthConnect(platform, {});
       }
-
-      // For other OAuth platforms
-      await handleOAuthConnect(platform, {});
     } catch (error) {
-      console.error("Re-authentication failed:", error);
-      // Keep the loading state until page reload from OAuth
+      log.error("Re-authentication failed:", error);
+
+      toast.error({
+        title: "재연동 실패",
+        description: "토큰 갱신에 실패했습니다. 다시 시도해주세요.",
+      });
+
+      setReAuthLoading((prev) => {
+        const newSet = new Set(prev);
+
+        newSet.delete(credential.id);
+
+        return newSet;
+      });
     }
   };
 

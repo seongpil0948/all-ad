@@ -5,11 +5,11 @@ export type UserRole = "master" | "viewer" | "team_mate";
 
 export interface Profile {
   id: string;
-  email: string;
+  email: string | null;
   full_name?: string | null;
   avatar_url?: string | null;
-  updated_at?: string;
-  created_at?: string;
+  updated_at?: string | null;
+  created_at?: string | null;
 }
 
 export interface Team {
@@ -61,13 +61,21 @@ export interface PlatformCredential {
   id: string;
   team_id: string;
   platform: PlatformType;
+  account_id: string;
+  account_name?: string | null;
   credentials: Record<string, unknown>;
+  data?: Record<string, unknown> | null;
+  access_token?: string | null;
+  refresh_token?: string | null;
+  expires_at?: string | null;
+  scope?: string | null;
+  error_message?: string | null;
   is_active: boolean;
+  user_id?: string | null;
   created_by?: string | null;
+  last_synced_at?: string | null;
   created_at: string;
   updated_at: string;
-  synced_at?: string | null;
-  last_sync_at?: string | null;
 }
 
 export interface Campaign {
@@ -75,6 +83,7 @@ export interface Campaign {
   team_id: string;
   platform: PlatformType;
   platform_campaign_id: string;
+  platform_credential_id?: string | null;
   name: string;
   status?: string | null;
   budget?: number | null;

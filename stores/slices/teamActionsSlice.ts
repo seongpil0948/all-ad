@@ -128,17 +128,20 @@ export const createTeamActionsSlice: StateCreator<
     set({ isLoading: true, error: null });
 
     try {
-      const { data, error } = await supabase.rpc(
-        "get_team_members_with_profiles",
-        {
-          team_id_param: currentTeam.id,
-        },
-      );
+      const { data, error } = await supabase
+        .from("team_members")
+        .select(
+          `
+          *,
+          profiles!team_members_user_id_fkey (*)
+        `,
+        )
+        .eq("team_id", currentTeam.id);
 
       if (error) throw error;
 
       const teamMembers: TeamMemberWithProfile[] =
-        data?.map((member: TeamMemberQueryResult) => ({
+        data?.map((member: any) => ({
           id: member.id,
           team_id: member.team_id,
           user_id: member.user_id,
@@ -297,7 +300,7 @@ export const createTeamActionsSlice: StateCreator<
     try {
       const { error } = await supabase
         .from("team_invitations")
-        .update({ status: "declined" })
+        .update({ status: "cancelled" })
         .eq("id", invitationId);
 
       if (error) throw error;

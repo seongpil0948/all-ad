@@ -22,24 +22,105 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user's current team
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("current_team_id")
-      .eq("id", user.id)
+    // Get user's team - check if user is master of a team
+    const { data: masterTeam } = await supabase
+      .from("teams")
+      .select("id")
+      .eq("master_user_id", user.id)
       .single();
 
-    if (profileError || !profile?.current_team_id) {
-      return NextResponse.json({ error: "Team not found" }, { status: 400 });
+    let teamId: string | null = null;
+
+    if (masterTeam) {
+      teamId = masterTeam.id;
+    } else {
+      // Check if user is a member of any team
+      const { data: membership } = await supabase
+        .from("team_members")
+        .select("team_id")
+        .eq("user_id", user.id)
+        .limit(1)
+        .single();
+
+      if (membership) {
+        teamId = membership.team_id;
+      }
     }
 
-    const teamId = profile.current_team_id;
+    if (!teamId) {
+      // Create team if doesn't exist
+      const { data: newTeamId, error: createError } = await supabase.rpc(
+        "create_team_for_user",
+        { user_id: user.id },
+      );
+
+      if (createError || !newTeamId) {
+        log.error("Failed to create team", { error: createError });
+
+        return NextResponse.json(
+          { error: "Failed to create team" },
+          { status: 500 },
+        );
+      }
+
+      teamId = newTeamId;
+    }
+
+    // Ensure teamId is not null
+    if (!teamId) {
+      return NextResponse.json(
+        { error: "Failed to get or create team" },
+        { status: 500 },
+      );
+    }
 
     // Parse request body
     const body = await request.json().catch(() => ({}));
-    const { platform } = body as { platform?: PlatformType };
+    const { platform, accountId } = body as {
+      platform?: PlatformType;
+      accountId?: string;
+    };
 
-    // Trigger token refresh for the team (and platform if specified)
+    // If specific account is provided, refresh only that account
+    if (accountId && platform) {
+      // Get the specific credential
+      const { data: credential } = await supabase
+        .from("platform_credentials")
+        .select("*")
+        .eq("team_id", teamId)
+        .eq("platform", platform)
+        .eq("account_id", accountId)
+        .single();
+
+      if (!credential) {
+        return NextResponse.json(
+          { error: "Credential not found" },
+          { status: 404 },
+        );
+      }
+
+      // Refresh single credential
+      const tokenRefreshResult =
+        await tokenRefreshService.refreshSingleCredential({
+          id: credential.id,
+          platform: credential.platform as PlatformType,
+          refresh_token: credential.refresh_token,
+          access_token: credential.access_token,
+          account_name: credential.account_name,
+          team_id: credential.team_id,
+          credentials: credential.credentials,
+        });
+
+      return NextResponse.json({
+        success: tokenRefreshResult.success,
+        message: tokenRefreshResult.success
+          ? "Token refreshed successfully"
+          : tokenRefreshResult.error,
+        error: tokenRefreshResult.error,
+      });
+    }
+
+    // Otherwise, refresh all credentials for the team (and platform if specified)
     const result = await tokenRefreshService.refreshPlatformCredentials(
       teamId,
       platform,
@@ -93,18 +174,57 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get user's current team
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("current_team_id")
-      .eq("id", user.id)
+    // Get user's team - check if user is master of a team
+    const { data: masterTeam } = await supabase
+      .from("teams")
+      .select("id")
+      .eq("master_user_id", user.id)
       .single();
 
-    if (profileError || !profile?.current_team_id) {
-      return NextResponse.json({ error: "Team not found" }, { status: 400 });
+    let teamId: string | null = null;
+
+    if (masterTeam) {
+      teamId = masterTeam.id;
+    } else {
+      // Check if user is a member of any team
+      const { data: membership } = await supabase
+        .from("team_members")
+        .select("team_id")
+        .eq("user_id", user.id)
+        .limit(1)
+        .single();
+
+      if (membership) {
+        teamId = membership.team_id;
+      }
     }
 
-    const teamId = profile.current_team_id;
+    if (!teamId) {
+      // Create team if doesn't exist
+      const { data: newTeamId, error: createError } = await supabase.rpc(
+        "create_team_for_user",
+        { user_id: user.id },
+      );
+
+      if (createError || !newTeamId) {
+        log.error("Failed to create team", { error: createError });
+
+        return NextResponse.json(
+          { error: "Failed to create team" },
+          { status: 500 },
+        );
+      }
+
+      teamId = newTeamId;
+    }
+
+    // Ensure teamId is not null
+    if (!teamId) {
+      return NextResponse.json(
+        { error: "Failed to get or create team" },
+        { status: 500 },
+      );
+    }
 
     // Get query parameters
     const url = new URL(request.url);
@@ -137,7 +257,7 @@ export async function GET(request: NextRequest) {
           success: !credentialNeedsRefresh,
           hasValidToken: !credentialNeedsRefresh,
         });
-      } catch (_error) {
+      } catch {
         return NextResponse.json({
           success: false,
           error: "Token validation failed",

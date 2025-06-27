@@ -17,7 +17,7 @@ export interface VirtualScrollTableColumn<T> {
 
 export interface VirtualScrollTableProps<T> {
   columns: VirtualScrollTableColumn<T>[];
-  items: AsyncListData<T>;
+  items: AsyncListData<T> | T[];
   renderCell: (item: T, columnKey: string) => ReactNode;
   emptyContent?: string;
   loadingContent?: ReactNode;
@@ -111,7 +111,12 @@ export function VirtualScrollTable<T extends { id: string | number }>({
   const scrollingRef = useRef<HTMLDivElement>(null);
 
   // Memoize items array to prevent unnecessary re-renders
-  const itemsArray = useMemo(() => items.items, [items.items]);
+  const itemsArray = useMemo(() => {
+    return Array.isArray(items) ? items : items.items;
+  }, [items]);
+
+  // Determine loading state based on items type
+  const loadingState = Array.isArray(items) ? undefined : items.loadingState;
 
   const virtualizer = useVirtualizer({
     count: itemsArray.length,
@@ -133,7 +138,7 @@ export function VirtualScrollTable<T extends { id: string | number }>({
   }
 
   const defaultBottomContent =
-    items.loadingState === "loadingMore" || isLoading ? (
+    loadingState === "loadingMore" || isLoading ? (
       <div className="flex w-full justify-center py-3">
         <Spinner size="sm" />
       </div>

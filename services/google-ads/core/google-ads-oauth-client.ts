@@ -50,7 +50,7 @@ export class GoogleAdsOAuthClient {
     // Get stored tokens from platform_credentials
     const { data: credential, error } = await supabase
       .from("platform_credentials")
-      .select("data")
+      .select("access_token, refresh_token, expires_at, scope, data")
       .eq("team_id", this.credentials.teamId)
       .eq("platform", "google")
       .eq("is_active", true)
@@ -60,7 +60,26 @@ export class GoogleAdsOAuthClient {
       throw new Error("No active Google Ads credentials found");
     }
 
-    const tokenData = credential.data as TokenData;
+    // Handle both new column structure and legacy JSONB structure
+    let tokenData: TokenData;
+
+    if (credential.access_token) {
+      // New structure with top-level columns
+      tokenData = {
+        access_token: credential.access_token,
+        refresh_token: credential.refresh_token || "",
+        expiry_date: credential.expires_at
+          ? new Date(credential.expires_at).getTime()
+          : Date.now() + 3600000, // Default 1 hour if not set
+        token_type: "Bearer",
+        scope: credential.scope || "",
+      };
+    } else if (credential.data) {
+      // Legacy structure with tokens in JSONB data column
+      tokenData = credential.data as TokenData;
+    } else {
+      throw new Error("No token data found in credentials");
+    }
 
     // Check if token is expired or will expire soon (5 minutes buffer)
     const now = Date.now();
@@ -72,17 +91,26 @@ export class GoogleAdsOAuthClient {
         tokenData.refresh_token,
       );
 
-      // Update stored tokens
+      // Update stored tokens (both top-level and in data column)
+      const updateData: Record<string, unknown> = {
+        access_token: refreshedToken.access_token,
+        expires_at: new Date(refreshedToken.expiry_date).toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      // Also update data column for backward compatibility
+      if (credential.data) {
+        updateData.data = {
+          ...credential.data,
+          access_token: refreshedToken.access_token,
+          expiry_date: refreshedToken.expiry_date,
+          updated_at: new Date().toISOString(),
+        };
+      }
+
       const { error: updateError } = await supabase
         .from("platform_credentials")
-        .update({
-          data: {
-            ...credential.data,
-            access_token: refreshedToken.access_token,
-            expiry_date: refreshedToken.expiry_date,
-            updated_at: new Date().toISOString(),
-          },
-        })
+        .update(updateData)
         .eq("team_id", this.credentials.teamId)
         .eq("platform", "google");
 
@@ -184,13 +212,16 @@ export class GoogleAdsOAuthClient {
 
   // Execute mutations
   async mutate(
-    operations: any[],
+    operations: Record<string, unknown>[],
     customerId?: string,
     options?: { validate_only?: boolean; partial_failure?: boolean },
   ) {
     try {
       const customer = await this.getAuthenticatedCustomer(customerId);
-      const response = await customer.mutateResources(operations, options);
+      const response = await customer.mutateResources(
+        operations as any,
+        options,
+      );
 
       log.info("Google Ads mutation successful", {
         customerId: customerId || this.credentials.customerId,
@@ -223,8 +254,8 @@ export class GoogleAdsOAuthClient {
 
       const results = await customer.query(query);
       const customerIds = results
-        .map((result: any) => result.customer_client?.id)
-        .filter(Boolean);
+        .map((result: Record<string, any>) => result.customer_client?.id)
+        .filter(Boolean) as string[];
 
       log.info("Retrieved accessible customers", {
         count: customerIds.length,
