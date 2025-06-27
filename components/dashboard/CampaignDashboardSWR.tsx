@@ -73,34 +73,6 @@ export function CampaignDashboardSWR() {
     totalPages,
   } = useCampaignPagination(filteredCampaigns, ITEMS_PER_PAGE);
 
-  // Debug logging
-  useEffect(() => {
-    log.debug("CampaignDashboardSWR data flow:", {
-      campaignsLength: campaigns.length,
-      filteredCampaignsLength: filteredCampaigns.length,
-      displayedCampaignsLength: displayedCampaigns.length,
-      hasMore,
-      currentPage,
-      totalPages,
-      isLoading,
-      error,
-      selectedPlatform,
-      firstCampaign: campaigns[0],
-      firstFilteredCampaign: filteredCampaigns[0],
-      firstDisplayedCampaign: displayedCampaigns[0],
-    });
-  }, [
-    campaigns,
-    filteredCampaigns,
-    displayedCampaigns,
-    hasMore,
-    currentPage,
-    totalPages,
-    isLoading,
-    error,
-    selectedPlatform,
-  ]);
-
   const { isOpen, onOpen, onClose, onOpenChange } = useDisclosure();
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(
     null,
@@ -391,21 +363,6 @@ export function CampaignDashboardSWR() {
             renderCell={renderCell}
             onLoadMore={loadMore}
           />
-          {/* Debug info */}
-          <div className="mt-4 p-4 bg-gray-100 rounded text-xs">
-            <p>Debug Info:</p>
-            <p>Total Campaigns: {campaigns.length}</p>
-            <p>Filtered Campaigns: {filteredCampaigns.length}</p>
-            <p>Displayed Campaigns: {displayedCampaigns.length}</p>
-            <p>Current Page: {currentPage}</p>
-            <p>Has More: {hasMore ? "Yes" : "No"}</p>
-            <p>Is Loading: {isLoading ? "Yes" : "No"}</p>
-            <pre>
-              {displayedCampaigns[0]
-                ? JSON.stringify(displayedCampaigns[0], null, 2)
-                : "No campaigns"}
-            </pre>
-          </div>
         </>
       )}
 

@@ -128,15 +128,34 @@ export const createTeamActionsSlice: StateCreator<
     set({ isLoading: true, error: null });
 
     try {
-      const { data, error } = await supabase
+      // First get team members
+      const { data: teamMembersData, error: teamMembersError } = await supabase
         .from("team_members")
-        .select(
-          `
-          *,
-          profiles!team_members_user_id_fkey (*)
-        `,
-        )
+        .select("*")
         .eq("team_id", currentTeam.id);
+
+      if (teamMembersError) throw teamMembersError;
+
+      // Then get profiles for each team member
+      const userIds =
+        teamMembersData?.map((member) => member.user_id).filter(Boolean) || [];
+
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("id", userIds as string[]);
+
+      if (profilesError) throw profilesError;
+
+      // Merge the data
+      const data = teamMembersData?.map((member) => ({
+        ...member,
+        profiles:
+          profilesData?.find((profile) => profile.id === member.user_id) ||
+          null,
+      }));
+
+      const error = null;
 
       if (error) throw error;
 
@@ -148,14 +167,7 @@ export const createTeamActionsSlice: StateCreator<
           role: member.role as UserRole,
           invited_by: member.invited_by,
           joined_at: member.joined_at,
-          profiles: member.profile_id
-            ? {
-                id: member.profile_id,
-                email: member.email || "",
-                full_name: member.full_name || "",
-                avatar_url: member.avatar_url || "",
-              }
-            : null,
+          profiles: member.profiles || null,
         })) || [];
 
       set({ teamMembers, isLoading: false });

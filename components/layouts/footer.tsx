@@ -51,6 +51,7 @@ export const Footer = () => {
       links: [
         { label: "이용약관", href: "#terms" },
         { label: "개인정보처리방침", href: "#privacy" },
+        { label: "청약철회 및 환불규정", href: "/refund-policy" },
         { label: "쿠키 정책", href: "#cookies" },
         { label: "보안", href: "#security" },
       ],

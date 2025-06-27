@@ -1,6 +1,13 @@
 "use client";
 
-import { ReactNode, useMemo, memo, useRef, CSSProperties } from "react";
+import {
+  ReactNode,
+  useMemo,
+  memo,
+  useRef,
+  CSSProperties,
+  useEffect,
+} from "react";
 import { TableColumnProps } from "@heroui/table";
 import { Spinner } from "@heroui/spinner";
 import { Skeleton } from "@heroui/skeleton";
@@ -166,6 +173,20 @@ export function VirtualScrollTable<T extends { id: string | number }>({
 
   const totalHeight = virtualizer.getTotalSize();
 
+  // Debug logging
+  useEffect(() => {
+    if (itemsArray.length > 0) {
+      console.log("[VirtualScrollTable] Debug:", {
+        itemsArrayLength: itemsArray.length,
+        virtualItemsLength: virtualItems.length,
+        totalHeight,
+        firstItem: itemsArray[0],
+        scrollingRef: scrollingRef.current,
+        parentRef: parentRef.current,
+      });
+    }
+  }, [itemsArray, virtualItems, totalHeight]);
+
   return (
     <div
       ref={parentRef}
@@ -207,14 +228,18 @@ export function VirtualScrollTable<T extends { id: string | number }>({
           <div
             className={clsx("table-row-group relative", classNames?.tbody)}
             style={{
-              height: `${totalHeight}px`,
+              height: itemsArray.length > 0 ? `${totalHeight}px` : "auto",
+              minHeight: "100px",
             }}
           >
             {isLoading && itemsArray.length === 0 ? (
               defaultLoadingContent
             ) : itemsArray.length === 0 ? (
               <div className="table-row">
-                <div className="table-cell text-center py-8 text-default-400">
+                <div
+                  className="table-cell text-center py-8 text-default-400"
+                  style={{ width: "100%" }}
+                >
                   {emptyContent}
                 </div>
               </div>

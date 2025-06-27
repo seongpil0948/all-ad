@@ -503,8 +503,8 @@ export function TeamManagement() {
                   <span className="font-medium">팀 이름:</span>{" "}
                   {currentTeam.name}
                 </p>
-                <p>
-                  <span className="font-medium">내 권한:</span>{" "}
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">내 권한:</span>
                   <Chip
                     color={roleConfig[userRole || "viewer"].color}
                     size="sm"
@@ -516,7 +516,7 @@ export function TeamManagement() {
                   >
                     {roleConfig[userRole || "viewer"].label}
                   </Chip>
-                </p>
+                </div>
                 <p className="text-sm text-default-500">
                   {roleConfig[userRole || "viewer"].description}
                 </p>

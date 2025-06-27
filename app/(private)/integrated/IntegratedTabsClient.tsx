@@ -5,7 +5,7 @@ import { Card, CardBody } from "@heroui/card";
 import { FaChartBar, FaKey, FaUsers } from "react-icons/fa";
 import { useShallow } from "zustand/shallow";
 
-import { CampaignDashboardSWR } from "@/components/dashboard/CampaignDashboardSWR";
+import { CampaignDashboard } from "@/components/dashboard/CampaignDashboard";
 import { MultiAccountPlatformManager } from "@/components/features/platform/MultiAccountPlatformManager";
 import { TeamManagement } from "@/components/team/TeamManagement";
 import { usePlatformStore, useTeamStore, useAuthStore } from "@/stores";
@@ -82,7 +82,7 @@ export default function IntegratedTabsClient() {
       >
         <Card className="mt-6">
           <CardBody>
-            <CampaignDashboardSWR />
+            <CampaignDashboard />
           </CardBody>
         </Card>
       </Tab>

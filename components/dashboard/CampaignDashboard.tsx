@@ -29,10 +29,10 @@ import {
 } from "react-icons/fa";
 
 import {
-  useCampaigns,
   useCampaignMutation,
   useCampaignBudgetMutation,
 } from "@/hooks/useCampaigns";
+import { useCampaignSWR, useCampaignPagination } from "@/hooks/useCampaignSWR";
 import { Campaign } from "@/types/campaign.types";
 import { PlatformType } from "@/types";
 import log from "@/utils/logger";
@@ -58,42 +58,26 @@ export function CampaignDashboard() {
   >("all");
 
   // SWR hooks for data fetching and mutations
-  const { campaigns, stats, isLoading } = useCampaigns(selectedPlatform);
+  const { campaigns, filteredCampaigns, stats, isLoading, error } =
+    useCampaignSWR(selectedPlatform);
   const { updateStatus, isUpdatingStatus } = useCampaignMutation();
   const { updateBudget, isUpdatingBudget } = useCampaignBudgetMutation();
 
-  // Debug logging
-  useEffect(() => {
-    log.debug("Campaign data updated:", {
-      campaignsLength: campaigns.length,
-      isLoading,
-      selectedPlatform,
-      campaigns: campaigns.slice(0, 2), // Log first 2 campaigns for debugging
-    });
-  }, [campaigns, isLoading, selectedPlatform]);
+  // 페이지네이션 훅
+  const {
+    displayedCampaigns,
+    hasMore,
+    loadMore,
+    reset,
+    currentPage,
+    totalPages,
+  } = useCampaignPagination(filteredCampaigns, ITEMS_PER_PAGE);
 
   const { isOpen, onOpen, onClose, onOpenChange } = useDisclosure();
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(
     null,
   );
   const [newBudget, setNewBudget] = useState("");
-  const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE);
-
-  // Filter campaigns are handled by SWR query parameters
-  const filteredCampaigns = campaigns;
-
-  // Displayed campaigns with pagination
-  const displayedCampaigns = useMemo(() => {
-    return filteredCampaigns.slice(0, displayCount);
-  }, [filteredCampaigns, displayCount]);
-
-  const hasMore = displayCount < filteredCampaigns.length;
-
-  const handleLoadMore = useCallback(() => {
-    setDisplayCount((prev) =>
-      Math.min(prev + ITEMS_PER_PAGE, filteredCampaigns.length),
-    );
-  }, [filteredCampaigns.length]);
 
   // Table columns definition
   const columns: InfiniteScrollTableColumn<Campaign>[] = [
@@ -105,17 +89,10 @@ export function CampaignDashboard() {
     { key: "actions", label: "액션" },
   ];
 
-  // Effect: Reset display count when platform filter changes
+  // 플랫폼 변경 시 페이지네이션 리셋
   useEffect(() => {
-    setDisplayCount(ITEMS_PER_PAGE);
-  }, [selectedPlatform]);
-
-  // Effect: Reset display count when campaigns data changes
-  useEffect(() => {
-    if (!isLoading) {
-      setDisplayCount(ITEMS_PER_PAGE);
-    }
-  }, [campaigns.length, isLoading]);
+    reset();
+  }, [selectedPlatform]); // reset을 의존성에서 제거하여 무한 루프 방지
 
   // Optimized callbacks with useCallback
   const handlePlatformFilter = useCallback((platform: PlatformType | "all") => {
@@ -263,14 +240,16 @@ export function CampaignDashboard() {
   );
 
   // 플랫폼별 캠페인 수 계산
-  const campaignCounts = campaigns.reduce(
-    (acc, campaign) => {
-      acc[campaign.platform] = (acc[campaign.platform] || 0) + 1;
+  const campaignCounts = useMemo(() => {
+    return campaigns.reduce(
+      (acc, campaign) => {
+        acc[campaign.platform] = (acc[campaign.platform] || 0) + 1;
 
-      return acc;
-    },
-    {} as Record<PlatformType, number>,
-  );
+        return acc;
+      },
+      {} as Record<PlatformType, number>,
+    );
+  }, [campaigns]);
 
   // 전체 통계 계산 (use SWR stats or fallback to calculated stats)
   const totalStats = stats || {
@@ -282,6 +261,25 @@ export function CampaignDashboard() {
     averageCTR: 0,
     averageCPC: 0,
   };
+
+  // 에러 상태 처리
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold">캠페인 대시보드</h2>
+        </div>
+        <div className="text-center py-8">
+          <p className="text-danger">
+            데이터를 불러오는 중 오류가 발생했습니다.
+          </p>
+          <Button className="mt-4" onPress={() => window.location.reload()}>
+            다시 시도
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -348,7 +346,8 @@ export function CampaignDashboard() {
         <>
           <div className="text-xs text-default-500 mb-2">
             총 {campaigns.length}개 캠페인 중 {filteredCampaigns.length}개
-            필터됨, 로드된 항목: {displayedCampaigns.length}
+            필터됨, 로드된 항목: {displayedCampaigns.length} (페이지{" "}
+            {currentPage}/{totalPages})
           </div>
           <VirtualScrollTable
             aria-label="캠페인 목록"
@@ -361,7 +360,7 @@ export function CampaignDashboard() {
             maxHeight="600px"
             overscan={5}
             renderCell={renderCell}
-            onLoadMore={handleLoadMore}
+            onLoadMore={loadMore}
           />
         </>
       )}
