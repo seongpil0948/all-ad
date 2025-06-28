@@ -5,6 +5,7 @@ import { Card, CardBody } from "@heroui/card";
 import { FaChartBar, FaKey, FaUsers } from "react-icons/fa";
 import { useShallow } from "zustand/shallow";
 
+import { Json } from "@/types/supabase.types";
 import { CampaignDashboard } from "@/components/dashboard/CampaignDashboard";
 import { MultiAccountPlatformManager } from "@/components/features/platform/MultiAccountPlatformManager";
 import { TeamManagement } from "@/components/team/TeamManagement";
@@ -42,8 +43,8 @@ export default function IntegratedTabsClient() {
       platform: cred.platform,
       account_id: cred.account_id,
       account_name: cred.account_name || null,
-      credentials: cred.credentials as any,
-      data: (cred.data || {}) as any,
+      credentials: cred.credentials as Json,
+      data: (cred.data || {}) as Json,
       access_token: cred.access_token || null,
       refresh_token: cred.refresh_token || null,
       expires_at: cred.expires_at || null,

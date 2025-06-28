@@ -13,7 +13,7 @@ import config from "./tests/config";
 // dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 // Use process.env.PORT by default and fallback to port 3001
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 // Set webServer.url and use.baseURL with the location of the WebServer respecting the correct set port
 const baseURL = process.env.BASE_URL || `http://localhost:${PORT}`;
@@ -31,7 +31,7 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  workers: 4,
   /* Global timeout for each test */
   timeout: 60 * 1000, // 60 seconds
   /* Global timeout for expect() */
@@ -40,8 +40,8 @@ export default defineConfig({
   },
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
-    ["dot"],
-    ["json"],
+    ["list"],
+    ["json", { outputFile: "test-results.json" }],
     ["html", { open: process.env.CI ? "never" : "on-failure" }], // 자동으로 리포트 서버를 열지 않음
     [
       "playwright-excel-reporter",

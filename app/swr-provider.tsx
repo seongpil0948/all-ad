@@ -8,7 +8,7 @@ const fetcher = async (url: string) => {
 
   if (!response.ok) {
     const error = new Error("Failed to fetch data") as Error & {
-      info?: any;
+      info?: unknown;
       status?: number;
     };
 

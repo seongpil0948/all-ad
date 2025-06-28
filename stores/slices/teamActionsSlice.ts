@@ -16,18 +16,6 @@ import { createClient } from "@/utils/supabase/client";
 import log from "@/utils/logger";
 
 // Type definitions
-interface TeamMemberQueryResult {
-  id: string;
-  team_id: string;
-  user_id: string;
-  role: string;
-  invited_by: string | null;
-  joined_at: string;
-  profile_id?: string;
-  email?: string;
-  full_name?: string;
-  avatar_url?: string;
-}
 
 export interface TeamActionsSlice {
   fetchCurrentTeam: () => Promise<void>;
@@ -160,10 +148,10 @@ export const createTeamActionsSlice: StateCreator<
       if (error) throw error;
 
       const teamMembers: TeamMemberWithProfile[] =
-        data?.map((member: any) => ({
+        data?.map((member) => ({
           id: member.id,
-          team_id: member.team_id,
-          user_id: member.user_id,
+          team_id: member.team_id || "",
+          user_id: member.user_id || "",
           role: member.role as UserRole,
           invited_by: member.invited_by,
           joined_at: member.joined_at,

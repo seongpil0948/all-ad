@@ -13,10 +13,15 @@ test.describe("FAQ Page - Additional Coverage", () => {
 
     // 페이지 타이틀 확인
     await expect(page).toHaveTitle(/자주 묻는 질문 | ALL AD/);
-    
+
     // 메타 태그 확인
-    const metaDescription = await page.getAttribute('meta[name="description"]', 'content');
-    expect(metaDescription).toContain("ALL AD 서비스 이용에 대한 자주 묻는 질문");
+    const metaDescription = await page.getAttribute(
+      'meta[name="description"]',
+      "content",
+    );
+    expect(metaDescription).toContain(
+      "ALL AD 서비스 이용에 대한 자주 묻는 질문",
+    );
   });
 
   test("요금제 관련 FAQ 상세 확인", async ({ page, pushAnnotation }) => {
@@ -33,7 +38,11 @@ test.describe("FAQ Page - Additional Coverage", () => {
     await page.waitForTimeout(1000);
 
     // 무료 기능 설명 확인
-    await expect(page.getByText("구글 애즈(유튜브, 구글), 메타 애즈(페이스북, 인스타그램)")).toBeVisible();
+    await expect(
+      page.getByText(
+        "구글 애즈(유튜브, 구글), 메타 애즈(페이스북, 인스타그램)",
+      ),
+    ).toBeVisible();
     await expect(page.getByText("계정당 최대 5명")).toBeVisible();
     await expect(page.getByText("시간당 1회 API 호출")).toBeVisible();
 
@@ -53,7 +62,9 @@ test.describe("FAQ Page - Additional Coverage", () => {
     await page.waitForTimeout(1000);
 
     // Q18: 보안 관련 질문
-    const q18 = page.getByText("Q18: 제 광고 계정 정보와 데이터는 안전하게 관리되나요?");
+    const q18 = page.getByText(
+      "Q18: 제 광고 계정 정보와 데이터는 안전하게 관리되나요?",
+    );
     await q18.click();
     await page.waitForTimeout(1000);
 
@@ -67,7 +78,9 @@ test.describe("FAQ Page - Additional Coverage", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "오류 처리");
 
     // Q9: 계정 연동 오류 해결
-    const q9 = page.getByText("Q9: 계정 연동 시 오류가 발생하면 어떻게 해야 하나요?");
+    const q9 = page.getByText(
+      "Q9: 계정 연동 시 오류가 발생하면 어떻게 해야 하나요?",
+    );
     await q9.click();
     await page.waitForTimeout(1000);
 
@@ -81,7 +94,9 @@ test.describe("FAQ Page - Additional Coverage", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "데이터 업데이트");
 
     // Q8: 데이터 업데이트 주기
-    const q8 = page.getByText("Q8: 연동된 계정의 데이터는 얼마나 자주 업데이트되나요?");
+    const q8 = page.getByText(
+      "Q8: 연동된 계정의 데이터는 얼마나 자주 업데이트되나요?",
+    );
     await q8.click();
     await page.waitForTimeout(1000);
 
@@ -122,7 +137,7 @@ test.describe("FAQ Page - Additional Coverage", () => {
     expect(loadTime).toBeLessThan(5000);
 
     // 이미지나 무거운 리소스가 없는지 확인
-    const images = page.locator('img');
+    const images = page.locator("img");
     const imageCount = await images.count();
     expect(imageCount).toBe(0); // FAQ 페이지에는 이미지가 없어야 함
   });
@@ -158,10 +173,10 @@ test.describe("FAQ Page - Additional Coverage", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "접근성");
 
     // 헤딩 구조 확인
-    const h1 = page.locator('h1');
+    const h1 = page.locator("h1");
     await expect(h1).toHaveCount(1);
-    
-    const h2 = page.locator('h2');
+
+    const h2 = page.locator("h2");
     const h2Count = await h2.count();
     expect(h2Count).toBe(6); // 6개 카테고리
 
@@ -172,14 +187,14 @@ test.describe("FAQ Page - Additional Coverage", () => {
 
     // 첫 번째 아코디언의 ARIA 상태 변경 확인
     const firstAccordion = accordionItems.first();
-    const initialExpanded = await firstAccordion.getAttribute('aria-expanded');
-    expect(initialExpanded).toBe('false');
+    const initialExpanded = await firstAccordion.getAttribute("aria-expanded");
+    expect(initialExpanded).toBe("false");
 
     await firstAccordion.click();
     await page.waitForTimeout(500);
 
-    const expandedState = await firstAccordion.getAttribute('aria-expanded');
-    expect(expandedState).toBe('true');
+    const expandedState = await firstAccordion.getAttribute("aria-expanded");
+    expect(expandedState).toBe("true");
   });
 
   test("FAQ 페이지 네비게이션", async ({ page, pushAnnotation }) => {
@@ -192,7 +207,7 @@ test.describe("FAQ Page - Additional Coverage", () => {
     // 페이지 내 앵커 점프 테스트 (카테고리로 이동)
     await page.evaluate(() => {
       const element = document.querySelector('h2:has-text("기술 지원")');
-      element?.scrollIntoView({ behavior: 'smooth' });
+      element?.scrollIntoView({ behavior: "smooth" });
     });
     await page.waitForTimeout(1000);
 

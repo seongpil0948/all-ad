@@ -96,7 +96,7 @@ export function CampaignDashboardClient({
   const [hasMore, setHasMore] = useState(true);
 
   // Effect 1: URL synchronization - separate concern
-  useFilterUrlSync(filters, setFilters);
+  useFilterUrlSync(filters as Record<string, unknown>, setFilters);
 
   // Effect 2: Filter input synchronization - separate concern
   useEffect(() => {

@@ -152,22 +152,14 @@ export async function GET(request: NextRequest) {
       account_id: accountId,
       account_name: userInfo.email || "Google Ads Account",
       is_active: true,
-      credentials: {
-        // No longer storing client credentials - using All-AD's
-      },
-      // Store tokens as top-level columns for token refresh service
+      credentials: {}, // Empty - using All-AD's OAuth
+      // Store tokens as top-level columns only
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       expires_at: expiresAt,
       scope: tokens.scope,
+      // Minimal data for user info only
       data: {
-        // Also store in data column for backward compatibility
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        expires_at: expiresAt,
-        expiry_date: expiryDate,
-        token_type: tokens.token_type,
-        scope: tokens.scope,
         user_email: userInfo.email,
         user_id: userInfo.id,
         connected_at: new Date().toISOString(),

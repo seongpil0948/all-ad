@@ -147,7 +147,7 @@ export const createPlatformActionsSlice: StateCreator<
         account_id: (credentials.account_id as string) || "default",
         credentials: credentials as Json,
         created_by: user.id,
-      } as any);
+      });
 
       if (error) throw error;
 

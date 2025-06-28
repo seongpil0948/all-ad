@@ -15,6 +15,8 @@ import { AsyncListData } from "@react-stately/data";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import clsx from "clsx";
 
+import log from "@/utils/logger";
+
 export interface VirtualScrollTableColumn<T> {
   key: string;
   label: string;
@@ -176,7 +178,7 @@ export function VirtualScrollTable<T extends { id: string | number }>({
   // Debug logging
   useEffect(() => {
     if (itemsArray.length > 0) {
-      console.log("[VirtualScrollTable] Debug:", {
+      log.debug("[VirtualScrollTable] Debug:", {
         itemsArrayLength: itemsArray.length,
         virtualItemsLength: virtualItems.length,
         totalHeight,

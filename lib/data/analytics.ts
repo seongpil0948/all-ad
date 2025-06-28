@@ -79,7 +79,8 @@ export const getAnalyticsData = cache(
       const dataMap = new Map<string, AnalyticsData>();
 
       data?.forEach((row) => {
-        const platform = (row as any).campaigns?.platform as PlatformType;
+        const platform = (row as { campaigns?: { platform?: PlatformType } })
+          .campaigns?.platform as PlatformType;
         const key = `${row.date}-${platform}`;
         const existing = dataMap.get(key);
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { createServiceClient } from "@/utils/supabase/service";
+// import { createServiceClient } from "@/utils/supabase/service"; // Uncomment when needed for actual SQL execution
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,9 +11,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const supabase = createServiceClient();
-    const errors: string[] = [];
-    const successes: string[] = [];
+    // const supabase = createServiceClient(); // Uncomment when needed for actual SQL execution
 
     // Drop existing policies
     const dropPoliciesSQL = [
@@ -42,21 +40,9 @@ export async function POST(request: NextRequest) {
       `DROP POLICY IF EXISTS "team_members_delete_as_master" ON public.team_members`,
     ];
 
-    // Execute drops with service role (bypasses RLS)
-    for (const sql of dropPoliciesSQL) {
-      try {
-        // Direct query execution as service role
-        const { error } = await supabase.from("teams").select("id").limit(0);
-
-        if (!error) {
-          successes.push(
-            `Dropped policy: ${sql.match(/DROP POLICY IF EXISTS "([^"]+)"/)?.[1]}`,
-          );
-        }
-      } catch (e) {
-        // Continue even if drop fails
-      }
-    }
+    // Note: In production, these SQL commands should be executed directly
+    // in Supabase SQL editor or via migration files
+    // This is just for generating the SQL statements
 
     // Create new policies
     const createPoliciesSQL = [
@@ -164,11 +150,11 @@ export async function POST(request: NextRequest) {
       instructions:
         "Please run this migration directly in your Supabase SQL editor or via Supabase CLI",
     });
-  } catch (error: any) {
+  } catch (error) {
     return NextResponse.json(
       {
         error: "Failed to generate RLS fix",
-        details: error.message,
+        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },
     );

@@ -53,6 +53,11 @@ export async function updateSession(request: NextRequest) {
     "/reset-password",
     "/confirm",
     "/intro",
+    "/faq",
+    "/terms",
+    "/privacy",
+    "/cookies",
+    "/refund-policy",
   ];
 
   const isPublicRoute = publicRoutes.some(

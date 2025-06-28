@@ -13,10 +13,14 @@ test.describe("FAQ Page", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "페이지 레이아웃");
 
     // 페이지 타이틀 확인
-    await expect(page.getByText("자주 묻는 질문", { exact: false })).toBeVisible();
-    
+    await expect(
+      page.getByRole("heading", { name: "자주 묻는 질문" }),
+    ).toBeVisible();
+
     // 부제목 확인
-    await expect(page.getByText("ALL AD 서비스 이용에 대한", { exact: false })).toBeVisible();
+    await expect(
+      page.getByText("ALL AD 서비스 이용에 대한", { exact: false }),
+    ).toBeVisible();
   });
 
   test("FAQ 카테고리 표시", async ({ page, pushAnnotation }) => {
@@ -41,12 +45,16 @@ test.describe("FAQ Page", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "Accordion 상호작용");
 
     // 첫 번째 질문 찾기
-    const firstQuestion = page.getByText("Q1: 올애드(All-AD)는 어떤 서비스인가요?");
+    const firstQuestion = page.getByText(
+      "Q1: 올애드(All-AD)는 어떤 서비스인가요?",
+    );
     await expect(firstQuestion).toBeVisible();
 
     // 첫 번째 답변 컨테이너 찾기
-    const firstAnswer = page.getByText("A1: 올애드는 여러 광고 플랫폼", { exact: false });
-    
+    const firstAnswer = page.getByText("A1: 올애드는 여러 광고 플랫폼", {
+      exact: false,
+    });
+
     // 초기 상태에서는 답변이 숨겨져 있는지 확인
     await expect(firstAnswer).not.toBeVisible();
 
@@ -65,19 +73,28 @@ test.describe("FAQ Page", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "다중 확장");
 
     // 첫 번째 질문 열기
-    const firstQuestion = page.getByText("Q1: 올애드(All-AD)는 어떤 서비스인가요?");
+    const firstQuestion = page.getByText(
+      "Q1: 올애드(All-AD)는 어떤 서비스인가요?",
+    );
     await firstQuestion.click();
     await page.waitForTimeout(1000);
 
-    const firstAnswer = page.getByText("A1: 올애드는 여러 광고 플랫폼", { exact: false });
+    const firstAnswer = page.getByText("A1: 올애드는 여러 광고 플랫폼", {
+      exact: false,
+    });
     await expect(firstAnswer).toBeVisible();
 
     // 두 번째 질문도 열기 (다중 확장 가능)
-    const secondQuestion = page.getByText("Q2: 올애드를 사용하면 어떤 점이 좋은가요?");
+    const secondQuestion = page.getByText(
+      "Q2: 올애드를 사용하면 어떤 점이 좋은가요?",
+    );
     await secondQuestion.click();
     await page.waitForTimeout(1000);
 
-    const secondAnswer = page.getByText("A2: 여러 광고 플랫폼에 각각 접속하여", { exact: false });
+    const secondAnswer = page.getByText(
+      "A2: 여러 광고 플랫폼에 각각 접속하여",
+      { exact: false },
+    );
     await expect(secondAnswer).toBeVisible();
 
     // 첫 번째 답변도 여전히 보여야 함
@@ -107,13 +124,15 @@ test.describe("FAQ Page", () => {
     // Q13 질문 찾기
     const q13 = page.getByText("Q13: 팀원들과 함께 사용할 수 있나요?");
     await expect(q13).toBeVisible();
-    
+
     // 클릭하여 답변 표시
     await q13.click();
     await page.waitForTimeout(1000);
-    
+
     // Master, Team Mate, Viewer 역할 설명 확인
-    await expect(page.getByText("Master: 계정의 모든 설정과 기능 사용")).toBeVisible();
+    await expect(
+      page.getByText("Master: 계정의 모든 설정과 기능 사용"),
+    ).toBeVisible();
     await expect(page.getByText("Team Mate: 캠페인 편집")).toBeVisible();
     await expect(page.getByText("Viewer: 데이터 조회만 가능")).toBeVisible();
   });
@@ -124,17 +143,17 @@ test.describe("FAQ Page", () => {
     // Q5 질문 찾기
     const q5 = page.getByText("Q5: 어떤 광고 플랫폼을 연동할 수 있나요?");
     await expect(q5).toBeVisible();
-    
+
     // 클릭하여 답변 표시
     await q5.click();
     await page.waitForTimeout(1000);
-    
+
     // 현재 지원 플랫폼
     const currentPlatforms = ["구글 애즈", "메타 애즈", "쿠팡 애즈"];
     for (const platform of currentPlatforms) {
       await expect(page.getByText(platform, { exact: false })).toBeVisible();
     }
-    
+
     // 예정 플랫폼
     const futurePlatforms = ["네이버 광고", "카카오 모먼트", "틱톡 애즈"];
     for (const platform of futurePlatforms) {
@@ -146,19 +165,23 @@ test.describe("FAQ Page", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "접근성");
 
     // 키보드 네비게이션 테스트
-    const firstQuestion = page.getByText("Q1: 올애드(All-AD)는 어떤 서비스인가요?");
-    
+    const firstQuestion = page.getByText(
+      "Q1: 올애드(All-AD)는 어떤 서비스인가요?",
+    );
+
     // Tab 키로 이동
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('Tab');
-    
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Tab");
+
     // Enter 키로 확장
-    await page.keyboard.press('Enter');
+    await page.keyboard.press("Enter");
     await page.waitForTimeout(1000);
-    
+
     // 답변이 표시되는지 확인
-    const firstAnswer = page.getByText("A1: 올애드는 여러 광고 플랫폼", { exact: false });
+    const firstAnswer = page.getByText("A1: 올애드는 여러 광고 플랫폼", {
+      exact: false,
+    });
     await expect(firstAnswer).toBeVisible();
   });
 
@@ -170,14 +193,20 @@ test.describe("FAQ Page", () => {
     await page.waitForTimeout(1000); // 뷰포트 변경 후 재렌더링 대기
 
     // FAQ 항목들이 여전히 보이는지 확인
-    await expect(page.getByText("자주 묻는 질문", { exact: false })).toBeVisible();
+    await expect(
+      page.getByText("자주 묻는 질문", { exact: false }),
+    ).toBeVisible();
 
     // Accordion이 모바일에서도 작동하는지
-    const firstQuestion = page.getByText("Q1: 올애드(All-AD)는 어떤 서비스인가요?");
+    const firstQuestion = page.getByText(
+      "Q1: 올애드(All-AD)는 어떤 서비스인가요?",
+    );
     await firstQuestion.click();
     await page.waitForTimeout(1000); // 애니메이션 대기
 
-    const firstAnswer = page.getByText("A1: 올애드는 여러 광고 플랫폼", { exact: false });
+    const firstAnswer = page.getByText("A1: 올애드는 여러 광고 플랫폼", {
+      exact: false,
+    });
     await expect(firstAnswer).toBeVisible();
   });
 
@@ -189,14 +218,18 @@ test.describe("FAQ Page", () => {
     await page.waitForTimeout(1000); // 스크롤 애니메이션 대기
 
     // 마지막 FAQ 항목 확인
-    await expect(page.getByText("Q21: API 키 발급 방법", { exact: false })).toBeVisible();
+    await expect(
+      page.getByText("Q21: API 키 발급 방법", { exact: false }),
+    ).toBeVisible();
 
     // 다시 상단으로 스크롤
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.waitForTimeout(1000); // 스크롤 애니메이션 대기
 
     // 첫 번째 FAQ 항목 확인
-    await expect(page.getByText("Q1: 올애드(All-AD)는 어떤 서비스인가요?")).toBeVisible();
+    await expect(
+      page.getByText("Q1: 올애드(All-AD)는 어떤 서비스인가요?"),
+    ).toBeVisible();
   });
 
   test("이메일 링크 클릭", async ({ page, pushAnnotation }) => {
@@ -207,7 +240,9 @@ test.describe("FAQ Page", () => {
     await page.waitForTimeout(1000);
 
     // Q20 답변 열기
-    const q20 = page.getByText("Q20: 서비스 이용 중 문제가 발생하면 어디에 문의해야 하나요?");
+    const q20 = page.getByText(
+      "Q20: 서비스 이용 중 문제가 발생하면 어디에 문의해야 하나요?",
+    );
     await q20.click();
     await page.waitForTimeout(1000); // 애니메이션 대기
 
@@ -237,7 +272,7 @@ test.describe("FAQ Page", () => {
     for (const category of Object.keys(categoryQuestionCounts)) {
       await expect(page.getByText(category, { exact: true })).toBeVisible();
     }
-    
+
     // 전체 FAQ 질문 수 확인 (21개)
     const allQuestions = page.locator('[data-testid="faq-question"]');
     const totalCount = await allQuestions.count();
@@ -248,14 +283,18 @@ test.describe("FAQ Page", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "콘텐츠 검증");
 
     // 첫 번째 질문과 답변 확인
-    const firstQuestion = page.getByText("Q1: 올애드(All-AD)는 어떤 서비스인가요?");
+    const firstQuestion = page.getByText(
+      "Q1: 올애드(All-AD)는 어떤 서비스인가요?",
+    );
     await firstQuestion.click();
     await page.waitForTimeout(1000);
 
     // 답변 내용 확인
-    await expect(page.getByText("올애드는 여러 광고 플랫폼", { exact: false })).toBeVisible();
-    await expect(page.getByText("통합적으로 관리하고 분석", { exact: false })).toBeVisible();
+    await expect(
+      page.getByText("올애드는 여러 광고 플랫폼", { exact: false }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("통합적으로 관리하고 분석", { exact: false }),
+    ).toBeVisible();
   });
-
-
 });

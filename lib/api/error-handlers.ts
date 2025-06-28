@@ -185,7 +185,7 @@ export function withErrorHandler<T extends unknown[]>(
 }
 
 // Helper for validating request data
-export function validateRequired<T extends Record<string, any>>(
+export function validateRequired<T extends Record<string, unknown>>(
   data: Record<string, unknown>,
   requiredFields: (keyof T)[],
 ): T {

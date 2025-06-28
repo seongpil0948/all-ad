@@ -60,7 +60,9 @@ export function useUrlSync<T extends Record<string, unknown>>(
           if (config.store[storeKey] !== value) {
             // Update store only if value is different
             const setterName = `set${storeKey.charAt(0).toUpperCase()}${storeKey.slice(1)}`;
-            const setter = (config.store as any)[setterName];
+            const setter = (config.store as Record<string, unknown>)[
+              setterName
+            ];
 
             if (typeof setter === "function") {
               setter(value);
@@ -108,7 +110,7 @@ export function usePaginationUrlSync(store: {
 /**
  * Hook to sync filter state with URL
  */
-export function useFilterUrlSync<T extends Record<string, any>>(
+export function useFilterUrlSync<T extends Record<string, unknown>>(
   filters: T,
   setFilters: (filters: Partial<T>) => void,
 ) {

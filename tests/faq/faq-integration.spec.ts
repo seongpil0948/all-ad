@@ -13,13 +13,13 @@ test.describe("FAQ Page - Integration Tests", () => {
     // Footer에서 FAQ 링크 확인
     await page.goto("/");
     await page.waitForTimeout(2000);
-    
+
     const footer = page.locator("footer");
     await footer.scrollIntoViewIfNeeded();
-    
+
     const faqLink = footer.getByText("자주 묻는 질문");
     await expect(faqLink).toBeVisible();
-    
+
     // FAQ 페이지로 이동
     await faqLink.click();
     await page.waitForURL("**/faq");
@@ -61,7 +61,9 @@ test.describe("FAQ Page - Integration Tests", () => {
     await page.waitForTimeout(1000);
 
     // 질문 하나 열기
-    const firstQuestion = page.getByText("Q1: 올애드(All-AD)는 어떤 서비스인가요?");
+    const firstQuestion = page.getByText(
+      "Q1: 올애드(All-AD)는 어떤 서비스인가요?",
+    );
     await firstQuestion.click();
     await page.waitForTimeout(1000);
 
@@ -72,7 +74,7 @@ test.describe("FAQ Page - Integration Tests", () => {
     // 앞으로가기
     await page.goForward();
     await expect(page).toHaveURL(/\/faq$/);
-    
+
     // 질문 상태가 유지되는지 확인 (브라우저에 따라 다를 수 있음)
     await expect(firstQuestion).toBeVisible();
   });
@@ -129,7 +131,7 @@ test.describe("FAQ Page - Integration Tests", () => {
       "기능 관련",
       "요금제 및 결제",
       "보안 및 데이터",
-      "기술 지원"
+      "기술 지원",
     ];
 
     for (const text of koreanTexts) {
@@ -137,15 +139,15 @@ test.describe("FAQ Page - Integration Tests", () => {
     }
 
     // lang 속성 확인
-    const htmlLang = await page.getAttribute('html', 'lang');
-    expect(htmlLang).toBe('ko');
+    const htmlLang = await page.getAttribute("html", "lang");
+    expect(htmlLang).toBe("ko");
   });
 
   test("SEO 최적화 확인", async ({ page, pushAnnotation }) => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "SEO");
 
     // 구조화된 데이터 확인
-    const h1Count = await page.locator('h1').count();
+    const h1Count = await page.locator("h1").count();
     expect(h1Count).toBe(1);
 
     // 의미있는 링크 텍스트 확인
@@ -157,7 +159,10 @@ test.describe("FAQ Page - Integration Tests", () => {
     }
 
     // 페이지 설명 메타 태그
-    const description = await page.getAttribute('meta[name="description"]', 'content');
+    const description = await page.getAttribute(
+      'meta[name="description"]',
+      "content",
+    );
     expect(description).toBeTruthy();
     expect(description?.length).toBeGreaterThan(50);
   });
@@ -166,11 +171,11 @@ test.describe("FAQ Page - Integration Tests", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "키보드 네비게이션");
 
     // Tab 키로 첫 번째 질문으로 이동
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('Tab');
-    
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Tab");
+
     // Space 키로 열기
-    await page.keyboard.press('Space');
+    await page.keyboard.press("Space");
     await page.waitForTimeout(1000);
 
     // 첫 번째 답변이 표시되는지 확인
@@ -178,8 +183,8 @@ test.describe("FAQ Page - Integration Tests", () => {
     await expect(firstAnswer).toBeVisible();
 
     // Arrow Down으로 다음 질문으로 이동
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Enter");
     await page.waitForTimeout(1000);
 
     // 두 번째 답변도 표시되는지 확인
@@ -223,13 +228,13 @@ test.describe("FAQ Page - Integration Tests", () => {
     }
 
     // 프린트 미리보기 에뮬레이션
-    await page.emulateMedia({ media: 'print' });
-    
+    await page.emulateMedia({ media: "print" });
+
     // 주요 콘텐츠가 여전히 보이는지 확인
     await expect(page.getByText("자주 묻는 질문")).toBeVisible();
     await expect(page.getByText("서비스 일반")).toBeVisible();
-    
+
     // 미디어 타입 원복
-    await page.emulateMedia({ media: 'screen' });
+    await page.emulateMedia({ media: "screen" });
   });
 });
