@@ -383,14 +383,37 @@ utils/
 #### Hook이 실행되지 않는 경우
 
 ```bash
-# Husky 재설치
+# 1. Husky 재설치
 pnpm run prepare
 
-# Hook 파일 권한 확인
-chmod +x .husky/pre-commit
+# 2. 수동으로 git hook 설정 (Husky 9.x 이상에서 문제가 있는 경우)
+echo '#!/bin/sh
+cd "$(dirname "$0")/../.."
+npx lint-staged' > .git/hooks/pre-commit
 
-# Git hooks 확인
-ls -la .git/hooks/
+# 3. Hook 파일 권한 설정
+chmod +x .git/hooks/pre-commit
+
+# 4. Git hooks 확인
+ls -la .git/hooks/pre-commit
+```
+
+#### Hook 작동 확인
+
+```bash
+# 테스트 파일 생성
+echo "const test='hello';console.log(test)" > test.js
+
+# 파일 스테이징
+git add test.js
+
+# 커밋 시도 (pre-commit hook이 자동으로 실행되어야 함)
+git commit -m "test: check pre-commit hook"
+
+# 정상 작동 시 ESLint + Prettier가 자동으로 실행됩니다
+# 테스트 후 정리
+rm test.js
+git reset HEAD~1 --soft
 ```
 
 #### Lint/Format 오류
