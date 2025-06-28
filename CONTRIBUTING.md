@@ -166,6 +166,7 @@ pnpm tsc --watch
 2. **ESLint 실행**: JavaScript/TypeScript 파일의 코드 품질 검사 및 자동 수정
 3. **Prettier 실행**: 모든 지원 파일 포매팅
 4. **자동 재스테이징**: 수정된 파일은 자동으로 다시 스테이징됨
+5. **커밋 메시지 검증**: Conventional Commits 형식 준수 확인
 
 #### 커밋 과정
 
@@ -401,16 +402,26 @@ ls -la .git/hooks/pre-commit
 #### Hook 작동 확인
 
 ```bash
-# 테스트 파일 생성
+# 테스트 파일 생성 (잘못된 포매팅)
 echo "const test='hello';console.log(test)" > test.js
 
 # 파일 스테이징
 git add test.js
 
-# 커밋 시도 (pre-commit hook이 자동으로 실행되어야 함)
-git commit -m "test: check pre-commit hook"
+# 1. 잘못된 커밋 메시지로 테스트 (실패해야 함)
+git commit -m "bad message"
+# 결과: commitlint가 오류를 발견하여 커밋 거부
 
-# 정상 작동 시 ESLint + Prettier가 자동으로 실행됩니다
+# 2. 올바른 커밋 메시지로 테스트 (성공해야 함)
+git commit -m "feat(test): add test file"
+# 결과: pre-commit hook이 코드를 수정하고 커밋 성공
+
+# 정상 작동 시:
+# ✔ ESLint가 코드를 검사하고 수정
+# ✔ Prettier가 코드를 포매팅
+# ✔ Commitlint가 커밋 메시지를 검증
+# ✔ 모든 검사 통과 후 커밋 완료
+
 # 테스트 후 정리
 rm test.js
 git reset HEAD~1 --soft
