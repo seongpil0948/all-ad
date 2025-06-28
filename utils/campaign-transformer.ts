@@ -1,5 +1,5 @@
 // Transform database campaign to application campaign
-import { Campaign as DBCampaign } from "@/types/database.types";
+import { Campaign as DBCampaign } from "@/types";
 import { Campaign as AppCampaign } from "@/types/campaign.types";
 
 export function transformDbCampaignToApp(dbCampaign: DBCampaign): AppCampaign {
@@ -12,7 +12,7 @@ export function transformDbCampaignToApp(dbCampaign: DBCampaign): AppCampaign {
     status: (dbCampaign.status?.toLowerCase() ||
       "active") as AppCampaign["status"],
     budget: dbCampaign.budget || undefined,
-    isActive: dbCampaign.is_active,
+    isActive: dbCampaign.is_active ?? false,
     createdAt: dbCampaign.created_at,
     updatedAt: dbCampaign.updated_at,
   };

@@ -1,0 +1,762 @@
+{
+  "common": {
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "add": "添加",
+    "search": "搜索",
+    "filter": "筛选",
+    "sort": "排序",
+    "actions": "操作",
+    "close": "关闭",
+    "confirm": "确认",
+    "back": "返回",
+    "next": "下一步",
+    "previous": "上一步",
+    "submit": "提交",
+    "reset": "重置",
+    "refresh": "刷新",
+    "download": "下载",
+    "upload": "上传",
+    "select": "选择",
+    "selectAll": "全选",
+    "unselectAll": "取消全选",
+    "yes": "是",
+    "no": "否",
+    "or": "或",
+    "and": "和",
+    "of": "的",
+    "noData": "暂无数据",
+    "noResults": "未找到结果",
+    "viewAll": "查看全部",
+    "viewLess": "收起",
+    "more": "更多",
+    "less": "收起",
+    "new": "新建",
+    "all": "全部",
+    "none": "无",
+    "today": "今天",
+    "yesterday": "昨天",
+    "week": "周",
+    "month": "月",
+    "year": "年",
+    "date": "日期",
+    "time": "时间",
+    "status": "状态",
+    "active": "活跃",
+    "inactive": "未激活",
+    "pending": "待处理",
+    "completed": "已完成",
+    "failed": "失败",
+    "retry": "重试",
+    "copy": "复制",
+    "copied": "已复制",
+    "share": "分享",
+    "export": "导出",
+    "import": "导入",
+    "settings": "设置",
+    "help": "帮助",
+    "documentation": "文档",
+    "support": "支持",
+    "feedback": "反馈",
+    "report": "报告",
+    "language": "语言",
+    "theme": "主题",
+    "light": "浅色",
+    "dark": "深色",
+    "system": "系统"
+  },
+  "nav": {
+    "home": "首页",
+    "demo": "演示",
+    "pricing": "价格",
+    "support": "客户支持",
+    "lab": "实验室",
+    "login": "登录",
+    "freeTrial": "免费试用",
+    "profile": "我的资料",
+    "settings": "设置",
+    "team": "团队管理",
+    "analytics": "分析",
+    "help": "帮助与反馈",
+    "logout": "退出登录",
+    "dashboard": "仪表板",
+    "campaigns": "广告系列管理",
+    "reports": "报告"
+  },
+  "home": {
+    "hero": {
+      "title": "一站式广告管理",
+      "subtitle": "在一个仪表板中管理多个广告平台。通过实时分析和自动优化最大化您的广告效果。",
+      "cta": "立即开始",
+      "subCta": "14天免费试用，体验所有功能"
+    },
+    "features": {
+      "title": "核心功能",
+      "subtitle": "让广告管理更智能",
+      "dashboard": {
+        "title": "统一仪表板",
+        "description": "一目了然地监控所有广告平台的效果。提供实时数据分析和报告。"
+      },
+      "automation": {
+        "title": "自动化广告优化",
+        "description": "通过AI驱动的优化最大化投资回报率，高效管理广告预算。"
+      },
+      "security": {
+        "title": "安全数据管理",
+        "description": "采用企业级安全措施保护您的广告数据。"
+      },
+      "integration": {
+        "title": "灵活的集成方式",
+        "description": "支持SDK、开放API、数据库对接等多种集成方式。"
+      },
+      "unifiedDashboard": {
+        "title": "统一仪表板",
+        "description": "一目了然地查看所有广告平台的表现。提供实时数据分析和报告。"
+      },
+      "automaticOptimization": {
+        "title": "自动化广告优化",
+        "description": "通过AI驱动的广告优化最大化ROI，高效管理您的广告预算。"
+      },
+      "secureDataManagement": {
+        "title": "安全数据管理",
+        "description": "企业级安全保护您的广告数据安全。"
+      },
+      "flexibleIntegration": {
+        "title": "灵活集成方式",
+        "description": "支持SDK、Open API、DB to DB等多种集成方式。"
+      }
+    },
+    "platforms": {
+      "title": "支持的平台",
+      "subtitle": "支持国内外主要广告平台",
+      "visualization": {
+        "title": "直观的仪表板",
+        "subtitle": "将复杂数据可视化，便于理解"
+      }
+    },
+    "dashboard": {
+      "title": "直观仪表板",
+      "subtitle": "将复杂数据可视化，便于理解"
+    },
+    "cta": {
+      "mainTitle": "所有广告",
+      "mainTitleHighlight": "统一管理",
+      "mainSubtitle": "在单一仪表板中管理多个广告平台。通过实时分析和自动优化最大化广告效果。",
+      "primaryButton": "免费开始",
+      "secondaryButton": "查看演示",
+      "sectionTitle": "立即开始",
+      "sectionSubtitle": "14天免费试用，体验所有功能",
+      "sectionButton": "开始免费试用"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "登录",
+      "email": "邮箱",
+      "emailPlaceholder": "your@email.com",
+      "password": "密码",
+      "passwordPlaceholder": "输入您的密码",
+      "submit": "登录",
+      "forgotPassword": "忘记密码？",
+      "noAccount": "还没有账号？",
+      "signUp": "注册",
+      "or": "或",
+      "continueWith": "使用{{provider}}继续",
+      "errors": {
+        "invalidEmail": "请输入有效的邮箱地址。",
+        "passwordRequired": "请输入密码。",
+        "invalidCredentials": "邮箱或密码错误。",
+        "general": "登录时出错。请重试。",
+        "tooManyAttempts": "登录尝试次数过多。请稍后再试。"
+      },
+      "success": "登录成功！"
+    },
+    "signup": {
+      "title": "注册",
+      "email": "邮箱",
+      "emailPlaceholder": "your@email.com",
+      "password": "密码",
+      "passwordPlaceholder": "至少6个字符",
+      "confirmPassword": "确认密码",
+      "confirmPasswordPlaceholder": "再次输入密码",
+      "submit": "注册",
+      "hasAccount": "已有账号？",
+      "login": "登录",
+      "agreeToTerms": "注册即表示您同意我们的",
+      "termsOfService": "服务条款",
+      "privacyPolicy": "隐私政策",
+      "and": "和",
+      "errors": {
+        "invalidEmail": "请输入有效的邮箱地址。",
+        "passwordMin": "密码至少需要6个字符。",
+        "passwordMatch": "密码不匹配。",
+        "general": "注册时出错。请重试。",
+        "emailExists": "该邮箱已被注册。"
+      },
+      "success": "账号创建成功！请查看邮箱验证您的账号。"
+    },
+    "forgotPassword": {
+      "title": "重置密码",
+      "subtitle": "输入您的注册邮箱，我们将发送密码重置链接。",
+      "email": "邮箱",
+      "emailPlaceholder": "your@email.com",
+      "submit": "发送重置链接",
+      "backToLogin": "返回登录",
+      "errors": {
+        "invalidEmail": "请输入有效的邮箱地址。",
+        "general": "发送重置链接时出错。请重试。"
+      },
+      "success": "密码重置链接已发送！请查看您的邮箱。"
+    },
+    "resetPassword": {
+      "title": "设置新密码",
+      "newPassword": "新密码",
+      "newPasswordPlaceholder": "至少6个字符",
+      "confirmPassword": "确认密码",
+      "confirmPasswordPlaceholder": "再次输入密码",
+      "submit": "重置密码",
+      "errors": {
+        "passwordMin": "密码至少需要6个字符。",
+        "passwordMatch": "密码不匹配。",
+        "general": "重置密码时出错。请重试。",
+        "invalidToken": "无效或过期的重置链接。"
+      },
+      "success": "密码重置成功！您现在可以使用新密码登录。"
+    }
+  },
+  "campaigns": {
+    "title": "广告系列管理",
+    "subtitle": "监控和控制所有广告系列。",
+    "table": {
+      "name": "广告系列名称",
+      "platform": "平台",
+      "status": "状态",
+      "budget": "预算",
+      "spent": "支出",
+      "impressions": "曝光",
+      "clicks": "点击",
+      "ctr": "点击率",
+      "cpc": "点击成本",
+      "conversions": "转化",
+      "lastUpdated": "最后更新",
+      "metrics": "效果",
+      "actions": "操作",
+      "impressionsLabel": "曝光：",
+      "clicksLabel": "点击：",
+      "noCampaigns": "没有广告系列"
+    },
+    "actions": {
+      "enable": "启用",
+      "disable": "停用",
+      "edit": "编辑",
+      "delete": "删除",
+      "duplicate": "复制",
+      "viewDetails": "查看详情"
+    },
+    "status": {
+      "active": "活跃",
+      "paused": "暂停",
+      "completed": "已完成",
+      "draft": "草稿",
+      "error": "错误"
+    },
+    "filters": {
+      "all": "所有广告系列",
+      "active": "活跃",
+      "paused": "暂停",
+      "completed": "已完成"
+    },
+    "budgetModal": {
+      "title": "编辑预算",
+      "campaign": "广告系列：",
+      "currentBudget": "当前预算：",
+      "newBudgetLabel": "新预算",
+      "newBudgetPlaceholder": "输入预算",
+      "cancel": "取消",
+      "update": "更新"
+    },
+    "statusModal": {
+      "title": "更改广告系列状态",
+      "confirmActive": "您确定要",
+      "activate": "启用",
+      "deactivate": "停用",
+      "confirmSuffix": "这个广告系列吗？",
+      "cancel": "取消",
+      "confirm": "确认"
+    },
+    "search": {
+      "placeholder": "搜索广告系列..."
+    },
+    "toast": {
+      "invalidBudget": "请输入有效的预算金额",
+      "budgetUpdateSuccess": "预算更新成功",
+      "budgetUpdateError": "预算更新失败",
+      "statusChangeSuccess": "广告系列已{{status}}",
+      "statusChangeError": "广告系列状态更改失败"
+    },
+    "metrics": {
+      "totalBudgetLabel": "总预算",
+      "totalSpendLabel": "总支出",
+      "totalImpressionsLabel": "总曝光数",
+      "totalClicksLabel": "总点击数",
+      "won": "圆"
+    },
+    "actionLabels": {
+      "editBudget": "编辑预算",
+      "activate": "启用",
+      "deactivate": "停用"
+    }
+  },
+  "integrations": {
+    "title": "平台集成",
+    "subtitle": "连接您的广告账户开始使用。",
+    "connected": "已连接",
+    "connect": "连接",
+    "disconnect": "断开连接",
+    "reconnect": "重新连接",
+    "platforms": {
+      "googleAds": {
+        "name": "Google Ads",
+        "description": "连接您的Google Ads账户",
+        "features": "Google Ads集成可用功能：",
+        "feature1": "实时广告系列监控",
+        "feature2": "广告系列开关控制",
+        "feature3": "自动收集效果数据",
+        "feature4": "生成综合报告",
+        "connectButton": "使用Google账户连接",
+        "instructions": "登录Google并批准权限后自动集成"
+      },
+      "metaAds": {
+        "name": "Meta Ads",
+        "description": "连接您的Meta（Facebook和Instagram）广告账户"
+      },
+      "naverAds": {
+        "name": "Naver Ads",
+        "description": "连接您的Naver搜索广告账户"
+      },
+      "kakaoAds": {
+        "name": "Kakao Ads",
+        "description": "连接您的Kakao Moment账户"
+      },
+      "coupangAds": {
+        "name": "Coupang Ads",
+        "description": "连接您的Coupang广告账户"
+      }
+    },
+    "connectedAccount": "已连接账户",
+    "lastSync": "最后同步",
+    "syncNow": "立即同步",
+    "settings": "集成设置",
+    "errors": {
+      "connectionFailed": "连接失败。请重试。",
+      "authExpired": "认证已过期。请重新连接。",
+      "syncFailed": "同步失败。请检查您的连接。",
+      "oauthCancelled": "OAuth 认证已取消。",
+      "invalidOauthResponse": "无效的 OAuth 响应。",
+      "teamNotFound": "找不到团队。",
+      "oauthFailed": "OAuth 认证失败。"
+    },
+    "success": {
+      "connected": "{{platform}} 连接成功！\n账户：{{account}}",
+      "disconnected": "平台连接已断开"
+    },
+    "management": {
+      "title": "平台集成管理",
+      "subtitle": "连接广告平台以从统一仪表板管理",
+      "refreshAll": "全部刷新",
+      "refresh": "刷新",
+      "tokenRefreshService": "令牌刷新服务",
+      "tokenRefreshDescription": "自动刷新过期的令牌",
+      "serviceStatus": "服务状态",
+      "running": "运行中",
+      "stopped": "已停止",
+      "totalIntegrations": "总集成数：{{count}}",
+      "needRefresh": "需要刷新：{{count}}",
+      "connectedPlatforms": "已连接的平台",
+      "lastSyncTime": "最后同步：{{time}}",
+      "tokenExpiry": "令牌过期：",
+      "disconnect": "断开连接",
+      "platformIntegration": "平台集成",
+      "oauthSupported": "支持 OAuth",
+      "manualOnly": "仅支持手动集成",
+      "connected": "已连接",
+      "comingSoon": "即将推出",
+      "disconnectModal": {
+        "title": "断开平台连接",
+        "confirmText": "您确定要断开",
+        "platformName": "{{platform}} ({{account}}) 的连接吗？",
+        "warning": "断开连接后，您将无法再从该平台同步数据。要重新连接，您需要再次进行 OAuth 认证。",
+        "cancel": "取消",
+        "disconnect": "断开连接"
+      }
+    },
+    "status": {
+      "error": "错误",
+      "needsRefresh": "需要刷新",
+      "connected": "已连接",
+      "inactive": "未激活"
+    },
+    "credentials": {
+      "title": "平台凭证管理",
+      "modalTitle": "{{platform}} 认证信息",
+      "notConnected": "未连接",
+      "oauthInfo": "此平台使用 OAuth 认证。点击「连接」按钮将跳转到 {{platform}} 登录页面。",
+      "oauthSupported": "支持 OAuth 认证",
+      "apiKey": "API Key",
+      "secretKey": "Secret Key",
+      "accessKey": "Access Key",
+      "customerId": "客户 ID",
+      "naverApiKeyPlaceholder": "Naver 搜索广告 API Key",
+      "customerIdPlaceholder": "客户 ID",
+      "coupangAccessKeyPlaceholder": "Coupang Access Key",
+      "coupangSecretKeyPlaceholder": "Coupang Secret Key",
+      "connectedDate": "连接日期",
+      "googleDescription": "连接您的 Google Ads 账户以实时监控和管理广告系列效果。",
+      "budgetManagement": "预算管理和优化",
+      "accountName": "账户名称",
+      "accountId": "账户 ID",
+      "accountList": "账户列表",
+      "noAccounts": "没有连接的账户",
+      "platformAccountManagement": "平台账户管理",
+      "accountsConnected": "已连接 {{count}} 个账户",
+      "addAccount": "添加账户",
+      "addAccountTitle": "添加 {{platform}} 账户",
+      "noName": "无名称",
+      "tokenExpired": "令牌已过期",
+      "checking": "检查中...",
+      "notSynced": "未同步",
+      "tokenRefreshSuccess": "令牌刷新成功",
+      "tokenRefreshSuccessDesc": "{{account}} 的令牌已刷新。",
+      "reAuthFailed": "重新认证失败",
+      "reAuthFailedDesc": "令牌刷新失败。请重试。"
+    }
+  },
+  "pricing": {
+    "title": "选择您的套餐",
+    "subtitle": "所有套餐包含14天免费试用。随时取消。",
+    "monthly": "月付",
+    "yearly": "年付",
+    "save": "节省{{percent}}%",
+    "mostPopular": "最受欢迎",
+    "plans": {
+      "starter": {
+        "name": "入门版",
+        "price": "¥699/月",
+        "description": "适合小型企业的基础套餐",
+        "features": [
+          "最多3个广告账户",
+          "基础分析功能",
+          "邮件支持",
+          "每日数据同步"
+        ]
+      },
+      "professional": {
+        "name": "专业版",
+        "price": "¥1,999/月",
+        "description": "适合成长型企业的专业套餐",
+        "features": [
+          "最多10个广告账户",
+          "高级分析功能",
+          "优先支持",
+          "实时数据同步",
+          "自定义报告",
+          "API访问"
+        ]
+      },
+      "enterprise": {
+        "name": "企业版",
+        "price": "定制报价",
+        "description": "为大型企业定制的解决方案",
+        "features": [
+          "无限广告账户",
+          "企业级分析",
+          "专属支持",
+          "实时数据同步",
+          "自定义集成",
+          "完整API访问",
+          "SLA保证",
+          "定制培训"
+        ]
+      }
+    },
+    "cta": {
+      "startFreeTrial": "开始免费试用",
+      "contactSales": "联系销售",
+      "currentPlan": "当前套餐"
+    }
+  },
+  "dashboard": {
+    "title": "仪表板",
+    "subtitle": "一目了然地管理所有广告平台的营销活动。",
+    "noData": "暂无数据",
+    "loginRequired": "需要登录。",
+    "sync": {
+      "button": "同步",
+      "syncing": "同步中...",
+      "noConnections": "无连接",
+      "connectFirst": "请先连接至少一个广告平台",
+      "success": "成功",
+      "successDescription": "所有平台同步成功",
+      "error": "错误",
+      "errorDescription": "同步过程中发生错误",
+      "syncAll": "全部同步",
+      "noActivePlatforms": "没有激活的平台",
+      "syncPlatforms": "同步 {{count}} 个平台"
+    },
+    "metrics": {
+      "totalSpend": "总支出",
+      "totalImpressions": "总曝光",
+      "totalClicks": "总点击",
+      "avgCTR": "平均点击率",
+      "avgCPC": "平均点击成本",
+      "totalConversions": "总转化"
+    },
+    "charts": {
+      "performance": "效果趋势",
+      "platforms": "按平台",
+      "campaigns": "热门广告系列"
+    },
+    "filters": {
+      "dateRange": "日期范围",
+      "platform": "平台",
+      "campaign": "广告系列",
+      "status": "状态"
+    }
+  },
+  "settings": {
+    "title": "设置",
+    "sections": {
+      "notifications": {
+        "title": "通知设置",
+        "subtitle": "配置接收通知的方式",
+        "email": {
+          "title": "邮件通知",
+          "description": "通过邮件接收重要更新"
+        },
+        "browser": {
+          "title": "浏览器通知",
+          "description": "在浏览器中获取实时通知"
+        }
+      },
+      "security": {
+        "title": "安全设置",
+        "subtitle": "增强账户安全性",
+        "twoFactor": {
+          "title": "双重验证",
+          "description": "添加额外的安全层"
+        },
+        "loginAlerts": {
+          "title": "登录提醒",
+          "description": "从新设备登录时收到通知"
+        }
+      },
+      "privacy": {
+        "title": "数据与隐私",
+        "subtitle": "数据使用和隐私设置",
+        "dataCollection": {
+          "title": "数据收集",
+          "description": "允许收集数据以改进服务"
+        },
+        "marketing": {
+          "title": "营销通信",
+          "description": "接收功能和促销新闻"
+        }
+      }
+    }
+  },
+  "team": {
+    "title": "团队管理",
+    "subtitle": "管理团队成员并设置权限。",
+    "invite": {
+      "title": "邀请团队成员",
+      "email": "邮箱地址",
+      "role": "角色",
+      "sendInvite": "发送邀请",
+      "accept": {
+        "title": "团队邀请",
+        "invitedBy": "{{inviter}} 邀请您加入",
+        "asRole": "身份：",
+        "needAccount": "您需要创建账户才能接受此邀请。",
+        "decline": "拒绝",
+        "acceptInvitation": "接受邀请",
+        "createAccount": "创建账户",
+        "success": {
+          "title": "邀请已接受！",
+          "description": "您已成功加入团队。正在跳转到仪表板..."
+        },
+        "toast": {
+          "successTitle": "邀请接受成功",
+          "successDescription": "成功加入团队。正在跳转到仪表板...",
+          "errorTitle": "接受邀请失败",
+          "errorDescription": "发生错误"
+        }
+      }
+    },
+    "members": {
+      "title": "团队成员",
+      "you": "您",
+      "owner": "所有者",
+      "admin": "管理员",
+      "member": "成员",
+      "viewer": "查看者",
+      "pending": "待定",
+      "active": "活跃"
+    },
+    "roles": {
+      "master": {
+        "name": "管理员",
+        "description": "拥有所有权限的管理员"
+      },
+      "team_mate": {
+        "name": "团队成员",
+        "description": "可以修改和管理广告活动"
+      },
+      "viewer": {
+        "name": "查看者",
+        "description": "只读权限"
+      }
+    },
+    "actions": {
+      "changeRole": "更改角色",
+      "remove": "移除",
+      "resendInvite": "重新发送邀请",
+      "cancelInvite": "取消邀请"
+    },
+    "table": {
+      "columns": {
+        "member": "团队成员",
+        "email": "邮箱",
+        "role": "权限",
+        "joinDate": "加入日期",
+        "actions": "操作",
+        "invitedEmail": "邀请邮箱",
+        "status": "状态",
+        "invitedBy": "邀请人",
+        "expiresAt": "过期时间"
+      }
+    },
+    "inviteModal": {
+      "title": "输入要邀请的团队成员邮箱。",
+      "emailLabel": "邮箱",
+      "roleLabel": "权限",
+      "cancel": "取消",
+      "send": "发送邀请"
+    },
+    "toast": {
+      "inviteSuccess": "邀请成功",
+      "inviteSuccessDescription": "已向 {{email}} 发送邀请。",
+      "inviteFailed": "邀请失败",
+      "inviteFailedDescription": "发送邀请时出错。请重试。",
+      "roleChangeSuccess": "权限更改成功",
+      "roleChangeSuccessDescription": "团队成员权限已更改为 {{role}}。",
+      "roleChangeFailed": "权限更改失败",
+      "roleChangeFailedDescription": "更改权限失败。请重试。",
+      "removeConfirm": "从团队中移除 {{name}} ？",
+      "removeSuccess": "成员移除成功",
+      "removeSuccessDescription": "{{name}} 已从团队中移除。",
+      "removeFailed": "成员移除失败",
+      "removeFailedDescription": "移除团队成员时出错。"
+    },
+    "noName": "无名称",
+    "me": "（我）",
+    "unknown": "未知",
+    "loadingTeam": "正在加载团队信息...",
+    "teamInfo": "团队信息",
+    "teamName": "团队名称：",
+    "myRole": "我的权限：",
+    "memberListTitle": "团队成员",
+    "memberListSubtitle": "管理团队成员",
+    "inviteButton": "邀请成员",
+    "noMembers": "没有团队成员",
+    "invitationListTitle": "邀请状态",
+    "invitationListSubtitle": "查看邀请用户的状态",
+    "noInvitations": "没有邀请记录",
+    "statuses": {
+      "pending": "待处理",
+      "accepted": "已接受"
+    },
+    "save": "保存",
+    "cancel": "取消"
+  },
+  "footer": {
+    "product": "产品",
+    "features": "功能",
+    "integrations": "集成",
+    "pricing": "价格",
+    "resources": "资源",
+    "blog": "博客",
+    "guides": "指南",
+    "apiDocs": "API文档",
+    "company": "公司",
+    "about": "关于",
+    "careers": "招聘",
+    "partners": "合作伙伴",
+    "contact": "联系",
+    "legal": "法律",
+    "terms": "服务条款",
+    "privacy": "隐私政策",
+    "refund": "退款政策",
+    "cookies": "Cookie政策",
+    "security": "安全",
+    "newsletter": {
+      "title": "订阅新闻",
+      "subtitle": "通过邮件获取最新更新和提示",
+      "placeholder": "邮箱地址",
+      "subscribe": "订阅"
+    },
+    "companyInfo": {
+      "name": "AllAd",
+      "tagline": "一站式广告平台。为广告管理设立新标准。",
+      "copyright": "© {{year}} {{company}}. 保留所有权利。",
+      "address": "首尔特别市江南区德黑兰路123号",
+      "email": "support@allad.co.kr",
+      "phone": "02-1234-5678"
+    }
+  },
+  "faq": {
+    "title": "常见问题",
+    "questions": {
+      "platforms": {
+        "question": "AllAd支持哪些广告平台？",
+        "answer": "AllAd目前支持Google Ads、Meta Ads（Facebook和Instagram）、Naver搜索广告、Kakao Moment等，并正在添加更多平台。"
+      },
+      "migration": {
+        "question": "可以迁移现有的广告系列吗？",
+        "answer": "是的，AllAd与您现有的广告账户无缝连接。您的广告系列保留在原始平台上，同时通过我们的统一仪表板进行管理。"
+      },
+      "contract": {
+        "question": "有最低合同期限吗？",
+        "answer": "没有，AllAd提供灵活的月度订阅。您可以随时升级、降级或取消。"
+      },
+      "security": {
+        "question": "如何管理数据安全？",
+        "answer": "我们使用企业级加密和安全措施。广告账户凭据经过加密，所有平台集成都使用官方API。"
+      },
+      "integration": {
+        "question": "除了API集成还支持其他集成方式吗？",
+        "answer": "是的，根据需求我们支持SDK、webhook、数据库连接等多种集成方式。"
+      }
+    }
+  },
+  "errors": {
+    "general": "发生意外错误。请重试。",
+    "network": "网络错误。请检查您的连接。",
+    "unauthorized": "未授权访问。请登录。",
+    "forbidden": "您没有权限访问此资源。",
+    "notFound": "页面未找到。",
+    "serverError": "服务器错误。请稍后再试。",
+    "validation": "请检查您的输入并重试。"
+  },
+  "success": {
+    "saved": "保存成功！",
+    "updated": "更新成功！",
+    "deleted": "删除成功！",
+    "copied": "已复制到剪贴板！",
+    "sent": "发送成功！"
+  }
+}

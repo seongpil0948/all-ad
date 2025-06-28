@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { Campaign, CampaignMetric, Team } from "@/types/database.types";
+import { Campaign, CampaignMetric, Team } from "@/types";
 
 export interface Logger {
   debug: (message: string, ...args: unknown[]) => void;
@@ -224,7 +224,6 @@ export class PlatformDatabaseService {
           .update({
             credentials,
             data: additionalData || {},
-            user_id: userId,
             updated_at: new Date().toISOString(),
           })
           .eq("id", existing.id);
@@ -247,7 +246,6 @@ export class PlatformDatabaseService {
       platform,
       credentials,
       data: additionalData || {},
-      user_id: userId,
       account_id: effectiveAccountId,
       is_active: true,
       created_by: userId,

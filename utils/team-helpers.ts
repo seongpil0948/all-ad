@@ -1,6 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 
-import { UserRole } from "@/types/database.types";
+import { UserRole } from "@/types";
 
 export interface TeamInfo {
   teamId: string;

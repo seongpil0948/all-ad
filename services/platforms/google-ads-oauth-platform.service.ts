@@ -70,24 +70,15 @@ export class GoogleAdsOAuthPlatformService implements PlatformService {
       // Convert to Campaign type
       return campaigns.map((campaign) => ({
         id: campaign.id,
-        teamId: this.teamId!,
-        platformCampaignId: campaign.id.replace("google_", ""),
-        name: campaign.name,
+        team_id: this.teamId!,
         platform: "google" as PlatformType,
+        platform_campaign_id: campaign.id.replace("google_", ""),
+        name: campaign.name,
         status: campaign.status as CampaignStatus,
-        isActive: campaign.status === "active",
+        is_active: campaign.status === "active",
         budget: campaign.budget,
-        createdAt: campaign.updatedAt,
-        updatedAt: campaign.updatedAt,
-        metrics: {
-          impressions: campaign.impressions,
-          clicks: campaign.clicks,
-          cost: campaign.cost,
-          conversions: campaign.conversions,
-          ctr: campaign.ctr,
-          cpc: campaign.cpc,
-          cpm: campaign.averageCpm,
-        },
+        created_at: campaign.updatedAt,
+        updated_at: campaign.updatedAt,
       }));
     } catch (error) {
       log.error("Failed to fetch Google Ads campaigns", error as Error);

@@ -301,10 +301,9 @@ export type Database = {
           account_id: string
           account_name: string | null
           created_at: string
-          created_by: string | null
+          created_by: string
           credentials: Json
           data: Json | null
-          error_message: string | null
           expires_at: string | null
           id: string
           is_active: boolean | null
@@ -314,17 +313,15 @@ export type Database = {
           scope: string | null
           team_id: string
           updated_at: string
-          user_id: string | null
         }
         Insert: {
           access_token?: string | null
           account_id: string
           account_name?: string | null
           created_at?: string
-          created_by?: string | null
+          created_by: string
           credentials?: Json
           data?: Json | null
-          error_message?: string | null
           expires_at?: string | null
           id?: string
           is_active?: boolean | null
@@ -334,17 +331,15 @@ export type Database = {
           scope?: string | null
           team_id: string
           updated_at?: string
-          user_id?: string | null
         }
         Update: {
           access_token?: string | null
           account_id?: string
           account_name?: string | null
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           credentials?: Json
           data?: Json | null
-          error_message?: string | null
           expires_at?: string | null
           id?: string
           is_active?: boolean | null
@@ -354,7 +349,6 @@ export type Database = {
           scope?: string | null
           team_id?: string
           updated_at?: string
-          user_id?: string | null
         }
         Relationships: [
           {
@@ -564,6 +558,10 @@ export type Database = {
         Args: { invitation_token: string }
         Returns: Json
       }
+      call_edge_function: {
+        Args: { function_name: string; payload?: Json }
+        Returns: number
+      }
       check_team_member_limit: {
         Args: { team_id_param: string }
         Returns: boolean
@@ -574,6 +572,10 @@ export type Database = {
       }
       create_team_for_user: {
         Args: { user_id: string }
+        Returns: string
+      }
+      ensure_user_has_team: {
+        Args: { user_id_param: string }
         Returns: string
       }
       get_cron_job_status: {
@@ -592,6 +594,21 @@ export type Database = {
       get_invitation_by_token: {
         Args: { invitation_token: string }
         Returns: Json
+      }
+      user_teams: {
+        Args: { user_id: string }
+        Returns: {
+          team_id: string
+        }[]
+      }
+      validate_token_migration: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          platform: string
+          total_count: number
+          migrated_count: number
+          missing_tokens: number
+        }[]
       }
     }
     Enums: {

@@ -28,7 +28,7 @@ const TestimonialCard = ({
     <Card className="h-full hover:shadow-lg transition-shadow">
       <CardBody className="flex flex-col gap-4">
         <div className="flex gap-1">
-          {[...Array(5)].map((_, i) => (
+          {Array.from({ length: 5 }, (_, i) => (
             <FaStar
               key={i}
               className={`w-4 h-4 ${

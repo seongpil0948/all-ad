@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/utils/supabase/server";
-import { UserRole } from "@/types/database.types";
+import { UserRole } from "@/types";
 import log from "@/utils/logger";
 
 export interface AuthContext {

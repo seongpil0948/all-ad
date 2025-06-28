@@ -7,6 +7,7 @@ import { Chip } from "@heroui/chip";
 
 import { PlatformType } from "@/types";
 import { CredentialValues } from "@/types/credentials.types";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface PlatformCredentialFormProps {
   platform: PlatformType;
@@ -19,6 +20,7 @@ export function PlatformCredentialForm({
   initialValues,
   onSubmit,
 }: PlatformCredentialFormProps) {
+  const { dictionary: dict } = useDictionary();
   const [values, setValues] = useState<CredentialValues>(initialValues || {});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -78,18 +80,18 @@ export function PlatformCredentialForm({
         <div className="space-y-4">
           <div className="bg-primary-50 dark:bg-primary-900/20 p-4 rounded-lg">
             <p className="text-sm text-primary-700 dark:text-primary-300">
-              이 플랫폼은 OAuth 인증을 사용합니다. &quot;연동하기&quot; 버튼을
-              클릭하면{" "}
-              {platform === "google"
-                ? "Google"
-                : platform === "facebook"
-                  ? "Facebook"
-                  : "Kakao"}{" "}
-              로그인 페이지로 이동합니다.
+              {dict.integrations.credentials.oauthInfo.replace(
+                "{{platform}}",
+                platform === "google"
+                  ? "Google"
+                  : platform === "facebook"
+                    ? "Facebook"
+                    : "Kakao",
+              )}
             </p>
           </div>
           <Chip color="success" size="sm" variant="flat">
-            OAuth 인증 지원
+            {dict.integrations.credentials.oauthSupported}
           </Chip>
         </div>
       );
@@ -101,8 +103,8 @@ export function PlatformCredentialForm({
           <>
             <Input
               isRequired
-              label="API Key"
-              placeholder="네이버 검색광고 API Key"
+              label={dict.integrations.credentials.apiKey}
+              placeholder={dict.integrations.credentials.naverApiKeyPlaceholder}
               value={values.clientId || ""}
               onChange={(e) =>
                 setValues({ ...values, clientId: e.target.value })
@@ -110,8 +112,8 @@ export function PlatformCredentialForm({
             />
             <Input
               isRequired
-              label="Secret Key"
-              placeholder="Secret Key"
+              label={dict.integrations.credentials.secretKey}
+              placeholder={dict.integrations.credentials.secretKey}
               type="password"
               value={values.clientSecret || ""}
               onChange={(e) =>
@@ -120,8 +122,8 @@ export function PlatformCredentialForm({
             />
             <Input
               isRequired
-              label="Customer ID"
-              placeholder="고객 ID"
+              label={dict.integrations.credentials.customerId}
+              placeholder={dict.integrations.credentials.customerIdPlaceholder}
               value={values.customerId || ""}
               onChange={(e) =>
                 setValues({ ...values, customerId: e.target.value })
@@ -135,8 +137,10 @@ export function PlatformCredentialForm({
           <>
             <Input
               isRequired
-              label="Access Key"
-              placeholder="쿠팡 Access Key"
+              label={dict.integrations.credentials.accessKey}
+              placeholder={
+                dict.integrations.credentials.coupangAccessKeyPlaceholder
+              }
               value={values.accessKey || ""}
               onChange={(e) =>
                 setValues({ ...values, accessKey: e.target.value })
@@ -144,8 +148,10 @@ export function PlatformCredentialForm({
             />
             <Input
               isRequired
-              label="Secret Key"
-              placeholder="쿠팡 Secret Key"
+              label={dict.integrations.credentials.secretKey}
+              placeholder={
+                dict.integrations.credentials.coupangSecretKeyPlaceholder
+              }
               type="password"
               value={values.secretKey || ""}
               onChange={(e) =>
@@ -173,7 +179,7 @@ export function PlatformCredentialForm({
           isLoading={isSubmitting}
           type="submit"
         >
-          저장
+          {dict.common.save}
         </Button>
       )}
     </form>

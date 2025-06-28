@@ -1,7 +1,7 @@
 import { PlatformServiceFactory } from "./platforms/platform-service-factory";
 import { PlatformDatabaseService, Logger } from "./platform-database.service";
 
-import { Campaign as DBCampaign, PlatformType } from "@/types/database.types";
+import { Campaign as DBCampaign, PlatformType, Json } from "@/types";
 import { PlatformCampaign, PlatformCampaignMetrics } from "@/types/platform";
 import { createClient } from "@/utils/supabase/server";
 
@@ -268,7 +268,7 @@ export class PlatformSyncService {
         status: campaign.status,
         budget: campaign.budget,
         is_active: campaign.is_active,
-        raw_data: campaign.raw_data || {},
+        raw_data: (campaign.raw_data || null) as Json | null,
       });
 
       if (savedCampaign) {

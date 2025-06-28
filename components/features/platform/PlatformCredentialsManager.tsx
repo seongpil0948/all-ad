@@ -19,6 +19,7 @@ import { PlatformCredentialItem } from "./PlatformCredentialItem";
 import { PlatformCredential, PlatformType } from "@/types";
 import { CredentialValues } from "@/types/credentials.types";
 import { platformConfig } from "@/constants/platform-config";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface PlatformCredentialsManagerProps {
   credentials: PlatformCredential[];
@@ -40,6 +41,7 @@ function PlatformCredentialsManagerComponent({
   teamId,
   userId: _userId,
 }: PlatformCredentialsManagerProps) {
+  const { dictionary: dict } = useDictionary();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformType | null>(
     null,
@@ -113,7 +115,9 @@ function PlatformCredentialsManagerComponent({
     <>
       <Card>
         <CardHeader>
-          <h3 className="text-lg font-semibold">플랫폼 인증 관리</h3>
+          <h3 className="text-lg font-semibold">
+            {dict.integrations.credentials.title}
+          </h3>
         </CardHeader>
         <CardBody className="gap-4">
           {(Object.keys(platformConfig) as PlatformType[]).map((platform) => (
@@ -130,7 +134,7 @@ function PlatformCredentialsManagerComponent({
       </Card>
 
       {/* Coupang Manual Campaign Manager */}
-      {credentials.find((c) => c.platform === "coupang" && c.isActive) && (
+      {credentials.find((c) => c.platform === "coupang" && c.is_active) && (
         <CoupangManualCampaignManager teamId={teamId} />
       )}
 
@@ -139,14 +143,18 @@ function PlatformCredentialsManagerComponent({
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col gap-1">
-                {selectedPlatform && platformConfig[selectedPlatform].name} 인증
-                정보
+                {selectedPlatform &&
+                  dict.integrations.credentials.modalTitle.replace(
+                    "{{platform}}",
+                    platformConfig[selectedPlatform].name,
+                  )}
               </ModalHeader>
               <ModalBody>
                 {selectedPlatform && (
                   <PlatformCredentialForm
                     initialValues={
-                      getCredentialForPlatform(selectedPlatform)?.credentials
+                      getCredentialForPlatform(selectedPlatform)
+                        ?.credentials as CredentialValues | undefined
                     }
                     platform={selectedPlatform}
                     onSubmit={handleSave}
@@ -155,7 +163,7 @@ function PlatformCredentialsManagerComponent({
               </ModalBody>
               <ModalFooter>
                 <Button color="danger" variant="light" onPress={onClose}>
-                  취소
+                  {dict.common.cancel}
                 </Button>
                 <Button
                   color="primary"
@@ -163,7 +171,7 @@ function PlatformCredentialsManagerComponent({
                   isLoading={isLoading}
                   type="submit"
                 >
-                  저장
+                  {dict.common.save}
                 </Button>
               </ModalFooter>
             </>

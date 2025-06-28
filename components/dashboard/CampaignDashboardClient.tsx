@@ -42,6 +42,7 @@ import {
   MetricCardSkeleton,
 } from "@/components/common/skeletons";
 import { getPlatformConfig } from "@/utils/platform-config";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -63,6 +64,7 @@ export function CampaignDashboardClient({
   initialStats,
 }: CampaignDashboardClientProps) {
   const [isPending, startTransition] = useTransition();
+  const { dictionary: dict } = useDictionary();
 
   // Use useShallow to optimize re-renders
   const {
@@ -160,12 +162,12 @@ export function CampaignDashboardClient({
 
   // Table columns configuration
   const columns: InfiniteScrollTableColumn<Campaign>[] = [
-    { key: "name", label: "캠페인명" },
-    { key: "platform", label: "플랫폼" },
-    { key: "status", label: "상태" },
-    { key: "budget", label: "예산" },
-    { key: "metrics", label: "성과" },
-    { key: "actions", label: "액션" },
+    { key: "name", label: dict.campaigns.table.name },
+    { key: "platform", label: dict.campaigns.table.platform },
+    { key: "status", label: dict.campaigns.table.status },
+    { key: "budget", label: dict.campaigns.table.budget },
+    { key: "metrics", label: dict.campaigns.table.metrics },
+    { key: "actions", label: dict.campaigns.table.actions },
   ];
 
   // Optimized callbacks with useCallback
@@ -185,8 +187,8 @@ export function CampaignDashboardClient({
 
     if (isNaN(newBudget) || newBudget < 0) {
       addToast({
-        title: "오류",
-        description: "올바른 예산 금액을 입력해주세요",
+        title: dict.common.error,
+        description: dict.campaigns.toast.invalidBudget,
         color: "danger",
       });
 
@@ -203,16 +205,16 @@ export function CampaignDashboardClient({
         newBudget,
       });
       addToast({
-        title: "성공",
-        description: "예산이 업데이트되었습니다",
+        title: dict.common.success,
+        description: dict.campaigns.toast.budgetUpdateSuccess,
         color: "success",
       });
       onOpenChange();
     } catch (error) {
       log.error("Failed to update budget", error);
       addToast({
-        title: "오류",
-        description: "예산 업데이트에 실패했습니다",
+        title: dict.common.error,
+        description: dict.campaigns.toast.budgetUpdateError,
         color: "danger",
       });
     }
@@ -233,15 +235,20 @@ export function CampaignDashboardClient({
           newStatus: !campaign.isActive,
         });
         addToast({
-          title: "성공",
-          description: `캠페인이 ${!campaign.isActive ? "활성화" : "비활성화"}되었습니다`,
+          title: dict.common.success,
+          description: dict.campaigns.toast.statusChangeSuccess.replace(
+            "{{status}}",
+            !campaign.isActive
+              ? dict.campaigns.statusModal.activate + "d"
+              : dict.campaigns.statusModal.deactivate + "d",
+          ),
           color: "success",
         });
       } catch (error) {
         log.error("Failed to toggle campaign status", error);
         addToast({
-          title: "오류",
-          description: "캠페인 상태 변경에 실패했습니다",
+          title: dict.common.error,
+          description: dict.campaigns.toast.statusChangeError,
           color: "danger",
         });
       }
@@ -270,24 +277,31 @@ export function CampaignDashboardClient({
               size="sm"
               variant="flat"
             >
-              {campaign.isActive ? "활성" : "비활성"}
+              {campaign.isActive
+                ? dict.campaigns.status.active
+                : dict.campaigns.status.paused}
             </Chip>
           );
         case "budget":
           return (
             <div className="text-right">
-              {campaign.budget?.toLocaleString() || "-"} 원
+              {campaign.budget?.toLocaleString() || "-"}{" "}
+              {dict.campaigns.metrics.won}
             </div>
           );
         case "metrics":
           return (
             <div className="flex items-center gap-4 text-sm">
               <div>
-                <span className="text-default-400">노출:</span>{" "}
+                <span className="text-default-400">
+                  {dict.campaigns.table.impressionsLabel}
+                </span>{" "}
                 {(campaign.metrics?.impressions || 0).toLocaleString()}
               </div>
               <div>
-                <span className="text-default-400">클릭:</span>{" "}
+                <span className="text-default-400">
+                  {dict.campaigns.table.clicksLabel}
+                </span>{" "}
                 {(campaign.metrics?.clicks || 0).toLocaleString()}
               </div>
             </div>
@@ -298,12 +312,14 @@ export function CampaignDashboardClient({
               actions={[
                 {
                   icon: <FaDollarSign />,
-                  label: "예산 수정",
+                  label: dict.campaigns.actionLabels.editBudget,
                   onPress: () => handleBudgetEdit(campaign),
                 },
                 {
                   icon: campaign.isActive ? <FaPowerOff /> : <FaCheck />,
-                  label: campaign.isActive ? "비활성화" : "활성화",
+                  label: campaign.isActive
+                    ? dict.campaigns.actionLabels.deactivate
+                    : dict.campaigns.actionLabels.activate,
                   onPress: () => handleStatusToggle(campaign),
                   color: campaign.isActive ? "danger" : "success",
                 },
@@ -356,19 +372,19 @@ export function CampaignDashboardClient({
         ) : (
           <>
             <StatCard
-              label="총 예산"
-              value={`${totalStats.totalBudget.toLocaleString()}원`}
+              label={dict.campaigns.metrics.totalBudgetLabel}
+              value={`${totalStats.totalBudget.toLocaleString()}${dict.campaigns.metrics.won}`}
             />
             <StatCard
-              label="총 지출"
-              value={`${totalStats.totalSpend.toLocaleString()}원`}
+              label={dict.campaigns.metrics.totalSpendLabel}
+              value={`${totalStats.totalSpend.toLocaleString()}${dict.campaigns.metrics.won}`}
             />
             <StatCard
-              label="총 노출수"
+              label={dict.campaigns.metrics.totalImpressionsLabel}
               value={totalStats.totalImpressions.toLocaleString()}
             />
             <StatCard
-              label="총 클릭수"
+              label={dict.campaigns.metrics.totalClicksLabel}
               value={totalStats.totalClicks.toLocaleString()}
             />
           </>
@@ -383,7 +399,7 @@ export function CampaignDashboardClient({
             <div className="flex gap-4 items-center">
               <Input
                 className="max-w-xs"
-                placeholder="캠페인 검색..."
+                placeholder={dict.campaigns.search.placeholder}
                 startContent={<FaFilter />}
                 value={filterInput}
                 onChange={(e) => setFilterInput(e.target.value)}
@@ -395,7 +411,7 @@ export function CampaignDashboardClient({
                   variant={filters.isActive === true ? "flat" : "light"}
                   onPress={() => setFilters({ isActive: true })}
                 >
-                  활성
+                  {dict.campaigns.filters.active}
                 </Button>
                 <Button
                   color={filters.isActive === false ? "danger" : "default"}
@@ -403,7 +419,7 @@ export function CampaignDashboardClient({
                   variant={filters.isActive === false ? "flat" : "light"}
                   onPress={() => setFilters({ isActive: false })}
                 >
-                  비활성
+                  {dict.campaigns.filters.paused}
                 </Button>
                 <Button
                   size="sm"
@@ -412,14 +428,14 @@ export function CampaignDashboardClient({
                     setFilters({ isActive: undefined, search: "" })
                   }
                 >
-                  초기화
+                  {dict.common.reset}
                 </Button>
               </div>
             </div>
 
             {/* Platform Tabs */}
             <Tabs
-              aria-label="플랫폼별 캠페인"
+              aria-label={dict.campaigns.table.platform}
               onSelectionChange={(key) =>
                 setFilters({
                   platform: key === "all" ? undefined : (key as PlatformType),
@@ -430,7 +446,7 @@ export function CampaignDashboardClient({
                 key="all"
                 title={
                   <div className="flex items-center gap-2">
-                    <span>전체</span>
+                    <span>{dict.common.all}</span>
                     <Chip size="sm">{campaigns.length}</Chip>
                   </div>
                 }
@@ -439,9 +455,9 @@ export function CampaignDashboardClient({
                   <TableSkeleton columns={6} rows={5} />
                 ) : (
                   <InfiniteScrollTable
-                    aria-label="캠페인 목록"
+                    aria-label={dict.campaigns.title}
                     columns={columns}
-                    emptyContent="캠페인이 없습니다"
+                    emptyContent={dict.campaigns.table.noCampaigns}
                     hasMore={hasMore}
                     isLoading={list.isLoading || isPending}
                     items={list}
@@ -491,16 +507,20 @@ export function CampaignDashboardClient({
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col gap-1">
-                예산 수정
+                {dict.campaigns.budgetModal.title}
               </ModalHeader>
               <ModalBody>
                 <p className="text-sm text-default-500">
                   {selectedCampaign?.name}
                 </p>
                 <Input
-                  endContent={<span className="text-default-400">원</span>}
-                  label="새 예산"
-                  placeholder="0"
+                  endContent={
+                    <span className="text-default-400">
+                      {dict.campaigns.metrics.won}
+                    </span>
+                  }
+                  label={dict.campaigns.budgetModal.newBudgetLabel}
+                  placeholder={dict.campaigns.budgetModal.newBudgetPlaceholder}
                   type="number"
                   value={budgetInput}
                   onChange={(e) => setBudgetInput(e.target.value)}
@@ -508,10 +528,10 @@ export function CampaignDashboardClient({
               </ModalBody>
               <ModalFooter>
                 <Button color="danger" variant="light" onPress={onClose}>
-                  취소
+                  {dict.campaigns.budgetModal.cancel}
                 </Button>
                 <Button color="primary" onPress={handleBudgetUpdate}>
-                  저장
+                  {dict.campaigns.budgetModal.update}
                 </Button>
               </ModalFooter>
             </>

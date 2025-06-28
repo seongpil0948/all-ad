@@ -53,24 +53,18 @@ export class CoupangPlatformService extends BasePlatformService {
 
       return (manualCampaigns || []).map((campaign) => ({
         id: campaign.external_id,
-        teamId: this.teamId || campaign.team_id,
-        platformCampaignId: campaign.external_id,
+        team_id: this.teamId || campaign.team_id,
+        platform: "coupang" as PlatformType,
+        platform_campaign_id: campaign.external_id,
         name: campaign.name,
         status:
           campaign.status === "active"
             ? "active"
             : ("paused" as CampaignStatus),
-        isActive: campaign.status === "active",
+        is_active: campaign.status === "active",
         budget: campaign.budget || 0,
-        platform: "coupang" as PlatformType,
-        currency: "KRW",
-        impressions: campaign.impressions || 0,
-        clicks: campaign.clicks || 0,
-        spend: campaign.spent || 0,
-        conversions: campaign.conversions || 0,
-        revenue: campaign.revenue || 0,
-        createdAt: campaign.created_at,
-        updatedAt: campaign.last_updated_at,
+        created_at: campaign.created_at || new Date().toISOString(),
+        updated_at: campaign.updated_at || new Date().toISOString(),
       }));
     } catch (error) {
       log.error("Failed to fetch Coupang manual campaigns", error);

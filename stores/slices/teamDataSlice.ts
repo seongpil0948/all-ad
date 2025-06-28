@@ -2,12 +2,7 @@
 
 import { StateCreator } from "zustand";
 
-import {
-  Team,
-  TeamMemberWithProfile,
-  TeamInvitation,
-  UserRole,
-} from "@/types/database.types";
+import { Team, TeamMemberWithProfile, TeamInvitation, UserRole } from "@/types";
 
 export interface TeamDataSlice {
   currentTeam: Team | null;

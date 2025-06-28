@@ -8,6 +8,8 @@ import { Button } from "@heroui/button";
 import { Chip } from "@heroui/chip";
 import { FaGoogle, FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
 
+import { useDictionary } from "@/hooks/use-dictionary";
+
 type PlatformCredential = Tables<"platform_credentials">;
 
 interface GoogleAdsIntegrationProps {
@@ -23,6 +25,7 @@ export function GoogleAdsIntegration({
   onDisconnect,
   isLoading = false,
 }: GoogleAdsIntegrationProps) {
+  const { dictionary: dict } = useDictionary();
   const [isDisconnecting, setIsDisconnecting] = useState(false);
 
   const handleDisconnect = async () => {
@@ -46,7 +49,7 @@ export function GoogleAdsIntegration({
           <div>
             <h3 className="text-lg font-semibold">Google Ads</h3>
             <p className="text-sm text-default-500">
-              Google 광고 캠페인을 관리하세요
+              {dict.integrations.platforms.googleAds.description}
             </p>
           </div>
         </div>
@@ -61,7 +64,9 @@ export function GoogleAdsIntegration({
           }
           variant="flat"
         >
-          {isConnected ? "연동됨" : "미연동"}
+          {isConnected
+            ? dict.integrations.connected
+            : dict.integrations.credentials.notConnected}
         </Chip>
       </CardHeader>
 
@@ -70,13 +75,17 @@ export function GoogleAdsIntegration({
           <>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-default-500">연동 계정</span>
+                <span className="text-default-500">
+                  {dict.integrations.connectedAccount}
+                </span>
                 <span className="font-medium">
-                  {credential.account_name || "Google Ads 계정"}
+                  {credential.account_name || "Google Ads Account"}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-default-500">연동 일시</span>
+                <span className="text-default-500">
+                  {dict.integrations.credentials.connectedDate}
+                </span>
                 <span className="font-medium">
                   {new Date(credential.created_at).toLocaleDateString()}
                 </span>
@@ -98,24 +107,23 @@ export function GoogleAdsIntegration({
                 variant="flat"
                 onPress={handleDisconnect}
               >
-                연동 해제
+                {dict.integrations.disconnect}
               </Button>
             </div>
           </>
         ) : (
           <div className="space-y-4">
             <p className="text-sm text-default-600">
-              Google Ads 계정을 연동하면 캠페인 성과를 실시간으로 확인하고
-              관리할 수 있습니다.
+              {dict.integrations.credentials.googleDescription}
             </p>
 
             <div className="space-y-2 text-sm text-default-500">
-              <p>연동 시 다음 기능을 사용할 수 있습니다:</p>
+              <p>{dict.integrations.platforms.googleAds.features}</p>
               <ul className="list-disc list-inside space-y-1 ml-2">
-                <li>캠페인 ON/OFF 제어</li>
-                <li>실시간 성과 지표 확인</li>
-                <li>예산 관리 및 최적화</li>
-                <li>통합 리포트 생성</li>
+                <li>{dict.integrations.platforms.googleAds.feature2}</li>
+                <li>{dict.integrations.platforms.googleAds.feature1}</li>
+                <li>{dict.integrations.credentials.budgetManagement}</li>
+                <li>{dict.integrations.platforms.googleAds.feature4}</li>
               </ul>
             </div>
 
@@ -126,7 +134,7 @@ export function GoogleAdsIntegration({
               startContent={<FaGoogle />}
               onPress={onConnect}
             >
-              Google Ads 연동하기
+              {dict.integrations.platforms.googleAds.connectButton}
             </Button>
           </div>
         )}

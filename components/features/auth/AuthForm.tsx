@@ -9,9 +9,10 @@ import { Form } from "@heroui/form";
 import { FaEnvelope, FaLock } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 
-import { clientLogin } from "@/app/(auth)/login/client-actions";
-import { signup, type ActionState } from "@/app/(auth)/login/actions";
+import { clientLogin } from "@/app/[lang]/(auth)/login/client-actions";
+import { signup, type ActionState } from "@/app/[lang]/(auth)/login/actions";
 import { toast } from "@/utils/toast";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface AuthFormProps {
   initialMode?: "login" | "signup";
@@ -29,6 +30,7 @@ export function AuthForm({
   const [isSignUp, setIsSignUp] = useState(initialMode === "signup");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { dictionary: dict } = useDictionary();
 
   // For signup, we use server action with useActionState
   const initialState: ActionState = { errors: {} };
@@ -51,14 +53,14 @@ export function AuthForm({
 
       if (!result.success && result.error) {
         toast.error({
-          title: "로그인 실패",
+          title: dict.auth.login.errors.general,
           description: result.error,
         });
       }
     } catch {
       toast.error({
-        title: "오류 발생",
-        description: "예기치 않은 오류가 발생했습니다.",
+        title: dict.common.error,
+        description: dict.errors.general,
       });
     } finally {
       setIsLoading(false);
@@ -84,9 +86,9 @@ export function AuthForm({
               defaultValue={defaultEmail}
               errorMessage={signupState.errors?.email}
               isInvalid={!!signupState.errors?.email}
-              label="이메일"
+              label={dict.auth.signup.email}
               name="email"
-              placeholder="your@email.com"
+              placeholder={dict.auth.signup.emailPlaceholder}
               startContent={<FaEnvelope className="text-default-400" />}
               type="email"
               variant="bordered"
@@ -97,9 +99,9 @@ export function AuthForm({
               data-test-id="signup-input-password"
               errorMessage={signupState.errors?.password}
               isInvalid={!!signupState.errors?.password}
-              label="비밀번호"
+              label={dict.auth.signup.password}
               name="password"
-              placeholder="비밀번호를 입력하세요"
+              placeholder={dict.auth.signup.passwordPlaceholder}
               startContent={<FaLock className="text-default-400" />}
               type="password"
               variant="bordered"
@@ -120,7 +122,7 @@ export function AuthForm({
               isLoading={isSignupPending}
               type="submit"
             >
-              회원가입
+              {dict.auth.signup.submit}
             </Button>
           </div>
         </Form>
@@ -134,9 +136,9 @@ export function AuthForm({
               data-test-id="login-input-id"
               defaultValue={defaultEmail}
               isDisabled={isLoading}
-              label="이메일"
+              label={dict.auth.login.email}
               name="email"
-              placeholder="your@email.com"
+              placeholder={dict.auth.login.emailPlaceholder}
               startContent={<FaEnvelope className="text-default-400" />}
               type="email"
               variant="bordered"
@@ -146,9 +148,9 @@ export function AuthForm({
               autoComplete="current-password"
               data-test-id="login-input-pw"
               isDisabled={isLoading}
-              label="비밀번호"
+              label={dict.auth.login.password}
               name="password"
-              placeholder="비밀번호를 입력하세요"
+              placeholder={dict.auth.login.passwordPlaceholder}
               startContent={<FaLock className="text-default-400" />}
               type="password"
               variant="bordered"
@@ -162,7 +164,7 @@ export function AuthForm({
               isLoading={isLoading}
               type="submit"
             >
-              로그인
+              {dict.auth.login.submit}
             </Button>
           </div>
         </form>
@@ -172,13 +174,13 @@ export function AuthForm({
 
       <div className="text-center">
         <p className="text-sm text-default-500">
-          {isSignUp ? "이미 계정이 있으신가요?" : "아직 계정이 없으신가요?"}{" "}
+          {isSignUp ? dict.auth.signup.hasAccount : dict.auth.login.noAccount}{" "}
           <Link
             className="cursor-pointer"
             size="sm"
             onPress={() => setIsSignUp(!isSignUp)}
           >
-            {isSignUp ? "로그인" : "회원가입"}
+            {isSignUp ? dict.auth.signup.login : dict.auth.login.signUp}
           </Link>
         </p>
       </div>
@@ -186,7 +188,7 @@ export function AuthForm({
       {!isSignUp && (
         <div className="text-center mt-2">
           <Link href="/forgot-password" size="sm">
-            비밀번호를 잊으셨나요?
+            {dict.auth.login.forgotPassword}
           </Link>
         </div>
       )}

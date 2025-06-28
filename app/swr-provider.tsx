@@ -3,6 +3,8 @@
 import { SWRConfig } from "swr";
 import { addToast } from "@heroui/toast";
 
+import { useDictionary } from "@/hooks/use-dictionary";
+
 const fetcher = async (url: string) => {
   const response = await fetch(url);
 
@@ -25,19 +27,23 @@ const fetcher = async (url: string) => {
 };
 
 export const SWRProvider = ({ children }: { children: React.ReactNode }) => {
+  const { dictionary: dict } = useDictionary();
+
   return (
     <SWRConfig
       value={{
         fetcher,
         revalidateOnFocus: true,
         revalidateOnReconnect: true,
-        refreshInterval: 60000, // 1분마다 자동 갱신
+        refreshInterval: 60000,
         dedupingInterval: 2000,
         onError: (error) => {
           addToast({
-            title: "오류",
+            title: dict?.common?.error || "Error",
             description:
-              error.message || "데이터를 가져오는 중 오류가 발생했습니다",
+              error.message ||
+              dict?.errors?.network ||
+              "Network error occurred",
             color: "danger",
           });
         },

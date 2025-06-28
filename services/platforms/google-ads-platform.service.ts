@@ -3,6 +3,7 @@ import type {
   CampaignMetrics,
   PlatformType,
   CampaignStatus,
+  CampaignWithMetrics,
 } from "@/types";
 import type { GoogleAdsCredentials } from "@/types/credentials.types";
 import type { GoogleAdsQueryResponseRow } from "@/types/google-ads-api.types";
@@ -93,7 +94,7 @@ export class GoogleAdsPlatformService implements PlatformService {
     }
   }
 
-  async fetchCampaigns(): Promise<Campaign[]> {
+  async fetchCampaigns(): Promise<CampaignWithMetrics[]> {
     if (this.isMultiAccountMode && this.mccAuthService) {
       // MCC 모드: 모든 클라이언트 계정의 캠페인 조회
       try {
@@ -119,44 +120,37 @@ export class GoogleAdsPlatformService implements PlatformService {
               continue;
             }
 
-            const mappedCampaign: Campaign = {
+            const mappedCampaign: CampaignWithMetrics = {
               id: String(campaign.id || ""),
-              teamId: clientId,
-              platformCampaignId: String(campaign.id || ""),
-              name: campaign.name || "",
+              team_id: clientId,
               platform: "google" as PlatformType,
+              platform_campaign_id: String(campaign.id || ""),
+              name: campaign.name || "",
               status: (campaign.status === "ENABLED"
                 ? "active"
                 : "paused") as CampaignStatus,
-              isActive: campaign.status === "ENABLED",
+              is_active: campaign.status === "ENABLED",
               budget: campaignBudget?.amount_micros
                 ? Number(campaignBudget.amount_micros) / 1000000
                 : 0,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
               metrics: metrics
-                ? {
-                    impressions: Number(metrics.impressions || 0),
-                    clicks: Number(metrics.clicks || 0),
-                    cost: Number(metrics.cost_micros || 0) / 1000000,
-                    conversions: Number(metrics.conversions || 0),
-                    ctr: Number(metrics.ctr || 0),
-                    cpc: metrics.average_cpc
-                      ? Number(metrics.average_cpc) / 1000000
-                      : 0,
-                    cpm: metrics.average_cpm
-                      ? Number(metrics.average_cpm) / 1000
-                      : 0,
-                  }
-                : {
-                    impressions: 0,
-                    clicks: 0,
-                    cost: 0,
-                    conversions: 0,
-                    ctr: 0,
-                    cpc: 0,
-                    cpm: 0,
-                  },
+                ? [
+                    {
+                      id: `${String(campaign.id || "")}_${new Date().toISOString().split("T")[0]}`,
+                      campaign_id: String(campaign.id || ""),
+                      date: new Date().toISOString().split("T")[0],
+                      impressions: Number(metrics.impressions || 0),
+                      clicks: Number(metrics.clicks || 0),
+                      cost: Number(metrics.cost_micros || 0) / 1000000,
+                      conversions: Number(metrics.conversions || 0),
+                      revenue: Number(metrics.conversions_value || 0),
+                      raw_data: null,
+                      created_at: new Date().toISOString(),
+                    },
+                  ]
+                : [],
             };
 
             mappedCampaigns.push(mappedCampaign);
@@ -165,7 +159,7 @@ export class GoogleAdsPlatformService implements PlatformService {
           allCampaigns.push(...mappedCampaigns);
         }
 
-        return allCampaigns;
+        return allCampaigns as CampaignWithMetrics[];
       } catch (error) {
         log.error("Failed to fetch campaigns via MCC", error as Error);
         throw error;
@@ -186,30 +180,35 @@ export class GoogleAdsPlatformService implements PlatformService {
       // Google Ads 캠페인을 공통 Campaign 타입으로 변환
       return googleCampaigns.map((campaign) => ({
         id: campaign.id,
-        teamId: this.credentials!.customerId, // Use customer ID as team ID for now
-        platformCampaignId: campaign.id,
-        name: campaign.name,
+        team_id: this.credentials!.customerId, // Use customer ID as team ID for now
         platform: "google" as PlatformType,
+        platform_campaign_id: campaign.id,
+        name: campaign.name,
         status: campaign.status === "ENABLED" ? "active" : "paused",
-        isActive: campaign.status === "ENABLED",
+        is_active: campaign.status === "ENABLED",
         budget: campaign.budgetAmountMicros
           ? campaign.budgetAmountMicros / 1000000
           : 0, // micros to currency
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         // 메트릭 데이터 포함
         metrics:
           campaign.impressions !== undefined
-            ? {
-                impressions: campaign.impressions,
-                clicks: campaign.clicks || 0,
-                cost: (campaign.costMicros || 0) / 1000000,
-                conversions: 0,
-                ctr: 0,
-                cpc: 0,
-                cpm: 0,
-              }
-            : undefined,
+            ? [
+                {
+                  id: `${campaign.id}_${new Date().toISOString().split("T")[0]}`,
+                  campaign_id: campaign.id,
+                  date: new Date().toISOString().split("T")[0],
+                  impressions: campaign.impressions,
+                  clicks: campaign.clicks || 0,
+                  cost: (campaign.costMicros || 0) / 1000000,
+                  conversions: 0,
+                  revenue: 0,
+                  raw_data: null,
+                  created_at: new Date().toISOString(),
+                },
+              ]
+            : [],
       }));
     } catch (error) {
       log.error("Failed to fetch Google Ads campaigns", error as Error);

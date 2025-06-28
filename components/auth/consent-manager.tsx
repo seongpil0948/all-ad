@@ -3,6 +3,7 @@
 import { Card, CardHeader, CardBody } from "@heroui/card";
 import { Checkbox } from "@heroui/checkbox";
 import { Button } from "@heroui/button";
+import { Link } from "@heroui/link";
 import { useState } from "react";
 import { FaGoogle, FaFacebook } from "react-icons/fa";
 import { SiTiktok } from "react-icons/si";
@@ -240,13 +241,13 @@ export function ConsentManager({
         {/* 법적 고지 */}
         <p className="text-xs text-default-400 text-center mt-4">
           계속 진행하면 올애드의{" "}
-          <a className="text-primary hover:underline" href="/terms">
+          <Link className="text-primary hover:underline" href="/terms">
             이용약관
-          </a>{" "}
+          </Link>{" "}
           및{" "}
-          <a className="text-primary hover:underline" href="/privacy">
+          <Link className="text-primary hover:underline" href="/privacy">
             개인정보 처리방침
-          </a>
+          </Link>
           에 동의하는 것으로 간주됩니다.
         </p>
       </CardBody>

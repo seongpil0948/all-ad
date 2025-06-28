@@ -31,6 +31,7 @@ import {
   isPlatformOAuthSupported,
 } from "@/lib/auth/oauth-handlers";
 import log from "@/utils/logger";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface PlatformCredential {
   id: string;
@@ -74,6 +75,7 @@ const PlatformColors = {
 
 export function PlatformIntegrations() {
   const [isPending, startTransition] = useTransition();
+  const { dictionary: dict } = useDictionary();
   const [refreshStatus, setRefreshStatus] = useState<RefreshStatus | null>(
     null,
   );
@@ -100,29 +102,34 @@ export function PlatformIntegrations() {
       log.info("Platform connected successfully", { platform, account });
       // Show success notification using a toast or alert
       alert(
-        `${getPlatformDisplayName(platform.toUpperCase() as PlatformType)} 연결 성공!\n계정: ${decodeURIComponent(account)}`,
+        dict.integrations.success.connected
+          .replace(
+            "{{platform}}",
+            getPlatformDisplayName(platform.toUpperCase() as PlatformType),
+          )
+          .replace("{{account}}", decodeURIComponent(account)),
       );
       // Clear URL params
       window.history.replaceState({}, "", window.location.pathname);
       // Refresh data
       fetchRefreshStatus();
     } else if (error && platform) {
-      let errorMessage = "플랫폼 연결에 실패했습니다.";
+      let errorMessage = dict.integrations.errors.connectionFailed;
 
       switch (error) {
         case "oauth_cancelled":
-          errorMessage = "OAuth 인증이 취소되었습니다.";
+          errorMessage = dict.integrations.errors.oauthCancelled;
           break;
         case "invalid_oauth_response":
-          errorMessage = "OAuth 응답이 올바르지 않습니다.";
+          errorMessage = dict.integrations.errors.invalidOauthResponse;
           break;
         case "team_not_found":
-          errorMessage = "팀을 찾을 수 없습니다.";
+          errorMessage = dict.integrations.errors.teamNotFound;
           break;
         case "oauth_failed":
           errorMessage = message
             ? decodeURIComponent(message)
-            : "OAuth 인증에 실패했습니다.";
+            : dict.integrations.errors.oauthFailed;
           break;
         default:
           errorMessage = message ? decodeURIComponent(message) : errorMessage;
@@ -131,7 +138,7 @@ export function PlatformIntegrations() {
       log.error("Platform connection failed", { error, platform, message });
       // Show error notification
       alert(
-        `${getPlatformDisplayName(platform.toUpperCase() as PlatformType)} 연결 실패!\n${errorMessage}`,
+        `${getPlatformDisplayName(platform.toUpperCase() as PlatformType)} ${dict.integrations.errors.connectionFailed}\n${errorMessage}`,
       );
       window.history.replaceState({}, "", window.location.pathname);
     }
@@ -259,27 +266,38 @@ export function PlatformIntegrations() {
     );
   }, []);
 
-  const getCredentialStatus = useCallback((credential: PlatformCredential) => {
-    if (credential.hasError) {
-      return {
-        color: "danger" as const,
-        label: "오류",
-        icon: FaExclamationTriangle,
-      };
-    }
-    if (credential.needsRefresh) {
-      return { color: "warning" as const, label: "갱신 필요", icon: FaClock };
-    }
-    if (credential.isActive) {
-      return {
-        color: "success" as const,
-        label: "연결됨",
-        icon: FaCheckCircle,
-      };
-    }
+  const getCredentialStatus = useCallback(
+    (credential: PlatformCredential) => {
+      if (credential.hasError) {
+        return {
+          color: "danger" as const,
+          label: dict.integrations.status.error,
+          icon: FaExclamationTriangle,
+        };
+      }
+      if (credential.needsRefresh) {
+        return {
+          color: "warning" as const,
+          label: dict.integrations.status.needsRefresh,
+          icon: FaClock,
+        };
+      }
+      if (credential.isActive) {
+        return {
+          color: "success" as const,
+          label: dict.integrations.status.connected,
+          icon: FaCheckCircle,
+        };
+      }
 
-    return { color: "default" as const, label: "비활성", icon: FaClock };
-  }, []);
+      return {
+        color: "default" as const,
+        label: dict.integrations.status.inactive,
+        icon: FaClock,
+      };
+    },
+    [dict],
+  );
 
   if (isLoading) {
     return (
@@ -305,9 +323,11 @@ export function PlatformIntegrations() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">플랫폼 연동 관리</h2>
+          <h2 className="text-2xl font-bold">
+            {dict.integrations.management.title}
+          </h2>
           <p className="text-default-500 mt-1">
-            광고 플랫폼을 연동하여 통합 대시보드에서 관리하세요
+            {dict.integrations.management.subtitle}
           </p>
         </div>
         <div className="flex gap-2">
@@ -320,7 +340,7 @@ export function PlatformIntegrations() {
             variant="flat"
             onPress={() => handleRefreshTokens()}
           >
-            전체 갱신
+            {dict.integrations.management.refreshAll}
           </Button>
           <Button
             color="primary"
@@ -328,7 +348,7 @@ export function PlatformIntegrations() {
             variant="flat"
             onPress={fetchRefreshStatus}
           >
-            새로고침
+            {dict.integrations.management.refresh}
           </Button>
         </div>
       </div>
@@ -339,9 +359,11 @@ export function PlatformIntegrations() {
           <CardBody>
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold">토큰 갱신 서비스</h3>
+                <h3 className="font-semibold">
+                  {dict.integrations.management.tokenRefreshService}
+                </h3>
                 <p className="text-sm text-default-500">
-                  자동으로 만료되는 토큰을 갱신합니다
+                  {dict.integrations.management.tokenRefreshDescription}
                 </p>
               </div>
               <div className="flex items-center gap-4">
@@ -354,13 +376,21 @@ export function PlatformIntegrations() {
                   variant="flat"
                 >
                   {refreshStatus.refreshService.isRunning
-                    ? "실행 중"
-                    : "중지됨"}
+                    ? dict.integrations.management.running
+                    : dict.integrations.management.stopped}
                 </Chip>
                 <div className="text-right text-sm">
-                  <div>전체 연동: {refreshStatus.totalCredentials}개</div>
+                  <div>
+                    {dict.integrations.management.totalIntegrations.replace(
+                      "{{count}}",
+                      refreshStatus.totalCredentials.toString(),
+                    )}
+                  </div>
                   <div className="text-warning">
-                    갱신 필요: {refreshStatus.credentialsNeedingRefresh}개
+                    {dict.integrations.management.needRefresh.replace(
+                      "{{count}}",
+                      refreshStatus.credentialsNeedingRefresh.toString(),
+                    )}
                   </div>
                 </div>
               </div>
@@ -372,7 +402,9 @@ export function PlatformIntegrations() {
       {/* Connected Platforms */}
       {refreshStatus && refreshStatus.credentials.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold mb-4">연동된 플랫폼</h3>
+          <h3 className="text-lg font-semibold mb-4">
+            {dict.integrations.management.connectedPlatforms}
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {refreshStatus.credentials.map((credential) => {
               const Icon =
@@ -418,11 +450,14 @@ export function PlatformIntegrations() {
 
                     <div className="text-xs text-default-400 space-y-1">
                       <div>
-                        마지막 동기화: {formatLastSync(credential.lastSync)}
+                        {dict.integrations.management.lastSyncTime.replace(
+                          "{{time}}",
+                          formatLastSync(credential.lastSync),
+                        )}
                       </div>
                       {credential.expiresAt && (
                         <div>
-                          토큰 만료:{" "}
+                          {dict.integrations.management.tokenExpiry}{" "}
                           {new Date(credential.expiresAt).toLocaleDateString()}
                         </div>
                       )}
@@ -437,7 +472,7 @@ export function PlatformIntegrations() {
                         variant="flat"
                         onPress={() => handleRefreshTokens(credential.platform)}
                       >
-                        갱신
+                        {dict.integrations.management.refresh}
                       </Button>
                       <Button
                         color="danger"
@@ -446,7 +481,7 @@ export function PlatformIntegrations() {
                         variant="flat"
                         onPress={() => openDisconnectModal(credential)}
                       >
-                        연결 해제
+                        {dict.integrations.management.disconnect}
                       </Button>
                     </div>
                   </CardBody>
@@ -459,7 +494,9 @@ export function PlatformIntegrations() {
 
       {/* Available Platforms */}
       <div>
-        <h3 className="text-lg font-semibold mb-4">플랫폼 연동</h3>
+        <h3 className="text-lg font-semibold mb-4">
+          {dict.integrations.management.platformIntegration}
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Object.entries(PlatformIcons).map(([platform, Icon]) => {
             const platformType = platform as PlatformType;
@@ -481,14 +518,16 @@ export function PlatformIntegrations() {
                         {getPlatformDisplayName(platformType)}
                       </h4>
                       <p className="text-sm text-default-500">
-                        {isSupported ? "OAuth 지원" : "수동 연동만 가능"}
+                        {isSupported
+                          ? dict.integrations.management.oauthSupported
+                          : dict.integrations.management.manualOnly}
                       </p>
                     </div>
                   </div>
 
                   {isConnected ? (
                     <Chip color="success" variant="flat">
-                      연결됨
+                      {dict.integrations.management.connected}
                     </Chip>
                   ) : (
                     <Button
@@ -499,7 +538,9 @@ export function PlatformIntegrations() {
                       variant="flat"
                       onPress={() => handleConnectPlatform(platformType)}
                     >
-                      {isSupported ? "연결하기" : "지원 예정"}
+                      {isSupported
+                        ? dict.integrations.connect
+                        : dict.integrations.management.comingSoon}
                     </Button>
                   )}
                 </CardBody>
@@ -512,21 +553,24 @@ export function PlatformIntegrations() {
       {/* Disconnect Modal */}
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalContent>
-          <ModalHeader>플랫폼 연결 해제</ModalHeader>
+          <ModalHeader>
+            {dict.integrations.management.disconnectModal.title}
+          </ModalHeader>
           <ModalBody>
             {selectedCredential && (
               <div>
                 <p className="mb-4">
-                  정말로{" "}
-                  <strong>
-                    {getPlatformDisplayName(selectedCredential.platform)}
-                  </strong>
-                  ({selectedCredential.accountName}) 연결을 해제하시겠습니까?
+                  {dict.integrations.management.disconnectModal.confirmText}{" "}
+                  {dict.integrations.management.disconnectModal.platformName
+                    .replace(
+                      "{{platform}}",
+                      getPlatformDisplayName(selectedCredential.platform),
+                    )
+                    .replace("{{account}}", selectedCredential.accountName)}
                 </p>
                 <div className="bg-warning-50 border border-warning-200 rounded-lg p-3">
                   <p className="text-sm text-warning-800">
-                    연결을 해제하면 해당 플랫폼의 데이터를 더 이상 동기화할 수
-                    없습니다. 다시 연결하려면 OAuth 인증을 다시 진행해야 합니다.
+                    {dict.integrations.management.disconnectModal.warning}
                   </p>
                 </div>
               </div>
@@ -534,7 +578,7 @@ export function PlatformIntegrations() {
           </ModalBody>
           <ModalFooter>
             <Button variant="flat" onPress={onClose}>
-              취소
+              {dict.integrations.management.disconnectModal.cancel}
             </Button>
             <Button
               color="danger"
@@ -544,7 +588,7 @@ export function PlatformIntegrations() {
                 handleDisconnectPlatform(selectedCredential.id)
               }
             >
-              연결 해제
+              {dict.integrations.management.disconnectModal.disconnect}
             </Button>
           </ModalFooter>
         </ModalContent>

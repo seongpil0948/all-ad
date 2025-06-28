@@ -41,7 +41,7 @@ export async function handleUnifiedOAuthCallback(
 
   // Determine redirect URL based on environment
   const redirectUrl =
-    params.environment === "lab" ? `${baseUrl}/lab` : `${baseUrl}/integrated`;
+    params.environment === "lab" ? `${baseUrl}/lab` : `${baseUrl}/dashboard`;
 
   try {
     // Handle OAuth errors

@@ -7,7 +7,6 @@ export const PAGE_PATH = {
   settings: "/settings",
   profile: "/profile",
   team: "/team",
-  integrated: "/integrated",
   analytics: "/analytics",
   pricing: "/pricing",
   demo: "/demo",

@@ -24,12 +24,16 @@ export async function GET(
   const error = searchParams.get("error");
   const platform = platformParam.toUpperCase() as PlatformType;
 
+  // Get locale from headers or use default
+  const acceptLanguage = request.headers.get("accept-language") || "";
+  const locale = acceptLanguage.startsWith("ko") ? "ko" : "en";
+
   // Handle OAuth errors
   if (error) {
     log.error("OAuth error received", { platform, error });
 
     return redirect(
-      `/settings/integrations?error=oauth_cancelled&platform=${platform.toLowerCase()}`,
+      `/${locale}/settings/integrations?error=oauth_cancelled&platform=${platform.toLowerCase()}`,
     );
   }
 
@@ -42,7 +46,7 @@ export async function GET(
     });
 
     return redirect(
-      `/settings/integrations?error=invalid_oauth_response&platform=${platform.toLowerCase()}`,
+      `/${locale}/settings/integrations?error=invalid_oauth_response&platform=${platform.toLowerCase()}`,
     );
   }
 
@@ -60,7 +64,7 @@ export async function GET(
         authError,
       });
 
-      return redirect("/login?error=authentication_required");
+      return redirect(`/${locale}/login?error=authentication_required`);
     }
 
     // Get user's current team
@@ -77,7 +81,7 @@ export async function GET(
         profileError,
       });
 
-      return redirect("/settings/integrations?error=team_not_found");
+      return redirect(`/${locale}/settings/integrations?error=team_not_found`);
     }
 
     const teamId = profile.current_team_id;
@@ -96,7 +100,7 @@ export async function GET(
       });
 
       return redirect(
-        `/settings/integrations?error=oauth_credentials_missing&platform=${platformLower}`,
+        `/${locale}/settings/integrations?error=oauth_credentials_missing&platform=${platformLower}`,
       );
     }
 
@@ -164,7 +168,7 @@ export async function GET(
 
     // Redirect to integrations page with success message
     return redirect(
-      `/settings/integrations?success=platform_connected&platform=${platform.toLowerCase()}&account=${encodeURIComponent(accountInfo.accountName)}`,
+      `/${locale}/settings/integrations?success=platform_connected&platform=${platform.toLowerCase()}&account=${encodeURIComponent(accountInfo.accountName)}`,
     );
   } catch (error) {
     const errorMessage =
@@ -181,7 +185,7 @@ export async function GET(
     const encodedMessage = encodeURIComponent(errorMessage);
 
     return redirect(
-      `/settings/integrations?error=oauth_failed&platform=${platform.toLowerCase()}&message=${encodedMessage}`,
+      `/${locale}/settings/integrations?error=oauth_failed&platform=${platform.toLowerCase()}&message=${encodedMessage}`,
     );
   }
 }

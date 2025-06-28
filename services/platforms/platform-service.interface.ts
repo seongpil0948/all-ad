@@ -1,4 +1,9 @@
-import { Campaign, CampaignMetrics, PlatformType } from "@/types";
+import {
+  Campaign,
+  CampaignMetrics,
+  CampaignWithMetrics,
+  PlatformType,
+} from "@/types";
 
 // Common interface for all platform services
 export interface PlatformService {
@@ -14,7 +19,7 @@ export interface PlatformService {
   validateCredentials(): Promise<boolean>;
 
   // Fetch campaigns from the platform
-  fetchCampaigns(): Promise<Campaign[]>;
+  fetchCampaigns(): Promise<Campaign[] | CampaignWithMetrics[]>;
 
   // Fetch campaign metrics
   fetchCampaignMetrics(

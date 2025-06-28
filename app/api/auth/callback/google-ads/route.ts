@@ -78,12 +78,16 @@ export async function GET(request: NextRequest) {
   const error = searchParams.get("error");
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
+  // Get locale from headers or use default
+  const acceptLanguage = request.headers.get("accept-language") || "";
+  const locale = acceptLanguage.startsWith("ko") ? "ko" : "en";
+
   // Check for OAuth errors first
   if (error) {
     log.error("Google Ads OAuth error:", { error });
 
     return NextResponse.redirect(
-      `${baseUrl}/integrated?error=oauth_denied&platform=google`,
+      `${baseUrl}/${locale}/integrated?error=oauth_denied&platform=google`,
     );
   }
 
@@ -91,7 +95,7 @@ export async function GET(request: NextRequest) {
     log.error("Missing code or state parameter");
 
     return NextResponse.redirect(
-      `${baseUrl}/integrated?error=invalid_request&platform=google`,
+      `${baseUrl}/${locale}/integrated?error=invalid_request&platform=google`,
     );
   }
 
@@ -110,7 +114,7 @@ export async function GET(request: NextRequest) {
       log.error("Invalid state parameter", { stateError });
 
       return NextResponse.redirect(
-        `${baseUrl}/integrated?error=invalid_state&platform=google`,
+        `${baseUrl}/${locale}/integrated?error=invalid_state&platform=google`,
       );
     }
 
@@ -134,18 +138,20 @@ export async function GET(request: NextRequest) {
     const accountId = `google_${userInfo.id}_${Date.now()}`;
 
     // Check if this specific Google account is already connected
+    // Use a more specific query to avoid any potential ambiguity
     const { data: existingCred } = await supabase
       .from("platform_credentials")
       .select("id")
       .eq("team_id", stateData.team_id)
       .eq("platform", "google")
-      .eq("data->>user_id", userInfo.id)
+      .eq("account_name", userInfo.email || "Google Ads Account")
       .single();
 
     const expiryDate =
       tokens.expiry_date || Date.now() + tokens.expires_in * 1000;
     const expiresAt = new Date(expiryDate).toISOString();
 
+    // Prepare credential data
     const credentialData = {
       team_id: stateData.team_id,
       platform: "google" as const,
@@ -153,38 +159,50 @@ export async function GET(request: NextRequest) {
       account_name: userInfo.email || "Google Ads Account",
       is_active: true,
       credentials: {}, // Empty - using All-AD's OAuth
-      // Store tokens as top-level columns only
+      created_by: stateData.user_id, // Use created_by instead of user_id
+      // Store tokens as top-level columns
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       expires_at: expiresAt,
       scope: tokens.scope,
-      // Minimal data for user info only
+      // Store additional data
       data: {
-        user_email: userInfo.email,
-        user_id: userInfo.id,
+        google_user_email: userInfo.email,
+        google_user_id: userInfo.id,
         connected_at: new Date().toISOString(),
       },
-      created_by: stateData.user_id,
-      user_id: stateData.user_id,
     };
 
     if (existingCred) {
       // Update existing credential
+      log.info("Updating existing Google Ads credential", {
+        credentialId: existingCred.id,
+        teamId: stateData.team_id,
+      });
+
       const { error: updateError } = await supabase
         .from("platform_credentials")
         .update(credentialData)
         .eq("id", existingCred.id);
 
       if (updateError) {
+        log.error("Failed to update existing credential", updateError);
         throw updateError;
       }
     } else {
       // Insert new credential
+      log.info("Inserting new Google Ads credential", {
+        teamId: stateData.team_id,
+        userId: stateData.user_id,
+        accountId: credentialData.account_id,
+      });
+
       const { error: insertError } = await supabase
         .from("platform_credentials")
         .insert(credentialData);
 
       if (insertError) {
+        log.error("Failed to insert new credential", insertError);
         throw insertError;
       }
     }
@@ -207,18 +225,27 @@ export async function GET(request: NextRequest) {
         });
 
         // Update the account_id with the actual customer ID
-        const { error: updateError } = await supabase
+        // Find the credential we just created and update it
+        const { data: credToUpdate } = await supabase
           .from("platform_credentials")
-          .update({
-            account_id: googleAdsCustomerId,
-            account_name: `Google Ads - ${googleAdsCustomerId}`,
-          })
+          .select("id")
           .eq("team_id", stateData.team_id)
           .eq("platform", "google")
-          .eq("data->>user_id", userInfo.id);
+          .eq("account_name", userInfo.email || "Google Ads Account")
+          .single();
 
-        if (updateError) {
-          log.error("Failed to update customer ID", updateError);
+        if (credToUpdate) {
+          const { error: updateError } = await supabase
+            .from("platform_credentials")
+            .update({
+              account_id: googleAdsCustomerId,
+              account_name: `Google Ads - ${googleAdsCustomerId}`,
+            })
+            .eq("id", credToUpdate.id);
+
+          if (updateError) {
+            log.error("Failed to update customer ID", updateError);
+          }
         }
       }
     } catch (error) {
@@ -234,13 +261,13 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.redirect(
-      `${baseUrl}/integrated?success=google_connected&tab=platforms`,
+      `${baseUrl}/${locale}/dashboard?success=google_connected&tab=platforms`,
     );
   } catch (error) {
     log.error("Failed to process Google Ads OAuth callback:", error);
 
     return NextResponse.redirect(
-      `${baseUrl}/integrated?error=oauth_failed&platform=google`,
+      `${baseUrl}/${locale}/dashboard?error=oauth_failed&platform=google`,
     );
   }
 }

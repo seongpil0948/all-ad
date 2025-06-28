@@ -1,0 +1,756 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "actions": "Actions",
+    "close": "Close",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "reset": "Reset",
+    "refresh": "Refresh",
+    "download": "Download",
+    "upload": "Upload",
+    "select": "Select",
+    "selectAll": "Select All",
+    "unselectAll": "Unselect All",
+    "yes": "Yes",
+    "no": "No",
+    "or": "or",
+    "and": "and",
+    "of": "of",
+    "noData": "No data",
+    "noResults": "No results found",
+    "viewAll": "View All",
+    "viewLess": "View Less",
+    "more": "More",
+    "less": "Less",
+    "new": "New",
+    "all": "All",
+    "none": "None",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "week": "Week",
+    "month": "Month",
+    "year": "Year",
+    "date": "Date",
+    "time": "Time",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "completed": "Completed",
+    "failed": "Failed",
+    "retry": "Retry",
+    "copy": "Copy",
+    "copied": "Copied",
+    "share": "Share",
+    "export": "Export",
+    "import": "Import",
+    "settings": "Settings",
+    "help": "Help",
+    "documentation": "Documentation",
+    "support": "Support",
+    "feedback": "Feedback",
+    "report": "Report",
+    "language": "Language",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "nav": {
+    "home": "Home",
+    "demo": "Demo",
+    "pricing": "Pricing",
+    "support": "Customer Support",
+    "lab": "Lab",
+    "login": "Login",
+    "freeTrial": "Free Trial",
+    "profile": "My Profile",
+    "settings": "Settings",
+    "team": "Team Management",
+    "analytics": "Analytics",
+    "help": "Help & Feedback",
+    "logout": "Logout",
+    "dashboard": "Dashboard",
+    "campaigns": "Campaign Management",
+    "reports": "Reports"
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "email": "Email",
+      "emailPlaceholder": "your@email.com",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "submit": "Login",
+      "forgotPassword": "Forgot your password?",
+      "noAccount": "Don't have an account yet?",
+      "signUp": "Sign up",
+      "or": "OR",
+      "continueWith": "Continue with {{provider}}",
+      "errors": {
+        "invalidEmail": "Please enter a valid email address.",
+        "passwordRequired": "Please enter your password.",
+        "invalidCredentials": "Invalid email or password.",
+        "general": "Error during login. Please try again.",
+        "tooManyAttempts": "Too many login attempts. Please try again later."
+      },
+      "success": "Logged in successfully!"
+    },
+    "signup": {
+      "title": "Sign Up",
+      "email": "Email",
+      "emailPlaceholder": "your@email.com",
+      "password": "Password",
+      "passwordPlaceholder": "At least 6 characters",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Re-enter your password",
+      "submit": "Sign Up",
+      "hasAccount": "Already have an account?",
+      "login": "Login",
+      "agreeToTerms": "By signing up, you agree to our",
+      "termsOfService": "Terms of Service",
+      "privacyPolicy": "Privacy Policy",
+      "and": "and",
+      "errors": {
+        "invalidEmail": "Please enter a valid email address.",
+        "passwordMin": "Password must be at least 6 characters.",
+        "passwordMatch": "Passwords do not match.",
+        "general": "Error during sign up. Please try again.",
+        "emailExists": "This email is already registered."
+      },
+      "success": "Account created! Please check your email to verify your account."
+    },
+    "forgotPassword": {
+      "title": "Password Reset",
+      "subtitle": "Enter your registered email address and we'll send you a password reset link.",
+      "email": "Email",
+      "emailPlaceholder": "your@email.com",
+      "submit": "Send Reset Link",
+      "backToLogin": "Back to login",
+      "errors": {
+        "invalidEmail": "Please enter a valid email address.",
+        "general": "Error sending reset link. Please try again."
+      },
+      "success": "Password reset link sent! Please check your email."
+    },
+    "resetPassword": {
+      "title": "Set New Password",
+      "newPassword": "New Password",
+      "newPasswordPlaceholder": "At least 6 characters",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Re-enter your password",
+      "submit": "Reset Password",
+      "errors": {
+        "passwordMin": "Password must be at least 6 characters.",
+        "passwordMatch": "Passwords do not match.",
+        "general": "Error resetting password. Please try again.",
+        "invalidToken": "Invalid or expired reset link."
+      },
+      "success": "Password reset successfully! You can now login with your new password."
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Manage campaigns across all advertising platforms at a glance.",
+    "noData": "No data",
+    "loginRequired": "Login required.",
+    "sync": {
+      "button": "Sync",
+      "syncing": "Syncing...",
+      "noConnections": "No connections",
+      "connectFirst": "Please connect at least one advertising platform first",
+      "success": "Success",
+      "successDescription": "All platforms synchronized successfully",
+      "error": "Error",
+      "errorDescription": "An error occurred during synchronization",
+      "syncAll": "Sync All",
+      "noActivePlatforms": "No active platforms",
+      "syncPlatforms": "Sync {{count}} platforms"
+    },
+    "metrics": {
+      "totalSpend": "Total Spend",
+      "totalImpressions": "Total Impressions",
+      "totalClicks": "Total Clicks",
+      "avgCTR": "Average CTR",
+      "avgCPC": "Average CPC",
+      "totalConversions": "Total Conversions"
+    },
+    "charts": {
+      "performance": "Performance Trend",
+      "platforms": "By Platform",
+      "campaigns": "Top Campaigns"
+    },
+    "filters": {
+      "dateRange": "Date Range",
+      "platform": "Platform",
+      "campaign": "Campaign",
+      "status": "Status"
+    }
+  },
+  "campaigns": {
+    "title": "Campaign Management",
+    "subtitle": "Monitor and control all your advertising campaigns.",
+    "table": {
+      "name": "Campaign Name",
+      "platform": "Platform",
+      "status": "Status",
+      "budget": "Budget",
+      "spent": "Spent",
+      "impressions": "Impressions",
+      "clicks": "Clicks",
+      "ctr": "CTR",
+      "cpc": "CPC",
+      "conversions": "Conversions",
+      "lastUpdated": "Last Updated",
+      "metrics": "Performance",
+      "actions": "Actions",
+      "impressionsLabel": "Impressions:",
+      "clicksLabel": "Clicks:",
+      "noCampaigns": "No campaigns"
+    },
+    "actions": {
+      "enable": "Enable",
+      "disable": "Disable",
+      "edit": "Edit",
+      "delete": "Delete",
+      "duplicate": "Duplicate",
+      "viewDetails": "View Details"
+    },
+    "status": {
+      "active": "Active",
+      "paused": "Paused",
+      "completed": "Completed",
+      "draft": "Draft",
+      "error": "Error"
+    },
+    "filters": {
+      "all": "All Campaigns",
+      "active": "Active",
+      "paused": "Paused",
+      "completed": "Completed"
+    },
+    "budgetModal": {
+      "title": "Edit Budget",
+      "campaign": "Campaign:",
+      "currentBudget": "Current Budget:",
+      "newBudgetLabel": "New Budget",
+      "newBudgetPlaceholder": "Enter budget",
+      "cancel": "Cancel",
+      "update": "Update"
+    },
+    "statusModal": {
+      "title": "Change Campaign Status",
+      "confirmActive": "Are you sure you want to",
+      "activate": "activate",
+      "deactivate": "deactivate",
+      "confirmSuffix": "this campaign?",
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    },
+    "search": {
+      "placeholder": "Search campaigns..."
+    },
+    "toast": {
+      "invalidBudget": "Please enter a valid budget amount",
+      "budgetUpdateSuccess": "Budget updated successfully",
+      "budgetUpdateError": "Failed to update budget",
+      "statusChangeSuccess": "Campaign {{status}}",
+      "statusChangeError": "Failed to change campaign status"
+    },
+    "metrics": {
+      "totalBudgetLabel": "Total Budget",
+      "totalSpendLabel": "Total Spend",
+      "totalImpressionsLabel": "Total Impressions",
+      "totalClicksLabel": "Total Clicks",
+      "won": "₩"
+    },
+    "actionLabels": {
+      "editBudget": "Edit Budget",
+      "activate": "Activate",
+      "deactivate": "Deactivate"
+    }
+  },
+  "integrations": {
+    "title": "Platform Integration",
+    "subtitle": "Connect your advertising accounts to get started.",
+    "connected": "Connected",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "reconnect": "Reconnect",
+    "platforms": {
+      "googleAds": {
+        "name": "Google Ads",
+        "description": "Connect your Google Ads account",
+        "features": "Available features with Google Ads integration:",
+        "feature1": "Real-time campaign monitoring",
+        "feature2": "Campaign ON/OFF control",
+        "feature3": "Automatic performance data collection",
+        "feature4": "Integrated report generation",
+        "connectButton": "Connect with Google Account",
+        "instructions": "Sign in with Google and approve permissions for automatic integration"
+      },
+      "metaAds": {
+        "name": "Meta Ads",
+        "description": "Connect your Meta (Facebook & Instagram) Ads account"
+      },
+      "naverAds": {
+        "name": "Naver Ads",
+        "description": "Connect your Naver Search Ads account"
+      },
+      "kakaoAds": {
+        "name": "Kakao Ads",
+        "description": "Connect your Kakao Moment account"
+      },
+      "coupangAds": {
+        "name": "Coupang Ads",
+        "description": "Connect your Coupang Ads account"
+      }
+    },
+    "connectedAccount": "Connected Account",
+    "lastSync": "Last Sync",
+    "syncNow": "Sync Now",
+    "settings": "Integration Settings",
+    "errors": {
+      "connectionFailed": "Failed to connect. Please try again.",
+      "authExpired": "Authentication expired. Please reconnect.",
+      "syncFailed": "Sync failed. Please check your connection.",
+      "oauthCancelled": "OAuth authentication was cancelled.",
+      "invalidOauthResponse": "Invalid OAuth response.",
+      "teamNotFound": "Team not found.",
+      "oauthFailed": "OAuth authentication failed."
+    },
+    "success": {
+      "connected": "{{platform}} connected successfully!\nAccount: {{account}}",
+      "disconnected": "Platform disconnected successfully"
+    },
+    "management": {
+      "title": "Platform Integration Management",
+      "subtitle": "Connect advertising platforms to manage from unified dashboard",
+      "refreshAll": "Refresh All",
+      "refresh": "Refresh",
+      "tokenRefreshService": "Token Refresh Service",
+      "tokenRefreshDescription": "Automatically refreshes expiring tokens",
+      "serviceStatus": "Service Status",
+      "running": "Running",
+      "stopped": "Stopped",
+      "totalIntegrations": "Total Integrations: {{count}}",
+      "needRefresh": "Need Refresh: {{count}}",
+      "connectedPlatforms": "Connected Platforms",
+      "lastSyncTime": "Last Sync: {{time}}",
+      "tokenExpiry": "Token Expires:",
+      "disconnect": "Disconnect",
+      "platformIntegration": "Platform Integration",
+      "oauthSupported": "OAuth Supported",
+      "manualOnly": "Manual Integration Only",
+      "connected": "Connected",
+      "comingSoon": "Coming Soon",
+      "disconnectModal": {
+        "title": "Disconnect Platform",
+        "confirmText": "Are you sure you want to disconnect",
+        "platformName": "{{platform}} ({{account}})?",
+        "warning": "After disconnecting, you will no longer be able to sync data from this platform. To reconnect, you will need to go through OAuth authentication again.",
+        "cancel": "Cancel",
+        "disconnect": "Disconnect"
+      }
+    },
+    "status": {
+      "error": "Error",
+      "needsRefresh": "Needs Refresh",
+      "connected": "Connected",
+      "inactive": "Inactive"
+    },
+    "credentials": {
+      "title": "Platform Credential Management",
+      "modalTitle": "{{platform}} Authentication Information",
+      "notConnected": "Not Connected",
+      "oauthInfo": "This platform uses OAuth authentication. Click the 'Connect' button to redirect to {{platform}} login page.",
+      "oauthSupported": "OAuth Authentication Supported",
+      "apiKey": "API Key",
+      "secretKey": "Secret Key",
+      "accessKey": "Access Key",
+      "customerId": "Customer ID",
+      "naverApiKeyPlaceholder": "Naver Search Ads API Key",
+      "customerIdPlaceholder": "Customer ID",
+      "coupangAccessKeyPlaceholder": "Coupang Access Key",
+      "coupangSecretKeyPlaceholder": "Coupang Secret Key",
+      "connectedDate": "Connected Date",
+      "googleDescription": "Connect your Google Ads account to monitor and manage campaign performance in real-time.",
+      "budgetManagement": "Budget management and optimization",
+      "accountName": "Account Name",
+      "accountId": "Account ID",
+      "accountList": "Account List",
+      "noAccounts": "No connected accounts",
+      "platformAccountManagement": "Platform Account Management",
+      "accountsConnected": "{{count}} accounts connected",
+      "addAccount": "Add Account",
+      "addAccountTitle": "Add {{platform}} Account",
+      "noName": "No Name",
+      "tokenExpired": "Token Expired",
+      "checking": "Checking...",
+      "notSynced": "Not Synced",
+      "tokenRefreshSuccess": "Token Refresh Success",
+      "tokenRefreshSuccessDesc": "Token for {{account}} has been refreshed.",
+      "reAuthFailed": "Re-authentication Failed",
+      "reAuthFailedDesc": "Token refresh failed. Please try again."
+    }
+  },
+  "pricing": {
+    "title": "Choose Your Plan",
+    "subtitle": "All plans include a 14-day free trial. Cancel anytime.",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "save": "Save {{percent}}%",
+    "mostPopular": "Most Popular",
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "price": "$99/month",
+        "description": "Basic plan for small businesses",
+        "features": [
+          "Up to 3 ad accounts",
+          "Basic analytics",
+          "Email support",
+          "Daily data sync"
+        ]
+      },
+      "professional": {
+        "name": "Professional",
+        "price": "$299/month",
+        "description": "Professional plan for growing businesses",
+        "features": [
+          "Up to 10 ad accounts",
+          "Advanced analytics",
+          "Priority support",
+          "Real-time data sync",
+          "Custom reports",
+          "API access"
+        ]
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "Custom Quote",
+        "description": "Custom solution for large enterprises",
+        "features": [
+          "Unlimited ad accounts",
+          "Enterprise analytics",
+          "Dedicated support",
+          "Real-time data sync",
+          "Custom integrations",
+          "Full API access",
+          "SLA guarantee",
+          "Custom training"
+        ]
+      }
+    },
+    "cta": {
+      "startFreeTrial": "Start Free Trial",
+      "contactSales": "Contact Sales",
+      "currentPlan": "Current Plan"
+    }
+  },
+  "home": {
+    "hero": {
+      "title": "All Your Ads In One Place",
+      "subtitle": "Manage multiple advertising platforms from a single dashboard. Maximize ad performance with real-time analysis and automatic optimization.",
+      "cta": "Get Started Now",
+      "subCta": "Experience all features with a 14-day free trial"
+    },
+    "features": {
+      "title": "Key Features",
+      "subtitle": "Smarter Ad Management",
+      "unifiedDashboard": {
+        "title": "Unified Dashboard",
+        "description": "See all your ad platform performance at a glance. Get real-time data analysis and reports."
+      },
+      "automaticOptimization": {
+        "title": "Automated Ad Optimization",
+        "description": "Maximize ROI with AI-powered ad optimization and efficiently manage your advertising budget."
+      },
+      "secureDataManagement": {
+        "title": "Secure Data Management",
+        "description": "Protect your advertising data safely with enterprise-grade security."
+      },
+      "flexibleIntegration": {
+        "title": "Flexible Integration",
+        "description": "Support various integration methods including SDK, Open API, DB to DB, and more."
+      },
+      "dashboard": {
+        "title": "Unified Dashboard",
+        "description": "Monitor performance across all advertising platforms at a glance. Real-time data analysis and reporting."
+      },
+      "automation": {
+        "title": "Automated Ad Optimization",
+        "description": "Maximize ROI and efficiently manage your advertising budget with AI-powered optimization."
+      },
+      "security": {
+        "title": "Secure Data Management",
+        "description": "Protect your advertising data with enterprise-grade security."
+      },
+      "integration": {
+        "title": "Flexible Integration",
+        "description": "Support various integration methods including SDK, Open API, and DB to DB."
+      }
+    },
+    "platforms": {
+      "title": "Supported Platforms",
+      "subtitle": "Support all major domestic and international advertising platforms",
+      "visualization": {
+        "title": "Intuitive Dashboard",
+        "subtitle": "Visualize complex data for easy understanding"
+      }
+    },
+    "dashboard": {
+      "title": "Intuitive Dashboard",
+      "subtitle": "Visualize complex data for easy understanding"
+    },
+    "cta": {
+      "mainTitle": "All Your Ads",
+      "mainTitleHighlight": "In One Place",
+      "mainSubtitle": "Manage multiple advertising platforms from a single dashboard. Maximize ad performance with real-time analysis and automatic optimization.",
+      "primaryButton": "Start Free",
+      "secondaryButton": "View Demo",
+      "sectionTitle": "Get Started Now",
+      "sectionSubtitle": "Experience all features with a 14-day free trial",
+      "sectionButton": "Start Free Trial"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "sections": {
+      "notifications": {
+        "title": "Notification Settings",
+        "subtitle": "Configure how you receive notifications",
+        "email": {
+          "title": "Email Notifications",
+          "description": "Receive important updates via email"
+        },
+        "browser": {
+          "title": "Browser Notifications",
+          "description": "Get real-time notifications in your browser"
+        }
+      },
+      "security": {
+        "title": "Security Settings",
+        "subtitle": "Enhance your account security",
+        "twoFactor": {
+          "title": "Two-Factor Authentication",
+          "description": "Add an extra layer of security"
+        },
+        "loginAlerts": {
+          "title": "Login Alerts",
+          "description": "Get notified when logging in from new devices"
+        }
+      },
+      "privacy": {
+        "title": "Data & Privacy",
+        "subtitle": "Data usage and privacy settings",
+        "dataCollection": {
+          "title": "Data Collection",
+          "description": "Allow data collection for service improvement"
+        },
+        "marketing": {
+          "title": "Marketing Communications",
+          "description": "Receive news about features and promotions"
+        }
+      }
+    }
+  },
+  "team": {
+    "title": "Team Management",
+    "subtitle": "Manage team members and set permissions.",
+    "invite": {
+      "title": "Invite Team Member",
+      "email": "Email Address",
+      "role": "Role",
+      "sendInvite": "Send Invite",
+      "accept": {
+        "title": "Team Invitation",
+        "invitedBy": "{{inviter}} has invited you to join",
+        "asRole": "as a",
+        "needAccount": "You'll need to create an account to accept this invitation.",
+        "decline": "Decline",
+        "acceptInvitation": "Accept Invitation",
+        "createAccount": "Create Account",
+        "success": {
+          "title": "Invitation Accepted!",
+          "description": "You have successfully joined the team. Redirecting to dashboard..."
+        },
+        "toast": {
+          "successTitle": "Invitation Accepted",
+          "successDescription": "Successfully joined the team. Redirecting to dashboard...",
+          "errorTitle": "Failed to Accept Invitation",
+          "errorDescription": "An error occurred"
+        }
+      }
+    },
+    "members": {
+      "title": "Team Members",
+      "you": "You",
+      "owner": "Owner",
+      "admin": "Admin",
+      "member": "Member",
+      "viewer": "Viewer",
+      "pending": "Pending",
+      "active": "Active"
+    },
+    "roles": {
+      "master": {
+        "name": "Master",
+        "description": "Full access to all features and settings"
+      },
+      "team_mate": {
+        "name": "Team Mate",
+        "description": "Can manage campaigns and modify settings"
+      },
+      "viewer": {
+        "name": "Viewer",
+        "description": "Can only view data and reports"
+      }
+    },
+    "actions": {
+      "changeRole": "Change Role",
+      "remove": "Remove",
+      "resendInvite": "Resend Invite",
+      "cancelInvite": "Cancel Invite"
+    },
+    "table": {
+      "columns": {
+        "member": "Member",
+        "email": "Email",
+        "role": "Role",
+        "joinDate": "Join Date",
+        "actions": "Actions",
+        "invitedEmail": "Invited Email",
+        "status": "Status",
+        "invitedBy": "Invited By",
+        "expiresAt": "Expires At"
+      }
+    },
+    "inviteModal": {
+      "title": "Enter the email of the team member to invite.",
+      "emailLabel": "Email",
+      "roleLabel": "Role",
+      "cancel": "Cancel",
+      "send": "Invite"
+    },
+    "toast": {
+      "inviteSuccess": "Invitation Sent",
+      "inviteSuccessDescription": "Invitation sent to {{email}}.",
+      "inviteFailed": "Invitation Failed",
+      "inviteFailedDescription": "An error occurred while sending the invitation. Please try again.",
+      "roleChangeSuccess": "Role Changed",
+      "roleChangeSuccessDescription": "Team member's role changed to {{role}}.",
+      "roleChangeFailed": "Role Change Failed",
+      "roleChangeFailedDescription": "Failed to change role. Please try again.",
+      "removeConfirm": "Remove {{name}} from the team?",
+      "removeSuccess": "Member Removed",
+      "removeSuccessDescription": "{{name}} has been removed from the team.",
+      "removeFailed": "Member Removal Failed",
+      "removeFailedDescription": "An error occurred while removing the team member."
+    },
+    "noName": "No name",
+    "me": "(me)",
+    "unknown": "Unknown",
+    "loadingTeam": "Loading team information...",
+    "teamInfo": "Team Information",
+    "teamName": "Team Name:",
+    "myRole": "My Role:",
+    "memberListTitle": "Team Members",
+    "memberListSubtitle": "Manage team members",
+    "inviteButton": "Invite Member",
+    "noMembers": "No team members",
+    "invitationListTitle": "Invitation Status",
+    "invitationListSubtitle": "Check the status of invited users",
+    "noInvitations": "No invitations"
+  },
+  "footer": {
+    "product": "Product",
+    "features": "Features",
+    "integrations": "Integrations",
+    "pricing": "Pricing",
+    "resources": "Resources",
+    "blog": "Blog",
+    "guides": "Guides",
+    "apiDocs": "API Documentation",
+    "company": "Company",
+    "about": "About",
+    "careers": "Careers",
+    "partners": "Partners",
+    "contact": "Contact",
+    "legal": "Legal",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "refund": "Refund Policy",
+    "cookies": "Cookie Policy",
+    "security": "Security",
+    "newsletter": {
+      "title": "Newsletter",
+      "subtitle": "Get the latest updates and tips via email",
+      "placeholder": "Email address",
+      "subscribe": "Subscribe"
+    },
+    "companyInfo": {
+      "name": "AllAd",
+      "tagline": "All advertising platforms in one. Setting new standards for ad management.",
+      "copyright": "© {{year}} {{company}}. All rights reserved.",
+      "address": "123 Teheran-ro, Gangnam-gu, Seoul",
+      "email": "support@allad.co.kr",
+      "phone": "02-1234-5678"
+    }
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "questions": {
+      "platforms": {
+        "question": "Which advertising platforms does AllAd support?",
+        "answer": "AllAd currently supports Google Ads, Meta Ads (Facebook & Instagram), Naver Search Ads, Kakao Moment, and more platforms are being added."
+      },
+      "migration": {
+        "question": "Can I migrate my existing ad campaigns?",
+        "answer": "Yes, AllAd seamlessly connects with your existing ad accounts. Your campaigns remain on their original platforms while being managed through our unified dashboard."
+      },
+      "contract": {
+        "question": "Is there a minimum contract period?",
+        "answer": "No, AllAd offers flexible monthly subscriptions. You can upgrade, downgrade, or cancel anytime."
+      },
+      "security": {
+        "question": "How is data security managed?",
+        "answer": "We use enterprise-grade encryption and security measures. Your ad account credentials are encrypted and we use official APIs for all platform integrations."
+      },
+      "integration": {
+        "question": "Are there integration methods other than API?",
+        "answer": "Yes, we support various integration methods including SDK, webhooks, and database connections depending on your needs."
+      }
+    }
+  },
+  "errors": {
+    "general": "An unexpected error occurred. Please try again.",
+    "network": "Network error. Please check your connection.",
+    "unauthorized": "Unauthorized access. Please login.",
+    "forbidden": "You don't have permission to access this resource.",
+    "notFound": "Page not found.",
+    "serverError": "Server error. Please try again later.",
+    "validation": "Please check your input and try again."
+  },
+  "success": {
+    "saved": "Saved successfully!",
+    "updated": "Updated successfully!",
+    "deleted": "Deleted successfully!",
+    "copied": "Copied to clipboard!",
+    "sent": "Sent successfully!"
+  }
+}

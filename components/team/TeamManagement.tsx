@@ -27,11 +27,7 @@ import { useShallow } from "zustand/shallow";
 import { FaUserPlus, FaCrown, FaEdit, FaEye, FaTrash } from "react-icons/fa";
 
 import { useTeamStore, useAuthStore } from "@/stores";
-import {
-  UserRole,
-  TeamMemberWithProfile,
-  TeamInvitation,
-} from "@/types/database.types";
+import { UserRole, TeamMemberWithProfile, TeamInvitation } from "@/types";
 import log from "@/utils/logger";
 import {
   LoadingState,
@@ -42,32 +38,35 @@ import {
 } from "@/components/common";
 import { TableSkeleton, CardSkeleton } from "@/components/common/skeletons";
 import { toast } from "@/utils/toast";
+import { useDictionary } from "@/hooks/use-dictionary";
 
-const roleConfig = {
-  master: {
-    label: "마스터",
-    color: "danger",
-    icon: FaCrown,
-    description: "모든 권한을 가진 관리자",
-  },
-  team_mate: {
-    label: "팀 메이트",
-    color: "primary",
-    icon: FaEdit,
-    description: "캠페인 수정 및 관리 가능",
-  },
-  viewer: {
-    label: "뷰어",
-    color: "default",
-    icon: FaEye,
-    description: "읽기 전용 권한",
-  },
-} as const;
+const roleConfig = (dict: any) =>
+  ({
+    master: {
+      label: dict.team.roles.master.name,
+      color: "danger",
+      icon: FaCrown,
+      description: dict.team.roles.master.description,
+    },
+    team_mate: {
+      label: dict.team.roles.team_mate.name,
+      color: "primary",
+      icon: FaEdit,
+      description: dict.team.roles.team_mate.description,
+    },
+    viewer: {
+      label: dict.team.roles.viewer.name,
+      color: "default",
+      icon: FaEye,
+      description: dict.team.roles.viewer.description,
+    },
+  }) as const;
 
 const ITEMS_PER_PAGE = 20;
 
 export function TeamManagement() {
   const [isPending, startTransition] = useTransition();
+  const { dictionary: dict } = useDictionary();
 
   // Use useShallow to optimize re-renders
   const {
@@ -184,26 +183,28 @@ export function TeamManagement() {
     InfiniteScrollTableColumn<TeamMemberWithProfile>[]
   >(
     () => [
-      { key: "member", label: "팀원" },
-      { key: "email", label: "이메일" },
-      { key: "role", label: "권한" },
-      { key: "joinDate", label: "가입일" },
-      ...(canManageTeam ? [{ key: "actions", label: "액션" }] : []),
+      { key: "member", label: dict.team.table.columns.member },
+      { key: "email", label: dict.team.table.columns.email },
+      { key: "role", label: dict.team.table.columns.role },
+      { key: "joinDate", label: dict.team.table.columns.joinDate },
+      ...(canManageTeam
+        ? [{ key: "actions", label: dict.team.table.columns.actions }]
+        : []),
     ],
-    [canManageTeam],
+    [canManageTeam, dict],
   );
 
   const invitationColumns = useMemo<
     InfiniteScrollTableColumn<TeamInvitation>[]
   >(
     () => [
-      { key: "email", label: "초대한 이메일" },
-      { key: "role", label: "권한" },
-      { key: "status", label: "상태" },
-      { key: "invitedBy", label: "초대자" },
-      { key: "expiresAt", label: "만료일" },
+      { key: "email", label: dict.team.table.columns.invitedEmail },
+      { key: "role", label: dict.team.table.columns.role },
+      { key: "status", label: dict.team.table.columns.status },
+      { key: "invitedBy", label: dict.team.table.columns.invitedBy },
+      { key: "expiresAt", label: dict.team.table.columns.expiresAt },
     ],
-    [],
+    [dict],
   );
 
   // Effect 3: Reload members list when data changes - separate concern
@@ -223,7 +224,7 @@ export function TeamManagement() {
   const handleInvite = useCallback(async () => {
     if (!inviteEmail) {
       toast.error({
-        title: "초대할 팀원의 이메일을 입력해주세요.",
+        title: dict.team.inviteModal.title,
       });
 
       return;
@@ -232,8 +233,11 @@ export function TeamManagement() {
     try {
       await inviteTeamMember(inviteEmail, inviteRole);
       toast.success({
-        title: "초대 완료",
-        description: `${inviteEmail}님에게 초대장을 보냈습니다.`,
+        title: dict.team.toast.inviteSuccess,
+        description: dict.team.toast.inviteSuccessDescription.replace(
+          "{{email}}",
+          inviteEmail,
+        ),
       });
       startTransition(() => {
         setInviteEmail("");
@@ -242,51 +246,59 @@ export function TeamManagement() {
       onClose();
     } catch {
       toast.error({
-        title: "초대 실패",
-        description: "초대 중 오류가 발생했습니다. 다시 시도해주세요.",
+        title: dict.team.toast.inviteFailed,
+        description: dict.team.toast.inviteFailedDescription,
       });
     }
-  }, [inviteEmail, inviteRole, inviteTeamMember, onClose]);
+  }, [inviteEmail, inviteRole, inviteTeamMember, onClose, dict]);
 
   const handleRoleUpdate = useCallback(
     async (memberId: string) => {
       try {
         await updateMemberRole(memberId, editingRole);
         toast.success({
-          title: "권한 변경 완료",
-          description: `팀원의 권한이 ${roleConfig[editingRole].label}로 변경되었습니다.`,
+          title: dict.team.toast.roleChangeSuccess,
+          description: dict.team.toast.roleChangeSuccessDescription.replace(
+            "{{role}}",
+            roleConfig(dict)[editingRole].label,
+          ),
         });
         startTransition(() => {
           setEditingMember(null);
         });
       } catch {
         toast.error({
-          title: "권한 변경 실패",
-          description: "권한 변경에 실패했습니다. 다시 시도해주세요.",
+          title: dict.team.toast.roleChangeFailed,
+          description: dict.team.toast.roleChangeFailedDescription,
         });
       }
     },
-    [editingRole, updateMemberRole],
+    [editingRole, updateMemberRole, dict],
   );
 
   const handleRemoveMember = useCallback(
     async (memberId: string, memberName: string) => {
-      if (confirm(`${memberName}님을 팀에서 제거하시겠습니까?`)) {
+      if (
+        confirm(dict.team.toast.removeConfirm.replace("{{name}}", memberName))
+      ) {
         try {
           await removeMember(memberId);
           toast.success({
-            title: "팀원 제거 완료",
-            description: `${memberName}님이 팀에서 제거되었습니다.`,
+            title: dict.team.toast.removeSuccess,
+            description: dict.team.toast.removeSuccessDescription.replace(
+              "{{name}}",
+              memberName,
+            ),
           });
         } catch {
           toast.error({
-            title: "팀원 제거 실패",
-            description: "팀원 제거 중 오류가 발생했습니다.",
+            title: dict.team.toast.removeFailed,
+            description: dict.team.toast.removeFailedDescription,
           });
         }
       }
     },
-    [removeMember],
+    [removeMember, dict],
   );
 
   // Render cell content for members table - memoize to prevent re-renders
@@ -308,8 +320,8 @@ export function TeamManagement() {
               />
               <div>
                 <p className="font-medium">
-                  {memberProfile?.full_name || "이름 없음"}
-                  {isCurrentUser && " (나)"}
+                  {memberProfile?.full_name || dict.team.noName}
+                  {isCurrentUser && ` ${dict.team.me}`}
                 </p>
               </div>
             </div>
@@ -329,7 +341,7 @@ export function TeamManagement() {
                   });
                 }}
               >
-                {Object.entries(roleConfig).map(([role, config]) => (
+                {Object.entries(roleConfig(dict)).map(([role, config]) => (
                   <SelectItem key={role}>{config.label}</SelectItem>
                 ))}
               </Select>
@@ -338,7 +350,7 @@ export function TeamManagement() {
                 size="sm"
                 onPress={() => handleRoleUpdate(member.id)}
               >
-                저장
+                {dict.common.save}
               </Button>
               <Button
                 size="sm"
@@ -349,21 +361,23 @@ export function TeamManagement() {
                   });
                 }}
               >
-                취소
+                {dict.common.cancel}
               </Button>
             </div>
           ) : (
             <div className="flex items-center gap-2">
               <Chip
-                color={roleConfig[isMaster ? "master" : member.role].color}
+                color={
+                  roleConfig(dict)[isMaster ? "master" : member.role].color
+                }
                 size="sm"
                 startContent={createElement(
-                  roleConfig[isMaster ? "master" : member.role].icon,
+                  roleConfig(dict)[isMaster ? "master" : member.role].icon,
                   { className: "w-3 h-3" },
                 )}
                 variant="flat"
               >
-                {roleConfig[isMaster ? "master" : member.role].label}
+                {roleConfig(dict)[isMaster ? "master" : member.role].label}
               </Chip>
             </div>
           );
@@ -384,7 +398,7 @@ export function TeamManagement() {
                   ? [
                       {
                         icon: <FaEdit />,
-                        label: "권한 변경",
+                        label: dict.team.actions.changeRole,
                         variant: "flat" as const,
                         onPress: () => {
                           startTransition(() => {
@@ -399,13 +413,14 @@ export function TeamManagement() {
                   ? [
                       {
                         icon: <FaTrash />,
-                        label: "제거",
+                        label: dict.team.actions.remove,
                         variant: "flat" as const,
                         color: "danger" as const,
                         onPress: () =>
                           handleRemoveMember(
                             member.id,
-                            memberProfile?.full_name || "팀원",
+                            memberProfile?.full_name ||
+                              dict.team.table.columns.member,
                           ),
                       },
                     ]
@@ -425,6 +440,7 @@ export function TeamManagement() {
       userRole,
       handleRoleUpdate,
       handleRemoveMember,
+      dict,
     ],
   );
 
@@ -437,14 +453,17 @@ export function TeamManagement() {
         case "role":
           return (
             <Chip
-              color={roleConfig[invitation.role].color}
+              color={roleConfig(dict)[invitation.role].color}
               size="sm"
-              startContent={createElement(roleConfig[invitation.role].icon, {
-                className: "w-3 h-3",
-              })}
+              startContent={createElement(
+                roleConfig(dict)[invitation.role].icon,
+                {
+                  className: "w-3 h-3",
+                },
+              )}
               variant="flat"
             >
-              {roleConfig[invitation.role].label}
+              {roleConfig(dict)[invitation.role].label}
             </Chip>
           );
         case "status":
@@ -454,12 +473,16 @@ export function TeamManagement() {
               size="sm"
               variant="dot"
             >
-              {invitation.status === "pending" ? "대기 중" : "승인됨"}
+              {invitation.status === "pending"
+                ? dict.team.members.pending
+                : dict.team.members.active}
             </Chip>
           );
         case "invitedBy":
           return (
-            <p className="text-sm">{invitation.invited_by || "알 수 없음"}</p>
+            <p className="text-sm">
+              {invitation.invited_by || dict.team.unknown}
+            </p>
           );
         case "expiresAt":
           return (
@@ -471,11 +494,11 @@ export function TeamManagement() {
           return null;
       }
     },
-    [],
+    [dict],
   );
 
   if (isLoading && !teamMembers?.length) {
-    return <LoadingState message="팀 정보를 불러오는 중..." />;
+    return <LoadingState message={dict.team.loadingTeam} />;
   }
 
   if (error) {
@@ -495,30 +518,30 @@ export function TeamManagement() {
         currentTeam && (
           <Card>
             <CardHeader>
-              <h3 className="text-lg font-semibold">팀 정보</h3>
+              <h3 className="text-lg font-semibold">{dict.team.teamInfo}</h3>
             </CardHeader>
             <CardBody>
               <div className="space-y-2">
                 <p>
-                  <span className="font-medium">팀 이름:</span>{" "}
+                  <span className="font-medium">{dict.team.teamName}</span>{" "}
                   {currentTeam.name}
                 </p>
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">내 권한:</span>
+                  <span className="font-medium">{dict.team.myRole}</span>
                   <Chip
-                    color={roleConfig[userRole || "viewer"].color}
+                    color={roleConfig(dict)[userRole || "viewer"].color}
                     size="sm"
                     startContent={createElement(
-                      roleConfig[userRole || "viewer"].icon,
+                      roleConfig(dict)[userRole || "viewer"].icon,
                       { className: "w-3 h-3" },
                     )}
                     variant="flat"
                   >
-                    {roleConfig[userRole || "viewer"].label}
+                    {roleConfig(dict)[userRole || "viewer"].label}
                   </Chip>
                 </div>
                 <p className="text-sm text-default-500">
-                  {roleConfig[userRole || "viewer"].description}
+                  {roleConfig(dict)[userRole || "viewer"].description}
                 </p>
               </div>
             </CardBody>
@@ -530,8 +553,8 @@ export function TeamManagement() {
       <div>
         <div className="flex justify-between items-center mb-4">
           <SectionHeader
-            subtitle="팀에 속한 멤버들을 관리합니다"
-            title="팀원 목록"
+            subtitle={dict.team.memberListSubtitle}
+            title={dict.team.memberListTitle}
           />
           {canManageTeam && (
             <Button
@@ -540,7 +563,7 @@ export function TeamManagement() {
               startContent={<FaUserPlus />}
               onPress={onOpen}
             >
-              팀원 초대
+              {dict.team.inviteButton}
             </Button>
           )}
         </div>
@@ -549,9 +572,9 @@ export function TeamManagement() {
           <TableSkeleton columns={memberColumns.length} rows={5} />
         ) : (
           <InfiniteScrollTable
-            aria-label="팀원 목록"
+            aria-label={dict.team.memberListTitle}
             columns={memberColumns}
-            emptyContent="팀원이 없습니다"
+            emptyContent={dict.team.noMembers}
             hasMore={hasMoreMembers}
             isLoading={membersList.isLoading || isPending}
             items={membersList}
@@ -567,8 +590,8 @@ export function TeamManagement() {
         <div>
           <div className="mb-4">
             <SectionHeader
-              subtitle="초대된 사용자들의 상태를 확인합니다"
-              title="초대 현황"
+              subtitle={dict.team.invitationListSubtitle}
+              title={dict.team.invitationListTitle}
             />
           </div>
 
@@ -576,9 +599,9 @@ export function TeamManagement() {
             <TableSkeleton columns={invitationColumns.length} rows={3} />
           ) : (
             <InfiniteScrollTable
-              aria-label="초대 현황"
+              aria-label={dict.team.invitationListTitle}
               columns={invitationColumns}
-              emptyContent="초대 내역이 없습니다"
+              emptyContent={dict.team.noInvitations}
               hasMore={hasMoreInvitations}
               isLoading={invitationsList.isLoading || isPending}
               items={invitationsList}
@@ -593,11 +616,11 @@ export function TeamManagement() {
       {/* 팀원 초대 모달 */}
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalContent>
-          <ModalHeader>팀원 초대</ModalHeader>
+          <ModalHeader>{dict.team.invite.title}</ModalHeader>
           <ModalBody>
             <div className="space-y-4">
               <Input
-                label="이메일"
+                label={dict.team.inviteModal.emailLabel}
                 placeholder="team@example.com"
                 type="email"
                 value={inviteEmail}
@@ -608,7 +631,7 @@ export function TeamManagement() {
                 }}
               />
               <Select
-                label="권한"
+                label={dict.team.inviteModal.roleLabel}
                 selectedKeys={[inviteRole]}
                 onChange={(e) => {
                   startTransition(() => {
@@ -616,7 +639,7 @@ export function TeamManagement() {
                   });
                 }}
               >
-                {Object.entries(roleConfig)
+                {Object.entries(roleConfig(dict))
                   .filter(([role]) => role !== "master")
                   .map(([role, config]) => (
                     <SelectItem
@@ -624,6 +647,7 @@ export function TeamManagement() {
                       startContent={createElement(config.icon, {
                         className: "w-4 h-4",
                       })}
+                      textValue={config.label}
                     >
                       <div>
                         <p className="font-medium">{config.label}</p>
@@ -638,7 +662,7 @@ export function TeamManagement() {
           </ModalBody>
           <ModalFooter>
             <Button variant="light" onPress={onClose}>
-              취소
+              {dict.team.inviteModal.cancel}
             </Button>
             <Button
               color="primary"
@@ -646,7 +670,7 @@ export function TeamManagement() {
               startContent={<FaUserPlus />}
               onPress={handleInvite}
             >
-              초대하기
+              {dict.team.inviteModal.send}
             </Button>
           </ModalFooter>
         </ModalContent>

@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/client";
-import { Profile } from "@/types/database.types";
+import { Profile } from "@/types";
 import log from "@/utils/logger";
 
 export async function getProfile(userId: string): Promise<Profile | null> {

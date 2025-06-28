@@ -9,6 +9,7 @@ import { FaExternalLinkAlt } from "react-icons/fa";
 import { PlatformIcon } from "@/components/common/PlatformIcon";
 import { platformConfig } from "@/constants/platform-config";
 import { PlatformType, PlatformCredential } from "@/types";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface PlatformCredentialItemProps {
   platform: PlatformType;
@@ -25,6 +26,7 @@ function PlatformCredentialItemComponent({
   onToggle,
   onDelete,
 }: PlatformCredentialItemProps) {
+  const { dictionary: dict } = useDictionary();
   const config = platformConfig[platform];
 
   const handleToggle = useCallback(
@@ -50,11 +52,11 @@ function PlatformCredentialItemComponent({
           <h4 className="font-medium">{config.name}</h4>
           {credential ? (
             <Chip color="success" size="sm" variant="flat">
-              연동됨
+              {dict.integrations.connected}
             </Chip>
           ) : (
             <Chip color="default" size="sm" variant="flat">
-              미연동
+              {dict.integrations.credentials.notConnected}
             </Chip>
           )}
         </div>
@@ -63,7 +65,7 @@ function PlatformCredentialItemComponent({
       <div className="flex items-center gap-2">
         {credential && (
           <Switch
-            isSelected={credential.isActive}
+            isSelected={credential.is_active ?? false}
             onValueChange={handleToggle}
           />
         )}
@@ -78,7 +80,11 @@ function PlatformCredentialItemComponent({
           variant={credential ? "flat" : "solid"}
           onPress={handleAddOrEdit}
         >
-          {credential ? (config.supportsOAuth ? "재연동" : "수정") : "연동"}
+          {credential
+            ? config.supportsOAuth
+              ? dict.integrations.reconnect
+              : dict.common.edit
+            : dict.integrations.connect}
         </Button>
         {credential && (
           <Button
@@ -87,7 +93,7 @@ function PlatformCredentialItemComponent({
             variant="light"
             onPress={handleDelete}
           >
-            삭제
+            {dict.common.delete}
           </Button>
         )}
       </div>

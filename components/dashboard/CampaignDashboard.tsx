@@ -64,14 +64,8 @@ export function CampaignDashboard() {
   const { updateBudget, isUpdatingBudget } = useCampaignBudgetMutation();
 
   // 페이지네이션 훅
-  const {
-    displayedCampaigns,
-    hasMore,
-    loadMore,
-    reset,
-    currentPage,
-    totalPages,
-  } = useCampaignPagination(filteredCampaigns, ITEMS_PER_PAGE);
+  const { displayedCampaigns, hasMore, loadMore, reset } =
+    useCampaignPagination(filteredCampaigns, ITEMS_PER_PAGE);
 
   const { isOpen, onOpen, onClose, onOpenChange } = useDisclosure();
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(
@@ -343,26 +337,19 @@ export function CampaignDashboard() {
       {isLoading && campaigns.length === 0 ? (
         <TableSkeleton columns={6} rows={5} />
       ) : (
-        <>
-          <div className="text-xs text-default-500 mb-2">
-            총 {campaigns.length}개 캠페인 중 {filteredCampaigns.length}개
-            필터됨, 로드된 항목: {displayedCampaigns.length} (페이지{" "}
-            {currentPage}/{totalPages})
-          </div>
-          <VirtualScrollTable
-            aria-label="캠페인 목록"
-            columns={columns}
-            emptyContent="캠페인이 없습니다"
-            estimateSize={60}
-            hasMore={hasMore}
-            isLoading={isLoading || isPending}
-            items={displayedCampaigns}
-            maxHeight="600px"
-            overscan={5}
-            renderCell={renderCell}
-            onLoadMore={loadMore}
-          />
-        </>
+        <VirtualScrollTable
+          aria-label="캠페인 목록"
+          columns={columns}
+          emptyContent="캠페인이 없습니다"
+          estimateSize={60}
+          hasMore={hasMore}
+          isLoading={isLoading || isPending}
+          items={displayedCampaigns}
+          maxHeight="600px"
+          overscan={5}
+          renderCell={renderCell}
+          onLoadMore={loadMore}
+        />
       )}
 
       {/* 예산 수정 모달 */}

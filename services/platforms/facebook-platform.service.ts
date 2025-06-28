@@ -80,25 +80,15 @@ export class FacebookPlatformService extends BasePlatformService {
       // Transform to platform common format
       return metaCampaigns.map((campaign) => ({
         id: `${accountId}_${campaign.id}`,
-        teamId: this.teamId || "",
+        team_id: this.teamId || "",
         platform: "facebook" as PlatformType,
-        platformCampaignId: campaign.id,
-        accountId,
+        platform_campaign_id: campaign.id,
         name: campaign.name,
         status: this.mapStatus(campaign.status),
         budget: campaign.dailyBudget || campaign.lifetimeBudget || 0,
-        isActive: campaign.status === "ACTIVE",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        metrics: campaign.metrics
-          ? {
-              impressions: campaign.metrics.impressions || 0,
-              clicks: campaign.metrics.clicks || 0,
-              cost: campaign.metrics.spend || 0,
-              conversions: campaign.metrics.conversions || 0,
-              revenue: 0, // Meta doesn't provide revenue directly
-            }
-          : undefined,
+        is_active: campaign.status === "ACTIVE",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       }));
     } catch (error) {
       log.error("Failed to fetch Facebook campaigns", error as Error);

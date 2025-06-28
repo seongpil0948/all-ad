@@ -6,7 +6,7 @@ import { LoadingSlice } from "./loadingSlice";
 import { ErrorSlice } from "./errorSlice";
 import { PlatformDataSlice } from "./platformDataSlice";
 
-import { PlatformCredential, PlatformType } from "@/types/database.types";
+import { PlatformCredential, PlatformType } from "@/types";
 import { Json } from "@/types/supabase.types";
 import { createClient } from "@/utils/supabase/client";
 import log from "@/utils/logger";

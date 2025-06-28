@@ -7,7 +7,11 @@ import { createServiceClient } from "@/utils/supabase/service";
 import { getAllAdOAuthConfig } from "@/lib/oauth/platform-configs";
 import log from "@/utils/logger";
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
+  // Get locale from headers or use default
+  const acceptLanguage = request.headers.get("accept-language") || "";
+  const locale = acceptLanguage.startsWith("ko") ? "ko" : "en";
+
   try {
     const supabase = await createClient();
 
@@ -21,7 +25,7 @@ export async function GET(_request: NextRequest) {
       const baseUrl =
         process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-      return NextResponse.redirect(`${baseUrl}/login`);
+      return NextResponse.redirect(`${baseUrl}/${locale}/login`);
     }
 
     // Get user's current team
@@ -135,7 +139,7 @@ export async function GET(_request: NextRequest) {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
     return NextResponse.redirect(
-      `${baseUrl}/integrated?error=oauth_init_failed&platform=google`,
+      `${baseUrl}/${locale}/dashboard?error=oauth_init_failed&platform=google`,
     );
   }
 }

@@ -2,7 +2,7 @@
 
 import { StateCreator } from "zustand";
 
-import { PlatformCredential, PlatformType } from "@/types/database.types";
+import { PlatformCredential, PlatformType } from "@/types";
 
 export interface PlatformDataSlice {
   credentials: PlatformCredential[];

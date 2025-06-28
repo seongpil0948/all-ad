@@ -1,0 +1,776 @@
+{
+  "common": {
+    "loading": "로딩 중...",
+    "error": "오류",
+    "success": "성공",
+    "cancel": "취소",
+    "save": "저장",
+    "delete": "삭제",
+    "edit": "편집",
+    "add": "추가",
+    "search": "검색",
+    "filter": "필터",
+    "sort": "정렬",
+    "actions": "작업",
+    "close": "닫기",
+    "confirm": "확인",
+    "back": "뒤로",
+    "next": "다음",
+    "previous": "이전",
+    "submit": "제출",
+    "reset": "초기화",
+    "refresh": "새로고침",
+    "download": "다운로드",
+    "upload": "업로드",
+    "select": "선택",
+    "selectAll": "전체 선택",
+    "unselectAll": "전체 해제",
+    "yes": "예",
+    "no": "아니오",
+    "or": "또는",
+    "and": "그리고",
+    "of": "의",
+    "noData": "데이터가 없습니다",
+    "noResults": "검색 결과가 없습니다",
+    "viewAll": "전체 보기",
+    "viewLess": "간략히 보기",
+    "more": "더 보기",
+    "less": "접기",
+    "new": "신규",
+    "all": "전체",
+    "none": "없음",
+    "today": "오늘",
+    "yesterday": "어제",
+    "week": "주",
+    "month": "월",
+    "year": "년",
+    "date": "날짜",
+    "time": "시간",
+    "status": "상태",
+    "active": "활성",
+    "inactive": "비활성",
+    "pending": "대기 중",
+    "completed": "완료됨",
+    "failed": "실패",
+    "retry": "재시도",
+    "copy": "복사",
+    "copied": "복사됨",
+    "share": "공유",
+    "export": "내보내기",
+    "import": "가져오기",
+    "settings": "설정",
+    "help": "도움말",
+    "documentation": "문서",
+    "support": "지원",
+    "feedback": "피드백",
+    "report": "리포트",
+    "language": "언어",
+    "theme": "테마",
+    "light": "라이트",
+    "dark": "다크",
+    "system": "시스템"
+  },
+  "nav": {
+    "home": "홈",
+    "demo": "데모",
+    "pricing": "요금제",
+    "support": "고객 지원",
+    "lab": "연구실",
+    "login": "로그인",
+    "freeTrial": "무료 체험",
+    "profile": "내 프로필",
+    "settings": "설정",
+    "team": "팀 관리",
+    "analytics": "분석",
+    "help": "도움말 및 피드백",
+    "logout": "로그아웃",
+    "dashboard": "대시보드",
+    "campaigns": "캠페인 관리",
+    "reports": "리포트"
+  },
+  "home": {
+    "hero": {
+      "title": "모든 광고를 하나로",
+      "subtitle": "여러 광고 플랫폼을 하나의 대시보드에서 관리하세요. 실시간 분석과 자동 최적화로 광고 성과를 극대화합니다.",
+      "cta": "지금 시작하세요",
+      "subCta": "14일 무료 체험으로 모든 기능을 경험해보세요"
+    },
+    "features": {
+      "title": "주요 기능",
+      "subtitle": "광고 관리를 더 스마트하게",
+      "automation": {
+        "title": "자동화된 광고 최적화",
+        "description": "AI 기반 광고 최적화로 ROI를 극대화하고 광고 예산을 효율적으로 관리하세요."
+      },
+      "security": {
+        "title": "안전한 데이터 관리",
+        "description": "엔터프라이즈급 보안으로 광고 데이터를 안전하게 보호합니다."
+      },
+      "integration": {
+        "title": "유연한 연동 방식",
+        "description": "SDK, Open API, DB to DB 등 다양한 연동 방식을 지원합니다."
+      },
+      "hero": {
+        "title": "모든 광고를 하나로",
+        "subtitle": "여러 광고 플랫폼을 하나의 대시보드에서 관리하세요. 실시간 분석과 자동 최적화로 광고 성과를 극대화합니다.",
+        "cta": "지금 시작하세요",
+        "subCta": "14일 무료 체험으로 모든 기능을 경험해보세요"
+      },
+      "features": {
+        "title": "주요 기능",
+        "subtitle": "광고 관리를 더 스마트하게",
+        "unifiedDashboard": {
+          "title": "통합 대시보드",
+          "description": "모든 광고 플랫폼의 성과를 한눈에 확인하세요. 실시간 데이터 분석과 리포트를 제공합니다."
+        },
+        "automaticOptimization": {
+          "title": "자동화된 광고 최적화",
+          "description": "AI 기반 광고 최적화로 ROI를 극대화하고 광고 예산을 효율적으로 관리하세요."
+        },
+        "secureDataManagement": {
+          "title": "안전한 데이터 관리",
+          "description": "엔터프라이즈급 보안으로 광고 데이터를 안전하게 보호합니다."
+        },
+        "flexibleIntegration": {
+          "title": "유연한 연동 방식",
+          "description": "SDK, Open API, DB to DB 등 다양한 연동 방식을 지원합니다."
+        }
+      },
+      "platforms": {
+        "title": "연동 가능한 플랫폼",
+        "subtitle": "국내외 주요 광고 플랫폼을 모두 지원합니다",
+        "visualization": {
+          "title": "직관적인 대시보드",
+          "subtitle": "복잡한 데이터를 쉽게 이해할 수 있도록 시각화합니다"
+        }
+      },
+      "dashboard": {
+        "title": "직관적인 대시보드",
+        "subtitle": "복잡한 데이터를 쉽게 이해할 수 있도록 시각화합니다"
+      },
+      "cta": {
+        "mainTitle": "모든 광고를",
+        "mainTitleHighlight": "하나로",
+        "mainSubtitle": "여러 광고 플랫폼을 하나의 대시보드에서 관리하세요. 실시간 분석과 자동 최적화로 광고 성과를 극대화합니다.",
+        "primaryButton": "무료로 시작하기",
+        "secondaryButton": "데모 보기",
+        "sectionTitle": "지금 시작하세요",
+        "sectionSubtitle": "14일 무료 체험으로 모든 기능을 경험해보세요",
+        "sectionButton": "무료 체험 시작하기"
+      }
+    },
+    "platforms": {
+      "title": "연동 가능한 플랫폼",
+      "subtitle": "국내외 주요 광고 플랫폼을 모두 지원합니다",
+      "visualization": {
+        "title": "직관적인 대시보드",
+        "subtitle": "복잡한 데이터를 쉽게 이해할 수 있도록 시각화합니다"
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "로그인",
+      "email": "이메일",
+      "emailPlaceholder": "your@email.com",
+      "password": "비밀번호",
+      "passwordPlaceholder": "비밀번호를 입력하세요",
+      "submit": "로그인",
+      "forgotPassword": "비밀번호를 잊으셨나요?",
+      "noAccount": "아직 계정이 없으신가요?",
+      "signUp": "회원가입",
+      "or": "또는",
+      "continueWith": "{{provider}}로 계속하기",
+      "errors": {
+        "invalidEmail": "유효한 이메일 주소를 입력해주세요.",
+        "passwordRequired": "비밀번호를 입력해주세요.",
+        "invalidCredentials": "이메일 또는 비밀번호가 올바르지 않습니다.",
+        "general": "로그인 중 오류가 발생했습니다. 다시 시도해주세요.",
+        "tooManyAttempts": "로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요."
+      },
+      "success": "로그인되었습니다!"
+    },
+    "signup": {
+      "title": "회원가입",
+      "email": "이메일",
+      "emailPlaceholder": "your@email.com",
+      "password": "비밀번호",
+      "passwordPlaceholder": "최소 6자 이상",
+      "confirmPassword": "비밀번호 확인",
+      "confirmPasswordPlaceholder": "비밀번호를 다시 입력하세요",
+      "submit": "회원가입",
+      "hasAccount": "이미 계정이 있으신가요?",
+      "login": "로그인",
+      "agreeToTerms": "회원가입 시 당사의",
+      "termsOfService": "이용약관",
+      "privacyPolicy": "개인정보처리방침",
+      "and": "및",
+      "errors": {
+        "invalidEmail": "유효한 이메일 주소를 입력해주세요.",
+        "passwordMin": "비밀번호는 최소 6자 이상이어야 합니다.",
+        "passwordMatch": "비밀번호가 일치하지 않습니다.",
+        "general": "회원가입 중 오류가 발생했습니다. 다시 시도해주세요.",
+        "emailExists": "이미 등록된 이메일입니다."
+      },
+      "success": "계정이 생성되었습니다! 이메일을 확인하여 계정을 인증해주세요."
+    },
+    "forgotPassword": {
+      "title": "비밀번호 재설정",
+      "subtitle": "가입한 이메일 주소를 입력하시면 비밀번호 재설정 링크를 보내드립니다.",
+      "email": "이메일",
+      "emailPlaceholder": "your@email.com",
+      "submit": "재설정 링크 전송",
+      "backToLogin": "로그인으로 돌아가기",
+      "errors": {
+        "invalidEmail": "유효한 이메일 주소를 입력해주세요.",
+        "general": "재설정 링크 전송 중 오류가 발생했습니다. 다시 시도해주세요."
+      },
+      "success": "비밀번호 재설정 링크를 전송했습니다! 이메일을 확인해주세요."
+    },
+    "resetPassword": {
+      "title": "새 비밀번호 설정",
+      "newPassword": "새 비밀번호",
+      "newPasswordPlaceholder": "최소 6자 이상",
+      "confirmPassword": "비밀번호 확인",
+      "confirmPasswordPlaceholder": "비밀번호를 다시 입력하세요",
+      "submit": "비밀번호 재설정",
+      "errors": {
+        "passwordMin": "비밀번호는 최소 6자 이상이어야 합니다.",
+        "passwordMatch": "비밀번호가 일치하지 않습니다.",
+        "general": "비밀번호 재설정 중 오류가 발생했습니다. 다시 시도해주세요.",
+        "invalidToken": "유효하지 않거나 만료된 재설정 링크입니다."
+      },
+      "success": "비밀번호가 재설정되었습니다! 새 비밀번호로 로그인하실 수 있습니다."
+    }
+  },
+  "dashboard": {
+    "title": "대시보드",
+    "subtitle": "모든 광고 플랫폼의 캠페인을 한눈에 관리하세요.",
+    "noData": "데이터가 없습니다",
+    "loginRequired": "로그인이 필요합니다.",
+    "sync": {
+      "button": "동기화",
+      "syncing": "동기화 중...",
+      "noConnections": "연동 없음",
+      "connectFirst": "먼저 광고 플랫폼을 연동해주세요",
+      "success": "성공",
+      "successDescription": "모든 플랫폼 동기화가 완료되었습니다",
+      "error": "오류",
+      "errorDescription": "동기화 중 오류가 발생했습니다",
+      "syncAll": "전체 동기화",
+      "noActivePlatforms": "활성화된 플랫폼이 없습니다",
+      "syncPlatforms": "{{count}}개 플랫폼 동기화"
+    },
+    "metrics": {
+      "totalSpend": "총 지출",
+      "totalImpressions": "총 노출수",
+      "totalClicks": "총 클릭수",
+      "avgCTR": "평균 CTR",
+      "avgCPC": "평균 CPC",
+      "totalConversions": "총 전환수"
+    },
+    "charts": {
+      "performance": "성과 추이",
+      "platforms": "플랫폼별",
+      "campaigns": "상위 캠페인"
+    },
+    "filters": {
+      "dateRange": "기간",
+      "platform": "플랫폼",
+      "campaign": "캠페인",
+      "status": "상태"
+    }
+  },
+  "campaigns": {
+    "title": "캠페인 관리",
+    "subtitle": "모든 광고 캠페인을 모니터링하고 제어하세요.",
+    "table": {
+      "name": "캠페인명",
+      "platform": "플랫폼",
+      "status": "상태",
+      "budget": "예산",
+      "spent": "지출",
+      "impressions": "노출수",
+      "clicks": "클릭수",
+      "ctr": "CTR",
+      "cpc": "CPC",
+      "conversions": "전환수",
+      "lastUpdated": "최종 업데이트",
+      "metrics": "성과",
+      "actions": "액션",
+      "impressionsLabel": "노출:",
+      "clicksLabel": "클릭:",
+      "noCampaigns": "캠페인이 없습니다"
+    },
+    "actions": {
+      "enable": "활성화",
+      "disable": "비활성화",
+      "edit": "편집",
+      "delete": "삭제",
+      "duplicate": "복제",
+      "viewDetails": "상세 보기"
+    },
+    "status": {
+      "active": "활성",
+      "paused": "일시정지",
+      "completed": "완료",
+      "draft": "초안",
+      "error": "오류"
+    },
+    "filters": {
+      "all": "전체 캠페인",
+      "active": "활성",
+      "paused": "일시정지",
+      "completed": "완료"
+    },
+    "budgetModal": {
+      "title": "예산 수정",
+      "campaign": "캠페인:",
+      "currentBudget": "현재 예산:",
+      "newBudgetLabel": "새 예산",
+      "newBudgetPlaceholder": "예산을 입력하세요",
+      "cancel": "취소",
+      "update": "수정"
+    },
+    "statusModal": {
+      "title": "캠페인 상태 변경",
+      "confirmActive": "정말로",
+      "activate": "활성화",
+      "deactivate": "비활성화",
+      "confirmSuffix": "하시겠습니까?",
+      "cancel": "취소",
+      "confirm": "확인"
+    },
+    "search": {
+      "placeholder": "캠페인 검색..."
+    },
+    "toast": {
+      "invalidBudget": "올바른 예산 금액을 입력해주세요",
+      "budgetUpdateSuccess": "예산이 업데이트되었습니다",
+      "budgetUpdateError": "예산 업데이트에 실패했습니다",
+      "statusChangeSuccess": "캠페인이 {{status}}되었습니다",
+      "statusChangeError": "캠페인 상태 변경에 실패했습니다"
+    },
+    "metrics": {
+      "totalBudgetLabel": "총 예산",
+      "totalSpendLabel": "총 지출",
+      "totalImpressionsLabel": "총 노출수",
+      "totalClicksLabel": "총 클릭수",
+      "won": "원"
+    },
+    "actionLabels": {
+      "editBudget": "예산 수정",
+      "activate": "활성화",
+      "deactivate": "비활성화"
+    }
+  },
+  "integrations": {
+    "title": "플랫폼 연동",
+    "subtitle": "광고 계정을 연결하여 시작하세요.",
+    "connected": "연동됨",
+    "connect": "연동하기",
+    "disconnect": "연동 해제",
+    "reconnect": "재연동",
+    "platforms": {
+      "googleAds": {
+        "name": "Google Ads",
+        "description": "구글 광고 계정을 연동하세요",
+        "features": "Google Ads 연동 시 가능한 기능:",
+        "feature1": "캠페인 실시간 모니터링",
+        "feature2": "캠페인 ON/OFF 제어",
+        "feature3": "성과 데이터 자동 수집",
+        "feature4": "통합 리포트 생성",
+        "connectButton": "Google 계정으로 연동하기",
+        "instructions": "Google 로그인 후 권한을 승인하면 자동으로 연동됩니다"
+      },
+      "metaAds": {
+        "name": "Meta Ads",
+        "description": "메타(페이스북 & 인스타그램) 광고 계정을 연동하세요"
+      },
+      "naverAds": {
+        "name": "네이버 광고",
+        "description": "네이버 검색광고 계정을 연동하세요"
+      },
+      "kakaoAds": {
+        "name": "카카오 광고",
+        "description": "카카오모먼트 계정을 연동하세요"
+      },
+      "coupangAds": {
+        "name": "쿠팡 광고",
+        "description": "쿠팡 광고 계정을 연동하세요"
+      }
+    },
+    "connectedAccount": "연동된 계정",
+    "lastSync": "마지막 동기화",
+    "syncNow": "지금 동기화",
+    "settings": "연동 설정",
+    "errors": {
+      "connectionFailed": "연동에 실패했습니다. 다시 시도해주세요.",
+      "authExpired": "인증이 만료되었습니다. 재연동해주세요.",
+      "syncFailed": "동기화에 실패했습니다. 연결 상태를 확인해주세요.",
+      "oauthCancelled": "OAuth 인증이 취소되었습니다.",
+      "invalidOauthResponse": "OAuth 응답이 올바르지 않습니다.",
+      "teamNotFound": "팀을 찾을 수 없습니다.",
+      "oauthFailed": "OAuth 인증에 실패했습니다."
+    },
+    "success": {
+      "connected": "{{platform}} 연결 성공!\n계정: {{account}}",
+      "disconnected": "플랫폼 연결이 해제되었습니다"
+    },
+    "management": {
+      "title": "플랫폼 연동 관리",
+      "subtitle": "광고 플랫폼을 연동하여 통합 대시보드에서 관리하세요",
+      "refreshAll": "전체 갱신",
+      "refresh": "새로고침",
+      "tokenRefreshService": "토큰 갱신 서비스",
+      "tokenRefreshDescription": "자동으로 만료되는 토큰을 갱신합니다",
+      "serviceStatus": "서비스 상태",
+      "running": "실행 중",
+      "stopped": "중지됨",
+      "totalIntegrations": "전체 연동: {{count}}개",
+      "needRefresh": "갱신 필요: {{count}}개",
+      "connectedPlatforms": "연동된 플랫폼",
+      "lastSyncTime": "마지막 동기화: {{time}}",
+      "tokenExpiry": "토큰 만료:",
+      "disconnect": "연결 해제",
+      "platformIntegration": "플랫폼 연동",
+      "oauthSupported": "OAuth 지원",
+      "manualOnly": "수동 연동만 가능",
+      "connected": "연결됨",
+      "comingSoon": "지원 예정",
+      "disconnectModal": {
+        "title": "플랫폼 연결 해제",
+        "confirmText": "정말로",
+        "platformName": "{{platform}} ({{account}}) 연결을 해제하시겠습니까?",
+        "warning": "연결을 해제하면 해당 플랫폼의 데이터를 더 이상 동기화할 수 없습니다. 다시 연결하려면 OAuth 인증을 다시 진행해야 합니다.",
+        "cancel": "취소",
+        "disconnect": "연결 해제"
+      }
+    },
+    "status": {
+      "error": "오류",
+      "needsRefresh": "갱신 필요",
+      "connected": "연결됨",
+      "inactive": "비활성"
+    },
+    "credentials": {
+      "title": "플랫폼 인증 관리",
+      "modalTitle": "{{platform}} 인증 정보",
+      "notConnected": "미연동",
+      "oauthInfo": "이 플랫폼은 OAuth 인증을 사용합니다. '연동하기' 버튼을 클릭하면 {{platform}} 로그인 페이지로 이동합니다.",
+      "oauthSupported": "OAuth 인증 지원",
+      "apiKey": "API Key",
+      "secretKey": "Secret Key",
+      "accessKey": "Access Key",
+      "customerId": "고객 ID",
+      "naverApiKeyPlaceholder": "네이버 검색광고 API Key",
+      "customerIdPlaceholder": "고객 ID",
+      "coupangAccessKeyPlaceholder": "쿠팡 Access Key",
+      "coupangSecretKeyPlaceholder": "쿠팡 Secret Key",
+      "connectedDate": "연동 일시",
+      "googleDescription": "Google Ads 계정을 연동하면 캠페인 성과를 실시간으로 확인하고 관리할 수 있습니다.",
+      "budgetManagement": "예산 관리 및 최적화",
+      "accountName": "계정명",
+      "accountId": "계정 ID",
+      "accountList": "계정 목록",
+      "noAccounts": "연동된 계정이 없습니다",
+      "platformAccountManagement": "플랫폼 계정 관리",
+      "accountsConnected": "{{count}}개 계정 연동됨",
+      "addAccount": "계정 추가",
+      "addAccountTitle": "{{platform}} 계정 추가",
+      "noName": "이름 없음",
+      "tokenExpired": "토큰 만료",
+      "checking": "확인 중...",
+      "notSynced": "동기화 전",
+      "tokenRefreshSuccess": "토큰 갱신 성공",
+      "tokenRefreshSuccessDesc": "{{account}} 계정의 토큰이 갱신되었습니다.",
+      "reAuthFailed": "재연동 실패",
+      "reAuthFailedDesc": "토큰 갱신에 실패했습니다. 다시 시도해주세요."
+    }
+  },
+  "pricing": {
+    "title": "요금제 선택",
+    "subtitle": "모든 플랜에는 14일 무료 체험이 포함되어 있습니다. 언제든지 취소할 수 있습니다.",
+    "monthly": "월간",
+    "yearly": "연간",
+    "save": "{{percent}}% 절약",
+    "mostPopular": "가장 인기 있는 플랜",
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "price": "₩99,000/월",
+        "description": "소규모 비즈니스를 위한 기본 플랜",
+        "features": [
+          "광고 계정 3개까지",
+          "기본 분석 기능",
+          "이메일 지원",
+          "일일 데이터 동기화"
+        ]
+      },
+      "professional": {
+        "name": "Professional",
+        "price": "₩299,000/월",
+        "description": "성장하는 비즈니스를 위한 전문가 플랜",
+        "features": [
+          "광고 계정 10개까지",
+          "고급 분석 기능",
+          "우선 지원",
+          "실시간 데이터 동기화",
+          "맞춤형 리포트",
+          "API 접근"
+        ]
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "맞춤 견적",
+        "description": "대규모 기업을 위한 맞춤형 솔루션",
+        "features": [
+          "무제한 광고 계정",
+          "엔터프라이즈 분석",
+          "전담 지원",
+          "실시간 데이터 동기화",
+          "맞춤형 통합",
+          "전체 API 접근",
+          "SLA 보장",
+          "맞춤형 교육"
+        ]
+      }
+    },
+    "cta": {
+      "startFreeTrial": "무료 체험 시작하기",
+      "contactSales": "영업팀 문의",
+      "currentPlan": "현재 플랜"
+    }
+  },
+  "settings": {
+    "title": "설정",
+    "sections": {
+      "notifications": {
+        "title": "알림 설정",
+        "subtitle": "알림 수신 방법을 설정합니다",
+        "email": {
+          "title": "이메일 알림",
+          "description": "중요한 업데이트를 이메일로 받습니다"
+        },
+        "browser": {
+          "title": "브라우저 알림",
+          "description": "브라우저에서 실시간 알림을 받습니다"
+        }
+      },
+      "security": {
+        "title": "보안 설정",
+        "subtitle": "계정 보안을 강화합니다",
+        "twoFactor": {
+          "title": "2단계 인증",
+          "description": "추가 보안을 위한 2단계 인증을 설정합니다"
+        },
+        "loginAlerts": {
+          "title": "로그인 알림",
+          "description": "새로운 기기에서 로그인 시 알림을 받습니다"
+        }
+      },
+      "privacy": {
+        "title": "데이터 및 개인정보",
+        "subtitle": "데이터 사용 및 개인정보 설정",
+        "dataCollection": {
+          "title": "데이터 수집",
+          "description": "서비스 개선을 위한 데이터 수집에 동의합니다"
+        },
+        "marketing": {
+          "title": "마케팅 수신",
+          "description": "새로운 기능 및 프로모션 정보를 받습니다"
+        }
+      }
+    }
+  },
+  "team": {
+    "title": "팀 관리",
+    "subtitle": "팀원을 관리하고 권한을 설정하세요.",
+    "invite": {
+      "title": "팀원 초대",
+      "email": "이메일 주소",
+      "role": "역할",
+      "sendInvite": "초대 보내기",
+      "accept": {
+        "title": "팀 초대",
+        "invitedBy": "{{inviter}}님이 당신을 초대했습니다",
+        "asRole": "역할:",
+        "needAccount": "이 초대를 수락하려면 계정을 만들어야 합니다.",
+        "decline": "거절",
+        "acceptInvitation": "초대 수락",
+        "createAccount": "계정 만들기",
+        "success": {
+          "title": "초대 수락 완료!",
+          "description": "팀에 성공적으로 가입했습니다. 대시보드로 이동 중..."
+        },
+        "toast": {
+          "successTitle": "초대 수락 성공",
+          "successDescription": "팀에 성공적으로 가입했습니다. 대시보드로 이동합니다...",
+          "errorTitle": "초대 수락 실패",
+          "errorDescription": "오류가 발생했습니다"
+        }
+      }
+    },
+    "members": {
+      "title": "팀 구성원",
+      "you": "나",
+      "owner": "소유자",
+      "admin": "관리자",
+      "member": "구성원",
+      "viewer": "뷰어",
+      "pending": "대기 중",
+      "active": "활성"
+    },
+    "roles": {
+      "master": {
+        "name": "마스터",
+        "description": "모든 권한을 가진 관리자"
+      },
+      "team_mate": {
+        "name": "팀 메이트",
+        "description": "캠페인 수정 및 관리 가능"
+      },
+      "viewer": {
+        "name": "뷰어",
+        "description": "읽기 전용 권한"
+      }
+    },
+    "actions": {
+      "changeRole": "역할 변경",
+      "remove": "제거",
+      "resendInvite": "초대 재전송",
+      "cancelInvite": "초대 취소"
+    },
+    "table": {
+      "columns": {
+        "member": "팀원",
+        "email": "이메일",
+        "role": "권한",
+        "joinDate": "가입일",
+        "actions": "액션",
+        "invitedEmail": "초대한 이메일",
+        "status": "상태",
+        "invitedBy": "초대자",
+        "expiresAt": "만료일"
+      }
+    },
+    "inviteModal": {
+      "title": "초대할 팀원의 이메일을 입력해주세요.",
+      "emailLabel": "이메일",
+      "roleLabel": "권한",
+      "cancel": "취소",
+      "send": "초대하기"
+    },
+    "toast": {
+      "inviteSuccess": "초대 완료",
+      "inviteSuccessDescription": "{{email}}님에게 초대장을 보냈습니다.",
+      "inviteFailed": "초대 실패",
+      "inviteFailedDescription": "초대 중 오류가 발생했습니다. 다시 시도해주세요.",
+      "roleChangeSuccess": "권한 변경 완료",
+      "roleChangeSuccessDescription": "팀원의 권한이 {{role}}로 변경되었습니다.",
+      "roleChangeFailed": "권한 변경 실패",
+      "roleChangeFailedDescription": "권한 변경에 실패했습니다. 다시 시도해주세요.",
+      "removeConfirm": "{{name}}님을 팀에서 제거하시겠습니까?",
+      "removeSuccess": "팀원 제거 완료",
+      "removeSuccessDescription": "{{name}}님이 팀에서 제거되었습니다.",
+      "removeFailed": "팀원 제거 실패",
+      "removeFailedDescription": "팀원 제거 중 오류가 발생했습니다."
+    },
+    "noName": "이름 없음",
+    "me": "(나)",
+    "unknown": "알 수 없음",
+    "loadingTeam": "팀 정보를 불러오는 중...",
+    "teamInfo": "팀 정보",
+    "teamName": "팀 이름:",
+    "myRole": "내 권한:",
+    "memberListTitle": "팀원 목록",
+    "memberListSubtitle": "팀에 속한 멤버들을 관리합니다",
+    "inviteButton": "팀원 초대",
+    "noMembers": "팀원이 없습니다",
+    "invitationListTitle": "초대 현황",
+    "invitationListSubtitle": "초대된 사용자들의 상태를 확인합니다",
+    "noInvitations": "초대 내역이 없습니다",
+    "statuses": {
+      "pending": "대기 중",
+      "accepted": "승인됨"
+    },
+    "save": "저장",
+    "cancel": "취소"
+  },
+  "footer": {
+    "product": "제품",
+    "features": "기능",
+    "integrations": "통합",
+    "pricing": "요금제",
+    "resources": "리소스",
+    "blog": "블로그",
+    "guides": "가이드",
+    "apiDocs": "API 문서",
+    "company": "회사",
+    "about": "소개",
+    "careers": "채용",
+    "partners": "파트너",
+    "contact": "문의",
+    "legal": "법적 정보",
+    "terms": "이용약관",
+    "privacy": "개인정보처리방침",
+    "refund": "청약철회 및 환불규정",
+    "cookies": "쿠키 정책",
+    "security": "보안",
+    "newsletter": {
+      "title": "뉴스레터 구독",
+      "subtitle": "최신 업데이트와 팁을 이메일로 받아보세요",
+      "placeholder": "이메일 주소",
+      "subscribe": "구독하기"
+    },
+    "companyInfo": {
+      "name": "올애드",
+      "tagline": "모든 광고 플랫폼을 하나로. 광고 관리의 새로운 기준을 만들어갑니다.",
+      "copyright": "© {{year}} {{company}}. All rights reserved.",
+      "address": "서울특별시 강남구 테헤란로 123",
+      "email": "support@allad.co.kr",
+      "phone": "02-1234-5678"
+    }
+  },
+  "faq": {
+    "title": "자주 묻는 질문",
+    "questions": {
+      "platforms": {
+        "question": "올애드는 어떤 광고 플랫폼을 지원하나요?",
+        "answer": "올애드는 현재 Google Ads, Meta Ads(페이스북 & 인스타그램), 네이버 검색광고, 카카오모먼트 등을 지원하며, 더 많은 플랫폼이 추가되고 있습니다."
+      },
+      "migration": {
+        "question": "기존 광고 캠페인을 그대로 이전할 수 있나요?",
+        "answer": "네, 올애드는 기존 광고 계정과 원활하게 연동됩니다. 캠페인은 원래 플랫폼에 그대로 유지되면서 통합 대시보드를 통해 관리됩니다."
+      },
+      "contract": {
+        "question": "최소 계약 기간이 있나요?",
+        "answer": "아니요, 올애드는 유연한 월간 구독 방식을 제공합니다. 언제든지 업그레이드, 다운그레이드 또는 취소할 수 있습니다."
+      },
+      "security": {
+        "question": "데이터 보안은 어떻게 관리되나요?",
+        "answer": "엔터프라이즈급 암호화와 보안 조치를 사용합니다. 광고 계정 자격 증명은 암호화되며 모든 플랫폼 통합에는 공식 API를 사용합니다."
+      },
+      "integration": {
+        "question": "API 연동 외에 다른 연동 방식도 지원하나요?",
+        "answer": "네, 필요에 따라 SDK, 웹훅, 데이터베이스 연결 등 다양한 연동 방식을 지원합니다."
+      }
+    }
+  },
+  "errors": {
+    "general": "예기치 않은 오류가 발생했습니다. 다시 시도해주세요.",
+    "network": "네트워크 오류입니다. 연결을 확인해주세요.",
+    "unauthorized": "인증되지 않은 접근입니다. 로그인해주세요.",
+    "forbidden": "이 리소스에 접근할 권한이 없습니다.",
+    "notFound": "페이지를 찾을 수 없습니다.",
+    "serverError": "서버 오류입니다. 나중에 다시 시도해주세요.",
+    "validation": "입력 내용을 확인하고 다시 시도해주세요."
+  },
+  "success": {
+    "saved": "저장되었습니다!",
+    "updated": "업데이트되었습니다!",
+    "deleted": "삭제되었습니다!",
+    "copied": "클립보드에 복사되었습니다!",
+    "sent": "전송되었습니다!"
+  }
+}

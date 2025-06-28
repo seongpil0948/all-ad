@@ -1,21 +1,12 @@
 "use client";
 
-import {
-  ReactNode,
-  useMemo,
-  memo,
-  useRef,
-  CSSProperties,
-  useEffect,
-} from "react";
+import { ReactNode, useMemo, memo, useRef, CSSProperties } from "react";
 import { TableColumnProps } from "@heroui/table";
 import { Spinner } from "@heroui/spinner";
 import { Skeleton } from "@heroui/skeleton";
 import { AsyncListData } from "@react-stately/data";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import clsx from "clsx";
-
-import log from "@/utils/logger";
 
 export interface VirtualScrollTableColumn<T> {
   key: string;
@@ -174,20 +165,6 @@ export function VirtualScrollTable<T extends { id: string | number }>({
   );
 
   const totalHeight = virtualizer.getTotalSize();
-
-  // Debug logging
-  useEffect(() => {
-    if (itemsArray.length > 0) {
-      log.debug("[VirtualScrollTable] Debug:", {
-        itemsArrayLength: itemsArray.length,
-        virtualItemsLength: virtualItems.length,
-        totalHeight,
-        firstItem: itemsArray[0],
-        scrollingRef: scrollingRef.current,
-        parentRef: parentRef.current,
-      });
-    }
-  }, [itemsArray, virtualItems, totalHeight]);
 
   return (
     <div

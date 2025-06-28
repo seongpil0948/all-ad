@@ -60,17 +60,29 @@ export async function updateSession(request: NextRequest) {
     "/refund-policy",
   ];
 
+  // Extract locale from current path
+  const pathSegments = request.nextUrl.pathname.split("/");
+  const locale =
+    pathSegments[1] && ["en", "ko", "zh"].includes(pathSegments[1])
+      ? pathSegments[1]
+      : null;
+
+  // Remove locale from path for route matching
+  const pathWithoutLocale = locale
+    ? request.nextUrl.pathname.substring(3) || "/" // Remove /en, /ko, /zh
+    : request.nextUrl.pathname;
+
   const isPublicRoute = publicRoutes.some(
     (route) =>
-      request.nextUrl.pathname === route ||
-      request.nextUrl.pathname.startsWith(`${route}/`),
+      pathWithoutLocale === route || pathWithoutLocale.startsWith(`${route}/`),
   );
 
   if (!user && !isPublicRoute) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();
+    const redirectLocale = locale || "en";
 
-    url.pathname = "/login";
+    url.pathname = `/${redirectLocale}/login`;
 
     return NextResponse.redirect(url);
   }

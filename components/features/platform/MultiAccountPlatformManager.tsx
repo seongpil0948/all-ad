@@ -32,6 +32,7 @@ import {
   InfiniteScrollTable,
   InfiniteScrollTableColumn,
 } from "@/components/common";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 type PlatformCredential =
   Database["public"]["Tables"]["platform_credentials"]["Row"];
@@ -50,15 +51,6 @@ interface MultiAccountPlatformManagerProps {
 
 const ITEMS_PER_PAGE = 10;
 
-// Table columns definition
-const columns: InfiniteScrollTableColumn<PlatformCredential>[] = [
-  { key: "name", label: "계정명" },
-  { key: "accountId", label: "계정 ID" },
-  { key: "status", label: "상태" },
-  { key: "lastSync", label: "마지막 동기화" },
-  { key: "actions", label: "액션" },
-];
-
 export function MultiAccountPlatformManager({
   credentials,
   onSave,
@@ -67,6 +59,7 @@ export function MultiAccountPlatformManager({
   teamId,
   userId: _userId,
 }: MultiAccountPlatformManagerProps) {
+  const { dictionary: dict } = useDictionary();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformType | null>(
     null,
@@ -82,6 +75,15 @@ export function MultiAccountPlatformManager({
     Record<string, "valid" | "invalid" | "checking">
   >({});
   const [reAuthLoading, setReAuthLoading] = useState<Set<string>>(new Set());
+
+  // Table columns definition
+  const columns: InfiniteScrollTableColumn<PlatformCredential>[] = [
+    { key: "name", label: dict.integrations.credentials.accountName },
+    { key: "accountId", label: dict.integrations.credentials.accountId },
+    { key: "status", label: dict.common.status },
+    { key: "lastSync", label: dict.integrations.lastSync },
+    { key: "actions", label: dict.common.actions },
+  ];
 
   // Create async list for a platform
   const createPlatformList = (platform: PlatformType) => {
@@ -239,8 +241,12 @@ export function MultiAccountPlatformManager({
       if (refreshResult.success) {
         // Token refreshed successfully
         toast.success({
-          title: "토큰 갱신 성공",
-          description: `${credential.account_name} 계정의 토큰이 갱신되었습니다.`,
+          title: dict.integrations.credentials.tokenRefreshSuccess,
+          description:
+            dict.integrations.credentials.tokenRefreshSuccessDesc.replace(
+              "{{account}}",
+              credential.account_name ?? "",
+            ),
         });
 
         setTokenStatus((prev) => ({
@@ -280,8 +286,8 @@ export function MultiAccountPlatformManager({
       log.error("Re-authentication failed:", error);
 
       toast.error({
-        title: "재연동 실패",
-        description: "토큰 갱신에 실패했습니다. 다시 시도해주세요.",
+        title: dict.integrations.credentials.reAuthFailed,
+        description: dict.integrations.credentials.reAuthFailedDesc,
       });
 
       setReAuthLoading((prev) => {
@@ -351,7 +357,9 @@ export function MultiAccountPlatformManager({
       case "name":
         return (
           <div className="flex items-center gap-2">
-            <span>{item.account_name || "이름 없음"}</span>
+            <span>
+              {item.account_name || dict.integrations.credentials.noName}
+            </span>
             {isOAuthPlatform && currentTokenStatus === "invalid" && (
               <Chip
                 color="warning"
@@ -359,7 +367,7 @@ export function MultiAccountPlatformManager({
                 startContent={<FaExclamationTriangle size={12} />}
                 variant="flat"
               >
-                토큰 만료
+                {dict.integrations.credentials.tokenExpired}
               </Chip>
             )}
           </div>
@@ -375,7 +383,9 @@ export function MultiAccountPlatformManager({
               onValueChange={(isActive) => onToggle(item.id, isActive)}
             />
             {isOAuthPlatform && currentTokenStatus === "checking" && (
-              <span className="text-tiny text-default-400">확인 중...</span>
+              <span className="text-tiny text-default-400">
+                {dict.integrations.credentials.checking}
+              </span>
             )}
           </div>
         );
@@ -384,13 +394,13 @@ export function MultiAccountPlatformManager({
           <span className="text-small text-default-500">
             {item.last_synced_at
               ? new Date(item.last_synced_at).toLocaleDateString()
-              : "동기화 전"}
+              : dict.integrations.credentials.notSynced}
           </span>
         );
       case "actions": {
         const actions = [
           {
-            label: "삭제",
+            label: dict.common.delete,
             color: "danger" as const,
             variant: "light" as const,
             onPress: () => onDelete(item.id),
@@ -409,7 +419,7 @@ export function MultiAccountPlatformManager({
                 variant="flat"
                 onPress={() => handleReAuthenticate(item)}
               >
-                재연동
+                {dict.integrations.reconnect}
               </Button>
             )}
           </div>
@@ -427,9 +437,9 @@ export function MultiAccountPlatformManager({
 
     return (
       <InfiniteScrollTable
-        aria-label={`${platformConfig[platform].name} 계정 목록`}
+        aria-label={`${platformConfig[platform].name} ${dict.integrations.credentials.accountList}`}
         columns={columns}
-        emptyContent="연동된 계정이 없습니다"
+        emptyContent={dict.integrations.credentials.noAccounts}
         hasMore={hasMoreItems[platform] || false}
         isLoading={list.isLoading && list.items.length === 0}
         items={list}
@@ -444,7 +454,9 @@ export function MultiAccountPlatformManager({
     <>
       <Card>
         <CardHeader>
-          <SectionHeader title="플랫폼 계정 관리" />
+          <SectionHeader
+            title={dict.integrations.credentials.platformAccountManagement}
+          />
         </CardHeader>
         <CardBody className="gap-4">
           {(Object.keys(platformConfig) as PlatformType[]).map((platform) => {
@@ -472,11 +484,14 @@ export function MultiAccountPlatformManager({
                         <div className="flex gap-2 mt-1">
                           {platformCredentials.length > 0 ? (
                             <Chip color="success" size="sm" variant="flat">
-                              {platformCredentials.length}개 계정 연동됨
+                              {dict.integrations.credentials.accountsConnected.replace(
+                                "{{count}}",
+                                platformCredentials.length.toString(),
+                              )}
                             </Chip>
                           ) : (
                             <Chip color="default" size="sm" variant="flat">
-                              미연동
+                              {dict.integrations.credentials.notConnected}
                             </Chip>
                           )}
                         </div>
@@ -492,7 +507,7 @@ export function MultiAccountPlatformManager({
                         handleAddAccount(platform);
                       }}
                     >
-                      계정 추가
+                      {dict.integrations.credentials.addAccount}
                     </Button>
                   </div>
 
@@ -516,8 +531,11 @@ export function MultiAccountPlatformManager({
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col gap-1">
-                {selectedPlatform && platformConfig[selectedPlatform].name} 계정
-                추가
+                {selectedPlatform &&
+                  dict.integrations.credentials.addAccountTitle.replace(
+                    "{{platform}}",
+                    platformConfig[selectedPlatform].name,
+                  )}
               </ModalHeader>
               <ModalBody>
                 {selectedPlatform && (
@@ -529,7 +547,7 @@ export function MultiAccountPlatformManager({
               </ModalBody>
               <ModalFooter>
                 <Button color="danger" variant="light" onPress={onClose}>
-                  취소
+                  {dict.common.cancel}
                 </Button>
                 <Button
                   color="primary"
@@ -537,7 +555,7 @@ export function MultiAccountPlatformManager({
                   isLoading={isLoading}
                   type="submit"
                 >
-                  저장
+                  {dict.common.save}
                 </Button>
               </ModalFooter>
             </>

@@ -117,24 +117,30 @@ const _POST = async (
       status: campaignData.status,
       budget: campaignData.budget,
       is_active: campaignData.status === "active",
-      raw_data: { ...campaignData },
+      raw_data: campaignData.raw_data || null,
     });
 
     // Fetch and save metrics if available
     // Check if the campaign contains metrics information
-    if (savedCampaign && campaignData.metrics) {
-      const metrics = campaignData.metrics;
+    if (savedCampaign && "metrics" in campaignData && campaignData.metrics) {
+      const campaignWithMetrics = campaignData as { metrics: unknown }; // Type assertion for now
+      const metricsArray = campaignWithMetrics.metrics;
 
-      await dbService.upsertCampaignMetrics({
-        campaign_id: savedCampaign.id, // Use the internal campaign ID
-        date: new Date().toISOString().split("T")[0],
-        impressions: metrics.impressions || 0,
-        clicks: metrics.clicks || 0,
-        conversions: metrics.conversions || 0,
-        cost: metrics.cost || 0,
-        revenue: metrics.revenue || 0,
-        raw_data: { ...metrics },
-      });
+      // Handle metrics array
+      if (Array.isArray(metricsArray)) {
+        for (const metric of metricsArray) {
+          await dbService.upsertCampaignMetrics({
+            campaign_id: savedCampaign.id, // Use the internal campaign ID
+            date: metric.date || new Date().toISOString().split("T")[0],
+            impressions: metric.impressions || 0,
+            clicks: metric.clicks || 0,
+            conversions: metric.conversions || 0,
+            cost: metric.cost || 0,
+            revenue: metric.revenue || 0,
+            raw_data: { ...metric },
+          });
+        }
+      }
     }
   }
 

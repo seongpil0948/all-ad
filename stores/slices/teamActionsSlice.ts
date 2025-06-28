@@ -6,12 +6,7 @@ import { LoadingSlice } from "./loadingSlice";
 import { ErrorSlice } from "./errorSlice";
 import { TeamDataSlice } from "./teamDataSlice";
 
-import {
-  Team,
-  TeamMemberWithProfile,
-  TeamInvitation,
-  UserRole,
-} from "@/types/database.types";
+import { Team, TeamMemberWithProfile, TeamInvitation, UserRole } from "@/types";
 import { createClient } from "@/utils/supabase/client";
 import log from "@/utils/logger";
 

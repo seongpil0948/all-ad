@@ -15,45 +15,48 @@ import {
   FaMapMarkerAlt,
 } from "react-icons/fa";
 
+import { useDictionary } from "@/hooks/use-dictionary";
+
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const { dictionary: dict } = useDictionary();
 
   const footerLinks = {
     product: {
-      title: "제품",
+      title: dict.footer.product,
       links: [
-        { label: "기능", href: "#features" },
-        { label: "요금제", href: "/pricing" },
-        { label: "데모", href: "/demo" },
-        { label: "통합", href: "#integrations" },
+        { label: dict.footer.features, href: "#features" },
+        { label: dict.footer.pricing, href: "/pricing" },
+        { label: dict.nav.demo, href: "/demo" },
+        { label: dict.footer.integrations, href: "#integrations" },
       ],
     },
     resources: {
-      title: "리소스",
+      title: dict.footer.resources,
       links: [
-        { label: "블로그", href: "#blog" },
-        { label: "가이드", href: "#guides" },
-        { label: "API 문서", href: "#api-docs" },
-        { label: "FAQ", href: "#faq" },
+        { label: dict.footer.blog, href: "#blog" },
+        { label: dict.footer.guides, href: "#guides" },
+        { label: dict.footer.apiDocs, href: "#api-docs" },
+        { label: dict.faq.title, href: "#faq" },
       ],
     },
     company: {
-      title: "회사",
+      title: dict.footer.company,
       links: [
-        { label: "소개", href: "#about" },
-        { label: "채용", href: "#careers" },
-        { label: "파트너", href: "#partners" },
-        { label: "문의하기", href: "/contact" },
+        { label: dict.footer.about, href: "#about" },
+        { label: dict.footer.careers, href: "#careers" },
+        { label: dict.footer.partners, href: "#partners" },
+        { label: dict.footer.contact, href: "/contact" },
       ],
     },
     legal: {
-      title: "법적 정보",
+      title: dict.footer.legal,
       links: [
-        { label: "이용약관", href: "/terms" },
-        { label: "개인정보처리방침", href: "/privacy" },
-        { label: "청약철회 및 환불규정", href: "/refund-policy" },
-        { label: "쿠키 정책", href: "/cookies" },
-        { label: "보안", href: "#security" },
+        { label: dict.footer.terms, href: "/terms" },
+        { label: dict.footer.privacy, href: "/privacy" },
+        { label: dict.footer.refund, href: "/refund-policy" },
+        { label: dict.footer.cookies, href: "/cookies" },
+        { label: dict.footer.security, href: "#security" },
       ],
     },
   };
@@ -72,22 +75,26 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 mb-12">
           {/* Company info */}
           <div className="lg:col-span-2">
-            <h3 className="text-xl font-bold mb-4">올애드</h3>
+            <h3 className="text-xl font-bold mb-4">
+              {dict.footer.companyInfo.name}
+            </h3>
             <p className="text-default-600 mb-4">
-              모든 광고 플랫폼을 하나로. 광고 관리의 새로운 기준을 만들어갑니다.
+              {dict.footer.companyInfo.tagline}
             </p>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-default-600">
                 <FaEnvelope className="w-4 h-4" />
-                <span className="text-sm">support@allad.co.kr</span>
+                <span className="text-sm">{dict.footer.companyInfo.email}</span>
               </div>
               <div className="flex items-center gap-2 text-default-600">
                 <FaPhone className="w-4 h-4" />
-                <span className="text-sm">02-1234-5678</span>
+                <span className="text-sm">{dict.footer.companyInfo.phone}</span>
               </div>
               <div className="flex items-center gap-2 text-default-600">
                 <FaMapMarkerAlt className="w-4 h-4" />
-                <span className="text-sm">서울특별시 강남구 테헤란로 123</span>
+                <span className="text-sm">
+                  {dict.footer.companyInfo.address}
+                </span>
               </div>
             </div>
           </div>
@@ -117,20 +124,22 @@ export const Footer = () => {
         <div className="bg-default-100 rounded-xl p-6 mb-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
-              <h4 className="font-semibold mb-1">뉴스레터 구독</h4>
+              <h4 className="font-semibold mb-1">
+                {dict.footer.newsletter.title}
+              </h4>
               <p className="text-sm text-default-600">
-                최신 업데이트와 팁을 이메일로 받아보세요
+                {dict.footer.newsletter.subtitle}
               </p>
             </div>
             <div className="flex gap-2 w-full md:w-auto">
               <Input
                 className="flex-1 md:w-64"
-                placeholder="이메일 주소"
+                placeholder={dict.footer.newsletter.placeholder}
                 type="email"
                 variant="flat"
               />
               <Button color="primary" variant="solid">
-                구독하기
+                {dict.footer.newsletter.subscribe}
               </Button>
             </div>
           </div>
@@ -141,7 +150,9 @@ export const Footer = () => {
         {/* Bottom section */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-default-600">
-            © {currentYear} 올애드. All rights reserved.
+            {dict.footer.companyInfo.copyright
+              .replace("{{year}}", currentYear.toString())
+              .replace("{{company}}", dict.footer.companyInfo.name)}
           </p>
 
           {/* Social links */}
