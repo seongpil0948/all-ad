@@ -1,7 +1,41 @@
+import type { MutateOperation } from "google-ads-api";
+
 import { GoogleAdsClient } from "../core/google-ads-client";
 
 import log from "@/utils/logger";
 import { GoogleAdsLabel } from "@/types/google-ads.types";
+
+// Type definitions
+interface GoogleAdsMutateResponse {
+  results: Array<{
+    resource_name: string;
+  }>;
+  partial_failure_error?: unknown;
+}
+
+interface GoogleAdsCampaignWithLabel {
+  "campaign.id": string;
+  "campaign.name": string;
+  "campaign.status": string;
+  "label.id": string;
+  "label.name": string;
+}
+
+interface GoogleAdsLabelResult {
+  "label.id": string;
+  "label.name": string;
+  "label.text_label.description": string;
+  "label.text_label.background_color": string;
+}
+
+interface GoogleAdsLabelResource {
+  resource_name: string;
+  name?: string;
+  text_label?: {
+    description?: string;
+    background_color?: string;
+  };
+}
 
 export class LabelManagementService {
   constructor(private googleAdsClient: GoogleAdsClient) {}
@@ -14,7 +48,7 @@ export class LabelManagementService {
       description?: string;
       backgroundColor?: string;
     },
-  ): Promise<any> {
+  ): Promise<GoogleAdsMutateResponse> {
     const operations = [
       {
         entity: "label",
@@ -26,7 +60,7 @@ export class LabelManagementService {
             background_color: labelData.backgroundColor || "#0000FF",
           },
         },
-      },
+      } as MutateOperation<Record<string, unknown>>,
     ];
 
     try {
@@ -52,15 +86,18 @@ export class LabelManagementService {
     customerId: string,
     labelId: string,
     campaignIds: string[],
-  ): Promise<any> {
-    const operations = campaignIds.map((campaignId) => ({
-      entity: "campaign_label",
-      operation: "create",
-      resource: {
-        campaign: `customers/${customerId}/campaigns/${campaignId}`,
-        label: `customers/${customerId}/labels/${labelId}`,
-      },
-    }));
+  ): Promise<GoogleAdsMutateResponse> {
+    const operations = campaignIds.map(
+      (campaignId) =>
+        ({
+          entity: "campaign_label",
+          operation: "create",
+          resource: {
+            campaign: `customers/${customerId}/campaigns/${campaignId}`,
+            label: `customers/${customerId}/labels/${labelId}`,
+          },
+        }) as MutateOperation<Record<string, unknown>>,
+    );
 
     try {
       const response = await this.googleAdsClient.mutate(
@@ -89,7 +126,7 @@ export class LabelManagementService {
   async getCampaignsByLabel(
     customerId: string,
     labelId: string,
-  ): Promise<any[]> {
+  ): Promise<GoogleAdsCampaignWithLabel[]> {
     const query = `
       SELECT
         campaign.id,
@@ -102,7 +139,11 @@ export class LabelManagementService {
     `;
 
     try {
-      const results = await this.googleAdsClient.query(customerId, query);
+      const results =
+        await this.googleAdsClient.query<GoogleAdsCampaignWithLabel>(
+          customerId,
+          query,
+        );
 
       log.info("라벨로 캠페인 조회 성공", {
         customerId,
@@ -135,7 +176,10 @@ export class LabelManagementService {
     `;
 
     try {
-      const results = await this.googleAdsClient.query<any>(customerId, query);
+      const results = await this.googleAdsClient.query<GoogleAdsLabelResult>(
+        customerId,
+        query,
+      );
 
       return results.map((result) => ({
         id: result["label.id"],
@@ -154,12 +198,15 @@ export class LabelManagementService {
     customerId: string,
     labelId: string,
     campaignIds: string[],
-  ): Promise<any> {
-    const operations = campaignIds.map((campaignId) => ({
-      entity: "campaign_label",
-      operation: "remove",
-      resource_name: `customers/${customerId}/campaignLabels/${campaignId}~${labelId}`,
-    }));
+  ): Promise<GoogleAdsMutateResponse> {
+    const operations = campaignIds.map(
+      (campaignId) =>
+        ({
+          entity: "campaign_label",
+          operation: "remove",
+          resource_name: `customers/${customerId}/campaignLabels/${campaignId}~${labelId}`,
+        }) as unknown as MutateOperation<Record<string, unknown>>,
+    );
 
     try {
       const response = await this.googleAdsClient.mutate(
@@ -193,8 +240,8 @@ export class LabelManagementService {
       description?: string;
       backgroundColor?: string;
     },
-  ): Promise<any> {
-    const resource: any = {
+  ): Promise<GoogleAdsMutateResponse> {
+    const resource: GoogleAdsLabelResource = {
       resource_name: `customers/${customerId}/labels/${labelId}`,
     };
 
@@ -225,7 +272,7 @@ export class LabelManagementService {
         update_mask: {
           paths: updatePaths,
         },
-      },
+      } as unknown as MutateOperation<Record<string, unknown>>,
     ];
 
     try {
@@ -248,13 +295,16 @@ export class LabelManagementService {
   }
 
   // 라벨 삭제
-  async deleteLabel(customerId: string, labelId: string): Promise<any> {
+  async deleteLabel(
+    customerId: string,
+    labelId: string,
+  ): Promise<GoogleAdsMutateResponse> {
     const operations = [
       {
         entity: "label",
         operation: "remove",
         resource_name: `customers/${customerId}/labels/${labelId}`,
-      },
+      } as unknown as MutateOperation<Record<string, unknown>>,
     ];
 
     try {

@@ -2,8 +2,10 @@
 
 import { Button } from "@heroui/button";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 import log from "@/utils/logger";
+import { buttonVariants } from "@/utils/animations";
 
 interface CTAButtonProps {
   text: string;
@@ -25,13 +27,20 @@ export function CTAButton({ text, path, action, className }: CTAButtonProps) {
   };
 
   return (
-    <Button
-      className={className}
-      size="lg"
-      variant="solid"
-      onPress={handleClick}
+    <motion.div
+      initial="initial"
+      variants={buttonVariants}
+      whileHover="hover"
+      whileTap="tap"
     >
-      {text}
-    </Button>
+      <Button
+        className={className}
+        size="lg"
+        variant="solid"
+        onPress={handleClick}
+      >
+        {text}
+      </Button>
+    </motion.div>
   );
 }

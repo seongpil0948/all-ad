@@ -6,8 +6,7 @@ import { SwitchProps, useSwitch } from "@heroui/switch";
 import { useTheme } from "next-themes";
 import { useIsSSR } from "@react-aria/ssr";
 import clsx from "clsx";
-
-import { SunFilledIcon, MoonFilledIcon } from "@/components/icons";
+import { MdLightMode, MdDarkMode } from "react-icons/md";
 
 export interface ThemeSwitchProps {
   className?: string;
@@ -22,7 +21,11 @@ export const ThemeSwitch: FC<ThemeSwitchProps> = ({
   const isSSR = useIsSSR();
 
   const onChange = () => {
-    theme === "light" ? setTheme("dark") : setTheme("light");
+    if (theme === "light") {
+      setTheme("dark");
+    } else {
+      setTheme("light");
+    }
   };
 
   const {
@@ -61,7 +64,7 @@ export const ThemeSwitch: FC<ThemeSwitchProps> = ({
               "rounded-lg",
               "flex items-center justify-center",
               "group-data-[selected=true]:bg-transparent",
-              "!text-default-500",
+              "text-default-500!",
               "pt-px",
               "px-0",
               "mx-0",
@@ -71,9 +74,9 @@ export const ThemeSwitch: FC<ThemeSwitchProps> = ({
         })}
       >
         {!isSelected || isSSR ? (
-          <SunFilledIcon size={22} />
+          <MdLightMode size={22} />
         ) : (
-          <MoonFilledIcon size={22} />
+          <MdDarkMode size={22} />
         )}
       </div>
     </Component>

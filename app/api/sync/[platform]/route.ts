@@ -1,133 +1,167 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/utils/supabase/server";
-import { platformServiceFactory } from "@/services/platforms/platform-service-factory";
-import { PlatformDatabaseService } from "@/services/platform-database.service";
+import {
+  getPlatformServiceFactory,
+  getPlatformDatabaseService,
+} from "@/lib/di/service-resolver";
 import { PlatformType } from "@/types";
-import log from "@/utils/logger";
+import { withErrorHandler, ApiErrors } from "@/lib/api/error-handlers";
 
-export async function POST(
+const _POST = async (
   request: NextRequest,
   { params }: { params: Promise<{ platform: string }> },
-) {
-  try {
-    const { platform } = await params;
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+): Promise<NextResponse> => {
+  const { platform } = await params;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  if (!user) {
+    throw ApiErrors.UNAUTHORIZED();
+  }
 
-    const platformType = platform as PlatformType;
-    const validPlatforms: PlatformType[] = [
-      "facebook",
-      "google",
-      "kakao",
-      "naver",
-      "coupang",
-    ];
+  const platformType = platform as PlatformType;
+  const validPlatforms: PlatformType[] = [
+    "facebook",
+    "google",
+    "kakao",
+    "naver",
+    "coupang",
+  ];
 
-    if (!validPlatforms.includes(platformType)) {
-      return NextResponse.json({ error: "Invalid platform" }, { status: 400 });
-    }
+  if (!validPlatforms.includes(platformType)) {
+    throw ApiErrors.BAD_REQUEST(`Invalid platform: ${platform}`);
+  }
 
-    // Get user's team
+  // First, check if user is a team master
+  const { data: masterTeam } = await supabase
+    .from("teams")
+    .select("id")
+    .eq("master_user_id", user.id)
+    .maybeSingle();
+
+  let teamId: string;
+  let userRole: string = "master";
+
+  if (masterTeam) {
+    // User is a team master
+    teamId = masterTeam.id;
+  } else {
+    // Check if user is a team member
     const { data: teamMember, error: teamError } = await supabase
       .from("team_members")
       .select("team_id, role")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     if (teamError || !teamMember) {
-      return NextResponse.json({ error: "Team not found" }, { status: 404 });
+      throw ApiErrors.NOT_FOUND("Team membership not found");
     }
 
-    if (teamMember.role === "viewer") {
-      return NextResponse.json(
-        { error: "Insufficient permissions" },
-        { status: 403 },
-      );
-    }
+    teamId = teamMember.team_id;
+    userRole = teamMember.role;
+  }
 
-    // Get platform credentials
-    const { data: credential, error: credError } = await supabase
-      .from("platform_credentials")
-      .select("*")
-      .eq("team_id", teamMember.team_id)
-      .eq("platform", platformType)
-      .eq("is_active", true)
-      .single();
+  if (userRole === "viewer") {
+    throw ApiErrors.FORBIDDEN("Viewers cannot perform sync operations");
+  }
 
-    if (credError || !credential) {
-      return NextResponse.json(
-        { error: "Platform credentials not found" },
-        { status: 404 },
-      );
-    }
+  // Get platform credentials
+  const { data: credential, error: credError } = await supabase
+    .from("platform_credentials")
+    .select("*")
+    .eq("team_id", teamId)
+    .eq("platform", platformType)
+    .eq("is_active", true)
+    .single();
 
-    // Create platform service
-    const platformService = platformServiceFactory.createService(platformType);
-    const dbService = new PlatformDatabaseService();
-
-    // Set credentials
-    platformService.setCredentials(credential.credentials);
-
-    // Fetch campaigns from platform
-    const campaigns = await platformService.fetchCampaigns();
-
-    // Save campaigns to database
-    for (const campaignData of campaigns) {
-      const savedCampaign = await dbService.upsertCampaign({
-        team_id: teamMember.team_id,
-        platform: platformType,
-        platform_campaign_id: campaignData.id,
-        name: campaignData.name,
-        status: campaignData.status,
-        budget: campaignData.budget,
-        is_active: campaignData.status === "active",
-        raw_data: campaignData,
-      });
-
-      // Fetch and save metrics if available
-      // Check if the campaign contains metrics information
-      if (savedCampaign && campaignData.metrics) {
-        const metrics = campaignData.metrics;
-
-        await dbService.upsertCampaignMetrics({
-          campaign_id: savedCampaign.id, // Use the internal campaign ID
-          date: new Date().toISOString().split("T")[0],
-          impressions: metrics.impressions || 0,
-          clicks: metrics.clicks || 0,
-          conversions: metrics.conversions || 0,
-          cost: metrics.cost || 0,
-          revenue: metrics.revenue || 0,
-          raw_data: metrics,
-        });
-      }
-    }
-
-    // Update sync timestamp
-    await supabase
-      .from("platform_credentials")
-      .update({ synced_at: new Date().toISOString() })
-      .eq("id", credential.id);
-
-    return NextResponse.json({
-      success: true,
-      message: `Synced ${campaigns.length} campaigns for ${platformType}`,
-    });
-  } catch (error) {
-    log.error(`Sync error for platform ${error}:`);
-
-    return NextResponse.json(
-      {
-        error: "Sync failed",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
+  if (credError || !credential) {
+    throw ApiErrors.NOT_FOUND(
+      `Active ${platformType} credentials not found for this team`,
     );
   }
-}
+
+  // Get services from DI container
+  const platformServiceFactory = await getPlatformServiceFactory();
+  const dbService = await getPlatformDatabaseService();
+
+  // Create platform service
+  const platformService = platformServiceFactory.createService(platformType);
+
+  // Set credentials - for OAuth platforms, pass teamId and account info
+  if (platformType === "google") {
+    const credentialsData = {
+      teamId: teamId,
+      customerId: credential.account_id || null,
+      ...credential.credentials,
+    };
+
+    platformService.setCredentials(credentialsData);
+  } else {
+    platformService.setCredentials(credential.credentials);
+  }
+
+  // Fetch campaigns from platform
+  const campaigns = await platformService.fetchCampaigns();
+
+  // Save campaigns to database
+  for (const campaignData of campaigns) {
+    const savedCampaign = await dbService.upsertCampaign({
+      team_id: teamId,
+      platform: platformType,
+      platform_campaign_id: campaignData.id,
+      platform_credential_id: credential.id,
+      name: campaignData.name,
+      status: campaignData.status,
+      budget: campaignData.budget,
+      is_active: campaignData.status === "active",
+      raw_data: campaignData.raw_data || null,
+    });
+
+    // Fetch and save metrics if available
+    // Check if the campaign contains metrics information
+    if (savedCampaign && "metrics" in campaignData && campaignData.metrics) {
+      const campaignWithMetrics = campaignData as { metrics: unknown }; // Type assertion for now
+      const metricsArray = campaignWithMetrics.metrics;
+
+      // Handle metrics array
+      if (Array.isArray(metricsArray)) {
+        for (const metric of metricsArray) {
+          await dbService.upsertCampaignMetrics({
+            campaign_id: savedCampaign.id, // Use the internal campaign ID
+            date: metric.date || new Date().toISOString().split("T")[0],
+            impressions: metric.impressions || 0,
+            clicks: metric.clicks || 0,
+            conversions: metric.conversions || 0,
+            cost: metric.cost || 0,
+            revenue: metric.revenue || 0,
+            raw_data: { ...metric },
+          });
+        }
+      }
+    }
+  }
+
+  // Update sync timestamp
+  await supabase
+    .from("platform_credentials")
+    .update({
+      synced_at: new Date().toISOString(),
+      last_synced_at: new Date().toISOString(),
+    })
+    .eq("id", credential.id);
+
+  return NextResponse.json({
+    success: true,
+    message: `Synced ${campaigns.length} campaigns for ${platformType}`,
+    data: {
+      campaignCount: campaigns.length,
+      platform: platformType,
+      syncedAt: new Date().toISOString(),
+    },
+  });
+};
+
+export const POST = withErrorHandler(_POST, "sync-platform");

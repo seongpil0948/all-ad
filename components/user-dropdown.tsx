@@ -17,24 +17,25 @@ import {
   FiBarChart2,
   FiUsers,
 } from "react-icons/fi";
+import { useShallow } from "zustand/shallow";
+import { motion } from "framer-motion";
 
-import { useAuth } from "@/hooks/use-auth";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { clientLogout } from "@/app/[lang]/(auth)/login/client-actions";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 export function UserDropdown() {
   const router = useRouter();
-  const { user, profile } = useAuth();
-  const logout = useAuthStore((state) => state.logout);
+  const { dictionary: dict } = useDictionary();
+  const user = useAuthStore(useShallow((state) => state.user));
 
   if (!user) return null;
 
   const handleSignOut = async () => {
     try {
-      await logout();
-      router.push("/");
-      router.refresh();
-    } catch (error) {
-      // Error is handled in the store
+      await clientLogout(router);
+    } catch {
+      // Error is handled in the client action
     }
   };
 
@@ -46,20 +47,25 @@ export function UserDropdown() {
 
   const userEmail = user.email || "";
   const userInitials = getUserInitials(userEmail);
-  const userName = profile?.full_name || userEmail.split("@")[0];
+  const userName = userEmail.split("@")[0];
 
   return (
     <Dropdown placement="bottom-end">
       <DropdownTrigger>
-        <Avatar
-          isBordered
-          as="button"
-          className="transition-transform"
-          color="primary"
-          name={userInitials}
-          size="sm"
-          src={profile?.avatar_url || undefined}
-        />
+        <motion.div
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <Avatar
+            isBordered
+            as="button"
+            className="transition-transform"
+            color="primary"
+            name={userInitials}
+            size="sm"
+          />
+        </motion.div>
       </DropdownTrigger>
       <DropdownMenu
         aria-label="User menu actions"
@@ -102,25 +108,25 @@ export function UserDropdown() {
             key="profile"
             startContent={<FiUser className="text-xl" />}
           >
-            내 프로필
+            {dict.nav.profile}
           </DropdownItem>
           <DropdownItem
             key="settings"
             startContent={<FiSettings className="text-xl" />}
           >
-            설정
+            {dict.nav.settings}
           </DropdownItem>
           <DropdownItem
             key="team"
             startContent={<FiUsers className="text-xl" />}
           >
-            팀 관리
+            {dict.nav.team}
           </DropdownItem>
           <DropdownItem
             key="analytics"
             startContent={<FiBarChart2 className="text-xl" />}
           >
-            분석
+            {dict.nav.analytics}
           </DropdownItem>
         </DropdownSection>
         <DropdownSection>
@@ -128,7 +134,7 @@ export function UserDropdown() {
             key="help"
             startContent={<FiHelpCircle className="text-xl" />}
           >
-            도움말 및 피드백
+            {dict.nav.help}
           </DropdownItem>
           <DropdownItem
             key="logout"
@@ -136,7 +142,7 @@ export function UserDropdown() {
             color="danger"
             startContent={<FiLogOut className="text-xl" />}
           >
-            로그아웃
+            {dict.nav.logout}
           </DropdownItem>
         </DropdownSection>
       </DropdownMenu>

@@ -1,0 +1,35 @@
+# <type>(<scope>): <description>
+
+# <body>
+
+# <footer>
+
+# Type can be one of:
+# feat: A new feature
+# fix: A bug fix
+# docs: Documentation only changes
+# style: Changes that do not affect the meaning of the code
+# refactor: A code change that neither fixes a bug nor adds a feature
+# perf: A code change that improves performance
+# test: Adding missing tests or correcting existing tests
+# build: Changes that affect the build system or external dependencies
+# ci: Changes to our CI configuration files and scripts
+# chore: Other changes that don't modify src or test files
+# revert: Reverts a previous commit
+
+# Scope is optional and can be anything specifying place of the commit change.
+# For example: auth, dashboard, api, components, etc.
+
+# Description should be imperative, present tense: "change" not "changed" nor "changes"
+# Don't capitalize first letter
+# No dot (.) at the end
+
+# Body is optional and should include motivation for the change and contrast with previous behavior
+
+# Footer is optional and should contain any information about Breaking Changes
+# and is also the place to reference GitHub issues that this commit closes
+
+# Examples:
+# feat(auth): add login functionality
+# fix(dashboard): resolve campaign data loading issue
+# docs(readme): update installation guide

@@ -1,56 +1,5 @@
-import {
-  FaChartLine,
-  FaRocket,
-  FaShieldAlt,
-  FaDatabase,
-  FaGoogle,
-  FaFacebook,
-  FaInstagram,
-  FaYoutube,
-  FaTiktok,
-  FaAmazon,
-} from "react-icons/fa";
-import { SiNaver, SiKakao } from "react-icons/si";
-
-export const FEATURES = [
-  {
-    icon: FaChartLine,
-    title: "통합 대시보드",
-    description:
-      "모든 광고 플랫폼의 성과를 한눈에 확인하세요. 실시간 데이터 분석과 리포트를 제공합니다.",
-  },
-  {
-    icon: FaRocket,
-    title: "자동화된 광고 최적화",
-    description:
-      "AI 기반 광고 최적화로 ROI를 극대화하고 광고 예산을 효율적으로 관리하세요.",
-  },
-  {
-    icon: FaShieldAlt,
-    title: "안전한 데이터 관리",
-    description: "엔터프라이즈급 보안으로 광고 데이터를 안전하게 보호합니다.",
-  },
-  {
-    icon: FaDatabase,
-    title: "유연한 연동 방식",
-    description: "SDK, Open API, DB to DB 등 다양한 연동 방식을 지원합니다.",
-  },
-] as const;
-
-export const PLATFORMS = [
-  { icon: FaGoogle, name: "Google Ads", color: "text-blue-500" },
-  { icon: FaFacebook, name: "Facebook Ads", color: "text-blue-600" },
-  { icon: FaInstagram, name: "Instagram Ads", color: "text-pink-500" },
-  { icon: FaYoutube, name: "YouTube Ads", color: "text-red-500" },
-  { icon: SiNaver, name: "Naver Ads", color: "text-green-500" },
-  { icon: SiKakao, name: "Kakao Ads", color: "text-yellow-500" },
-  {
-    icon: FaTiktok,
-    name: "TikTok Ads",
-    color: "text-black dark:text-white",
-  },
-  { icon: FaAmazon, name: "Amazon Ads", color: "text-orange-500" },
-] as const;
+// Note: FEATURES and PLATFORMS constants moved to their respective components
+// to avoid SSG build issues with React icon components
 
 export const CTA_TEXTS = {
   MAIN_TITLE: "모든 광고를",

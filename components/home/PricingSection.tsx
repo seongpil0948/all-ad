@@ -54,7 +54,7 @@ const PricingCard = ({ plan, index }: { plan: PricingPlan; index: number }) => {
           <ul className="space-y-3">
             {plan.features.map((feature, idx) => (
               <li key={idx} className="flex items-start gap-2">
-                <FaCheck className="text-success mt-0.5 flex-shrink-0" />
+                <FaCheck className="text-success mt-0.5 shrink-0" />
                 <span className="text-sm">{feature}</span>
               </li>
             ))}
@@ -125,7 +125,7 @@ export const PricingSection = () => {
   ];
 
   return (
-    <section className="px-6 py-20 bg-default-50">
+    <section className="px-6 py-20 bg-default-50" data-testid="pricing-section">
       <div className="max-w-7xl mx-auto">
         <motion.div
           className="text-center mb-12"

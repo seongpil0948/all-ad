@@ -43,7 +43,7 @@ export interface CreateCampaignDto {
   budget: number;
   startDate: Date;
   endDate?: Date;
-  targeting?: Record<string, any>;
+  targeting?: Record<string, unknown>;
 }
 
 // Ad Service Implementation (Hexagonal Architecture - Application Service)

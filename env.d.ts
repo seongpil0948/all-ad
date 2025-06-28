@@ -15,9 +15,9 @@ declare global {
       SUPABASE_SERVICE_ROLE_KEY: string;
 
       // Google Ads
-      GOOGLE_ADS_CLIENT_ID: string;
-      GOOGLE_ADS_CLIENT_SECRET: string;
-      GOOGLE_ADS_DEVELOPER_TOKEN: string;
+      GOOGLE_CLIENT_ID: string;
+      GOOGLE_CLIENT_SECRET: string;
+      GOOGLE_DEVELOPER_TOKEN: string;
 
       // Meta Ads
       META_APP_ID: string;

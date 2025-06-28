@@ -1,7 +1,37 @@
-import { GoogleAdsApi, Customer } from "google-ads-api";
+import { GoogleAdsApi, Customer, MutateOperation } from "google-ads-api";
 
 import { GoogleAdsApiCredentials } from "@/types/google-ads.types";
 import log from "@/utils/logger";
+
+// Type definitions for Google Ads operations
+type GoogleAdsOperation = MutateOperation<Record<string, unknown>>;
+
+interface GoogleAdsMutateResponse {
+  results: Array<{
+    resource_name: string;
+  }>;
+  partial_failure_error?: unknown;
+}
+
+interface GoogleAdsAccountInfo {
+  customer: {
+    id: string;
+    descriptive_name: string;
+    currency_code: string;
+    time_zone: string;
+    manager: boolean;
+  };
+}
+
+interface GoogleAdsCustomerClient {
+  customer_client?: {
+    id?: string;
+    descriptive_name?: string;
+    level?: number;
+    manager?: boolean;
+    resource_name?: string;
+  };
+}
 
 // Google Ads API 클라이언트 래퍼
 export class GoogleAdsClient {
@@ -43,7 +73,7 @@ export class GoogleAdsClient {
   }
 
   // Google Ads Query Language (GAQL) 실행
-  async query<T = any>(customerId: string, query: string): Promise<T[]> {
+  async query<T = unknown>(customerId: string, query: string): Promise<T[]> {
     try {
       const customer = await this.getAuthenticatedCustomer(customerId);
       const results = await customer.query(query);
@@ -66,9 +96,9 @@ export class GoogleAdsClient {
   // 변경 작업 실행 (mutate)
   async mutate(
     customerId: string,
-    operations: any[],
+    operations: GoogleAdsOperation[],
     options?: { validate_only?: boolean; partial_failure?: boolean },
-  ): Promise<any> {
+  ): Promise<GoogleAdsMutateResponse> {
     try {
       const customer = await this.getAuthenticatedCustomer(customerId);
       const response = await customer.mutateResources(operations, options);
@@ -78,7 +108,7 @@ export class GoogleAdsClient {
         operationCount: operations.length,
       });
 
-      return response;
+      return response as unknown as GoogleAdsMutateResponse;
     } catch (error) {
       log.error("Google Ads 변경 작업 실패", error as Error, {
         customerId,
@@ -89,10 +119,10 @@ export class GoogleAdsClient {
   }
 
   // 리포트 실행 (스트리밍)
-  async report(
+  async report<T = unknown>(
     customerId: string,
     query: string,
-  ): Promise<AsyncIterableIterator<any>> {
+  ): Promise<AsyncIterableIterator<T>> {
     try {
       const customer = await this.getAuthenticatedCustomer(customerId);
       // reportStream은 query가 아닌 다른 형식을 받을 수 있음
@@ -100,9 +130,9 @@ export class GoogleAdsClient {
       const results = await customer.query(query);
 
       // AsyncIterableIterator로 변환
-      async function* resultIterator() {
+      async function* resultIterator(): AsyncIterableIterator<T> {
         for (const result of results) {
-          yield result;
+          yield result as T;
         }
       }
 
@@ -119,7 +149,9 @@ export class GoogleAdsClient {
   }
 
   // 계정 정보 조회
-  async getAccountInfo(customerId: string): Promise<any> {
+  async getAccountInfo(
+    customerId: string,
+  ): Promise<GoogleAdsAccountInfo | null> {
     const query = `
       SELECT
         customer.id,
@@ -131,7 +163,7 @@ export class GoogleAdsClient {
       WHERE customer.id = ${customerId}
     `;
 
-    const results = await this.query(customerId, query);
+    const results = await this.query<GoogleAdsAccountInfo>(customerId, query);
 
     return results[0] || null;
   }
@@ -169,8 +201,9 @@ export class GoogleAdsClient {
       const results = await customer.query(query);
       const accessibleCustomers = results
         .map(
-          (result: any) =>
-            result.customer_client?.id || result.customer_client?.resource_name,
+          (result) =>
+            (result as GoogleAdsCustomerClient).customer_client?.id ||
+            (result as GoogleAdsCustomerClient).customer_client?.resource_name,
         )
         .filter(Boolean);
 
@@ -178,7 +211,7 @@ export class GoogleAdsClient {
         count: accessibleCustomers.length,
       });
 
-      return accessibleCustomers;
+      return accessibleCustomers as string[];
     } catch (error) {
       log.error("접근 가능한 고객 목록 조회 실패", error as Error);
       throw error;

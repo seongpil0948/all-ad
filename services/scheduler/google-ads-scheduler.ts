@@ -1,5 +1,3 @@
-import * as cron from "node-cron";
-
 import { GoogleAdsSyncService } from "../google-ads/sync/sync-strategy.service";
 import { GoogleAdsClient } from "../google-ads/core/google-ads-client";
 
@@ -7,52 +5,33 @@ import { createClient } from "@/utils/supabase/server";
 import { GoogleAdsCredentials } from "@/types";
 import log from "@/utils/logger";
 
+// Type definitions
+interface GoogleAdsAccountRecord {
+  id: string;
+  team_id: string;
+  platform: string;
+  account_id: string;
+  account_name: string;
+  credentials: {
+    client_id: string;
+    client_secret: string;
+    refresh_token: string;
+    developer_token: string;
+    login_customer_id?: string;
+  };
+  is_active: boolean;
+  customer_id: string;
+  user_id?: string;
+  created_by?: string;
+}
+
 export class GoogleAdsScheduler {
-  private syncJobs: Map<string, cron.ScheduledTask> = new Map();
+  // Supabase Cron을 사용하므로 node-cron 관련 코드 제거
+  // 스케줄링은 Supabase의 pg_cron에서 설정하고,
+  // Supabase Edge Functions에서 처리
 
-  // 스케줄러 시작
-  async startScheduledSync(): Promise<void> {
-    log.info("Google Ads 스케줄러 시작");
-
-    // 매시간 정각에 증분 동기화 실행
-    const incrementalJob = cron.schedule("0 * * * *", async () => {
-      log.info("Google Ads 증분 동기화 시작");
-      await this.runScheduledSync("INCREMENTAL");
-    });
-
-    // 매일 새벽 2시에 전체 동기화 실행
-    const fullSyncJob = cron.schedule("0 2 * * *", async () => {
-      log.info("Google Ads 전체 동기화 시작");
-      await this.runScheduledSync("FULL");
-    });
-
-    // 작업 시작
-    incrementalJob.start();
-    fullSyncJob.start();
-
-    // 작업 저장
-    this.syncJobs.set("incremental", incrementalJob);
-    this.syncJobs.set("full", fullSyncJob);
-
-    log.info("Google Ads 스케줄러 작업 등록 완료");
-  }
-
-  // 스케줄러 중지
-  stopScheduledSync(): void {
-    log.info("Google Ads 스케줄러 중지");
-
-    for (const [jobName, job] of Array.from(this.syncJobs.entries())) {
-      job.stop();
-      log.info(`스케줄 작업 중지: ${jobName}`);
-    }
-
-    this.syncJobs.clear();
-  }
-
-  // 스케줄된 동기화 실행
-  private async runScheduledSync(
-    syncType: "FULL" | "INCREMENTAL",
-  ): Promise<void> {
+  // 스케줄된 동기화 실행 (Supabase Cron에서 호출)
+  async runScheduledSync(syncType: "FULL" | "INCREMENTAL"): Promise<void> {
     try {
       const accounts = await this.getActiveGoogleAdsAccounts();
 
@@ -60,19 +39,30 @@ export class GoogleAdsScheduler {
 
       for (const account of accounts) {
         try {
-          const credentials = {
-            clientId: account.credentials.client_id,
-            clientSecret: account.credentials.client_secret,
-            refreshToken: account.credentials.refresh_token,
-            developerToken: account.credentials.developer_token,
-            customerId: account.customer_id,
-            loginCustomerId: account.credentials.login_customer_id,
-          } as GoogleAdsCredentials;
+          // Credentials object for future use
+          // const credentials = {
+          //   clientId: account.credentials.client_id,
+          //   clientSecret: account.credentials.client_secret,
+          //   refreshToken: account.credentials.refresh_token,
+          //   developerToken: account.credentials.developer_token,
+          //   customerId: account.customer_id,
+          //   loginCustomerId: account.credentials.login_customer_id,
+          // } as GoogleAdsCredentials;
 
+          // Legacy OAuth manager removed - access token retrieval needs reimplementation
+          // TODO: Implement access token retrieval
+          log.warn(
+            `Skipping Google Ads account - OAuth implementation removed: ${account.id}`,
+          );
+          continue;
+
+          // Unreachable code due to OAuth removal - commented out
+          /*
           const googleAdsClient = new GoogleAdsClient({
             clientId: credentials.clientId,
             clientSecret: credentials.clientSecret,
             refreshToken: credentials.refreshToken,
+            accessToken: accessToken,
             developerToken: credentials.developerToken,
             loginCustomerId: credentials.loginCustomerId,
           });
@@ -87,6 +77,7 @@ export class GoogleAdsScheduler {
             accountId: account.customer_id,
             syncType,
           });
+          */
         } catch (error) {
           log.error(
             `계정 동기화 스케줄링 실패: ${account.account_name}`,
@@ -104,7 +95,9 @@ export class GoogleAdsScheduler {
   }
 
   // 활성화된 Google Ads 계정 목록 조회
-  private async getActiveGoogleAdsAccounts(): Promise<any[]> {
+  private async getActiveGoogleAdsAccounts(): Promise<
+    GoogleAdsAccountRecord[]
+  > {
     const supabase = await createClient();
 
     const { data, error } = await supabase
@@ -174,19 +167,31 @@ export class GoogleAdsScheduler {
     await syncService.scheduleSyncForAccount(accountId, syncType);
   }
 
-  // 스케줄러 상태 조회
+  // 스케줄러 상태 조회 (Supabase Cron 사용)
   getSchedulerStatus(): {
     isRunning: boolean;
-    jobs: { name: string; nextRun: Date | null }[];
+    cronJobs: { name: string; schedule: string; function: string }[];
   } {
-    const jobs = Array.from(this.syncJobs.entries()).map(([name, _job]) => ({
-      name,
-      nextRun: null, // node-cron doesn't provide next run time easily
-    }));
-
+    // Supabase Cron 설정 정보 반환
     return {
-      isRunning: this.syncJobs.size > 0,
-      jobs,
+      isRunning: true, // Supabase Cron은 항상 활성화
+      cronJobs: [
+        {
+          name: "google-ads-sync-hourly",
+          schedule: "0 * * * *", // 매시간
+          function: "google-ads-sync",
+        },
+        {
+          name: "google-ads-sync-full-daily",
+          schedule: "0 2 * * *", // 매일 새벽 2시
+          function: "google-ads-sync-full",
+        },
+        {
+          name: "refresh-oauth-tokens",
+          schedule: "0 * * * *", // 매시간
+          function: "refresh-tokens",
+        },
+      ],
     };
   }
 }

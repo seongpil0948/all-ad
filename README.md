@@ -2,6 +2,19 @@
 
 All-AD는 여러 광고 플랫폼(Facebook, Google, Kakao, Naver, Coupang)을 하나의 대시보드에서 통합 관리할 수 있는 차세대 광고 관리 솔루션입니다.
 
+## 📋 목차
+
+- [주요 기능](#-주요-기능)
+- [기술 스택](#-기술-스택)
+- [프로젝트 구조](#-프로젝트-구조)
+- [시작하기](#-시작하기)
+- [사용 방법](#-사용-방법)
+- [보안](#-보안)
+- [기여하기](#-기여하기)
+- [문제 해결](#-문제-해결)
+- [라이선스](#-라이선스)
+- [문의](#-문의)
+
 ## 🚀 주요 기능
 
 ### 1. 멀티 플랫폼 통합 관리
@@ -65,6 +78,12 @@ all-ad/
 
 ## 🚦 시작하기
 
+### 필수 요구사항
+
+- Node.js 18.0.0 이상
+- pnpm 8.0.0 이상 (권장)
+- Git
+
 ### 환경 변수 설정
 
 `.env.local` 파일을 생성하고 다음 환경 변수를 설정하세요:
@@ -86,17 +105,73 @@ FACEBOOK_APP_SECRET=your_facebook_app_secret
 ### 설치 및 실행
 
 ```bash
-# 의존성 설치
-npm install
+# 저장소 클론
+git clone <repository-url>
+cd all-ad
+
+# 의존성 설치 (Pre-commit hooks 자동 설정됨)
+pnpm install
 
 # 개발 서버 실행
-npm run dev
+pnpm dev
 
 # 프로덕션 빌드
-npm run build
+pnpm build
 
 # 프로덕션 실행
-npm start
+pnpm start
+```
+
+### 개발 환경 설정
+
+프로젝트는 다음과 같은 개발 도구들이 설정되어 있습니다:
+
+#### Pre-commit Hooks
+
+- **Husky**: Git hooks 관리
+- **Lint-staged**: 커밋 전 staged 파일에 대해서만 린팅/포매팅 실행
+- **ESLint**: 코드 품질 검사 및 자동 수정
+- **Prettier**: 코드 포매팅
+
+커밋 시 자동으로 다음 작업이 수행됩니다:
+
+- JavaScript/TypeScript 파일: ESLint 검사 및 수정, Prettier 포매팅
+- JSON/Markdown/CSS 파일: Prettier 포매팅
+
+#### 개발 명령어
+
+```bash
+# 타입 체크
+pnpm tsc
+
+# 전체 프로젝트 린팅
+pnpm lint
+
+# 전체 프로젝트 포매팅
+pnpm format
+
+# 단위 테스트
+pnpm test:unit
+
+# E2E 테스트
+pnpm test:e2e
+```
+
+### 테스트 실행
+
+```bash
+# 테스트용 환경 변수 설정
+cp .env.test.example .env.test
+# .env.test 파일을 열어 TEST_USER_ID와 TEST_USER_PASSWORD 설정
+
+# Playwright 테스트 실행
+pnpm exec playwright test
+
+# UI 모드로 테스트 실행
+pnpm exec playwright test --ui
+
+# 특정 테스트 파일만 실행
+pnpm exec playwright test tests/auth/login.spec.ts
 ```
 
 ### 데이터베이스 마이그레이션
@@ -140,13 +215,84 @@ supabase db push
 
 ## 🤝 기여하기
 
-프로젝트에 기여하고 싶으시다면 PR을 보내주세요!
+프로젝트에 기여하고 싶으시다면 [CONTRIBUTING.md](./CONTRIBUTING.md)를 참고해주세요.
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+**빠른 가이드:**
+
+1. **저장소 포크 및 클론**
+
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/all-ad.git
+   cd all-ad
+   pnpm install
+   ```
+
+2. **기능 브랜치 생성**
+
+   ```bash
+   git checkout -b feature/amazing-feature
+   ```
+
+3. **개발 및 커밋**
+
+   ```bash
+   # 자동으로 ESLint + Prettier 적용됨 (pre-commit hook)
+   git add .
+   git commit -m "feat(scope): description"
+   ```
+
+4. **푸시 및 PR 생성**
+   ```bash
+   git push origin feature/amazing-feature
+   ```
+
+자세한 개발 워크플로우, 코딩 가이드라인, 문제 해결 방법은 **[CONTRIBUTING.md](./CONTRIBUTING.md)**에서 확인하세요.
+
+## 🔧 문제 해결
+
+### 자주 발생하는 문제들
+
+#### 1. Pre-commit Hook 오류
+
+```bash
+# Hook이 설치되지 않은 경우
+pnpm run prepare
+
+# Hook 파일 권한 문제
+chmod +x .husky/pre-commit
+
+# 수동으로 pre-commit 체크 실행
+pnpm run pre-commit
+```
+
+#### 2. ESLint 오류
+
+```bash
+# ESLint 캐시 초기화
+rm -rf .eslintcache
+
+# 전체 프로젝트 재린팅
+pnpm lint
+```
+
+#### 3. TypeScript 오류
+
+```bash
+# TypeScript 캐시 초기화
+rm -rf .next
+rm tsconfig.tsbuildinfo
+
+# 타입 체크
+pnpm tsc
+```
+
+#### 4. 의존성 문제
+
+```bash
+# node_modules 재설치
+rm -rf node_modules pnpm-lock.yaml
+pnpm install
+```
 
 ## 📝 라이선스
 

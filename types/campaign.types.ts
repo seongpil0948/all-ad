@@ -25,6 +25,17 @@ export interface Campaign {
   metrics?: CampaignMetrics;
 }
 
+// Campaign statistics interface
+export interface CampaignStats {
+  totalCampaigns: number;
+  activeCampaigns: number;
+  totalBudget: number;
+  totalSpend: number;
+  totalClicks: number;
+  totalImpressions: number;
+  platforms: number;
+}
+
 // Campaign metrics interface
 export interface CampaignMetrics {
   impressions: number;

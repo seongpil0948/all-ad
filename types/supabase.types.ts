@@ -1,419 +1,635 @@
+
 export type Json =
   | string
   | number
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[];
+  | Json[]
 
 export type Database = {
   graphql_public: {
     Tables: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     Views: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     Functions: {
       graphql: {
         Args: {
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-          extensions?: Json;
-        };
-        Returns: Json;
-      };
-    };
+          operationName?: string
+          query?: string
+          variables?: Json
+          extensions?: Json
+        }
+        Returns: Json
+      }
+    }
     Enums: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       campaign_metrics: {
         Row: {
-          campaign_id: string | null;
-          clicks: number | null;
-          conversions: number | null;
-          cost: number | null;
-          created_at: string;
-          date: string;
-          id: string;
-          impressions: number | null;
-          raw_data: Json | null;
-          revenue: number | null;
-        };
+          campaign_id: string
+          clicks: number | null
+          conversions: number | null
+          cost: number | null
+          created_at: string
+          date: string
+          id: string
+          impressions: number | null
+          raw_data: Json | null
+          revenue: number | null
+        }
         Insert: {
-          campaign_id?: string | null;
-          clicks?: number | null;
-          conversions?: number | null;
-          cost?: number | null;
-          created_at?: string;
-          date: string;
-          id?: string;
-          impressions?: number | null;
-          raw_data?: Json | null;
-          revenue?: number | null;
-        };
+          campaign_id: string
+          clicks?: number | null
+          conversions?: number | null
+          cost?: number | null
+          created_at?: string
+          date: string
+          id?: string
+          impressions?: number | null
+          raw_data?: Json | null
+          revenue?: number | null
+        }
         Update: {
-          campaign_id?: string | null;
-          clicks?: number | null;
-          conversions?: number | null;
-          cost?: number | null;
-          created_at?: string;
-          date?: string;
-          id?: string;
-          impressions?: number | null;
-          raw_data?: Json | null;
-          revenue?: number | null;
-        };
+          campaign_id?: string
+          clicks?: number | null
+          conversions?: number | null
+          cost?: number | null
+          created_at?: string
+          date?: string
+          id?: string
+          impressions?: number | null
+          raw_data?: Json | null
+          revenue?: number | null
+        }
         Relationships: [
           {
-            foreignKeyName: "campaign_metrics_campaign_id_fkey";
-            columns: ["campaign_id"];
-            isOneToOne: false;
-            referencedRelation: "campaigns";
-            referencedColumns: ["id"];
+            foreignKeyName: "campaign_metrics_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       campaigns: {
         Row: {
-          budget: number | null;
-          created_at: string;
-          id: string;
-          is_active: boolean | null;
-          name: string;
-          platform: Database["public"]["Enums"]["platform_type"];
-          platform_campaign_id: string;
-          raw_data: Json | null;
-          status: string | null;
-          synced_at: string | null;
-          team_id: string | null;
-          updated_at: string;
-        };
+          budget: number | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          platform: Database["public"]["Enums"]["platform_type"]
+          platform_campaign_id: string
+          platform_credential_id: string | null
+          raw_data: Json | null
+          status: string | null
+          synced_at: string | null
+          team_id: string
+          updated_at: string
+        }
         Insert: {
-          budget?: number | null;
-          created_at?: string;
-          id?: string;
-          is_active?: boolean | null;
-          name: string;
-          platform: Database["public"]["Enums"]["platform_type"];
-          platform_campaign_id: string;
-          raw_data?: Json | null;
-          status?: string | null;
-          synced_at?: string | null;
-          team_id?: string | null;
-          updated_at?: string;
-        };
+          budget?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          platform: Database["public"]["Enums"]["platform_type"]
+          platform_campaign_id: string
+          platform_credential_id?: string | null
+          raw_data?: Json | null
+          status?: string | null
+          synced_at?: string | null
+          team_id: string
+          updated_at?: string
+        }
         Update: {
-          budget?: number | null;
-          created_at?: string;
-          id?: string;
-          is_active?: boolean | null;
-          name?: string;
-          platform?: Database["public"]["Enums"]["platform_type"];
-          platform_campaign_id?: string;
-          raw_data?: Json | null;
-          status?: string | null;
-          synced_at?: string | null;
-          team_id?: string | null;
-          updated_at?: string;
-        };
+          budget?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          platform?: Database["public"]["Enums"]["platform_type"]
+          platform_campaign_id?: string
+          platform_credential_id?: string | null
+          raw_data?: Json | null
+          status?: string | null
+          synced_at?: string | null
+          team_id?: string
+          updated_at?: string
+        }
         Relationships: [
           {
-            foreignKeyName: "campaigns_team_id_fkey";
-            columns: ["team_id"];
-            isOneToOne: false;
-            referencedRelation: "teams";
-            referencedColumns: ["id"];
+            foreignKeyName: "campaigns_platform_credential_id_fkey"
+            columns: ["platform_credential_id"]
+            isOneToOne: false
+            referencedRelation: "platform_credentials"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+          {
+            foreignKeyName: "campaigns_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manual_campaign_metrics: {
+        Row: {
+          clicks: number | null
+          conversions: number | null
+          created_at: string | null
+          created_by: string | null
+          date: string
+          id: string
+          impressions: number | null
+          manual_campaign_id: string
+          revenue: number | null
+          spent: number | null
+        }
+        Insert: {
+          clicks?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          date: string
+          id?: string
+          impressions?: number | null
+          manual_campaign_id: string
+          revenue?: number | null
+          spent?: number | null
+        }
+        Update: {
+          clicks?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          date?: string
+          id?: string
+          impressions?: number | null
+          manual_campaign_id?: string
+          revenue?: number | null
+          spent?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_campaign_metrics_manual_campaign_id_fkey"
+            columns: ["manual_campaign_id"]
+            isOneToOne: false
+            referencedRelation: "manual_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manual_campaigns: {
+        Row: {
+          budget: number | null
+          clicks: number | null
+          conversions: number | null
+          created_at: string | null
+          created_by: string | null
+          external_id: string
+          id: string
+          impressions: number | null
+          last_updated_at: string | null
+          name: string
+          notes: string | null
+          platform: string
+          revenue: number | null
+          spent: number | null
+          status: string
+          team_id: string
+          updated_by: string | null
+        }
+        Insert: {
+          budget?: number | null
+          clicks?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          external_id: string
+          id?: string
+          impressions?: number | null
+          last_updated_at?: string | null
+          name: string
+          notes?: string | null
+          platform: string
+          revenue?: number | null
+          spent?: number | null
+          status: string
+          team_id: string
+          updated_by?: string | null
+        }
+        Update: {
+          budget?: number | null
+          clicks?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          external_id?: string
+          id?: string
+          impressions?: number | null
+          last_updated_at?: string | null
+          name?: string
+          notes?: string | null
+          platform?: string
+          revenue?: number | null
+          spent?: number | null
+          status?: string
+          team_id?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_campaigns_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oauth_states: {
+        Row: {
+          created_at: string
+          id: string
+          platform: string
+          state: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          platform: string
+          state: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          platform?: string
+          state?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oauth_states_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_credentials: {
         Row: {
-          account_id: string | null;
-          account_name: string | null;
-          created_at: string;
-          created_by: string | null;
-          credentials: Json;
-          data: Json | null;
-          id: string;
-          is_active: boolean | null;
-          last_synced_at: string | null;
-          platform: Database["public"]["Enums"]["platform_type"];
-          team_id: string | null;
-          updated_at: string;
-          user_id: string | null;
-        };
+          access_token: string | null
+          account_id: string
+          account_name: string | null
+          created_at: string
+          created_by: string
+          credentials: Json
+          data: Json | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          last_synced_at: string | null
+          platform: Database["public"]["Enums"]["platform_type"]
+          refresh_token: string | null
+          scope: string | null
+          team_id: string
+          updated_at: string
+        }
         Insert: {
-          account_id?: string | null;
-          account_name?: string | null;
-          created_at?: string;
-          created_by?: string | null;
-          credentials: Json;
-          data?: Json | null;
-          id?: string;
-          is_active?: boolean | null;
-          last_synced_at?: string | null;
-          platform: Database["public"]["Enums"]["platform_type"];
-          team_id?: string | null;
-          updated_at?: string;
-          user_id?: string | null;
-        };
+          access_token?: string | null
+          account_id: string
+          account_name?: string | null
+          created_at?: string
+          created_by: string
+          credentials?: Json
+          data?: Json | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_synced_at?: string | null
+          platform: Database["public"]["Enums"]["platform_type"]
+          refresh_token?: string | null
+          scope?: string | null
+          team_id: string
+          updated_at?: string
+        }
         Update: {
-          account_id?: string | null;
-          account_name?: string | null;
-          created_at?: string;
-          created_by?: string | null;
-          credentials?: Json;
-          data?: Json | null;
-          id?: string;
-          is_active?: boolean | null;
-          last_synced_at?: string | null;
-          platform?: Database["public"]["Enums"]["platform_type"];
-          team_id?: string | null;
-          updated_at?: string;
-          user_id?: string | null;
-        };
+          access_token?: string | null
+          account_id?: string
+          account_name?: string | null
+          created_at?: string
+          created_by?: string
+          credentials?: Json
+          data?: Json | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_synced_at?: string | null
+          platform?: Database["public"]["Enums"]["platform_type"]
+          refresh_token?: string | null
+          scope?: string | null
+          team_id?: string
+          updated_at?: string
+        }
         Relationships: [
           {
-            foreignKeyName: "platform_credentials_team_id_fkey";
-            columns: ["team_id"];
-            isOneToOne: false;
-            referencedRelation: "teams";
-            referencedColumns: ["id"];
+            foreignKeyName: "platform_credentials_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       profiles: {
         Row: {
-          avatar_url: string | null;
-          created_at: string;
-          email: string;
-          full_name: string | null;
-          id: string;
-          updated_at: string;
-        };
+          avatar_url: string | null
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string | null
+        }
         Insert: {
-          avatar_url?: string | null;
-          created_at?: string;
-          email: string;
-          full_name?: string | null;
-          id: string;
-          updated_at?: string;
-        };
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+        }
         Update: {
-          avatar_url?: string | null;
-          created_at?: string;
-          email?: string;
-          full_name?: string | null;
-          id?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      sync_logs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_count: number | null
+          error_message: string | null
+          id: string
+          last_sync_at: string | null
+          platform: Database["public"]["Enums"]["platform_type"]
+          records_processed: number | null
+          started_at: string
+          status: string | null
+          success_count: number | null
+          sync_type: string
+          team_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_count?: number | null
+          error_message?: string | null
+          id?: string
+          last_sync_at?: string | null
+          platform: Database["public"]["Enums"]["platform_type"]
+          records_processed?: number | null
+          started_at?: string
+          status?: string | null
+          success_count?: number | null
+          sync_type: string
+          team_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_count?: number | null
+          error_message?: string | null
+          id?: string
+          last_sync_at?: string | null
+          platform?: Database["public"]["Enums"]["platform_type"]
+          records_processed?: number | null
+          started_at?: string
+          status?: string | null
+          success_count?: number | null
+          sync_type?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_logs_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_invitations: {
         Row: {
-          accepted_at: string | null;
-          created_at: string;
-          email: string;
-          expires_at: string;
-          id: string;
-          invited_by: string;
-          role: Database["public"]["Enums"]["user_role"];
-          status: string | null;
-          team_id: string;
-          token: string;
-        };
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          role: Database["public"]["Enums"]["user_role"]
+          status: Database["public"]["Enums"]["invitation_status"]
+          team_id: string
+          token: string
+        }
         Insert: {
-          accepted_at?: string | null;
-          created_at?: string;
-          email: string;
-          expires_at?: string;
-          id?: string;
-          invited_by: string;
-          role?: Database["public"]["Enums"]["user_role"];
-          status?: string | null;
-          team_id: string;
-          token?: string;
-        };
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          role: Database["public"]["Enums"]["user_role"]
+          status?: Database["public"]["Enums"]["invitation_status"]
+          team_id: string
+          token?: string
+        }
         Update: {
-          accepted_at?: string | null;
-          created_at?: string;
-          email?: string;
-          expires_at?: string;
-          id?: string;
-          invited_by?: string;
-          role?: Database["public"]["Enums"]["user_role"];
-          status?: string | null;
-          team_id?: string;
-          token?: string;
-        };
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          status?: Database["public"]["Enums"]["invitation_status"]
+          team_id?: string
+          token?: string
+        }
         Relationships: [
           {
-            foreignKeyName: "team_invitations_team_id_fkey";
-            columns: ["team_id"];
-            isOneToOne: false;
-            referencedRelation: "teams";
-            referencedColumns: ["id"];
+            foreignKeyName: "team_invitations_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       team_members: {
         Row: {
-          id: string;
-          invited_by: string | null;
-          joined_at: string;
-          role: Database["public"]["Enums"]["user_role"];
-          team_id: string | null;
-          user_id: string | null;
-        };
+          id: string
+          invited_by: string | null
+          joined_at: string
+          role: Database["public"]["Enums"]["user_role"]
+          team_id: string | null
+          user_id: string | null
+        }
         Insert: {
-          id?: string;
-          invited_by?: string | null;
-          joined_at?: string;
-          role?: Database["public"]["Enums"]["user_role"];
-          team_id?: string | null;
-          user_id?: string | null;
-        };
+          id?: string
+          invited_by?: string | null
+          joined_at?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          team_id?: string | null
+          user_id?: string | null
+        }
         Update: {
-          id?: string;
-          invited_by?: string | null;
-          joined_at?: string;
-          role?: Database["public"]["Enums"]["user_role"];
-          team_id?: string | null;
-          user_id?: string | null;
-        };
+          id?: string
+          invited_by?: string | null
+          joined_at?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          team_id?: string | null
+          user_id?: string | null
+        }
         Relationships: [
           {
-            foreignKeyName: "team_members_team_id_fkey";
-            columns: ["team_id"];
-            isOneToOne: false;
-            referencedRelation: "teams";
-            referencedColumns: ["id"];
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       teams: {
         Row: {
-          created_at: string;
-          id: string;
-          master_user_id: string;
-          name: string;
-          updated_at: string;
-        };
+          created_at: string
+          id: string
+          master_user_id: string
+          name: string
+          updated_at: string
+        }
         Insert: {
-          created_at?: string;
-          id?: string;
-          master_user_id: string;
-          name: string;
-          updated_at?: string;
-        };
+          created_at?: string
+          id?: string
+          master_user_id: string
+          name: string
+          updated_at?: string
+        }
         Update: {
-          created_at?: string;
-          id?: string;
-          master_user_id?: string;
-          name?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-    };
+          created_at?: string
+          id?: string
+          master_user_id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+    }
     Views: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     Functions: {
       accept_team_invitation: {
-        Args: { invitation_token: string };
-        Returns: Json;
-      };
-      can_invite_team_members: {
-        Args: { check_user_id: string; check_team_id: string };
-        Returns: boolean;
-      };
+        Args: { invitation_token: string }
+        Returns: Json
+      }
+      call_edge_function: {
+        Args: { function_name: string; payload?: Json }
+        Returns: number
+      }
       check_team_member_limit: {
-        Args: { team_id_param: string };
-        Returns: boolean;
-      };
+        Args: { team_id_param: string }
+        Returns: boolean
+      }
+      cleanup_old_oauth_states: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       create_team_for_user: {
-        Args: { user_id: string };
-        Returns: string;
-      };
-      debug_get_all_invitation_tokens: {
-        Args: Record<PropertyKey, never>;
+        Args: { user_id: string }
+        Returns: string
+      }
+      ensure_user_has_team: {
+        Args: { user_id_param: string }
+        Returns: string
+      }
+      get_cron_job_status: {
+        Args: Record<PropertyKey, never>
         Returns: {
-          token: string;
-          email: string;
-          status: string;
-        }[];
-      };
-      decline_team_invitation: {
-        Args: { invitation_token: string };
-        Returns: Json;
-      };
+          jobid: number
+          jobname: string
+          schedule: string
+          command: string
+          active: boolean
+          last_run: string
+          last_status: string
+          last_duration: unknown
+        }[]
+      }
       get_invitation_by_token: {
-        Args: { invitation_token: string };
-        Returns: Json;
-      };
-      get_team_details: {
-        Args: { team_id_param: string };
+        Args: { invitation_token: string }
+        Returns: Json
+      }
+      user_teams: {
+        Args: { user_id: string }
         Returns: {
-          id: string;
-          name: string;
-          master_user_id: string;
-          created_at: string;
-          updated_at: string;
-          member_count: number;
-        }[];
-      };
-      get_team_members_with_profiles: {
-        Args: { team_id_param: string };
+          team_id: string
+        }[]
+      }
+      validate_token_migration: {
+        Args: Record<PropertyKey, never>
         Returns: {
-          id: string;
-          team_id: string;
-          user_id: string;
-          role: Database["public"]["Enums"]["user_role"];
-          invited_by: string;
-          joined_at: string;
-          profile_id: string;
-          email: string;
-          full_name: string;
-          avatar_url: string;
-        }[];
-      };
-      is_team_master: {
-        Args: { check_team_id: string; check_user_id?: string };
-        Returns: boolean;
-      };
-      is_team_member: {
-        Args: { check_team_id: string; check_user_id?: string };
-        Returns: boolean;
-      };
-    };
+          platform: string
+          total_count: number
+          migrated_count: number
+          missing_tokens: number
+        }[]
+      }
+    }
     Enums: {
-      invitation_status: "pending" | "accepted" | "expired" | "cancelled";
-      platform_type: "facebook" | "google" | "kakao" | "naver" | "coupang";
-      user_role: "master" | "viewer" | "team_mate";
-    };
+      invitation_status: "pending" | "accepted" | "expired" | "cancelled"
+      platform_type: "facebook" | "google" | "kakao" | "naver" | "coupang"
+      user_role: "master" | "team_mate" | "viewer"
+    }
     CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
-};
+      [_ in never]: never
+    }
+  }
+}
 
-type DefaultSchema = Database[Extract<keyof Database, "public">];
+type DefaultSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof Database },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database;
+    schema: keyof Database
   }
     ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
@@ -421,7 +637,7 @@ export type Tables<
 > = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
   ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R;
+      Row: infer R
     }
     ? R
     : never
@@ -429,64 +645,64 @@ export type Tables<
         DefaultSchema["Views"])
     ? (DefaultSchema["Tables"] &
         DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R;
+        Row: infer R
       }
       ? R
       : never
-    : never;
+    : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof Database },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database;
+    schema: keyof Database
   }
     ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
   ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I;
+      Insert: infer I
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I;
+        Insert: infer I
       }
       ? I
       : never
-    : never;
+    : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof Database },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database;
+    schema: keyof Database
   }
     ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
   ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U;
+      Update: infer U
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U;
+        Update: infer U
       }
       ? U
       : never
-    : never;
+    : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof Database },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database;
+    schema: keyof Database
   }
     ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
@@ -494,14 +710,14 @@ export type Enums<
   ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never;
+    : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof Database },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database;
+    schema: keyof Database
   }
     ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
@@ -509,7 +725,7 @@ export type CompositeTypes<
   ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never;
+    : never
 
 export const Constants = {
   graphql_public: {
@@ -519,7 +735,7 @@ export const Constants = {
     Enums: {
       invitation_status: ["pending", "accepted", "expired", "cancelled"],
       platform_type: ["facebook", "google", "kakao", "naver", "coupang"],
-      user_role: ["master", "viewer", "team_mate"],
+      user_role: ["master", "team_mate", "viewer"],
     },
   },
-} as const;
+} as const

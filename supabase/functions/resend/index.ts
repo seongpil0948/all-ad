@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
@@ -10,14 +9,14 @@ interface EmailRequest {
   replyTo?: string;
 }
 
-interface ResendResponse {
-  id: string;
-}
+// interface ResendResponse {
+//   id: string;
+// }
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const RESEND_API_URL = "https://api.resend.com/emails";
 
-Deno.serve(async (req) => {
+Deno.serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -33,8 +32,6 @@ Deno.serve(async (req) => {
   try {
     // Check if API key is configured
     if (!RESEND_API_KEY) {
-      console.error("RESEND_API_KEY is not configured");
-
       return new Response(
         JSON.stringify({ error: "Email service is not configured" }),
         {
@@ -76,10 +73,7 @@ Deno.serve(async (req) => {
       ...(emailData.replyTo && { reply_to: emailData.replyTo }),
     };
 
-    console.log("Sending email via Resend", {
-      to: resendData.to,
-      subject: resendData.subject,
-    });
+    // Email sending attempt - no logging in edge function
 
     // Send email using Resend API
     const response = await fetch(RESEND_API_URL, {
@@ -94,11 +88,6 @@ Deno.serve(async (req) => {
     const responseData = await response.json();
 
     if (!response.ok) {
-      console.error("Resend API error", {
-        status: response.status,
-        error: responseData,
-      });
-
       return new Response(
         JSON.stringify({
           error: "Failed to send email",
@@ -114,8 +103,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log("Email sent successfully", { id: responseData.id });
-
     return new Response(
       JSON.stringify({
         success: true,
@@ -129,12 +116,10 @@ Deno.serve(async (req) => {
       },
     );
   } catch (error) {
-    console.error("Error in resend function", error);
-
     return new Response(
       JSON.stringify({
         error: "Internal server error",
-        message: error.message,
+        message: error instanceof Error ? error.message : String(error),
       }),
       {
         status: 500,

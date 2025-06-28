@@ -11,6 +11,8 @@ import {
 import { LineChart, BarChart, PieChart } from "echarts/charts";
 import { CanvasRenderer } from "echarts/renderers";
 
+import { EChartsProps } from "@/types/components";
+
 // Register required components
 echarts.use([
   GridComponent,
@@ -22,12 +24,6 @@ echarts.use([
   PieChart,
   CanvasRenderer,
 ]);
-
-interface EChartsProps {
-  option: echarts.EChartsCoreOption;
-  style?: React.CSSProperties;
-  className?: string;
-}
 
 export function EChart({ option, style, className }: EChartsProps) {
   const chartRef = useRef<HTMLDivElement>(null);

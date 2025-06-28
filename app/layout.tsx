@@ -5,9 +5,7 @@ import clsx from "clsx";
 import { Providers } from "./providers";
 
 import { siteConfig } from "@/config/site";
-import { fontSans } from "@/config/fonts";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
+import { fontMono, nanumMyeongjo, notoSerifKr } from "@/config/fonts";
 
 export const metadata: Metadata = {
   title: {
@@ -27,6 +25,10 @@ export const viewport: Viewport = {
   ],
 };
 
+export async function generateStaticParams() {
+  return [{ lang: "en" }, { lang: "ko" }, { lang: "zh" }];
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -38,15 +40,13 @@ export default function RootLayout({
       <body
         className={clsx(
           "min-h-screen text-foreground bg-background font-sans antialiased",
-          fontSans.variable,
+          fontMono.variable,
+          notoSerifKr.variable,
+          nanumMyeongjo.variable,
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
-          <div className="relative flex flex-col h-screen">
-            <Navbar />
-            <main className="mx-auto grow w-full">{children}</main>
-            <Footer />
-          </div>
+          {children}
         </Providers>
       </body>
     </html>

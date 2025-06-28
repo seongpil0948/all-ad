@@ -1,12 +1,61 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { match } from "@formatjs/intl-localematcher";
+import Negotiator from "negotiator";
 
 import { updateSession } from "@/utils/supabase/middleware";
 import log from "@/utils/logger";
+
+const locales = ["en", "ko", "zh"];
+const defaultLocale = "en";
+
+function getLocale(request: NextRequest): string {
+  try {
+    const negotiatorHeaders: Record<string, string> = {};
+
+    request.headers.forEach((value, key) => (negotiatorHeaders[key] = value));
+
+    const languages = new Negotiator({
+      headers: negotiatorHeaders,
+    }).languages();
+
+    // Filter out invalid languages and ensure we have a valid array
+    const validLanguages = languages.filter(
+      (lang): lang is string => typeof lang === "string" && lang.length > 0,
+    );
+
+    // If no valid languages, return default
+    if (validLanguages.length === 0) {
+      return defaultLocale;
+    }
+
+    return match(validLanguages, locales, defaultLocale);
+  } catch (error) {
+    log.warn("Failed to get locale from headers, using default", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    return defaultLocale;
+  }
+}
 
 export async function middleware(request: NextRequest) {
   const startTime = Date.now();
   const { pathname } = request.nextUrl;
   const method = request.method;
+
+  // Check if there is any supported locale in the pathname
+  const pathnameHasLocale = locales.some(
+    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`,
+  );
+
+  // Redirect if there is no locale
+  if (!pathnameHasLocale) {
+    const locale = getLocale(request);
+
+    request.nextUrl.pathname = `/${locale}${pathname}`;
+
+    return NextResponse.redirect(request.nextUrl);
+  }
 
   // Log incoming request
   log.http(method, pathname, undefined, undefined, {
@@ -70,9 +119,9 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - api/health (health check endpoint)
+     * - api/ (all API routes)
      * Feel free to modify this pattern to include more paths.
      */
-    "/((?!_next/static|_next/image|favicon.ico|api/health|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

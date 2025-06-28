@@ -1,17 +1,25 @@
-import { Campaign, CampaignMetrics, PlatformType } from "@/types";
+import {
+  Campaign,
+  CampaignMetrics,
+  CampaignWithMetrics,
+  PlatformType,
+} from "@/types";
 
 // Common interface for all platform services
 export interface PlatformService {
   platform: PlatformType;
 
   // Set credentials for the service
-  setCredentials(credentials: Record<string, any>): void;
+  setCredentials(credentials: Record<string, unknown>): void;
+
+  // Set multi-account credentials (MCC, System User, Business Center)
+  setMultiAccountCredentials?(credentials: Record<string, unknown>): void;
 
   // Validate credentials
   validateCredentials(): Promise<boolean>;
 
   // Fetch campaigns from the platform
-  fetchCampaigns(): Promise<Campaign[]>;
+  fetchCampaigns(): Promise<Campaign[] | CampaignWithMetrics[]>;
 
   // Fetch campaign metrics
   fetchCampaignMetrics(

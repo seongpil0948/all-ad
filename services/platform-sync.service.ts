@@ -1,31 +1,25 @@
-import { platformServiceFactory } from "./platforms/platform-service-factory";
-import { PlatformDatabaseService } from "./platform-database.service";
+import { PlatformServiceFactory } from "./platforms/platform-service-factory";
+import { PlatformDatabaseService, Logger } from "./platform-database.service";
 
-import log from "@/utils/logger";
-import { Campaign as DBCampaign, PlatformType } from "@/types/database.types";
+import { Campaign as DBCampaign, PlatformType, Json } from "@/types";
+import { PlatformCampaign, PlatformCampaignMetrics } from "@/types/platform";
 import { createClient } from "@/utils/supabase/server";
 
-// Platform-specific campaign interface
-interface PlatformCampaign {
-  platform_campaign_id: string;
-  name: string;
-  status?: string;
-  budget?: number;
+// Type definitions
+interface PlatformCredential {
+  id: string;
+  team_id: string;
+  platform: string;
+  credentials: Record<string, unknown>;
   is_active: boolean;
-  raw_data?: Record<string, any>;
-}
-
-// Platform-specific metrics interface
-interface PlatformCampaignMetrics {
-  date: string;
-  impressions: number;
-  clicks: number;
-  conversions?: number;
-  cost?: number;
-  revenue?: number;
 }
 
 export class PlatformSyncService {
+  constructor(
+    private platformServiceFactory: PlatformServiceFactory,
+    private databaseService: PlatformDatabaseService,
+    private log: Logger,
+  ) {}
   async syncAllPlatforms(
     teamId: string,
     _userId: string,
@@ -65,7 +59,7 @@ export class PlatformSyncService {
         >,
       };
     } catch (error) {
-      log.error("Sync all platforms error:", error as Error);
+      this.log.error("Sync all platforms error:", error as Error);
 
       return {
         success: false,
@@ -80,10 +74,10 @@ export class PlatformSyncService {
   async syncPlatform(
     teamId: string,
     platform: PlatformType,
-    credentials: Record<string, any>,
+    credentials: Record<string, unknown>,
   ): Promise<boolean> {
     try {
-      const service = platformServiceFactory.createService(platform);
+      const service = this.platformServiceFactory.createService(platform);
 
       // Set credentials on the service
       service.setCredentials(credentials);
@@ -130,7 +124,7 @@ export class PlatformSyncService {
               await this.saveCampaignMetrics(savedCampaign.id, metrics);
             }
           } catch (error) {
-            log.error(
+            this.log.error(
               `Failed to sync metrics for campaign ${platformCampaign.platform_campaign_id}:`,
               error as Error,
             );
@@ -139,13 +133,11 @@ export class PlatformSyncService {
       }
 
       // Update sync time
-      const dbService = new PlatformDatabaseService();
-
-      await dbService.updateCampaignSyncTime(teamId, platform);
+      await this.databaseService.updateCampaignSyncTime(teamId, platform);
 
       return true;
     } catch (error) {
-      log.error(`Platform sync error for ${platform}:`, error as Error);
+      this.log.error(`Platform sync error for ${platform}:`, error as Error);
       throw error;
     }
   }
@@ -161,7 +153,7 @@ export class PlatformSyncService {
       // Get platform credentials
       const credentials = await this.getTeamCredentials(teamId);
       const platformCredential = credentials.find(
-        (c: any) => c.platform === platform,
+        (c) => c.platform === platform,
       );
 
       if (!platformCredential) {
@@ -169,7 +161,7 @@ export class PlatformSyncService {
       }
 
       // Update on the platform
-      const service = platformServiceFactory.createService(platform);
+      const service = this.platformServiceFactory.createService(platform);
 
       service.setCredentials(platformCredential.credentials);
 
@@ -189,7 +181,7 @@ export class PlatformSyncService {
 
       return dbSuccess;
     } catch (error) {
-      log.error("Update campaign budget error:", error as Error);
+      this.log.error("Update campaign budget error:", error as Error);
 
       return false;
     }
@@ -206,7 +198,7 @@ export class PlatformSyncService {
       // Get platform credentials
       const credentials = await this.getTeamCredentials(teamId);
       const platformCredential = credentials.find(
-        (c: any) => c.platform === platform,
+        (c) => c.platform === platform,
       );
 
       if (!platformCredential) {
@@ -214,7 +206,7 @@ export class PlatformSyncService {
       }
 
       // Update on the platform
-      const service = platformServiceFactory.createService(platform);
+      const service = this.platformServiceFactory.createService(platform);
 
       service.setCredentials(platformCredential.credentials);
 
@@ -234,14 +226,16 @@ export class PlatformSyncService {
 
       return dbSuccess;
     } catch (error) {
-      log.error("Update campaign status error:", error as Error);
+      this.log.error("Update campaign status error:", error as Error);
 
       return false;
     }
   }
 
   // Helper methods
-  private async getTeamCredentials(teamId: string): Promise<any[]> {
+  private async getTeamCredentials(
+    teamId: string,
+  ): Promise<PlatformCredential[]> {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("platform_credentials")
@@ -250,7 +244,7 @@ export class PlatformSyncService {
       .eq("is_active", true);
 
     if (error) {
-      log.error("Error fetching team credentials:", error);
+      this.log.error("Error fetching team credentials:", error);
 
       return [];
     }
@@ -264,10 +258,9 @@ export class PlatformSyncService {
     campaigns: PlatformCampaign[],
   ): Promise<DBCampaign[]> {
     const savedCampaigns: DBCampaign[] = [];
-    const dbService = new PlatformDatabaseService();
 
     for (const campaign of campaigns) {
-      const savedCampaign = await dbService.upsertCampaign({
+      const savedCampaign = await this.databaseService.upsertCampaign({
         team_id: teamId,
         platform,
         platform_campaign_id: campaign.platform_campaign_id,
@@ -275,7 +268,7 @@ export class PlatformSyncService {
         status: campaign.status,
         budget: campaign.budget,
         is_active: campaign.is_active,
-        raw_data: campaign.raw_data || {},
+        raw_data: (campaign.raw_data || null) as Json | null,
       });
 
       if (savedCampaign) {
@@ -290,10 +283,8 @@ export class PlatformSyncService {
     campaignId: string,
     metrics: PlatformCampaignMetrics[],
   ): Promise<void> {
-    const dbService = new PlatformDatabaseService();
-
     for (const metric of metrics) {
-      await dbService.upsertCampaignMetrics({
+      await this.databaseService.upsertCampaignMetrics({
         campaign_id: campaignId,
         date: metric.date,
         impressions: metric.impressions,
@@ -319,7 +310,7 @@ export class PlatformSyncService {
       .eq("id", campaignId);
 
     if (error) {
-      log.error("Error updating campaign settings:", error);
+      this.log.error("Error updating campaign settings:", error);
 
       return false;
     }

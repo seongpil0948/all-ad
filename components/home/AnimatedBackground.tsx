@@ -4,9 +4,12 @@ import { motion } from "framer-motion";
 
 export const AnimatedBackground = () => {
   return (
-    <div className="absolute inset-0 -z-10 overflow-hidden">
+    <div
+      className="absolute inset-0 -z-10 overflow-hidden"
+      data-testid="animated-background"
+    >
       {/* Gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-violet-100 to-pink-100 dark:from-violet-900/20 dark:to-pink-900/20 opacity-50" />
+      <div className="absolute inset-0 bg-linear-to-br from-violet-100 to-pink-100 dark:from-violet-900/20 dark:to-pink-900/20 opacity-50" />
 
       {/* Animated circles */}
       <motion.div

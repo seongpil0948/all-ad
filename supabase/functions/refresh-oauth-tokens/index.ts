@@ -4,7 +4,7 @@
 // This enables autocomplete, go to definition, etc.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,7 +20,7 @@ interface TokenData {
   scope?: string;
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   // Handle CORS
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -29,7 +29,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const redisUrl = Deno.env.get("REDIS_URL")!;
+    // const redisUrl = Deno.env.get("REDIS_URL")!;
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -180,13 +180,13 @@ serve(async (req) => {
 });
 
 async function refreshGoogleToken(
-  credentials: any,
+  credentials: Record<string, unknown>,
   refreshToken: string,
 ): Promise<TokenData> {
   const params = new URLSearchParams({
     refresh_token: refreshToken,
-    client_id: credentials.client_id,
-    client_secret: credentials.client_secret,
+    client_id: credentials.client_id as string,
+    client_secret: credentials.client_secret as string,
     grant_type: "refresh_token",
   });
 
@@ -216,20 +216,20 @@ async function refreshGoogleToken(
 }
 
 async function refreshFacebookToken(
-  credentials: any,
+  credentials: Record<string, unknown>,
   refreshToken: string,
 ): Promise<TokenData> {
   // Facebook uses long-lived tokens that don't need refresh
   // But we can exchange for a new long-lived token
   const params = new URLSearchParams({
     grant_type: "fb_exchange_token",
-    client_id: credentials.client_id,
-    client_secret: credentials.client_secret,
+    client_id: credentials.client_id as string,
+    client_secret: credentials.client_secret as string,
     fb_exchange_token: refreshToken,
   });
 
   const response = await fetch(
-    "https://graph.facebook.com/v18.0/oauth/access_token",
+    "https://graph.facebook.com/v23.0/oauth/access_token",
     {
       method: "POST",
       headers: {
@@ -255,13 +255,13 @@ async function refreshFacebookToken(
 }
 
 async function refreshKakaoToken(
-  credentials: any,
+  credentials: Record<string, unknown>,
   refreshToken: string,
 ): Promise<TokenData> {
   const params = new URLSearchParams({
     refresh_token: refreshToken,
-    client_id: credentials.client_id,
-    client_secret: credentials.client_secret,
+    client_id: credentials.client_id as string,
+    client_secret: credentials.client_secret as string,
     grant_type: "refresh_token",
   });
 

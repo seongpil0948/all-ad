@@ -1,3 +1,5 @@
+import { MetaAdsIntegrationService } from "../meta-ads/meta-ads-integration.service";
+
 import { BasePlatformService } from "./base-platform.service";
 
 import {
@@ -7,23 +9,48 @@ import {
   FacebookCredentials,
 } from "@/types";
 import log from "@/utils/logger";
+import { formatDateToYYYYMMDD } from "@/utils/date-formatter";
+
+interface MetaAdAccount {
+  id: string;
+  name: string;
+  currency: string;
+  timezone: string;
+  status: number;
+}
+
 export class FacebookPlatformService extends BasePlatformService {
   platform: PlatformType = "facebook";
+  private metaAdsService?: MetaAdsIntegrationService;
+
+  // Initialize Meta Ads service
+  private getMetaAdsService(): MetaAdsIntegrationService {
+    if (!this.metaAdsService) {
+      const credentials = this.credentials as unknown as FacebookCredentials;
+
+      this.metaAdsService = new MetaAdsIntegrationService({
+        accessToken: credentials.accessToken || "",
+        appId: credentials.appId,
+        appSecret: credentials.appSecret,
+        businessId: credentials.businessId,
+      });
+    }
+
+    return this.metaAdsService;
+  }
 
   async validateCredentials(): Promise<boolean> {
-    const { accessToken, accountId } = this.credentials as FacebookCredentials;
+    const { accountId, accessToken } = this
+      .credentials as unknown as FacebookCredentials;
 
     if (!accessToken || !accountId) {
       return false;
     }
 
     try {
-      // Validate token by making a simple API call
-      const response = await fetch(
-        `https://graph.facebook.com/v18.0/me?access_token=${accessToken}`,
-      );
+      const service = this.getMetaAdsService();
 
-      return response.ok;
+      return await service.testConnection(accountId);
     } catch (error) {
       log.error("Facebook credential validation error:", error as Error);
 
@@ -32,30 +59,39 @@ export class FacebookPlatformService extends BasePlatformService {
   }
 
   async fetchCampaigns(): Promise<Campaign[]> {
-    const { accessToken, accountId } = this.credentials as FacebookCredentials;
+    log.info("Fetching Facebook campaigns");
 
     try {
-      const response = await fetch(
-        `https://graph.facebook.com/v18.0/act_${accountId}/campaigns?fields=id,name,status,daily_budget,lifetime_budget&access_token=${accessToken}`,
+      const { accountId } = this.credentials as unknown as FacebookCredentials;
+      const service = this.getMetaAdsService();
+
+      // Get campaigns with last 30 days insights
+      const endDate = new Date();
+      const startDate = new Date();
+
+      startDate.setDate(startDate.getDate() - 30);
+
+      const metaCampaigns = await service.getCampaignsWithInsights(
+        accountId,
+        formatDateToYYYYMMDD(startDate),
+        formatDateToYYYYMMDD(endDate),
       );
 
-      if (!response.ok) {
-        throw new Error(`Facebook API error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-
-      return data.data.map((campaign: any) => ({
-        platform: "facebook",
+      // Transform to platform common format
+      return metaCampaigns.map((campaign) => ({
+        id: `${accountId}_${campaign.id}`,
+        team_id: this.teamId || "",
+        platform: "facebook" as PlatformType,
         platform_campaign_id: campaign.id,
         name: campaign.name,
-        status: campaign.status,
-        budget: campaign.daily_budget || campaign.lifetime_budget || 0,
+        status: this.mapStatus(campaign.status),
+        budget: campaign.dailyBudget || campaign.lifetimeBudget || 0,
         is_active: campaign.status === "ACTIVE",
-        raw_data: campaign,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       }));
     } catch (error) {
-      log.error("Facebook fetch campaigns error:", error as Error);
+      log.error("Failed to fetch Facebook campaigns", error as Error);
       throw error;
     }
   }
@@ -65,34 +101,44 @@ export class FacebookPlatformService extends BasePlatformService {
     startDate: Date,
     endDate: Date,
   ): Promise<CampaignMetrics[]> {
-    const { accessToken } = this.credentials as FacebookCredentials;
+    log.info("Fetching Facebook campaign metrics", {
+      campaignId,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+    });
 
     try {
-      const insights = await fetch(
-        `https://graph.facebook.com/v18.0/${campaignId}/insights?` +
-          `fields=impressions,clicks,conversions,spend,revenue&` +
-          `time_range={'since':'${this.formatDate(startDate)}','until':'${this.formatDate(endDate)}'}&` +
-          `access_token=${accessToken}`,
+      const service = this.getMetaAdsService();
+      const insights = await service.getCampaignInsights(
+        campaignId,
+        formatDateToYYYYMMDD(startDate),
+        formatDateToYYYYMMDD(endDate),
       );
 
-      if (!insights.ok) {
-        throw new Error(`Facebook API error: ${insights.statusText}`);
+      if (!insights) {
+        return [];
       }
 
-      const data = await insights.json();
-
-      return data.data.map((metric: any) => ({
-        campaign_id: campaignId,
-        date: metric.date_start,
-        impressions: parseInt(metric.impressions || "0"),
-        clicks: parseInt(metric.clicks || "0"),
-        conversions: parseInt(metric.conversions || "0"),
-        cost: parseFloat(metric.spend || "0"),
-        revenue: parseFloat(metric.revenue || "0"),
-        raw_data: metric,
-      }));
+      // Transform to platform common format
+      return [
+        {
+          date: formatDateToYYYYMMDD(startDate),
+          impressions: insights.impressions,
+          clicks: insights.clicks,
+          cost: insights.spend,
+          conversions: insights.conversions,
+          revenue: 0,
+          ctr: insights.ctr,
+          cpc: insights.cpc,
+          cpm:
+            insights.spend && insights.impressions
+              ? (insights.spend / insights.impressions) * 1000
+              : 0,
+          roas: 0, // Would need conversion value data
+        },
+      ];
     } catch (error) {
-      log.error("Facebook fetch metrics error:", error as Error);
+      log.error("Failed to fetch campaign metrics", error as Error);
       throw error;
     }
   }
@@ -101,26 +147,14 @@ export class FacebookPlatformService extends BasePlatformService {
     campaignId: string,
     budget: number,
   ): Promise<boolean> {
-    const { accessToken } = this.credentials as FacebookCredentials;
+    log.info(`Updating Facebook campaign ${campaignId} budget to ${budget}`);
 
     try {
-      const response = await fetch(
-        `https://graph.facebook.com/v18.0/${campaignId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            daily_budget: budget * 100, // Facebook uses cents
-            access_token: accessToken,
-          }),
-        },
-      );
+      const service = this.getMetaAdsService();
 
-      return response.ok;
+      return await service.updateCampaignBudget(campaignId, budget);
     } catch (error) {
-      log.error("Facebook update budget error:", error as Error);
+      log.error("Failed to update campaign budget", error as Error);
 
       return false;
     }
@@ -130,28 +164,51 @@ export class FacebookPlatformService extends BasePlatformService {
     campaignId: string,
     isActive: boolean,
   ): Promise<boolean> {
-    const { accessToken } = this.credentials as FacebookCredentials;
+    log.info(
+      `Updating Facebook campaign ${campaignId} status to ${isActive ? "ACTIVE" : "PAUSED"}`,
+    );
 
     try {
-      const response = await fetch(
-        `https://graph.facebook.com/v18.0/${campaignId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            status: isActive ? "ACTIVE" : "PAUSED",
-            access_token: accessToken,
-          }),
-        },
-      );
+      const service = this.getMetaAdsService();
 
-      return response.ok;
+      return await service.updateCampaignStatus(
+        campaignId,
+        isActive ? "ACTIVE" : "PAUSED",
+      );
     } catch (error) {
-      log.error("Facebook update status error:", error as Error);
+      log.error("Failed to update campaign status", error as Error);
 
       return false;
+    }
+  }
+
+  // Map Facebook status to common status
+  private mapStatus(facebookStatus: string): "active" | "paused" | "removed" {
+    switch (facebookStatus) {
+      case "ACTIVE":
+        return "active";
+      case "PAUSED":
+        return "paused";
+      case "DELETED":
+      case "ARCHIVED":
+        return "removed";
+      default:
+        return "paused";
+    }
+  }
+
+  /**
+   * Get all accessible ad accounts for account selection
+   */
+  async getAccessibleAccounts(): Promise<MetaAdAccount[]> {
+    try {
+      const service = this.getMetaAdsService();
+      const credentials = this.credentials as unknown as FacebookCredentials;
+
+      return await service.getAdAccounts(credentials.businessId);
+    } catch (error) {
+      log.error("Failed to fetch accessible accounts", error as Error);
+      throw error;
     }
   }
 }

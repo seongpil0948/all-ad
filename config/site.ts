@@ -1,6 +1,20 @@
-export type SiteConfig = typeof siteConfig;
+import { SiteConfig } from "@/types/config";
 
-export const siteConfig = {
+export const PAGE_PATH = {
+  landing: "/",
+  login: "/login",
+  dashboard: "/dashboard",
+  settings: "/settings",
+  profile: "/profile",
+  team: "/team",
+  analytics: "/analytics",
+  pricing: "/pricing",
+  demo: "/demo",
+  support: "/support",
+  contact: "/contact",
+} as const;
+
+export const siteConfig: SiteConfig = {
   name: "A.ll + Ad",
   description: "All in one advertising solution - 모든 광고를 하나로",
   navItems: [

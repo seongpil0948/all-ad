@@ -1,138 +1,118 @@
-import { NextRequest, NextResponse } from "next/server";
-
+import { withAuth } from "@/lib/api/middleware";
+import { ApiErrors, handleApiError, validateParams } from "@/lib/api/errors";
+import { successResponse } from "@/lib/api/response";
 import { createClient } from "@/utils/supabase/server";
-import { platformServiceFactory } from "@/services/platforms/platform-service-factory";
+import { getPlatformServiceFactory } from "@/lib/di/service-resolver";
 import { PlatformType } from "@/types";
 import log from "@/utils/logger";
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ platform: string; campaignId: string }> },
-) {
-  try {
-    const { platform, campaignId } = await params;
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+const VALID_PLATFORMS: PlatformType[] = [
+  "facebook",
+  "google",
+  "kakao",
+  "naver",
+  "coupang",
+];
 
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { is_active } = await request.json();
-
-    if (typeof is_active !== "boolean") {
-      return NextResponse.json(
-        { error: "Invalid status value" },
-        { status: 400 },
-      );
-    }
-
-    const platformType = platform as PlatformType;
-
-    const validPlatforms: PlatformType[] = [
-      "facebook",
-      "google",
-      "kakao",
-      "naver",
-      "coupang",
-    ];
-
-    if (!validPlatforms.includes(platformType)) {
-      return NextResponse.json({ error: "Invalid platform" }, { status: 400 });
-    }
-
-    // Get user's team and check permissions
-    const { data: teamMember, error: teamError } = await supabase
-      .from("team_members")
-      .select("team_id, role")
-      .eq("user_id", user.id)
-      .single();
-
-    if (teamError || !teamMember) {
-      return NextResponse.json({ error: "Team not found" }, { status: 404 });
-    }
-
-    if (teamMember.role === "viewer") {
-      return NextResponse.json(
-        { error: "Insufficient permissions" },
-        { status: 403 },
-      );
-    }
-
-    // Get platform credentials
-    const { data: credential, error: credError } = await supabase
-      .from("platform_credentials")
-      .select("*")
-      .eq("team_id", teamMember.team_id)
-      .eq("platform", platformType)
-      .eq("is_active", true)
-      .single();
-
-    if (credError || !credential) {
-      return NextResponse.json(
-        { error: "Platform credentials not found" },
-        { status: 404 },
-      );
-    }
-
-    // Update status in the platform
-    const platformService = platformServiceFactory.createService(platformType);
-
-    await platformService.setCredentials(credential.credentials);
-
+export const PATCH = withAuth(
+  async (request, context, routeContext) => {
     try {
-      const success = await platformService.updateCampaignStatus(
-        campaignId,
-        is_active,
-      );
+      const { platform, campaignId } = await routeContext.params;
+      const body = await request.json();
 
-      if (!success) {
-        throw new Error("Failed to update status on platform");
+      // Validate request body
+      validateParams(body, ["status"]);
+      const { status } = body;
+
+      // Validate status value
+      if (status !== "ENABLED" && status !== "PAUSED") {
+        throw ApiErrors.INVALID_REQUEST(
+          "Invalid status value. Must be ENABLED or PAUSED",
+        );
       }
 
-      // Update status in our database
-      const { error: updateError } = await supabase
-        .from("campaigns")
-        .update({
-          is_active,
-          status: is_active ? "ACTIVE" : "PAUSED",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("team_id", teamMember.team_id)
+      // Validate platform
+      const platformType = platform as PlatformType;
+
+      if (!VALID_PLATFORMS.includes(platformType)) {
+        throw ApiErrors.INVALID_REQUEST("Invalid platform");
+      }
+
+      const is_active = status === "ENABLED";
+      const supabase = await createClient();
+
+      // Get platform credentials
+      const { data: credential, error: credError } = await supabase
+        .from("platform_credentials")
+        .select("*")
+        .eq("team_id", context.teamMember.team_id)
         .eq("platform", platformType)
-        .eq("platform_campaign_id", campaignId);
+        .eq("is_active", true)
+        .single();
 
-      if (updateError) {
-        throw updateError;
+      if (credError || !credential) {
+        throw ApiErrors.NOT_FOUND("Platform credentials");
       }
 
-      return NextResponse.json({
-        success: true,
-        message: "Campaign status updated successfully",
-        is_active,
-      });
-    } catch (error) {
-      log.error(`Status update error for ${platformType}: ${error}`);
+      // Update status in the platform
+      const platformServiceFactory = await getPlatformServiceFactory();
+      const platformService =
+        platformServiceFactory.createService(platformType);
 
-      return NextResponse.json(
-        {
-          error: "Failed to update status",
-          details: error instanceof Error ? error.message : "Unknown error",
-        },
-        { status: 500 },
+      await platformService.setCredentials(credential.credentials);
+
+      try {
+        const success = await platformService.updateCampaignStatus(
+          campaignId,
+          is_active,
+        );
+
+        if (!success) {
+          throw new Error("Failed to update status on platform");
+        }
+
+        // Update status in our database
+        const { error: updateError } = await supabase
+          .from("campaigns")
+          .update({
+            is_active,
+            status: is_active ? "ACTIVE" : "PAUSED",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("team_id", context.teamMember.team_id)
+          .eq("platform", platformType)
+          .eq("platform_campaign_id", campaignId);
+
+        if (updateError) {
+          throw updateError;
+        }
+
+        log.info("Campaign status updated", {
+          userId: context.user.id,
+          teamId: context.teamMember.team_id,
+          platform: platformType,
+          campaignId,
+          newStatus: status,
+        });
+
+        return successResponse(
+          { campaignId, is_active, status },
+          { message: "Campaign status updated successfully" },
+        );
+      } catch (error) {
+        throw ApiErrors.PLATFORM_ERROR(
+          platformType,
+          error instanceof Error ? error.message : "Failed to update status",
+        );
+      }
+    } catch (error) {
+      return handleApiError(
+        error,
+        "PATCH /campaigns/[platform]/[campaignId]/status",
       );
     }
-  } catch (error) {
-    log.error(`Status API error:${error}`);
-
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+  {
+    requiredRole: ["master", "team_mate"], // Only master and team_mate can update
+  },
+);

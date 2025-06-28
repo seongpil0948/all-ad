@@ -1,26 +1,50 @@
-import { Spinner } from "@heroui/spinner";
+"use client";
 
-interface LoadingStateProps {
-  message?: string;
-  size?: "sm" | "md" | "lg";
-  fullScreen?: boolean;
-}
+import type { LoadingStateProps } from "@/types/components";
+
+import { Spinner } from "@heroui/spinner";
+import { motion } from "framer-motion";
+
+import { fadeIn, scaleIn } from "@/utils/animations";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 export function LoadingState({
-  message = "로딩 중...",
+  message,
   size = "lg",
   fullScreen = false,
 }: LoadingStateProps) {
+  const { dictionary: dict } = useDictionary();
+  const defaultMessage = message || dict.common.loading;
   const containerClass = fullScreen
     ? "fixed inset-0 flex justify-center items-center bg-background/80 backdrop-blur-sm z-50"
     : "flex justify-center items-center h-64";
 
   return (
-    <div className={containerClass}>
-      <div className="flex flex-col items-center gap-4">
+    <motion.div
+      animate="animate"
+      className={containerClass}
+      exit="exit"
+      initial="initial"
+      variants={fadeIn}
+    >
+      <motion.div
+        animate="animate"
+        className="flex flex-col items-center gap-4"
+        initial="initial"
+        variants={scaleIn}
+      >
         <Spinner size={size} />
-        {message && <p className="text-default-500 text-sm">{message}</p>}
-      </div>
-    </div>
+        {defaultMessage && (
+          <motion.p
+            animate={{ opacity: 1, y: 0 }}
+            className="text-default-500 text-sm"
+            initial={{ opacity: 0, y: 10 }}
+            transition={{ delay: 0.2 }}
+          >
+            {defaultMessage}
+          </motion.p>
+        )}
+      </motion.div>
+    </motion.div>
   );
 }

@@ -1,55 +1,65 @@
-// Google Ads API 타입 정의
-
-// OAuth 2.0 인증 관련 타입
-export interface GoogleAdsApiCredentials {
+export interface GoogleAdsCredentials {
   clientId: string;
   clientSecret: string;
-  refreshToken?: string; // Optional as we handle refresh internally
-  accessToken?: string; // For direct token usage
+  refreshToken: string;
   developerToken: string;
+  accessToken?: string; // Optional access token
   loginCustomerId?: string; // MCC 계정 ID
+  isMcc?: boolean; // MCC 계정 여부
 }
+
+// Type alias for backward compatibility
+export type GoogleAdsApiCredentials = GoogleAdsCredentials;
 
 export interface GoogleAdsAccount {
   id: string;
   name: string;
   customerId: string;
-  credentials: GoogleAdsApiCredentials;
+  credentials: GoogleAdsCredentials;
   isManager: boolean;
   parentId?: string;
+  currencyCode?: string;
+  timeZone?: string;
+  status?: "ENABLED" | "PAUSED" | "REMOVED";
 }
 
-// 캠페인 관련 타입
 export interface GoogleAdsCampaign {
   id: string;
   name: string;
   status: "ENABLED" | "PAUSED" | "REMOVED";
-  budgetAmountMicros: number;
-  type: string;
-  startDate?: string;
-  endDate?: string;
-  metrics?: GoogleAdsMetrics;
+  budgetAmountMicros?: number;
+  impressions?: number;
+  clicks?: number;
+  costMicros?: number;
+}
+
+export interface CampaignStatusUpdate {
+  campaignId: string;
+  status: "ENABLED" | "PAUSED" | "REMOVED";
 }
 
 export interface GoogleAdsMetrics {
   impressions: number;
   clicks: number;
   costMicros: number;
-  conversions: number;
-  conversionValue: number;
-  ctr: number;
-  averageCpc: number;
-  averageCpm: number;
-  date?: string;
+  conversions?: number;
+  conversionValue?: number;
+  ctr?: number;
+  averageCpc?: number;
+  averageCpm?: number;
 }
 
-// 캠페인 상태 업데이트 타입
-export interface CampaignStatusUpdate {
-  campaignId: string;
-  status: "ENABLED" | "PAUSED" | "REMOVED";
+export interface GoogleAdsClientAccount {
+  customer_client: {
+    id: string;
+    descriptive_name: string;
+    currency_code: string;
+    time_zone: string;
+    manager: boolean;
+    status: string;
+  };
 }
 
-// 라벨 관련 타입
 export interface GoogleAdsLabel {
   id: string;
   name: string;
@@ -62,31 +72,20 @@ export interface CampaignLabelAssignment {
   labelId: string;
 }
 
-// 동기화 관련 타입
 export interface SyncConfig {
-  accountId: string;
-  syncType: "FULL" | "INCREMENTAL";
-  timestamp: string;
-  lastSyncAt?: string;
-}
-
-export interface SyncResult {
-  accountId: string;
-  syncType: "FULL" | "INCREMENTAL";
-  recordsProcessed: number;
-  successCount: number;
-  errorCount: number;
-  errors?: SyncError[];
-  completedAt: string;
+  enabled: boolean;
+  interval: number;
+  batchSize: number;
+  retryAttempts: number;
 }
 
 export interface SyncError {
-  campaignId?: string;
+  timestamp: Date;
+  accountId: string;
   error: string;
-  timestamp: string;
+  details?: unknown;
 }
 
-// 쿼리 관련 타입
 export interface GoogleAdsQuery {
   query: string;
   customerId: string;
@@ -94,88 +93,80 @@ export interface GoogleAdsQuery {
   pageToken?: string;
 }
 
-// API 응답 타입
-export interface GoogleAdsApiResponse<T> {
+export interface GoogleAdsApiResponse<T = unknown> {
   results: T[];
-  nextPageToken?: string;
+  fieldMask?: string;
   totalResultsCount?: number;
+  nextPageToken?: string;
 }
 
-// 에러 타입
 export interface GoogleAdsError {
-  code: string;
+  code: number;
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
-// 배치 작업 타입
-export interface BatchOperation {
-  entity:
-    | "campaign"
-    | "ad_group"
-    | "ad"
-    | "keyword"
-    | "label"
-    | "campaign_label";
-  operation: "create" | "update" | "remove";
-  resource: any;
-  updateMask?: {
-    paths: string[];
-  };
+export interface BatchOperation<T = unknown> {
+  create?: T;
+  update?: T;
+  remove?: string;
+  updateMask?: string[];
 }
 
-// 리포트 관련 타입
 export interface ReportQuery {
-  customerId: string;
-  query: string;
-  startDate: string;
-  endDate: string;
-  metrics?: string[];
-  dimensions?: string[];
-  orderBy?: string;
+  entity: string;
+  attributes: string[];
+  metrics: string[];
+  segments?: string[];
+  dateRange?: {
+    startDate: string;
+    endDate: string;
+  };
+  filters?: string[];
+  orderBy?: string[];
   limit?: number;
 }
 
-// 예산 관련 타입
 export interface CampaignBudget {
-  id: string;
-  name: string;
-  amountMicros: number;
-  deliveryMethod: "STANDARD" | "ACCELERATED";
-  explicitlyShared: boolean;
+  campaignId: string;
+  budgetAmountMicros: number;
+  deliveryMethod?: "STANDARD" | "ACCELERATED";
 }
 
-// 변경 이력 관련 타입
 export interface ChangeEvent {
+  customerId: string;
   changeDateTime: string;
-  userEmail: string;
   changeResourceType: string;
   changeResourceId: string;
-  changeResourceName: string;
-  clientType: string;
-  oldResource?: any;
-  newResource?: any;
-  resourceChangeOperation: string;
-  changedFields: string[];
+  changeType: "ADDED" | "CHANGED" | "REMOVED";
+  oldResource?: unknown;
+  newResource?: unknown;
 }
 
-// 큐 작업 타입
-export interface QueueJob {
+export interface QueueJob<T = unknown> {
   id: string;
-  type: "sync-account" | "update-campaigns" | "fetch-metrics";
-  data: any;
-  priority: number;
+  type: string;
+  payload: T;
+  status: "pending" | "processing" | "completed" | "failed";
   attempts: number;
-  createdAt: string;
-  processedAt?: string;
-  failedAt?: string;
+  createdAt: Date;
+  processedAt?: Date;
   error?: string;
 }
 
-// 스케줄러 설정 타입
 export interface SchedulerConfig {
-  incrementalSyncCron: string; // 예: '0 * * * *' (매시간)
-  fullSyncCron: string; // 예: '0 2 * * *' (매일 새벽 2시)
+  jobType: string;
+  schedule: string; // cron expression
   enabled: boolean;
-  timezone: string;
+  lastRun?: Date;
+  nextRun?: Date;
+}
+
+export interface SyncResult {
+  accountId: string;
+  success: boolean;
+  recordsProcessed: number;
+  errors: SyncError[];
+  startTime: Date;
+  endTime: Date;
 }

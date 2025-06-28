@@ -1,15 +1,12 @@
+import type { MessageCardProps } from "@/types/components";
+
 import { Card, CardBody } from "@heroui/card";
+import { Button } from "@heroui/button";
 import {
   FaCheckCircle,
   FaExclamationCircle,
   FaInfoCircle,
 } from "react-icons/fa";
-
-interface MessageCardProps {
-  message: string;
-  type: "success" | "error" | "info" | "warning";
-  onClose?: () => void;
-}
 
 export function MessageCard({ message, type, onClose }: MessageCardProps) {
   const config = {
@@ -45,15 +42,19 @@ export function MessageCard({ message, type, onClose }: MessageCardProps) {
     <Card className={`${bgColor} ${borderColor} border`}>
       <CardBody>
         <div className="flex items-center gap-3">
-          <Icon className={`${textColor} w-5 h-5 flex-shrink-0`} />
+          <Icon className={`${textColor} w-5 h-5 shrink-0`} />
           <p className={textColor}>{message}</p>
           {onClose && (
-            <button
-              className={`ml-auto ${textColor} hover:opacity-70`}
-              onClick={onClose}
+            <Button
+              isIconOnly
+              aria-label="Close message"
+              className={`ml-auto ${textColor}`}
+              size="sm"
+              variant="light"
+              onPress={onClose}
             >
               ✕
-            </button>
+            </Button>
           )}
         </div>
       </CardBody>

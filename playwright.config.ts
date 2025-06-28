@@ -12,11 +12,11 @@ import config from "./tests/config";
 // import path from 'path';
 // dotenv.config({ path: path.resolve(__dirname, '.env') });
 
-// Use process.env.PORT by default and fallback to port 3000
+// Use process.env.PORT by default and fallback to port 3001
 const PORT = process.env.PORT || 3000;
 
 // Set webServer.url and use.baseURL with the location of the WebServer respecting the correct set port
-const baseURL = `http://localhost:${PORT}`;
+const baseURL = process.env.BASE_URL || `http://localhost:${PORT}`;
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -31,11 +31,17 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  workers: 4,
+  /* Global timeout for each test */
+  timeout: 60 * 1000, // 60 seconds
+  /* Global timeout for expect() */
+  expect: {
+    timeout: 10 * 1000, // 10 seconds
+  },
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
-    ["dot"],
-    ["json"],
+    ["list"],
+    ["json", { outputFile: "test-results.json" }],
     ["html", { open: process.env.CI ? "never" : "on-failure" }], // 자동으로 리포트 서버를 열지 않음
     [
       "playwright-excel-reporter",
@@ -48,10 +54,12 @@ export default defineConfig({
     ],
   ],
   webServer: {
-    command: "pnpm run local",
+    command: "pnpm run dev",
     url: baseURL,
-    timeout: 30 * 1000,
+    timeout: 120 * 1000, // 2 minutes for server startup
     reuseExistingServer: !process.env.CI,
+    stdout: "pipe",
+    stderr: "pipe",
   },
 
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */

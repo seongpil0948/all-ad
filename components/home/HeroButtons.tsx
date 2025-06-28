@@ -2,8 +2,10 @@
 
 import { Button } from "@heroui/button";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 import log from "@/utils/logger";
+import { staggerContainer, staggerItem } from "@/utils/animations";
 
 interface HeroButtonsProps {
   primaryButtonText: string;
@@ -27,22 +29,41 @@ export function HeroButtons({
   };
 
   return (
-    <div className="flex gap-4 justify-center">
-      <Button
-        color="primary"
-        size="lg"
-        variant="shadow"
-        onPress={() => handleNavigation("/login", "start-free")}
+    <motion.div
+      animate="animate"
+      className="flex gap-4 justify-center"
+      initial="initial"
+      variants={staggerContainer}
+    >
+      <motion.div
+        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+        variants={staggerItem}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
       >
-        {primaryButtonText}
-      </Button>
-      <Button
-        size="lg"
-        variant="bordered"
-        onPress={() => handleNavigation("/demo", "view-demo")}
+        <Button
+          color="primary"
+          size="lg"
+          variant="shadow"
+          onPress={() => handleNavigation("/login", "start-free")}
+        >
+          {primaryButtonText}
+        </Button>
+      </motion.div>
+      <motion.div
+        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+        variants={staggerItem}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
       >
-        {secondaryButtonText}
-      </Button>
-    </div>
+        <Button
+          size="lg"
+          variant="bordered"
+          onPress={() => handleNavigation("/demo", "view-demo")}
+        >
+          {secondaryButtonText}
+        </Button>
+      </motion.div>
+    </motion.div>
   );
 }

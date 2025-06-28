@@ -12,21 +12,16 @@ export class KakaoPlatformService extends BasePlatformService {
   platform: PlatformType = "kakao";
 
   async validateCredentials(): Promise<boolean> {
-    const { accessToken, accountId } = this.credentials as KakaoCredentials;
+    const { accessToken, accountId } = this
+      .credentials as unknown as KakaoCredentials;
 
     if (!accessToken || !accountId) {
       return false;
     }
 
-    try {
-      // Validate credentials by making a test API call
-      // TODO: Implement actual Kakao API validation
-      return true;
-    } catch (error) {
-      log.error("Kakao credential validation error:", error as Error);
-
-      return false;
-    }
+    // TODO: Implement actual Kakao API validation
+    // For now, return true if credentials are present
+    return true;
   }
 
   async fetchCampaigns(): Promise<Campaign[]> {

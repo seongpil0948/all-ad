@@ -1,8 +1,7 @@
 import { createClient } from "redis";
 
 import log from "@/utils/logger";
-
-export type RedisClient = ReturnType<typeof createClient>;
+import { RedisClient } from "@/types/redis";
 
 let redisClient: RedisClient | null = null;
 
@@ -30,9 +29,9 @@ export async function getRedisClient(): Promise<RedisClient> {
   return redisClient;
 }
 
-export async function setToken(
+export async function setToken<T = unknown>(
   key: string,
-  value: any,
+  value: T,
   expirySeconds?: number,
 ): Promise<void> {
   const client = await getRedisClient();
@@ -45,16 +44,16 @@ export async function setToken(
   }
 }
 
-export async function getToken(key: string): Promise<any> {
+export async function getToken<T = unknown>(key: string): Promise<T | null> {
   const client = await getRedisClient();
   const value = await client.get(key);
 
   if (!value) return null;
 
   try {
-    return JSON.parse(value);
+    return JSON.parse(value) as T;
   } catch {
-    return value;
+    return value as T;
   }
 }
 

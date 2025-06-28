@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useMemo } from "react";
 import { Button } from "@heroui/button";
 import { Tooltip } from "@heroui/tooltip";
 import { FaSync } from "react-icons/fa";
 import { addToast } from "@heroui/toast";
+import { useShallow } from "zustand/shallow";
 
 import { usePlatformStore } from "@/stores";
 import log from "@/utils/logger";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface SyncButtonProps {
   size?: "sm" | "md" | "lg";
@@ -30,19 +32,39 @@ export function SyncButton({
   showLabel = true,
   className,
 }: SyncButtonProps) {
-  const { credentials, syncAllPlatforms, syncProgress } = usePlatformStore();
-  const [isLoading, setIsLoading] = useState(false);
+  const { dictionary: dict } = useDictionary();
 
-  const activeCredentials = credentials.filter((c) => c.is_active);
-  const isSyncing = Object.values(syncProgress).some(
-    (progress) => progress > 0,
+  // Defensive check to ensure sync dictionary is available
+  if (!dict?.dashboard?.sync) {
+    return null;
+  }
+
+  // Use useShallow to optimize re-renders
+  const { credentials, syncAllPlatforms, syncProgress, isLoading } =
+    usePlatformStore(
+      useShallow((state) => ({
+        credentials: state.credentials,
+        syncAllPlatforms: state.syncAllPlatforms,
+        syncProgress: state.syncProgress,
+        isLoading: state.isLoading,
+      })),
+    );
+
+  const activeCredentials = useMemo(
+    () => credentials.filter((c) => c.is_active),
+    [credentials],
   );
 
-  const handleSync = async () => {
+  const isSyncing = useMemo(
+    () => Object.values(syncProgress).some((progress) => progress > 0),
+    [syncProgress],
+  );
+
+  const handleSync = useCallback(async () => {
     if (activeCredentials.length === 0) {
       addToast({
-        title: "오류",
-        description: "동기화할 활성 플랫폼이 없습니다",
+        title: dict.dashboard.sync.error,
+        description: dict.dashboard.sync.connectFirst,
         color: "danger",
         promise: new Promise((resolve) => setTimeout(resolve, 2000)),
       });
@@ -50,33 +72,30 @@ export function SyncButton({
       return;
     }
 
-    setIsLoading(true);
     try {
       await syncAllPlatforms();
       addToast({
-        title: "성공",
-        description: "모든 플랫폼 동기화가 완료되었습니다",
+        title: dict.dashboard.sync.success,
+        description: dict.dashboard.sync.successDescription,
         color: "success",
       });
     } catch (error) {
       log.error(`Sync error: ${JSON.stringify(error)}`);
       addToast({
-        title: "오류",
-        description: "동기화 중 오류가 발생했습니다",
+        title: dict.dashboard.sync.error,
+        description: dict.dashboard.sync.errorDescription,
         color: "danger",
       });
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [activeCredentials.length, syncAllPlatforms, dict]);
 
-  const syncProgressText = () => {
+  const syncProgressText = useMemo(() => {
     const progressValues = Object.entries(syncProgress)
       .filter(([_, progress]) => progress > 0)
       .map(([platform, progress]) => `${platform}: ${progress}%`);
 
     return progressValues.length > 0 ? progressValues.join(", ") : "";
-  };
+  }, [syncProgress]);
 
   const buttonContent = (
     <Button
@@ -89,13 +108,14 @@ export function SyncButton({
       variant={variant}
       onPress={handleSync}
     >
-      {showLabel && (isSyncing ? "동기화 중..." : "전체 동기화")}
+      {showLabel &&
+        (isSyncing ? dict.dashboard.sync.syncing : dict.dashboard.sync.syncAll)}
     </Button>
   );
 
-  if (isSyncing && syncProgressText()) {
+  if (isSyncing && syncProgressText) {
     return (
-      <Tooltip content={syncProgressText()} placement="bottom">
+      <Tooltip content={syncProgressText} placement="bottom">
         {buttonContent}
       </Tooltip>
     );
@@ -103,7 +123,10 @@ export function SyncButton({
 
   if (activeCredentials.length === 0) {
     return (
-      <Tooltip content="활성화된 플랫폼이 없습니다" placement="bottom">
+      <Tooltip
+        content={dict.dashboard.sync.noActivePlatforms}
+        placement="bottom"
+      >
         {buttonContent}
       </Tooltip>
     );
@@ -111,7 +134,10 @@ export function SyncButton({
 
   return (
     <Tooltip
-      content={`${activeCredentials.length}개 플랫폼 동기화`}
+      content={dict.dashboard.sync.syncPlatforms.replace(
+        "{{count}}",
+        activeCredentials.length.toString(),
+      )}
       placement="bottom"
     >
       {buttonContent}
