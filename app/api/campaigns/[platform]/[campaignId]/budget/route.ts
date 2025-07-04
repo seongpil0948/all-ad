@@ -65,15 +65,13 @@ export const PATCH = withAuth(
         credential.credentials.is_business_center
       ) {
         if (platformService.setMultiAccountCredentials) {
-          await platformService.setMultiAccountCredentials(
-            credential.credentials,
-          );
+          platformService.setMultiAccountCredentials(credential.credentials);
         } else {
           // Fallback to regular credentials if multi-account method not available
-          await platformService.setCredentials(credential.credentials);
+          platformService.setCredentials(credential.credentials);
         }
       } else {
-        await platformService.setCredentials(credential.credentials);
+        platformService.setCredentials(credential.credentials);
       }
 
       try {

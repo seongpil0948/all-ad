@@ -64,8 +64,14 @@ export function CampaignDashboard() {
   const { updateBudget, isUpdatingBudget } = useCampaignBudgetMutation();
 
   // 페이지네이션 훅
-  const { displayedCampaigns, hasMore, loadMore, reset } =
-    useCampaignPagination(filteredCampaigns, ITEMS_PER_PAGE);
+  const {
+    displayedCampaigns,
+    hasMore,
+    loadMore,
+    reset,
+    currentPage,
+    totalPages,
+  } = useCampaignPagination(filteredCampaigns, ITEMS_PER_PAGE);
 
   const { isOpen, onOpen, onClose, onOpenChange } = useDisclosure();
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(
@@ -86,7 +92,7 @@ export function CampaignDashboard() {
   // 플랫폼 변경 시 페이지네이션 리셋
   useEffect(() => {
     reset();
-  }, [selectedPlatform]); // reset을 의존성에서 제거하여 무한 루프 방지
+  }, [selectedPlatform]);
 
   // Optimized callbacks with useCallback
   const handlePlatformFilter = useCallback((platform: PlatformType | "all") => {
@@ -106,12 +112,12 @@ export function CampaignDashboard() {
 
   const handleBudgetUpdate = useCallback(async () => {
     if (!selectedCampaign || !newBudget) return;
-
+    console.log("Updating budget for campaign:", {
+      id: selectedCampaign.id,
+      budget: newBudget,
+    });
     try {
-      await updateBudget({
-        campaignId: selectedCampaign.id,
-        budget: parseFloat(newBudget),
-      });
+      await updateBudget(selectedCampaign);
 
       addToast({
         title: "예산 업데이트",
@@ -236,7 +242,7 @@ export function CampaignDashboard() {
   // 플랫폼별 캠페인 수 계산
   const campaignCounts = useMemo(() => {
     return campaigns.reduce(
-      (acc, campaign) => {
+      (acc: Record<PlatformType, number>, campaign: Campaign) => {
         acc[campaign.platform] = (acc[campaign.platform] || 0) + 1;
 
         return acc;
@@ -248,7 +254,7 @@ export function CampaignDashboard() {
   // 전체 통계 계산 (use SWR stats or fallback to calculated stats)
   const totalStats = stats || {
     totalCampaigns: campaigns.length,
-    activeCampaigns: campaigns.filter((c) => c.isActive).length,
+    activeCampaigns: campaigns.filter((c: Campaign) => c.isActive).length,
     totalSpend: 0,
     totalClicks: 0,
     totalImpressions: 0,
@@ -316,13 +322,14 @@ export function CampaignDashboard() {
         <Tab key="all" title={`전체 (${campaigns.length})`} />
         {Object.entries(campaignCounts).map(([platform, count]) => {
           const config = getPlatformConfig(platform as PlatformType);
+          const Icon = config.icon;
 
           return (
             <Tab
               key={platform}
               title={
                 <div className="flex items-center gap-2">
-                  <config.icon />
+                  <Icon />
                   <span>
                     {config.name} ({count})
                   </span>
@@ -337,19 +344,26 @@ export function CampaignDashboard() {
       {isLoading && campaigns.length === 0 ? (
         <TableSkeleton columns={6} rows={5} />
       ) : (
-        <VirtualScrollTable
-          aria-label="캠페인 목록"
-          columns={columns}
-          emptyContent="캠페인이 없습니다"
-          estimateSize={60}
-          hasMore={hasMore}
-          isLoading={isLoading || isPending}
-          items={displayedCampaigns}
-          maxHeight="600px"
-          overscan={5}
-          renderCell={renderCell}
-          onLoadMore={loadMore}
-        />
+        <>
+          <div className="text-xs text-default-500 mb-2">
+            총 {campaigns.length}개 캠페인 중 {filteredCampaigns.length}개
+            필터됨, 로드된 항목: {displayedCampaigns.length} (페이지{" "}
+            {currentPage}/{totalPages})
+          </div>
+          <VirtualScrollTable
+            aria-label="캠페인 목록"
+            columns={columns}
+            emptyContent="캠페인이 없습니다"
+            estimateSize={60}
+            hasMore={hasMore}
+            isLoading={isLoading || isPending}
+            items={displayedCampaigns}
+            maxHeight="600px"
+            overscan={5}
+            renderCell={renderCell}
+            onLoadMore={loadMore}
+          />
+        </>
       )}
 
       {/* 예산 수정 모달 */}
@@ -377,7 +391,7 @@ export function CampaignDashboard() {
                       startContent={<span className="text-default-400">₩</span>}
                       type="number"
                       value={newBudget}
-                      onChange={(e) => setNewBudget(e.target.value)}
+                      onValueChange={(value) => setNewBudget(value)}
                     />
                   </div>
                 )}

@@ -142,14 +142,9 @@ export function useMultiPlatformSync(platforms: PlatformType[]) {
 }
 
 // 캠페인 예산 업데이트
-async function updateCampaignBudget(
-  url: string,
-  { arg }: { arg: { campaignId: string; budget: number } },
-) {
-  const [platform, platformCampaignId] = arg.campaignId.split("_");
-
+async function updateCampaignBudget(url: string, { arg }: { arg: Campaign }) {
   const response = await fetch(
-    `/api/campaigns/${platform}/${platformCampaignId}/budget`,
+    `/api/campaigns/${arg.platform}/${arg.id}/budget`,
     {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -168,7 +163,6 @@ export function useCampaignBudgetMutation() {
   const { trigger: updateBudget, isMutating: isUpdatingBudget } =
     useSWRMutation("/api/campaigns", updateCampaignBudget, {
       onSuccess: () => {
-        // 예산 업데이트 성공 시 캠페인 데이터 재검증
         mutate(
           (key) => typeof key === "string" && key.startsWith("/api/campaigns"),
         );
