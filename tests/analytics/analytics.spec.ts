@@ -6,6 +6,7 @@ test.describe("Analytics Page", () => {
     pushAnnotation(AnnotationType.MAIN_CATEGORY, "분석");
     // 분석 페이지로 이동
     await gotoWithLang(page, "analytics");
+    await page.waitForLoadState("networkidle");
   });
 
   test.skip("분석 페이지 레이아웃", async ({ page, pushAnnotation }) => {

@@ -6,6 +6,7 @@ test.describe("Login functionality", () => {
     pushAnnotation(AnnotationType.MAIN_CATEGORY, "인증");
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "로그인");
     await gotoWithLang(page, "login");
+    await page.waitForLoadState("networkidle");
     await expectUrl(page, "login");
   });
 
@@ -119,9 +120,10 @@ test.describe("Login functionality", () => {
 
     // 비밀번호 찾기 링크 클릭
     await page.getByRole("link", { name: "비밀번호를 잊으셨나요?" }).click();
+    await page.waitForLoadState("networkidle", { timeout: 30000 });
 
     // URL 확인 (언어 코드 포함)
-    const pattern = await expectUrl(page, "/forgot-password");
+    const pattern = await expectUrl(page, "forgot-password");
     await expect(page).toHaveURL(pattern);
 
     // 비밀번호 찾기 페이지 요소 확인
@@ -139,9 +141,10 @@ test.describe("Login functionality", () => {
       .filter({ hasText: "A.ll + Ad" });
     await expect(logoLink).toBeVisible();
     await logoLink.click();
+    await page.waitForLoadState("networkidle");
 
     // 홈페이지로 이동하고 intro 페이지로 리디렉션됨 확인
-    const pattern = await expectUrl(page, "/intro");
+    const pattern = await expectUrl(page, "intro");
     await expect(page).toHaveURL(pattern);
   });
 });
