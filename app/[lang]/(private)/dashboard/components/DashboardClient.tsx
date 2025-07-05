@@ -79,7 +79,7 @@ export function DashboardClient({
   onToggle,
 }: DashboardClientProps) {
   const [selectedTab, setSelectedTab] = useState("campaigns");
-  const { stats, campaigns, credentials } = dashboardData;
+  const { stats, credentials } = dashboardData;
 
   return (
     <IntegratedDataProvider initialData={dashboardData}>
@@ -189,7 +189,7 @@ export function DashboardClient({
           <div className="mt-6">
             <Suspense fallback={<LoadingFallback />}>
               <MultiAccountPlatformManager
-                credentials={credentials as any}
+                credentials={credentials}
                 teamId={teamId}
                 userId={userId}
                 onDelete={onDelete}

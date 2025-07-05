@@ -18,6 +18,7 @@ import { PlatformCredentialItem } from "./PlatformCredentialItem";
 
 import { PlatformCredential, PlatformType } from "@/types";
 import { CredentialValues } from "@/types/credentials.types";
+import { Json } from "@/types/supabase.types";
 import { platformConfig } from "@/constants/platform-config";
 import { useDictionary } from "@/hooks/use-dictionary";
 
@@ -81,11 +82,32 @@ function PlatformCredentialsManagerComponent({
   );
 
   const handleSave = useCallback(
-    async (credentials: CredentialValues) => {
+    async (formValues: Record<string, unknown>) => {
       if (!selectedPlatform) return;
 
       setIsLoading(true);
       try {
+        // Convert form values to CredentialValues format
+        // The actual credential data will be in the credentials JSON field
+        const credentials: CredentialValues = {
+          access_token: null,
+          account_id: `${selectedPlatform}_${Date.now()}`,
+          account_name: null,
+          created_at: new Date().toISOString(),
+          created_by: _userId,
+          credentials: formValues as { [key: string]: Json | undefined }, // The form values go into the credentials JSON field
+          data: null,
+          expires_at: null,
+          id: crypto.randomUUID(),
+          is_active: true,
+          last_synced_at: null,
+          platform: selectedPlatform,
+          refresh_token: null,
+          scope: null,
+          team_id: teamId,
+          updated_at: new Date().toISOString(),
+        };
+
         // For API key platforms (Naver, Coupang), save the credentials
         // OAuth platforms are handled by redirect in handleAddOrEdit
         await onSave(selectedPlatform, credentials);
@@ -94,7 +116,7 @@ function PlatformCredentialsManagerComponent({
         setIsLoading(false);
       }
     },
-    [selectedPlatform, onSave, onOpenChange],
+    [selectedPlatform, onSave, onOpenChange, _userId, teamId],
   );
 
   const handleToggle = useCallback(
@@ -109,6 +131,24 @@ function PlatformCredentialsManagerComponent({
       return credentials.find((c) => c.platform === platform);
     },
     [credentials],
+  );
+
+  const convertCredentialToFormValues = useCallback(
+    (credential: PlatformCredential | undefined) => {
+      if (!credential) return undefined;
+
+      // Extract form values from the credentials JSON field
+      const credentialData = credential.credentials as Record<string, unknown>;
+
+      return {
+        clientId: credentialData?.client_id as string,
+        clientSecret: credentialData?.client_secret as string,
+        customerId: credentialData?.customer_id as string,
+        accessKey: credentialData?.access_key as string,
+        secretKey: credentialData?.secret_key as string,
+      };
+    },
+    [],
   );
 
   return (
@@ -152,10 +192,9 @@ function PlatformCredentialsManagerComponent({
               <ModalBody>
                 {selectedPlatform && (
                   <PlatformCredentialForm
-                    initialValues={
-                      getCredentialForPlatform(selectedPlatform)
-                        ?.credentials as CredentialValues | undefined
-                    }
+                    initialValues={convertCredentialToFormValues(
+                      getCredentialForPlatform(selectedPlatform),
+                    )}
                     platform={selectedPlatform}
                     onSubmit={handleSave}
                   />

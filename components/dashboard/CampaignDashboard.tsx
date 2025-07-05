@@ -112,10 +112,6 @@ export function CampaignDashboard() {
 
   const handleBudgetUpdate = useCallback(async () => {
     if (!selectedCampaign || !newBudget) return;
-    console.log("Updating budget for campaign:", {
-      id: selectedCampaign.id,
-      budget: newBudget,
-    });
     try {
       await updateBudget(selectedCampaign);
 

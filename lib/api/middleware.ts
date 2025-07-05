@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/utils/supabase/server";
 import { UserRole } from "@/types";
+import { getUserPrimaryTeamId } from "@/utils/team/user-teams";
 import log from "@/utils/logger";
 
 export interface AuthContext {
@@ -54,21 +55,40 @@ export function withAuth(
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
 
-      // Get user's team membership
-      const { data: teamMember, error: teamError } = await supabase
-        .from("team_members")
-        .select("team_id, role")
-        .eq("user_id", user.id)
-        .single();
+      // Get user's primary team ID (with automatic team creation if needed)
+      const teamId = await getUserPrimaryTeamId(user.id);
 
-      if (teamError || !teamMember) {
-        log.warn("Team not found for user", {
+      if (!teamId) {
+        log.warn("No team found for user", {
           userId: user.id,
-          error: teamError?.message || "No team membership found",
+          email: user.email,
         });
 
         return NextResponse.json({ error: "Team not found" }, { status: 404 });
       }
+
+      // Get user's role in the team (handle multiple records)
+      const { data: teamMembers, error: teamError } = await supabase
+        .from("team_members")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("team_id", teamId);
+
+      if (teamError || !teamMembers || teamMembers.length === 0) {
+        log.warn("Team membership not found", {
+          userId: user.id,
+          teamId,
+          error: teamError?.message || "No team membership found",
+        });
+
+        return NextResponse.json(
+          { error: "Team membership not found" },
+          { status: 404 },
+        );
+      }
+
+      // If multiple records exist, pick the first one (or highest role)
+      const teamMember = teamMembers[0];
 
       // Check role permissions
       if (
@@ -103,7 +123,10 @@ export function withAuth(
           id: user.id,
           email: user.email!,
         },
-        teamMember,
+        teamMember: {
+          team_id: teamId,
+          role: teamMember.role,
+        },
       };
 
       // Call the handler with context

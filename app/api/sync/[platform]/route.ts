@@ -7,6 +7,7 @@ import {
 } from "@/lib/di/service-resolver";
 import { PlatformType } from "@/types";
 import { withErrorHandler, ApiErrors } from "@/lib/api/error-handlers";
+import { getUserTeams } from "@/utils/team/user-teams";
 
 const _POST = async (
   request: NextRequest,
@@ -35,34 +36,17 @@ const _POST = async (
     throw ApiErrors.BAD_REQUEST(`Invalid platform: ${platform}`);
   }
 
-  // First, check if user is a team master
-  const { data: masterTeam } = await supabase
-    .from("teams")
-    .select("id")
-    .eq("master_user_id", user.id)
-    .maybeSingle();
+  // Get user's teams with automatic team creation
+  const userTeams = await getUserTeams(user.id);
 
-  let teamId: string;
-  let userRole: string = "master";
-
-  if (masterTeam) {
-    // User is a team master
-    teamId = masterTeam.id;
-  } else {
-    // Check if user is a team member
-    const { data: teamMember, error: teamError } = await supabase
-      .from("team_members")
-      .select("team_id, role")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (teamError || !teamMember) {
-      throw ApiErrors.NOT_FOUND("Team membership not found");
-    }
-
-    teamId = teamMember.team_id;
-    userRole = teamMember.role;
+  if (userTeams.length === 0) {
+    throw ApiErrors.NOT_FOUND("No team found for user");
   }
+
+  // Use the first team (primary team)
+  const primaryTeam = userTeams[0];
+  const teamId = primaryTeam.teamId;
+  const userRole = primaryTeam.role;
 
   if (userRole === "viewer") {
     throw ApiErrors.FORBIDDEN("Viewers cannot perform sync operations");

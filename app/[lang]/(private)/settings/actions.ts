@@ -8,11 +8,10 @@ import {
   getPlatformServiceFactory,
 } from "@/lib/di/service-resolver";
 import { PlatformType } from "@/types";
-import { CredentialValues } from "@/types/credentials.types";
 
 export async function savePlatformCredentials(
   platform: PlatformType,
-  credentials: CredentialValues,
+  credentials: Record<string, unknown>,
 ): Promise<void> {
   const supabase = await createClient();
   const {
@@ -37,21 +36,11 @@ export async function savePlatformCredentials(
 
   if (oauthPlatforms.includes(platform)) {
     // For OAuth platforms, save the OAuth app credentials
-    const {
-      client_id,
-      client_secret,
-      developer_token,
-      manual_refresh_token,
-      manual_token,
-    } = credentials;
+    const { client_id, client_secret, manual_refresh_token, manual_token } =
+      credentials;
 
     if (!client_id || !client_secret) {
       throw new Error("Client ID and Client Secret are required");
-    }
-
-    // For Google, developer token is also required
-    if (platform === "google" && !developer_token) {
-      throw new Error("Developer Token is required for Google Ads");
     }
 
     // Check if using manual refresh token
@@ -71,7 +60,6 @@ export async function savePlatformCredentials(
         { client_id, client_secret },
         user.id,
         {
-          developer_token,
           manual_token: true,
           connected: true,
           connected_at: new Date().toISOString(),
@@ -89,7 +77,7 @@ export async function savePlatformCredentials(
         platform,
         { client_id, client_secret },
         user.id,
-        { developer_token }, // Additional data
+        {}, // Additional data
       );
 
       if (!success) {

@@ -6,13 +6,21 @@ import { Button } from "@heroui/button";
 import { Chip } from "@heroui/chip";
 
 import { PlatformType } from "@/types";
-import { CredentialValues } from "@/types/credentials.types";
 import { useDictionary } from "@/hooks/use-dictionary";
+
+// Form values type for the credential form
+interface FormCredentials {
+  clientId?: string;
+  clientSecret?: string;
+  customerId?: string;
+  accessKey?: string;
+  secretKey?: string;
+}
 
 interface PlatformCredentialFormProps {
   platform: PlatformType;
-  initialValues?: CredentialValues;
-  onSubmit: (values: CredentialValues) => Promise<void>;
+  initialValues?: FormCredentials;
+  onSubmit: (values: Record<string, unknown>) => Promise<void>;
 }
 
 export function PlatformCredentialForm({
@@ -21,14 +29,14 @@ export function PlatformCredentialForm({
   onSubmit,
 }: PlatformCredentialFormProps) {
   const { dictionary: dict } = useDictionary();
-  const [values, setValues] = useState<CredentialValues>(initialValues || {});
+  const [values, setValues] = useState<FormCredentials>(initialValues || {});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const submissionValues = { ...values };
+      const submissionValues: Record<string, unknown> = { ...values };
 
       // For OAuth platforms (Google, Facebook, Kakao), we don't need manual credentials anymore
       // These will be handled by All-AD's OAuth flow
@@ -38,7 +46,7 @@ export function PlatformCredentialForm({
         platform === "kakao"
       ) {
         // OAuth platforms don't need manual credentials
-        await onSubmit({});
+        await onSubmit({ ...values });
 
         return;
       }
@@ -48,19 +56,12 @@ export function PlatformCredentialForm({
         submissionValues.client_id = values.clientId;
         submissionValues.client_secret = values.clientSecret;
         submissionValues.customer_id = values.customerId;
-
-        delete submissionValues.clientId;
-        delete submissionValues.clientSecret;
-        delete submissionValues.customerId;
       }
 
       // Map Coupang credentials (still uses API key authentication)
       if (platform === "coupang") {
         submissionValues.access_key = values.accessKey;
         submissionValues.secret_key = values.secretKey;
-
-        delete submissionValues.accessKey;
-        delete submissionValues.secretKey;
       }
 
       await onSubmit(submissionValues);

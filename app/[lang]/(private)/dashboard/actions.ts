@@ -1,15 +1,16 @@
 "use server";
 
+import type { CredentialValues } from "@/types/credentials.types";
+
 import { revalidatePath } from "next/cache";
 
+import { PlatformType } from "@/types";
 import { createClient } from "@/utils/supabase/server";
 import {
   getPlatformServiceFactory,
   getPlatformDatabaseService,
 } from "@/lib/di/service-resolver";
 import log from "@/utils/logger";
-import { PlatformType } from "@/types";
-import { CredentialValues } from "@/types/credentials.types";
 import { getUserTeamInfo, hasActionPermission } from "@/utils/team-helpers";
 
 export async function updateCampaignBudgetAction(
@@ -307,7 +308,7 @@ export async function syncAllCampaignsAction() {
 // Platform credential actions for multi-account support
 export async function savePlatformCredentials(
   platform: PlatformType,
-  credentials: CredentialValues,
+  credentialValues: CredentialValues,
 ): Promise<void> {
   const supabase = await createClient();
   const {
@@ -326,45 +327,35 @@ export async function savePlatformCredentials(
     throw new Error("User has no team");
   }
 
+  // Extract the actual credential data from the CredentialValues
+  const credentialsData = credentialValues.credentials as Record<
+    string,
+    unknown
+  >;
+
   // For OAuth platforms, we just save the OAuth app credentials
   const oauthPlatforms = ["google", "facebook", "kakao"];
 
   if (oauthPlatforms.includes(platform)) {
-    // Check if using simplified OAuth (Google Ads with env vars)
-    const isSimplifiedOAuth =
-      platform === "google" &&
-      process.env.GOOGLE_CLIENT_ID &&
-      process.env.GOOGLE_CLIENT_SECRET;
+    // Type guard to ensure we have OAuth fields
+    if (!credentialsData || typeof credentialsData !== "object") {
+      throw new Error("Invalid credential data format");
+    }
 
     // For OAuth platforms, save the OAuth app credentials
-    const {
-      client_id,
-      client_secret,
-      developer_token,
-      manual_refresh_token,
-      manual_token,
-    } = credentials;
+    const { client_id, client_secret, manual_refresh_token, manual_token } =
+      credentialsData as Record<string, string>;
 
     // Only require client_id and client_secret if not using simplified OAuth
-    if (!isSimplifiedOAuth && (!client_id || !client_secret)) {
+    if (!client_id || !client_secret) {
       throw new Error("Client ID and Client Secret are required");
     }
 
-    // For Google, developer token is also required (unless using simplified OAuth)
-    if (platform === "google" && !isSimplifiedOAuth && !developer_token) {
-      throw new Error("Developer Token is required for Google Ads");
-    }
+    // For Google, additional validation can be added here if needed
+    // Note: developer_token is no longer a required field
 
     // Generate a unique account ID for multiple accounts
     const accountId = `${platform}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    // For simplified OAuth (Google Ads with env vars), we don't save credentials
-    // The OAuth flow will handle everything
-    if (isSimplifiedOAuth) {
-      // For simplified OAuth, we don't need to save any credentials
-      // The OAuth callback will create the platform_credentials record
-      return;
-    }
 
     // Check if using manual refresh token
     if (manual_refresh_token || manual_token) {
@@ -379,7 +370,6 @@ export async function savePlatformCredentials(
         platform,
         credentials: { client_id, client_secret },
         data: {
-          developer_token,
           manual_token: true,
           connected: true,
           connected_at: new Date().toISOString(),
@@ -400,7 +390,7 @@ export async function savePlatformCredentials(
         team_id: team.id,
         platform,
         credentials: { client_id, client_secret },
-        data: { developer_token }, // Additional data
+        data: null, // Remove developer_token reference
         account_id: accountId,
         account_name: `${platform} Account ${new Date().toLocaleString()}`,
         is_active: false, // Will be activated after OAuth completion
@@ -417,7 +407,7 @@ export async function savePlatformCredentials(
     const platformServiceFactory = await getPlatformServiceFactory();
     const service = platformServiceFactory.createService(platform);
 
-    service.setCredentials(credentials);
+    service.setCredentials(credentialsData as Record<string, unknown>);
     const isValid = await service.validateCredentials();
 
     if (!isValid) {
@@ -431,7 +421,7 @@ export async function savePlatformCredentials(
     const { error } = await supabase.from("platform_credentials").insert({
       team_id: team.id,
       platform,
-      credentials,
+      credentials: credentialsData,
       account_id: accountId,
       account_name: `${platform} Account ${new Date().toLocaleString()}`,
       is_active: true,

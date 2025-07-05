@@ -70,26 +70,8 @@ export interface TeamInvitation {
   created_at: string;
 }
 
-export interface PlatformCredential {
-  id: string;
-  team_id: string;
-  platform: PlatformType;
-  account_id: string;
-  account_name?: string | null;
-  credentials: Json;
-  data?: Json | null;
-  access_token?: string | null;
-  refresh_token?: string | null;
-  expires_at?: string | null;
-  scope?: string | null;
-  error_message?: string | null;
-  is_active: boolean | null;
-  user_id?: string | null;
-  created_by?: string | null;
-  last_synced_at?: string | null;
-  created_at: string;
-  updated_at: string;
-}
+export type PlatformCredential =
+  Database["public"]["Tables"]["platform_credentials"]["Row"];
 
 export interface Campaign {
   id: string;

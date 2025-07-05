@@ -1,5 +1,7 @@
 "use client";
 
+import type { Dictionary } from "@/app/[lang]/dictionaries";
+
 import {
   createElement,
   useEffect,
@@ -40,7 +42,7 @@ import { TableSkeleton, CardSkeleton } from "@/components/common/skeletons";
 import { toast } from "@/utils/toast";
 import { useDictionary } from "@/hooks/use-dictionary";
 
-const roleConfig = (dict: any) =>
+const roleConfig = (dict: Dictionary) =>
   ({
     master: {
       label: dict.team.roles.master.name,

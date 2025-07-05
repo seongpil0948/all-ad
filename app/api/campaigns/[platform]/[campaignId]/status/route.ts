@@ -62,8 +62,15 @@ export const PATCH = withAuth(
       await platformService.setCredentials(credential.credentials);
 
       try {
+        // For Google campaigns, strip the "google_" prefix if present
+        let actualCampaignId = campaignId;
+
+        if (platformType === "google" && campaignId.startsWith("google_")) {
+          actualCampaignId = campaignId.replace("google_", "");
+        }
+
         const success = await platformService.updateCampaignStatus(
-          campaignId,
+          actualCampaignId,
           is_active,
         );
 

@@ -123,7 +123,7 @@ async function getIntegratedDashboardData(
   supabase: SupabaseClient<Database>,
   user: User,
   teamId: string,
-  lang: string,
+  _lang: string,
 ): Promise<IntegratedDashboardData> {
   // Get full team data
   const { data: fullTeam } = await supabase

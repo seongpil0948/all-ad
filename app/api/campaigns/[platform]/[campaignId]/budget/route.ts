@@ -75,8 +75,15 @@ export const PATCH = withAuth(
       }
 
       try {
+        // For Google campaigns, strip the "google_" prefix if present
+        let actualCampaignId = campaignId;
+
+        if (platformType === "google" && campaignId.startsWith("google_")) {
+          actualCampaignId = campaignId.replace("google_", "");
+        }
+
         const success = await platformService.updateCampaignBudget(
-          campaignId,
+          actualCampaignId,
           budget,
         );
 

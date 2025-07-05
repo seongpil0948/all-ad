@@ -14,8 +14,9 @@ export type Concrete<Type> = {
   [Key in keyof Type]-?: NonNullable<Type[Key]>;
 };
 export type PromiseType<T> = T extends Promise<infer U> ? U : never;
-export type PromiseReturnType<T extends (...args: any) => Promise<any>> =
-  PromiseType<ReturnType<T>>;
+export type PromiseReturnType<
+  T extends (...args: unknown[]) => Promise<unknown>,
+> = PromiseType<ReturnType<T>>;
 export type ToSearchState<T> = {
   [K in keyof T]: T[K] extends string ? T[K] | "ALL" : T[K];
 };

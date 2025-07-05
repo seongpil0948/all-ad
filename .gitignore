@@ -45,3 +45,5 @@ node_modules/
 /playwright/.cache/
 test-records
 test-results.json
+
+.vscode/mcp.json
