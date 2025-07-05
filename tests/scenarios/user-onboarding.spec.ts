@@ -19,7 +19,7 @@ test.describe("신규 사용자 온보딩 시나리오", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "전체 온보딩 플로우");
 
     // 1. 홈페이지 방문 및 가입 결정
-    await await gotoWithLang(page, "");
+    await gotoWithLang(page, "");
     await page.waitForLoadState("networkidle");
 
     // 랜딩 페이지에서 가치 제안 확인
