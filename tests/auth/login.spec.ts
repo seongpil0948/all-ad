@@ -5,8 +5,8 @@ test.describe("Login functionality", () => {
   test.beforeEach(async ({ page, pushAnnotation }) => {
     pushAnnotation(AnnotationType.MAIN_CATEGORY, "인증");
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "로그인");
-    await gotoWithLang(page, "/login");
-    await expectUrl(page, "/login");
+    await gotoWithLang(page, "login");
+    await expectUrl(page, "login");
   });
 
   test("로그인 페이지 표시 및 요소 확인", async ({ page, pushAnnotation }) => {
