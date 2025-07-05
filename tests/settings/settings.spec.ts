@@ -1,10 +1,11 @@
 import { test, expect, AnnotationType } from "../tester";
+import { gotoWithLang } from "../utils/navigation";
 
 test.describe("Settings Page", () => {
   test.beforeEach(async ({ page, pushAnnotation }) => {
     pushAnnotation(AnnotationType.MAIN_CATEGORY, "설정");
     // 설정 페이지로 이동
-    await page.goto("/settings");
+    await gotoWithLang(page, "settings");
   });
 
   test("설정 페이지 레이아웃", async ({ page, pushAnnotation }) => {

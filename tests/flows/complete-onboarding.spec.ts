@@ -1,4 +1,5 @@
 import { test, expect, AnnotationType } from "../tester";
+import { gotoWithLang } from "../utils/navigation";
 
 test.describe("Complete User Onboarding Flow", () => {
   test.beforeEach(async ({ pushAnnotation }) => {
@@ -13,18 +14,19 @@ test.describe("Complete User Onboarding Flow", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY2, "랜딩 확인");
 
     // 1. 랜딩 페이지 방문
-    await page.goto("/intro");
+    await gotoWithLang(page, "intro");
+    await page.waitForURL(/\/(en|ko)\/intro/);
 
-    // 2. 주요 요소 확인
+    // 2. 주요 요소 확인 - 다국어 지원
     await expect(
-      page.getByRole("heading", { name: /광고 관리의 새로운 기준/ }),
+      page.getByRole("heading", { name: /모든 광고를 하나로|All Ads in One/ }),
     ).toBeVisible();
 
     // 3. CTA 버튼 확인 - 실제 존재하는 요소만 확인
     const ctaButton = page
       .getByRole("button")
       .or(page.getByRole("link"))
-      .filter({ hasText: /시작|로그인|가입/ })
+      .filter({ hasText: /시작|로그인|가입|Start|Login|Sign/ })
       .first();
     if (await ctaButton.isVisible()) {
       await expect(ctaButton).toBeVisible();
@@ -35,8 +37,8 @@ test.describe("Complete User Onboarding Flow", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY2, "인증 페이지");
 
     // 로그인 페이지로 직접 이동
-    await page.goto("/login");
-    await expect(page).toHaveURL("/login");
+    await gotoWithLang(page, "login");
+    await page.waitForURL(/\/(en|ko)\/login/);
 
     // 로그인 폼 요소 확인
     await expect(page.getByTestId("login-input-id")).toBeVisible();
@@ -47,7 +49,7 @@ test.describe("Complete User Onboarding Flow", () => {
     const signupLink = page.getByText(/회원가입|Sign up/);
     if (await signupLink.isVisible()) {
       await signupLink.click();
-      await expect(page).toHaveURL("/signup");
+      await expect(page).toHaveURL(/\/(en|ko)\/signup/);
     }
   });
 
@@ -55,22 +57,22 @@ test.describe("Complete User Onboarding Flow", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY2, "공개 페이지 탐색");
 
     // FAQ 페이지
-    await page.goto("/faq");
-    await expect(page).toHaveURL("/faq");
+    await gotoWithLang(page, "faq");
+    await expect(page).toHaveURL(/\/(en|ko)\/faq/);
     await expect(
-      page.getByRole("heading", { name: "자주 묻는 질문" }),
+      page.getByRole("heading", { name: /자주 묻는 질문|FAQ/ }),
     ).toBeVisible();
 
     // 가격 페이지
-    await page.goto("/pricing");
-    await expect(page).toHaveURL("/pricing");
+    await gotoWithLang(page, "pricing");
+    await expect(page).toHaveURL(/\/(en|ko)\/pricing/);
     await expect(
       page.getByRole("heading", { name: /요금제|가격|Pricing/ }),
     ).toBeVisible();
 
     // 이용약관
-    await page.goto("/terms");
-    await expect(page).toHaveURL("/terms");
+    await gotoWithLang(page, "terms");
+    await expect(page).toHaveURL(/\/(en|ko)\/terms/);
     await expect(
       page.getByRole("heading", { name: /이용약관|서비스 약관|Terms/ }),
     ).toBeVisible();
@@ -83,7 +85,7 @@ test.describe("Complete User Onboarding Flow", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY2, "인증 필요");
 
     // 대시보드 접근 시도
-    await page.goto("/dashboard", { waitUntil: "commit" });
+    await gotoWithLang(page, "dashboard");
 
     // 로그인 페이지로 리디렉션 또는 404 페이지 확인
     const currentUrl = page.url();

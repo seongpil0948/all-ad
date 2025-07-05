@@ -1,5 +1,6 @@
 import { test, expect, AnnotationType } from "../tester";
 import { waitForAPIResponse } from "../helpers/test-utils";
+import { gotoWithLang } from "../utils/navigation";
 
 /**
  * 에러 처리 및 예외 상황 테스트
@@ -9,7 +10,7 @@ import { waitForAPIResponse } from "../helpers/test-utils";
 test.describe("에러 처리 및 예외 상황 테스트", () => {
   test.beforeEach(async ({ page, pushAnnotation }) => {
     pushAnnotation(AnnotationType.MAIN_CATEGORY, "에러 처리");
-    await page.goto("/dashboard");
+    await await gotoWithLang(page, "dashboard");
     await page.waitForLoadState("networkidle");
   });
 
@@ -183,7 +184,7 @@ test.describe("에러 처리 및 예외 상황 테스트", () => {
     });
 
     // 2. 인증이 필요한 페이지 접근
-    await page.goto("/campaigns");
+    await await gotoWithLang(page, "campaigns");
     await page.waitForTimeout(3000);
 
     // 3. 인증 만료 처리 확인
@@ -231,7 +232,7 @@ test.describe("에러 처리 및 예외 상황 테스트", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "입력 검증");
 
     // 1. 캠페인 생성/편집 페이지로 이동
-    await page.goto("/campaigns");
+    await await gotoWithLang(page, "campaigns");
     await page.waitForLoadState("networkidle");
 
     const createButton = page.getByText(/생성|create|새.*캠페인/i).first();
@@ -317,7 +318,7 @@ test.describe("에러 처리 및 예외 상황 테스트", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "동시 편집 충돌");
 
     // 1. 캠페인 편집 시작
-    await page.goto("/campaigns");
+    await await gotoWithLang(page, "campaigns");
     await page.waitForLoadState("networkidle");
 
     const editButton = page.getByText(/편집|edit/i).first();
@@ -425,7 +426,7 @@ test.describe("에러 처리 및 예외 상황 테스트", () => {
     });
 
     // 2. 캠페인 목록 페이지 로드
-    await page.goto("/campaigns");
+    await await gotoWithLang(page, "campaigns");
     const loadStartTime = Date.now();
 
     // 3. 로딩 상태 모니터링
@@ -496,7 +497,7 @@ test.describe("에러 처리 및 예외 상황 테스트", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "파일 업로드 오류");
 
     // 1. 파일 업로드 기능 찾기
-    await page.goto("/settings");
+    await await gotoWithLang(page, "settings");
     await page.waitForLoadState("networkidle");
 
     const uploadButton = page
@@ -589,7 +590,7 @@ test.describe("에러 처리 및 예외 상황 테스트", () => {
     const newPage = await context.newPage();
 
     // 2. 메인 페이지 로드
-    await newPage.goto("/");
+    await await gotoWithLang(newPage, "");
     await newPage.waitForTimeout(3000);
 
     // 3. 브라우저 호환성 경고 확인

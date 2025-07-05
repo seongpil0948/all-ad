@@ -13,6 +13,7 @@
     "commitlint": "commitlint --edit",
     "test:unit": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test": "playwright test --reporter=line ",
     "gen:type:supabase": "npx supabase gen types typescript --linked > types/supabase.types.ts",
     "db:migrate": "npx supabase migration up --linked --include-all",
     "func:deploy": "npx supabase functions deploy  resend --project-ref dtttnnwrzbtjzjzmpvaf ",

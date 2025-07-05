@@ -1,10 +1,11 @@
 import { test, expect, AnnotationType } from "../tester";
+import { gotoWithLang } from "../utils/navigation";
 
 test.describe("Forgot Password functionality", () => {
   test.beforeEach(async ({ page, pushAnnotation }) => {
     pushAnnotation(AnnotationType.MAIN_CATEGORY, "인증");
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "비밀번호 재설정");
-    await page.goto("/forgot-password");
+    await gotoWithLang(page, "forgot-password");
   });
 
   test("비밀번호 재설정 페이지 표시 및 요소 확인", async ({

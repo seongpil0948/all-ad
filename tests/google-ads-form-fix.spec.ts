@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { gotoWithLang } from "./utils/navigation";
 
 test.describe("Google Ads Form Fix Verification", () => {
   test("should render Google Ads form with correct fields", async ({
@@ -8,7 +9,7 @@ test.describe("Google Ads Form Fix Verification", () => {
     // We'll check this by inspecting the form fields and their behavior
 
     // Navigate to the login page to see the form structure
-    await page.goto("/login");
+    await gotoWithLang(page, "login");
 
     // Check that the login page loads
     await expect(page).toHaveTitle(/올애드|All-AD/i);
@@ -28,7 +29,7 @@ test.describe("Google Ads Form Fix Verification", () => {
     // This is a simple test to ensure our changes don't break the build
     // The actual form submission would happen after authentication
 
-    await page.goto("/");
+    await gotoWithLang(page, "");
 
     // Check that the homepage loads without errors
     await expect(page).toHaveTitle(/올애드|All-AD/i);

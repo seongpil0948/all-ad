@@ -1,11 +1,12 @@
 import { test, expect, AnnotationType } from "../tester";
+import { gotoWithLang } from "../utils/navigation";
 
 test.describe("Contact and Support Pages", () => {
   test.describe("Contact Page", () => {
     test.beforeEach(async ({ page, pushAnnotation }) => {
       pushAnnotation(AnnotationType.MAIN_CATEGORY, "고객지원");
       pushAnnotation(AnnotationType.SUB_CATEGORY1, "문의하기");
-      await page.goto("/contact");
+      await gotoWithLang(page, "contact");
     });
 
     test("문의 페이지 레이아웃", async ({ page, pushAnnotation }) => {
@@ -109,7 +110,7 @@ test.describe("Contact and Support Pages", () => {
     test.beforeEach(async ({ page, pushAnnotation }) => {
       pushAnnotation(AnnotationType.MAIN_CATEGORY, "고객지원");
       pushAnnotation(AnnotationType.SUB_CATEGORY1, "지원센터");
-      await page.goto("/support");
+      await gotoWithLang(page, "support");
     });
 
     test("지원 페이지 레이아웃", async ({ page, pushAnnotation }) => {

@@ -1,9 +1,10 @@
 import { test, expect } from "@playwright/test";
+import { gotoWithLang } from "../utils/navigation";
 
 test.describe("Simple Toast Test", () => {
   test("should show error toast on invalid login", async ({ page }) => {
     // Navigate to login page
-    await page.goto("/login");
+    await gotoWithLang(page, "login");
 
     // Wait for page to load
     await page.waitForLoadState("networkidle");
@@ -50,7 +51,7 @@ test.describe("Simple Toast Test", () => {
 
   test("should show form validation errors", async ({ page }) => {
     // Navigate to login page
-    await page.goto("/login");
+    await gotoWithLang(page, "login");
 
     // Wait for page to load
     await page.waitForLoadState("networkidle");

@@ -1,4 +1,5 @@
 import { test, expect, AnnotationType } from "../tester";
+import { gotoWithLang } from "../utils/navigation";
 
 test.describe("Team Invite Page", () => {
   const mockInviteToken = "mock-invite-token-123";
@@ -11,7 +12,7 @@ test.describe("Team Invite Page", () => {
   test("유효한 초대 링크로 접근", async ({ page, pushAnnotation }) => {
     pushAnnotation(AnnotationType.SUB_CATEGORY2, "초대 수락");
 
-    await page.goto(`/invite/${mockInviteToken}`);
+    await gotoWithLang(page, `invite/${mockInviteToken}`);
 
     // 초대 페이지 헤더
     await expect(
@@ -39,7 +40,7 @@ test.describe("Team Invite Page", () => {
   }) => {
     pushAnnotation(AnnotationType.SUB_CATEGORY2, "비로그인 초대");
 
-    await page.goto(`/invite/${mockInviteToken}`);
+    await await gotoWithLang(page, `invite/${mockInviteToken}`);
 
     // 초대 수락 버튼 클릭
     await page.getByRole("button", { name: "초대 수락" }).click();
@@ -56,7 +57,7 @@ test.describe("Team Invite Page", () => {
   test("새 사용자로 초대 수락", async ({ page, pushAnnotation }) => {
     pushAnnotation(AnnotationType.SUB_CATEGORY2, "신규 가입");
 
-    await page.goto(`/invite/${mockInviteToken}`);
+    await await gotoWithLang(page, `invite/${mockInviteToken}`);
 
     // 계정이 없는 경우 회원가입 링크
     await expect(page.getByText("계정이 없으신가요?")).toBeVisible();
@@ -80,7 +81,7 @@ test.describe("Team Invite Page", () => {
   test("만료된 초대 링크", async ({ page, pushAnnotation }) => {
     pushAnnotation(AnnotationType.SUB_CATEGORY2, "만료된 초대");
 
-    await page.goto("/invite/expired-token");
+    await gotoWithLang(page, "invite/expired-token");
 
     // 에러 메시지
     await expect(
@@ -100,7 +101,7 @@ test.describe("Team Invite Page", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY2, "중복 초대");
 
     // 로그인된 상태를 가정
-    await page.goto(`/invite/${mockInviteToken}`);
+    await await gotoWithLang(page, `invite/${mockInviteToken}`);
 
     // 이미 팀 멤버인 경우 메시지
     const alreadyMemberMessage = page.getByText(
@@ -119,7 +120,7 @@ test.describe("Team Invite Page", () => {
   test("초대 거절", async ({ page, pushAnnotation }) => {
     pushAnnotation(AnnotationType.SUB_CATEGORY2, "초대 거절");
 
-    await page.goto(`/invite/${mockInviteToken}`);
+    await await gotoWithLang(page, `invite/${mockInviteToken}`);
 
     // 거절 버튼 클릭
     await page.getByRole("button", { name: "거절" }).click();
@@ -152,7 +153,7 @@ test.describe("Team Invite Page", () => {
       await route.continue();
     });
 
-    await page.goto(`/invite/${mockInviteToken}`);
+    await await gotoWithLang(page, `invite/${mockInviteToken}`);
 
     // 로딩 상태 확인
     await expect(page.getByText(/로딩 중|Loading/)).toBeVisible();
@@ -167,7 +168,7 @@ test.describe("Team Invite Page", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY2, "팀 전환");
 
     // 로그인된 상태에서 초대 수락
-    await page.goto(`/invite/${mockInviteToken}`);
+    await await gotoWithLang(page, `invite/${mockInviteToken}`);
     await page.getByRole("button", { name: "초대 수락" }).click();
 
     // 성공 메시지
@@ -188,7 +189,7 @@ test.describe("Team Invite Page", () => {
   test("초대 페이지 접근성", async ({ page, pushAnnotation }) => {
     pushAnnotation(AnnotationType.SUB_CATEGORY2, "접근성");
 
-    await page.goto(`/invite/${mockInviteToken}`);
+    await await gotoWithLang(page, `invite/${mockInviteToken}`);
 
     // 키보드 네비게이션
     await page.keyboard.press("Tab");

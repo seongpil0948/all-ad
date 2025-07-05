@@ -33,17 +33,15 @@ export async function createTeamForUser(
       { user_id: userId },
     );
 
-    if (rpcError) {
-      log.error("Failed to create team using RPC", {
+    // If RPC has ambiguity error or other errors, fallback to manual creation
+    if (rpcError || existingTeamId === null) {
+      log.warn("RPC failed or returned null, attempting manual team creation", {
         userId,
-        error: rpcError,
+        rpcError: rpcError?.message,
+        rpcCode: rpcError?.code,
       });
 
-      return {
-        success: false,
-        message: "Failed to create team",
-        error: rpcError.message,
-      };
+      return await createTeamManually(userId, teamName);
     }
 
     if (existingTeamId) {
@@ -60,7 +58,9 @@ export async function createTeamForUser(
     }
 
     // Fallback manual creation if RPC fails
-    log.warn("RPC failed, attempting manual team creation", { userId });
+    log.warn("RPC returned empty result, attempting manual team creation", {
+      userId,
+    });
 
     return await createTeamManually(userId, teamName);
   } catch (error) {

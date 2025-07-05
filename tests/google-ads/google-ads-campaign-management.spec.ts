@@ -1,4 +1,5 @@
 import { test, expect, AnnotationType } from "../tester";
+import { gotoWithLang } from "../utils/navigation";
 
 test.describe("Google Ads Campaign Management", () => {
   test.use({ storageState: "tests/asset/storageState.json" });
@@ -33,7 +34,7 @@ test.describe("Google Ads Campaign Management", () => {
       }
     });
 
-    await page.goto("/integrated");
+    await await gotoWithLang(page, "integrated");
     await page.waitForLoadState("networkidle");
   });
 

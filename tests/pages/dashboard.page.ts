@@ -1,4 +1,5 @@
 import { Page, Locator } from "@playwright/test";
+import { gotoWithLang } from "../utils/navigation";
 
 export class DashboardPage {
   readonly page: Page;
@@ -26,7 +27,7 @@ export class DashboardPage {
   }
 
   async goto() {
-    await this.page.goto("/dashboard");
+    await gotoWithLang(this.page, "dashboard");
     await this.page.waitForLoadState("networkidle");
   }
 

@@ -1,11 +1,12 @@
 import { test, expect, AnnotationType } from "../tester";
+import { gotoWithLang } from "../utils/navigation";
 
 test.describe("Legal Pages", () => {
   test.describe("Terms of Service", () => {
     test.beforeEach(async ({ page, pushAnnotation }) => {
       pushAnnotation(AnnotationType.MAIN_CATEGORY, "법적 문서");
       pushAnnotation(AnnotationType.SUB_CATEGORY1, "이용약관");
-      await page.goto("/terms");
+      await gotoWithLang(page, "terms");
     });
 
     test("이용약관 페이지 표시", async ({ page, pushAnnotation }) => {
@@ -51,7 +52,7 @@ test.describe("Legal Pages", () => {
     test.beforeEach(async ({ page, pushAnnotation }) => {
       pushAnnotation(AnnotationType.MAIN_CATEGORY, "법적 문서");
       pushAnnotation(AnnotationType.SUB_CATEGORY1, "개인정보처리방침");
-      await page.goto("/privacy");
+      await gotoWithLang(page, "privacy");
     });
 
     test("개인정보처리방침 페이지 표시", async ({ page, pushAnnotation }) => {
@@ -89,7 +90,7 @@ test.describe("Legal Pages", () => {
     test.beforeEach(async ({ page, pushAnnotation }) => {
       pushAnnotation(AnnotationType.MAIN_CATEGORY, "법적 문서");
       pushAnnotation(AnnotationType.SUB_CATEGORY1, "환불정책");
-      await page.goto("/refund-policy");
+      await gotoWithLang(page, "refund-policy");
     });
 
     test("환불정책 페이지 표시", async ({ page, pushAnnotation }) => {
@@ -131,7 +132,7 @@ test.describe("Legal Pages", () => {
     test.beforeEach(async ({ page, pushAnnotation }) => {
       pushAnnotation(AnnotationType.MAIN_CATEGORY, "법적 문서");
       pushAnnotation(AnnotationType.SUB_CATEGORY1, "쿠키정책");
-      await page.goto("/cookies");
+      await gotoWithLang(page, "cookies");
     });
 
     test("쿠키정책 페이지 표시", async ({ page, pushAnnotation }) => {

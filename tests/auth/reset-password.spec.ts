@@ -1,4 +1,5 @@
 import { test, expect, AnnotationType } from "../tester";
+import { gotoWithLang } from "../utils/navigation";
 
 test.describe("Reset Password functionality", () => {
   test.beforeEach(async ({ page, pushAnnotation }) => {
@@ -6,7 +7,7 @@ test.describe("Reset Password functionality", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "비밀번호 재설정");
     // 실제 재설정 페이지는 이메일 링크를 통해서만 접근 가능하므로
     // 테스트를 위해 직접 URL로 이동
-    await page.goto("/reset-password");
+    await gotoWithLang(page, "reset-password");
   });
 
   test("비밀번호 재설정 페이지 표시 및 요소 확인", async ({

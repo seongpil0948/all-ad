@@ -1,4 +1,5 @@
 import { test, expect, AnnotationType } from "../tester";
+import { gotoWithLang } from "../utils/navigation";
 
 test.describe("Google Ads Token Refresh Cron Job", () => {
   test.use({ storageState: "tests/asset/storageState.json" });
@@ -155,7 +156,7 @@ test.describe("Google Ads Token Refresh Cron Job", () => {
       }
     });
 
-    await page.goto("/integrated");
+    await await gotoWithLang(page, "integrated");
     const platformsTab = page.locator(
       'button[role="tab"]:has-text("플랫폼 연동")',
     );
@@ -275,7 +276,7 @@ test.describe("Google Ads Token Refresh Cron Job", () => {
     await expect(page.getByText("2개 실패")).toBeVisible();
 
     // Navigate to integrated page to see inactive accounts
-    await page.goto("/integrated");
+    await await gotoWithLang(page, "integrated");
     const platformsTab = page.locator(
       'button[role="tab"]:has-text("플랫폼 연동")',
     );

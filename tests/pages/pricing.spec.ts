@@ -1,10 +1,11 @@
 import { test, expect, AnnotationType } from "../tester";
+import { gotoWithLang } from "../utils/navigation";
 
 test.describe("Pricing Page", () => {
   test.beforeEach(async ({ page, pushAnnotation }) => {
     pushAnnotation(AnnotationType.MAIN_CATEGORY, "가격");
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "요금제");
-    await page.goto("/pricing");
+    await gotoWithLang(page, "pricing");
   });
 
   test("가격 페이지 레이아웃", async ({ page, pushAnnotation }) => {

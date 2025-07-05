@@ -1,5 +1,6 @@
 import { test, expect, AnnotationType } from "../tester";
 import { fillForm, waitForAPIResponse } from "../helpers/test-utils";
+import { gotoWithLang } from "../utils/navigation";
 
 /**
  * 신규 사용자 온보딩 전체 시나리오 테스트
@@ -18,7 +19,7 @@ test.describe("신규 사용자 온보딩 시나리오", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "전체 온보딩 플로우");
 
     // 1. 홈페이지 방문 및 가입 결정
-    await page.goto("/");
+    await await gotoWithLang(page, "");
     await page.waitForLoadState("networkidle");
 
     // 랜딩 페이지에서 가치 제안 확인
@@ -80,7 +81,7 @@ test.describe("신규 사용자 온보딩 시나리오", () => {
     if (await integratedLink.isVisible()) {
       await integratedLink.click();
     } else {
-      await page.goto("/integrated");
+      await await gotoWithLang(page, "integrated");
     }
 
     await page.waitForURL(/integrated/);
@@ -96,14 +97,14 @@ test.describe("신규 사용자 온보딩 시나리오", () => {
     }
 
     // 7. 계정 설정 페이지 확인
-    await page.goto("/settings");
+    await await gotoWithLang(page, "settings");
     await page.waitForLoadState("networkidle");
 
     // 프로필 정보가 표시되는지 확인
     await expect(page.getByText(testEmail)).toBeVisible();
 
     // 8. 팀 관리 기능 확인
-    await page.goto("/team");
+    await await gotoWithLang(page, "team");
     await page.waitForLoadState("networkidle");
 
     // 새 사용자는 자동으로 마스터 권한을 가져야 함
@@ -114,7 +115,7 @@ test.describe("신규 사용자 온보딩 시나리오", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "온보딩 복구");
 
     // 사용자가 중간에 나갔다가 다시 돌아오는 시나리오
-    await page.goto("/login");
+    await await gotoWithLang(page, "login");
 
     // 기존 사용자로 로그인 (임시 계정)
     await fillForm(page, {
@@ -150,7 +151,7 @@ test.describe("신규 사용자 온보딩 시나리오", () => {
   test("온보딩 도움말 및 가이드 확인", async ({ page, pushAnnotation }) => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "도움말 시스템");
 
-    await page.goto("/");
+    await await gotoWithLang(page, "");
 
     // 도움말 또는 가이드 관련 요소 확인
     const helpElements = [

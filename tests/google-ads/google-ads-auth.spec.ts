@@ -1,4 +1,5 @@
 import { test, expect, AnnotationType } from "../tester";
+import { gotoWithLang } from "../utils/navigation";
 
 test.describe("Google Ads Authentication", () => {
   test.use({ storageState: "tests/asset/storageState.json" });
@@ -6,7 +7,7 @@ test.describe("Google Ads Authentication", () => {
   test.beforeEach(async ({ page, pushAnnotation }) => {
     pushAnnotation(AnnotationType.MAIN_CATEGORY, "Google Ads Integration");
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "Authentication");
-    await page.goto("/integrated");
+    await gotoWithLang(page, "integrated");
     await page.waitForLoadState("networkidle");
   });
 

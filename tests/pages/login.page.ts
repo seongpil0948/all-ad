@@ -1,4 +1,5 @@
 import { Page, Locator } from "@playwright/test";
+import { gotoWithLang } from "../utils/navigation";
 
 export class LoginPage {
   readonly page: Page;
@@ -22,7 +23,7 @@ export class LoginPage {
   }
 
   async goto() {
-    await this.page.goto("/login");
+    await gotoWithLang(this.page, "login");
   }
 
   async login(email: string, password: string) {

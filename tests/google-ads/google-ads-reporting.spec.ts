@@ -1,4 +1,5 @@
 import { test, expect, AnnotationType } from "../tester";
+import { gotoWithLang } from "../utils/navigation";
 
 test.describe("Google Ads Reporting & Analytics", () => {
   test.use({ storageState: "tests/asset/storageState.json" });
@@ -201,7 +202,7 @@ test.describe("Google Ads Reporting & Analytics", () => {
       });
     });
 
-    await page.goto("/integrated");
+    await await gotoWithLang(page, "integrated");
     // Navigate to reports tab
     await page
       .locator('button:has-text("보고서"), button:has-text("Reports")')
@@ -345,7 +346,7 @@ test.describe("Google Ads Reporting & Analytics", () => {
       });
     });
 
-    await page.goto("/integrated");
+    await await gotoWithLang(page, "integrated");
     // Navigate to keywords tab
     await page
       .locator('button:has-text("키워드"), button:has-text("Keywords")')
@@ -405,7 +406,7 @@ test.describe("Google Ads Reporting & Analytics", () => {
       });
     });
 
-    await page.goto("/integrated");
+    await await gotoWithLang(page, "integrated");
     // Navigate to ad groups tab
     await page
       .locator('button:has-text("광고그룹"), button:has-text("Ad Groups")')
@@ -453,7 +454,7 @@ test.describe("Google Ads Reporting & Analytics", () => {
       });
     });
 
-    await page.goto("/integrated");
+    await await gotoWithLang(page, "integrated");
     // Navigate to locations tab
     await page
       .locator('button:has-text("지역"), button:has-text("Locations")')
@@ -503,7 +504,7 @@ test.describe("Google Ads Reporting & Analytics", () => {
       });
     });
 
-    await page.goto("/integrated");
+    await await gotoWithLang(page, "integrated");
 
     // Try to refresh data
     const refreshButton = page.getByRole("button", {
@@ -553,7 +554,7 @@ test.describe("Google Ads Reporting & Analytics", () => {
       );
     }
 
-    await page.goto("/integrated");
+    await await gotoWithLang(page, "integrated");
     const campaignsTab = page.locator(
       'button[role="tab"]:has-text("캠페인 관리")',
     );
@@ -615,7 +616,7 @@ test.describe("Google Ads Reporting & Analytics", () => {
       });
     });
 
-    await page.goto("/integrated");
+    await await gotoWithLang(page, "integrated");
     await page
       .locator(
         'button:has-text("계정 관리"), button:has-text("Account Management")',

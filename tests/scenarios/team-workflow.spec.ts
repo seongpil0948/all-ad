@@ -1,5 +1,6 @@
 import { test, expect, AnnotationType } from "../tester";
 import { fillForm, waitForAPIResponse } from "../helpers/test-utils";
+import { gotoWithLang } from "../utils/navigation";
 
 /**
  * 팀 워크플로우 시나리오 테스트
@@ -9,7 +10,7 @@ import { fillForm, waitForAPIResponse } from "../helpers/test-utils";
 test.describe("팀 워크플로우 시나리오", () => {
   test.beforeEach(async ({ page, pushAnnotation }) => {
     pushAnnotation(AnnotationType.MAIN_CATEGORY, "팀 워크플로우");
-    await page.goto("/team");
+    await await gotoWithLang(page, "team");
     await page.waitForLoadState("networkidle");
   });
 
@@ -167,7 +168,7 @@ test.describe("팀 워크플로우 시나리오", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "캠페인 협업");
 
     // 1. 캠페인 목록으로 이동
-    await page.goto("/campaigns");
+    await await gotoWithLang(page, "campaigns");
     await page.waitForLoadState("networkidle");
 
     // 2. 캠페인 공유 기능 찾기
@@ -254,7 +255,7 @@ test.describe("팀 워크플로우 시나리오", () => {
       await page.waitForTimeout(2000);
     } else {
       // 설정 페이지에서 활동 로그 찾기
-      await page.goto("/settings");
+      await await gotoWithLang(page, "settings");
       await page.waitForLoadState("networkidle");
 
       const settingsActivityLink = page
@@ -319,12 +320,12 @@ test.describe("팀 워크플로우 시나리오", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "팀 설정 관리");
 
     // 1. 팀 설정 페이지 접근
-    await page.goto("/team/settings");
+    await await gotoWithLang(page, "team/settings");
     await page.waitForLoadState("networkidle");
 
     // 페이지가 없으면 설정에서 찾기
     if (page.url().includes("404") || !page.url().includes("settings")) {
-      await page.goto("/settings");
+      await await gotoWithLang(page, "settings");
       await page.waitForLoadState("networkidle");
 
       const teamSettingsLink = page
@@ -573,7 +574,7 @@ test.describe("팀 워크플로우 시나리오", () => {
     }
 
     // 4. 실제 접근 권한 테스트 (간접적)
-    await page.goto("/dashboard");
+    await await gotoWithLang(page, "dashboard");
     await page.waitForLoadState("networkidle");
 
     // 플랫폼별 데이터가 권한에 따라 표시되는지 확인

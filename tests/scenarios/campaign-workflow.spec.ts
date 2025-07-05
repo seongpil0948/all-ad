@@ -1,5 +1,6 @@
 import { test, expect, AnnotationType } from "../tester";
 import { waitForAPIResponse, fillForm } from "../helpers/test-utils";
+import { gotoWithLang } from "../utils/navigation";
 
 /**
  * 캠페인 관리 워크플로우 테스트
@@ -9,7 +10,7 @@ import { waitForAPIResponse, fillForm } from "../helpers/test-utils";
 test.describe("캠페인 관리 워크플로우", () => {
   test.beforeEach(async ({ page, pushAnnotation }) => {
     pushAnnotation(AnnotationType.MAIN_CATEGORY, "캠페인 관리");
-    await page.goto("/dashboard");
+    await gotoWithLang(page, "dashboard");
     await page.waitForLoadState("networkidle");
   });
 
@@ -90,7 +91,7 @@ test.describe("캠페인 관리 워크플로우", () => {
     if (await campaignListButton.isVisible()) {
       await campaignListButton.click();
     } else {
-      await page.goto("/campaigns");
+      await gotoWithLang(page, "campaigns");
     }
 
     await page.waitForLoadState("networkidle");
@@ -117,7 +118,7 @@ test.describe("캠페인 관리 워크플로우", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "긴급 캠페인 제어");
 
     // 1. 캠페인 목록 페이지로 이동
-    await page.goto("/campaigns");
+    await gotoWithLang(page, "campaigns");
     await page.waitForLoadState("networkidle");
 
     // 2. 활성 캠페인 찾기
@@ -188,7 +189,7 @@ test.describe("캠페인 관리 워크플로우", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "대량 캠페인 관리");
 
     // 1. 캠페인 목록에서 다중 선택
-    await page.goto("/campaigns");
+    await gotoWithLang(page, "campaigns");
     await page.waitForLoadState("networkidle");
 
     // 2. 체크박스나 선택 기능 찾기
@@ -258,7 +259,7 @@ test.describe("캠페인 관리 워크플로우", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "예산 관리");
 
     // 1. 특정 캠페인의 예산 편집
-    await page.goto("/campaigns");
+    await gotoWithLang(page, "campaigns");
     await page.waitForLoadState("networkidle");
 
     // 2. 예산 편집 버튼 찾기
@@ -329,7 +330,7 @@ test.describe("캠페인 관리 워크플로우", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "알림 설정");
 
     // 1. 설정 페이지로 이동
-    await page.goto("/settings");
+    await gotoWithLang(page, "settings");
     await page.waitForLoadState("networkidle");
 
     // 2. 알림 설정 섹션 찾기
@@ -399,7 +400,7 @@ test.describe("캠페인 관리 워크플로우", () => {
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "플랫폼 성과 비교");
 
     // 1. 분석 페이지로 이동
-    await page.goto("/analytics");
+    await gotoWithLang(page, "analytics");
     await page.waitForLoadState("networkidle");
 
     // 2. 플랫폼 비교 뷰 활성화

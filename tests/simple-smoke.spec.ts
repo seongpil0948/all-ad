@@ -1,23 +1,24 @@
 import { test, expect } from "@playwright/test";
+import { gotoWithLang, expectUrl } from "./utils/navigation";
 
 test.describe("Smoke Tests", () => {
   test("intro page loads", async ({ page }) => {
-    await page.goto("/intro");
-    await expect(page).toHaveURL("/intro");
+    await gotoWithLang(page, "intro");
+    await expect(page).toHaveURL(/\/(en|ko)\/intro/);
     await expect(page.locator("h1").first()).toBeVisible();
   });
 
   test("FAQ page loads", async ({ page }) => {
-    await page.goto("/faq");
-    await expect(page).toHaveURL("/faq");
+    await gotoWithLang(page, "faq");
+    await expect(page).toHaveURL(/\/(en|ko)\/faq/);
     await expect(
-      page.getByRole("heading", { name: "자주 묻는 질문" }),
+      page.getByRole("heading", { name: /자주 묻는 질문|FAQ/ }),
     ).toBeVisible();
   });
 
   test("login page loads", async ({ page }) => {
-    await page.goto("/login");
-    await expect(page).toHaveURL("/login");
+    await gotoWithLang(page, "login");
+    await expect(page).toHaveURL(/\/(en|ko)\/login/);
     await expect(page.getByTestId("login-input-id")).toBeVisible();
   });
 
@@ -27,6 +28,6 @@ test.describe("Smoke Tests", () => {
     // This is a known issue with the current app structure where
     // /dashboard is under (private) route group but middleware expects it at root
     await page.goto("/dashboard");
-    await expect(page).toHaveURL("/login");
+    await expect(page).toHaveURL(/\/(en|ko)\/login/);
   });
 });

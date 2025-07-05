@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { gotoWithLang } from "../utils/navigation";
 
 test.describe("RLS Fix Verification", () => {
   test("should be able to fetch teams without infinite recursion error", async ({
@@ -16,7 +17,7 @@ test.describe("RLS Fix Verification", () => {
     });
 
     // Navigate to login page
-    await page.goto("/login");
+    await gotoWithLang(page, "login");
 
     // Login with test credentials
     await page.fill('input[name="email"]', "seongpil0948@gmail.com");
@@ -27,10 +28,10 @@ test.describe("RLS Fix Verification", () => {
     await page.click('button[type="submit"]');
 
     // Wait for navigation to dashboard
-    await page.waitForURL("**/dashboard", { timeout: 10000 });
+    await page.waitForURL(/\/(en|ko)\/dashboard/, { timeout: 10000 });
 
     // Navigate to a page that fetches teams data
-    await page.goto("/analytics");
+    await gotoWithLang(page, "analytics");
     await page.waitForTimeout(2000); // Wait for data fetch
 
     // Assert no infinite recursion errors
@@ -62,7 +63,7 @@ test.describe("RLS Fix Verification", () => {
     });
 
     // Navigate to login page
-    await page.goto("/login");
+    await gotoWithLang(page, "login");
 
     // Login with test credentials
     await page.fill('input[name="email"]', "seongpil0948@gmail.com");
@@ -73,10 +74,10 @@ test.describe("RLS Fix Verification", () => {
     await page.click('button[type="submit"]');
 
     // Wait for navigation
-    await page.waitForURL("**/dashboard", { timeout: 10000 });
+    await page.waitForURL(/\/(en|ko)\/dashboard/, { timeout: 10000 });
 
     // Navigate to team management page
-    await page.goto("/team");
+    await gotoWithLang(page, "team");
     await page.waitForTimeout(2000); // Wait for data fetch
 
     // Assert no infinite recursion errors
@@ -108,7 +109,7 @@ test.describe("RLS Fix Verification", () => {
     });
 
     // Navigate to login page
-    await page.goto("/login");
+    await gotoWithLang(page, "login");
 
     // Login with test credentials (use a different user or ensure no existing team)
     await page.fill('input[name="email"]', "test@example.com");
@@ -120,7 +121,7 @@ test.describe("RLS Fix Verification", () => {
 
     // If login succeeds, check for team creation flow
     try {
-      await page.waitForURL("**/dashboard", { timeout: 5000 });
+      await page.waitForURL(/\/(en|ko)\/dashboard/, { timeout: 5000 });
 
       // Assert no infinite recursion errors during team setup
       expect(errorLogs).toHaveLength(0);

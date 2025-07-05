@@ -1,4 +1,5 @@
 import { test, expect, AnnotationType } from "../tester";
+import { gotoWithLang } from "../utils/navigation";
 
 test.describe("Google Ads Token Refresh & Data Sync", () => {
   test.use({ storageState: "tests/asset/storageState.json" });
@@ -57,7 +58,7 @@ test.describe("Google Ads Token Refresh & Data Sync", () => {
       }
     });
 
-    await page.goto("/integrated");
+    await await gotoWithLang(page, "integrated");
     const platformsTab = page.locator(
       'button[role="tab"]:has-text("플랫폼 연동")',
     );
@@ -141,7 +142,7 @@ test.describe("Google Ads Token Refresh & Data Sync", () => {
     );
 
     // Trigger manual refresh (if available in UI)
-    await page.goto("/integrated");
+    await await gotoWithLang(page, "integrated");
     const platformsTab = page.locator(
       'button[role="tab"]:has-text("플랫폼 연동")',
     );
@@ -219,7 +220,7 @@ test.describe("Google Ads Token Refresh & Data Sync", () => {
       }
     });
 
-    await page.goto("/integrated");
+    await await gotoWithLang(page, "integrated");
     const campaignsTab = page.locator(
       'button[role="tab"]:has-text("캠페인 관리")',
     );
@@ -272,7 +273,7 @@ test.describe("Google Ads Token Refresh & Data Sync", () => {
       }
     });
 
-    await page.goto("/integrated");
+    await await gotoWithLang(page, "integrated");
     const platformsTab = page.locator(
       'button[role="tab"]:has-text("플랫폼 연동")',
     );
@@ -304,7 +305,7 @@ test.describe("Google Ads Token Refresh & Data Sync", () => {
       });
     });
 
-    await page.goto("/integrated");
+    await await gotoWithLang(page, "integrated");
 
     // Trigger sync (if manual sync is available)
     const syncButton = page.getByRole("button", { name: /동기화|Sync/i });
@@ -449,7 +450,7 @@ test.describe("Google Ads Token Refresh & Data Sync", () => {
       }
     });
 
-    await page.goto("/integrated");
+    await await gotoWithLang(page, "integrated");
     const platformsTab = page.locator(
       'button[role="tab"]:has-text("플랫폼 연동")',
     );

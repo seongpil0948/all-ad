@@ -1,10 +1,11 @@
 import { test, expect, AnnotationType } from "../tester";
+import { gotoWithLang } from "../utils/navigation";
 
 test.describe("Signup functionality", () => {
   test.beforeEach(async ({ page, pushAnnotation }) => {
     pushAnnotation(AnnotationType.MAIN_CATEGORY, "인증");
     pushAnnotation(AnnotationType.SUB_CATEGORY1, "회원가입");
-    await page.goto("/signup");
+    await gotoWithLang(page, "signup");
   });
 
   test("회원가입 페이지 표시 및 요소 확인", async ({

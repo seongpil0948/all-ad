@@ -49,12 +49,14 @@ export function useCampaigns(platform?: PlatformType | "all") {
 // 캠페인 상태 업데이트
 async function updateCampaignStatus(
   url: string,
-  { arg }: { arg: { campaignId: string; status: "ENABLED" | "PAUSED" } },
+  {
+    arg,
+  }: {
+    arg: { campaignId: string; platform: string; status: "ENABLED" | "PAUSED" };
+  },
 ) {
-  const [platform, platformCampaignId] = arg.campaignId.split("_");
-
   const response = await fetch(
-    `/api/campaigns/${platform}/${platformCampaignId}/status`,
+    `/api/campaigns/${arg.platform}/${arg.campaignId}/status`,
     {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },

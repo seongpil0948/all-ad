@@ -104,7 +104,6 @@ export function CampaignDashboard() {
   const handleBudgetEdit = useCallback(
     (campaign: Campaign) => {
       setSelectedCampaign(campaign);
-      setNewBudget(campaign.budget?.toString() || "");
       onOpen();
     },
     [onOpen],
@@ -113,7 +112,10 @@ export function CampaignDashboard() {
   const handleBudgetUpdate = useCallback(async () => {
     if (!selectedCampaign || !newBudget) return;
     try {
-      await updateBudget(selectedCampaign);
+      await updateBudget({
+        ...selectedCampaign,
+        budget: parseInt(newBudget, 10),
+      });
 
       addToast({
         title: "예산 업데이트",
@@ -138,6 +140,7 @@ export function CampaignDashboard() {
       try {
         await updateStatus({
           campaignId: campaign.id,
+          platform: campaign.platform,
           status: campaign.isActive ? "PAUSED" : "ENABLED",
         });
 

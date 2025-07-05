@@ -1,13 +1,14 @@
 import { test, expect } from "@playwright/test";
+import { gotoWithLang } from "../utils/navigation";
 
 test.describe("Toast Notifications", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/");
+    await gotoWithLang(page, "");
   });
 
   test("should show success toast on login", async ({ page }) => {
     // Navigate to login page
-    await page.goto("/login");
+    await gotoWithLang(page, "login");
 
     // Fill in login form with test credentials
     await page.fill('input[name="email"]', "test@example.com");
@@ -27,7 +28,7 @@ test.describe("Toast Notifications", () => {
 
   test("should show error toast on invalid login", async ({ page }) => {
     // Navigate to login page
-    await page.goto("/login");
+    await gotoWithLang(page, "login");
 
     // Fill in login form with invalid credentials
     await page.fill('input[name="email"]', "invalid@example.com");
@@ -47,14 +48,14 @@ test.describe("Toast Notifications", () => {
 
   test("should show toast when uploading avatar", async ({ page }) => {
     // First login
-    await page.goto("/login");
+    await gotoWithLang(page, "login");
     await page.fill('input[name="email"]', "test@example.com");
     await page.fill('input[name="password"]', "testpassword123");
     await page.click('button[type="submit"]');
     await page.waitForURL("/dashboard");
 
     // Navigate to profile page
-    await page.goto("/profile");
+    await gotoWithLang(page, "profile");
 
     // Upload avatar (mock file upload)
     const fileInput = page.locator('input[type="file"]');
@@ -75,13 +76,13 @@ test.describe("Toast Notifications", () => {
 
   test("should show multiple toasts in order", async ({ page }) => {
     // Navigate to team management page (requires login)
-    await page.goto("/login");
+    await gotoWithLang(page, "login");
     await page.fill('input[name="email"]', "admin@example.com");
     await page.fill('input[name="password"]', "adminpassword123");
     await page.click('button[type="submit"]');
-    await page.waitForURL("/dashboard");
+    await page.waitForURL(/\/(en|ko)\/dashboard/);
 
-    await page.goto("/team");
+    await gotoWithLang(page, "team");
 
     // Try to invite multiple team members quickly
     const inviteButton = page.locator('button:has-text("팀원 초대")');
@@ -104,7 +105,7 @@ test.describe("Toast Notifications", () => {
 
   test("toast should auto-dismiss after timeout", async ({ page }) => {
     // Navigate to login page
-    await page.goto("/login");
+    await gotoWithLang(page, "login");
 
     // Trigger an error toast
     await page.fill('input[name="email"]', "invalid@example.com");
@@ -124,14 +125,14 @@ test.describe("Toast Notifications", () => {
 
   test("should show progress bar for long operations", async ({ page }) => {
     // Login first
-    await page.goto("/login");
+    await gotoWithLang(page, "login");
     await page.fill('input[name="email"]', "test@example.com");
     await page.fill('input[name="password"]', "testpassword123");
     await page.click('button[type="submit"]');
-    await page.waitForURL("/dashboard");
+    await page.waitForURL(/\/(en|ko)\/dashboard/);
 
     // Navigate to dashboard
-    await page.goto("/dashboard");
+    await gotoWithLang(page, "dashboard");
 
     // Click sync button if available
     const syncButton = page.locator('button:has-text("전체 동기화")');
