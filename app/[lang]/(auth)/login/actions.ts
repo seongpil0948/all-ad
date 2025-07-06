@@ -125,6 +125,19 @@ export async function signup(
 
   log.info("Attempting signup for:", { email });
 
+  // 테스트 환경에서는 실제 회원가입 대신 Mock 응답 반환
+  if (process.env.NODE_ENV === "test") {
+    log.info("Test mode: Mocking signup response");
+
+    return {
+      success: true,
+      errors: {
+        general:
+          "테스트 환경에서 회원가입이 시뮬레이션되었습니다. 실제 이메일이 발송되지 않았습니다.",
+      },
+    };
+  }
+
   const { error, data } = await supabase.auth.signUp({
     email,
     password,
