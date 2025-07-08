@@ -8,11 +8,18 @@ import { Divider } from "@heroui/divider";
 import { Form } from "@heroui/form";
 import { FaEnvelope, FaLock } from "react-icons/fa";
 import { useRouter } from "next/navigation";
+import { Accordion, AccordionItem } from "@heroui/accordion";
+import { Checkbox } from "@heroui/checkbox";
+import { Tabs, Tab } from "@heroui/tabs";
+import { Card, CardBody } from "@heroui/card";
 
 import { clientLogin } from "@/app/[lang]/(auth)/login/client-actions";
 import { signup, type ActionState } from "@/app/[lang]/(auth)/login/actions";
 import { toast } from "@/utils/toast";
 import { useDictionary } from "@/hooks/use-dictionary";
+import TermsOfServiceContent from "@/app/[lang]/(public)/terms/TermsOfServiceContent";
+import RefundPolicyContent from "@/app/[lang]/(public)/refund-policy/RefundPolicyContent";
+import CookiePolicyContent from "@/app/[lang]/(public)/cookies/CookiePolicyContent";
 
 interface AuthFormProps {
   initialMode?: "login" | "signup";
@@ -29,6 +36,7 @@ export function AuthForm({
 }: AuthFormProps) {
   const [isSignUp, setIsSignUp] = useState(initialMode === "signup");
   const [isLoading, setIsLoading] = useState(false);
+  const [isTermsAgreed, setIsTermsAgreed] = useState(false);
   const router = useRouter();
   const { dictionary: dict } = useDictionary();
 
@@ -66,6 +74,34 @@ export function AuthForm({
       setIsLoading(false);
     }
   };
+
+  const termsContent = (
+    <div className="flex w-full flex-col">
+      <Tabs aria-label="Policy Tabs">
+        <Tab key="terms" title="이용약관">
+          <Card>
+            <CardBody className="max-h-64 overflow-y-auto">
+              <TermsOfServiceContent />
+            </CardBody>
+          </Card>
+        </Tab>
+        <Tab key="refund" title="환불규정">
+          <Card>
+            <CardBody className="max-h-64 overflow-y-auto">
+              <RefundPolicyContent />
+            </CardBody>
+          </Card>
+        </Tab>
+        <Tab key="cookies" title="쿠키정책">
+          <Card>
+            <CardBody className="max-h-64 overflow-y-auto">
+              <CookiePolicyContent />
+            </CardBody>
+          </Card>
+        </Tab>
+      </Tabs>
+    </div>
+  );
 
   return (
     <>
@@ -107,6 +143,27 @@ export function AuthForm({
               variant="bordered"
             />
 
+            <Accordion>
+              <AccordionItem
+                key="terms"
+                aria-label="이용약관"
+                title="이용약관 및 정책"
+              >
+                {termsContent}
+              </AccordionItem>
+            </Accordion>
+
+            <Checkbox
+              isSelected={isTermsAgreed}
+              onValueChange={setIsTermsAgreed}
+            >
+              <span className="text-sm">
+                (필수) <Link href="/terms">이용약관</Link>,{" "}
+                <Link href="/refund-policy">환불규정</Link>,{" "}
+                <Link href="/cookies">쿠키정책</Link>에 모두 동의합니다.
+              </span>
+            </Checkbox>
+
             {signupState.errors?.general && (
               <div
                 className={`text-sm ${signupState.success ? "text-success" : "text-danger"}`}
@@ -119,6 +176,7 @@ export function AuthForm({
               fullWidth
               color="primary"
               data-test-id="signup-submit"
+              isDisabled={!isTermsAgreed || isSignupPending}
               isLoading={isSignupPending}
               type="submit"
             >
