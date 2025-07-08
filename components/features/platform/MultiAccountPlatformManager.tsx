@@ -22,7 +22,7 @@ import { CoupangManualCampaignManager } from "./coupang/CoupangManualCampaignMan
 // OAuth imports removed - legacy OAuth implementation
 import { PlatformType } from "@/types";
 import { CredentialValues } from "@/types/credentials.types";
-import { Database } from "@/types/supabase.types";
+import { Database, Json } from "@/types/supabase.types";
 import { platformConfig } from "@/utils/platform-config";
 import { toast } from "@/utils/toast";
 import log from "@/utils/logger";
@@ -280,7 +280,7 @@ export function MultiAccountPlatformManager({
         }
 
         // For other OAuth platforms
-        await handleOAuthConnect(platform, {});
+        await handleOAuthConnect(platform, credential);
       }
     } catch (error) {
       log.error("Re-authentication failed:", error);
@@ -300,17 +300,31 @@ export function MultiAccountPlatformManager({
     }
   };
 
-  const handleSave = async (credentials: CredentialValues) => {
+  const handleSave = async (formValues: Record<string, unknown>) => {
     if (!selectedPlatform) return;
 
     setIsLoading(true);
     try {
       const platformInfo = platformConfig[selectedPlatform];
 
-      // Ensure is_active is set to true for new credentials
-      const credentialsWithActiveStatus = {
-        ...credentials,
+      // Convert form values to CredentialValues format
+      const credentials: CredentialValues = {
+        access_token: null,
+        account_id: `${selectedPlatform}_${Date.now()}`,
+        account_name: platformInfo.name,
+        created_at: new Date().toISOString(),
+        created_by: _userId,
+        credentials: formValues as { [key: string]: Json | undefined },
+        data: null,
+        expires_at: null,
+        id: crypto.randomUUID(),
         is_active: true,
+        last_synced_at: null,
+        platform: selectedPlatform,
+        refresh_token: null,
+        scope: null,
+        team_id: teamId,
+        updated_at: new Date().toISOString(),
       };
 
       if (
@@ -319,9 +333,9 @@ export function MultiAccountPlatformManager({
           selectedPlatform === "kakao") &&
         platformInfo.supportsOAuth
       ) {
-        await handleOAuthConnect(selectedPlatform, credentialsWithActiveStatus);
+        await handleOAuthConnect(selectedPlatform, credentials);
       } else {
-        await onSave(selectedPlatform, credentialsWithActiveStatus);
+        await onSave(selectedPlatform, credentials);
         onOpenChange();
       }
     } finally {

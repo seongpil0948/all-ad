@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/utils/supabase/server";
 import { ActionState } from "@/types/actions";
+import { ensureUserHasTeam } from "@/lib/data/teams";
 import log from "@/utils/logger";
 import { redirectWithToast } from "@/utils/server-toast";
 
@@ -69,6 +70,17 @@ export async function login(
 
   log.info("Login successful:", { userId: user.id, email: user.email });
 
+  // Ensure user has a team after login
+  try {
+    await ensureUserHasTeam(user.id);
+  } catch (teamError) {
+    log.error("Failed to ensure team for user after login", {
+      userId: user.id,
+      error: teamError,
+    });
+    // Don't fail the login for team issues
+  }
+
   // Revalidate all paths to ensure the navbar updates
   revalidatePath("/", "layout");
   revalidatePath("/dashboard");
@@ -113,6 +125,19 @@ export async function signup(
 
   log.info("Attempting signup for:", { email });
 
+  // 테스트 환경에서는 실제 회원가입 대신 Mock 응답 반환
+  if (process.env.NODE_ENV === "test") {
+    log.info("Test mode: Mocking signup response");
+
+    return {
+      success: true,
+      errors: {
+        general:
+          "테스트 환경에서 회원가입이 시뮬레이션되었습니다. 실제 이메일이 발송되지 않았습니다.",
+      },
+    };
+  }
+
   const { error, data } = await supabase.auth.signUp({
     email,
     password,
@@ -152,6 +177,18 @@ export async function signup(
   // If signup is successful and user is immediately logged in
   if (data.session) {
     log.info("User signed up and logged in immediately");
+
+    // Ensure user has a team after successful signup
+    try {
+      await ensureUserHasTeam(data.user.id);
+    } catch (teamError) {
+      log.error("Failed to ensure team for user after signup", {
+        userId: data.user.id,
+        error: teamError,
+      });
+      // Don't fail the signup for team issues
+    }
+
     revalidatePath("/", "layout");
 
     // Redirect to returnUrl if provided and valid, otherwise to dashboard

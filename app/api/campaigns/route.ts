@@ -3,6 +3,7 @@ import log from "@/utils/logger";
 import { transformDbCampaignToApp } from "@/utils/campaign-transformer";
 import { successResponse } from "@/lib/api/response";
 import { ApiErrors, handleApiError } from "@/lib/api/errors";
+import { getUserPrimaryTeamId } from "@/utils/team/user-teams";
 
 export async function GET(request: Request) {
   try {
@@ -16,39 +17,23 @@ export async function GET(request: Request) {
       throw ApiErrors.UNAUTHORIZED();
     }
 
-    // Get user's team
-    let teamId: string | null = null;
-
-    // First check if user is a master of any team
-    const { data: masterTeam } = await supabase
-      .from("teams")
-      .select("id")
-      .eq("master_user_id", user.id)
-      .maybeSingle();
-
-    if (masterTeam) {
-      teamId = masterTeam.id;
-    } else {
-      // Check if user is a member of any team
-      const { data: teamMember } = await supabase
-        .from("team_members")
-        .select("team_id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (teamMember) {
-        teamId = teamMember.team_id;
-      }
-    }
+    // Use utility function to get primary team ID
+    const teamId = await getUserPrimaryTeamId(user.id);
 
     if (!teamId) {
-      log.info("No team found for user, returning empty campaigns", {
+      log.warn("No team found for user", {
         userId: user.id,
+        email: user.email,
       });
 
-      // Return empty array if user has no team yet
       return successResponse([]);
     }
+
+    log.info("Using team for campaigns fetch", {
+      userId: user.id,
+      teamId,
+      email: user.email,
+    });
 
     // Parse query parameters
     const { searchParams } = new URL(request.url);

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/utils/supabase/server";
-import { createServiceClient } from "@/utils/supabase/service";
+import { createTeamForUser } from "@/lib/data/teams";
 import log from "@/utils/logger";
 
 export async function POST() {
@@ -18,54 +18,26 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user already has a team
-    const { data: existingTeam } = await supabase
-      .from("teams")
-      .select("id")
-      .eq("master_user_id", user.id)
-      .single();
+    // Use the common team creation function
+    const result = await createTeamForUser(user.id);
 
-    if (existingTeam) {
-      return NextResponse.json({
-        success: true,
-        teamId: existingTeam.id,
-        message: "User already has a team",
-      });
-    }
-
-    // Use service role client to bypass RLS
-    const serviceClient = createServiceClient();
-
-    const { data: newTeam, error: createError } = await serviceClient
-      .from("teams")
-      .insert({
-        name: user.email || "My Team",
-        master_user_id: user.id,
-      })
-      .select("id")
-      .single();
-
-    if (createError) {
-      log.error("Failed to create team with service role", {
-        userId: user.id,
-        error: createError,
-      });
-
+    if (!result.success) {
       return NextResponse.json(
-        { error: "Failed to create team", details: createError.message },
+        { error: result.message, details: result.error },
         { status: 500 },
       );
     }
 
-    log.info("Team created successfully", {
+    log.info("Team creation result", {
       userId: user.id,
-      teamId: newTeam.id,
+      teamId: result.teamId,
+      message: result.message,
     });
 
     return NextResponse.json({
       success: true,
-      teamId: newTeam.id,
-      message: "Team created successfully",
+      teamId: result.teamId,
+      message: result.message,
     });
   } catch (error) {
     log.error("Error in team creation endpoint", error);

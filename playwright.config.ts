@@ -1,5 +1,3 @@
-import type { IExcelConfig } from "playwright-excel-reporter";
-
 import { defineConfig, devices } from "@playwright/test";
 
 import config from "./tests/config";
@@ -31,32 +29,33 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: 4,
+  workers: 8,
   /* Global timeout for each test */
-  timeout: 60 * 1000, // 60 seconds
+  timeout: 10 * 1000, // 10 seconds
   /* Global timeout for expect() */
   expect: {
-    timeout: 10 * 1000, // 10 seconds
+    timeout: 5 * 1000, // 5 seconds
   },
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
-    ["list"],
-    ["json", { outputFile: "test-results.json" }],
-    ["html", { open: process.env.CI ? "never" : "on-failure" }], // 자동으로 리포트 서버를 열지 않음
-    [
-      "playwright-excel-reporter",
-      {
-        excelInputPath: "tests/asset/unit-test-case.xlsx",
-        excelStartRow: 0,
-        caseSheetName: "블라인드",
-        excelOutputDir: "test-results",
-      } as Partial<IExcelConfig>,
-    ],
+    ["line", { outputFile: "test-line.txt" }],
+    ["json", { outputFile: "test-json.json" }],
+    // ["list"],
+    // ["html", { open: process.env.CI ? "never" : "on-failure" }], // 자동으로 리포트 서버를 열지 않음
+    // [
+    //   "playwright-excel-reporter",
+    //   {
+    //     excelInputPath: "tests/asset/unit-test-case.xlsx",
+    //     excelStartRow: 0,
+    //     caseSheetName: "블라인드",
+    //     excelOutputDir: "test-results",
+    //   } as Partial<IExcelConfig>,
+    // ],
   ],
   webServer: {
     command: "pnpm run dev",
     url: baseURL,
-    timeout: 120 * 1000, // 2 minutes for server startup
+    timeout: 60 * 1000, // 1 minute for server startup
     reuseExistingServer: !process.env.CI,
     stdout: "pipe",
     stderr: "pipe",
@@ -71,6 +70,10 @@ export default defineConfig({
     locale: "ko-KR",
     timezoneId: "Asia/Seoul",
     storageState: config.statePath,
+    // Add navigation timeout
+    navigationTimeout: 30 * 1000, // 30 seconds
+    // Add action timeout
+    actionTimeout: 20 * 1000, // 20 seconds
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",

@@ -59,11 +59,67 @@ export const PATCH = withAuth(
       const platformService =
         platformServiceFactory.createService(platformType);
 
-      await platformService.setCredentials(credential.credentials);
+      // Extract customer ID for Google Ads
+      let customerId = credential.customer_id;
+
+      // Fallback: If customer_id is not set, try to extract from account_id for Google
+      if (!customerId && platformType === "google") {
+        // For Google Ads, the account_id might be the customer ID
+        customerId = credential.account_id;
+
+        // If account_id looks like a temporary ID, try to get from data
+        if (customerId && customerId.startsWith("google_")) {
+          // Try to extract customer ID from the data field
+          const dataCustomerId = credential.data?.customer_id;
+
+          if (dataCustomerId) {
+            customerId = dataCustomerId;
+          }
+        }
+      }
+
+      const credentialsWithTeamId = {
+        ...credential.credentials,
+        teamId: context.teamMember.team_id,
+        customerId: customerId,
+      };
+
+      // Use MCC/System User/Business Center for multi-account access
+      if (
+        credential.credentials.is_mcc ||
+        credential.credentials.is_system_user ||
+        credential.credentials.is_business_center
+      ) {
+        if (platformService.setMultiAccountCredentials) {
+          await platformService.setMultiAccountCredentials(
+            credentialsWithTeamId,
+          );
+        } else {
+          // Fallback to regular credentials if multi-account method not available
+          platformService.setCredentials(credentialsWithTeamId);
+        }
+      } else {
+        platformService.setCredentials(credentialsWithTeamId);
+      }
 
       try {
+        // Get the actual platform campaign ID from the database
+        const { data: campaignData, error: campaignError } = await supabase
+          .from("campaigns")
+          .select("platform_campaign_id")
+          .eq("team_id", context.teamMember.team_id)
+          .eq("platform", platformType)
+          .eq("id", campaignId)
+          .single();
+
+        if (campaignError || !campaignData) {
+          throw ApiErrors.NOT_FOUND("Campaign not found");
+        }
+
+        const actualCampaignId = campaignData.platform_campaign_id;
+
         const success = await platformService.updateCampaignStatus(
-          campaignId,
+          actualCampaignId,
           is_active,
         );
 
@@ -81,7 +137,7 @@ export const PATCH = withAuth(
           })
           .eq("team_id", context.teamMember.team_id)
           .eq("platform", platformType)
-          .eq("platform_campaign_id", campaignId);
+          .eq("id", campaignId);
 
         if (updateError) {
           throw updateError;

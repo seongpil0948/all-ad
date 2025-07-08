@@ -170,7 +170,7 @@ export const createCampaignActionsSlice: StateCreator<
       }
 
       const response = await fetch(
-        `/api/campaigns/${campaign.platform}/${campaignId}/budget`,
+        `/api/campaigns/${campaign.platform}/${campaign.platformCampaignId}/budget`,
         {
           method: "PATCH",
           headers: {

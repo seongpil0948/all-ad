@@ -16,8 +16,9 @@ export class GoogleAdsOAuthPlatformService implements PlatformService {
   private teamId: string | null = null;
   private customerId: string | null = null;
 
-  setCredentials(credentials: Record<string, unknown>): void {
-    // For OAuth flow, we only need teamId
+  private initializeIntegrationService(
+    credentials: Record<string, unknown>,
+  ): void {
     this.teamId = credentials.teamId as string;
     this.customerId = credentials.customerId as string | null;
 
@@ -25,18 +26,26 @@ export class GoogleAdsOAuthPlatformService implements PlatformService {
       throw new Error("Team ID is required for Google Ads OAuth");
     }
 
-    // Initialize the OAuth integration service
+    if (!this.customerId) {
+      throw new Error(
+        "Google Ads Customer ID is missing. Please disconnect and reconnect your Google Ads account to resolve this issue.",
+      );
+    }
+
     this.integrationService = new GoogleAdsOAuthIntegrationService(
       this.teamId,
-      this.customerId || undefined,
+      this.customerId,
     );
+  }
+
+  setCredentials(credentials: Record<string, unknown>): void {
+    this.initializeIntegrationService(credentials);
   }
 
   async setMultiAccountCredentials(
     credentials: Record<string, unknown>,
   ): Promise<void> {
-    // For now, handle the same as single account
-    this.setCredentials(credentials);
+    this.initializeIntegrationService(credentials);
   }
 
   async validateCredentials(): Promise<boolean> {

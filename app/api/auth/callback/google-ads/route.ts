@@ -240,6 +240,7 @@ export async function GET(request: NextRequest) {
             .update({
               account_id: googleAdsCustomerId,
               account_name: `Google Ads - ${googleAdsCustomerId}`,
+              customer_id: googleAdsCustomerId, // Store in customer_id column
             })
             .eq("id", credToUpdate.id);
 

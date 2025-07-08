@@ -45,68 +45,72 @@ interface CampaignData {
 export class GoogleAdsOAuthIntegrationService {
   private client: GoogleAdsOAuthClient;
 
-  constructor(teamId: string, customerId?: string) {
+  constructor(teamId: string, customerId: string) {
     this.client = new GoogleAdsOAuthClient({ teamId, customerId });
   }
 
   // Get campaigns with performance metrics
   async getCampaigns(): Promise<CampaignData[]> {
-    const query = `
-      SELECT
-        campaign.id,
-        campaign.name,
-        campaign.status,
-        campaign_budget.amount_micros,
-        campaign_budget.type,
-        metrics.impressions,
-        metrics.clicks,
-        metrics.cost_micros,
-        metrics.conversions,
-        metrics.average_cpm
-      FROM campaign
-      WHERE segments.date DURING LAST_30_DAYS
-        AND campaign.status != 'REMOVED'
-      ORDER BY metrics.impressions DESC
-    `;
+    try {
+      const query = `
+        SELECT
+          campaign.id,
+          campaign.name,
+          campaign.status,
+          campaign_budget.amount_micros,
+          campaign_budget.type,
+          metrics.impressions,
+          metrics.clicks,
+          metrics.cost_micros,
+          metrics.conversions,
+          metrics.average_cpm
+        FROM campaign
+        WHERE segments.date DURING LAST_30_DAYS
+          AND campaign.status != 'REMOVED'
+        ORDER BY metrics.impressions DESC
+      `;
 
-    const results = await this.client.query<GoogleAdsCampaignResult>(query);
+      const results = await this.client.query<GoogleAdsCampaignResult>(query);
 
-    return results.map((result) => {
-      const impressions = result.metrics?.impressions || 0;
-      const clicks = result.metrics?.clicks || 0;
-      const costMicros = result.metrics?.cost_micros
-        ? Number(result.metrics.cost_micros)
-        : 0;
-      const cost = costMicros / 1_000_000;
-      const conversions = result.metrics?.conversions || 0;
+      return results.map((result) => {
+        const impressions = result.metrics?.impressions || 0;
+        const clicks = result.metrics?.clicks || 0;
+        const costMicros = result.metrics?.cost_micros
+          ? Number(result.metrics.cost_micros)
+          : 0;
+        const cost = costMicros / 1_000_000;
+        const conversions = result.metrics?.conversions || 0;
 
-      // Calculate derived metrics
-      const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
-      const conversionRate = clicks > 0 ? (conversions / clicks) * 100 : 0;
-      const cpc = clicks > 0 ? cost / clicks : 0;
-      const cpa = conversions > 0 ? cost / conversions : 0;
+        // Calculate derived metrics
+        const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
+        const conversionRate = clicks > 0 ? (conversions / clicks) * 100 : 0;
+        const cpc = clicks > 0 ? cost / clicks : 0;
+        const cpa = conversions > 0 ? cost / conversions : 0;
 
-      return {
-        id: `google_${result.campaign.id}`,
-        name: result.campaign.name,
-        platform: "google" as const,
-        status: this.mapCampaignStatus(result.campaign.status),
-        budget: result.campaign_budget?.amount_micros
-          ? Number(result.campaign_budget.amount_micros) / 1_000_000
-          : 0,
-        impressions,
-        clicks,
-        cost,
-        conversions,
-        ctr,
-        conversionRate,
-        cpc,
-        cpa,
-        averageCpc: cpc, // same as cpc
-        averageCpm: result.metrics?.average_cpm || 0,
-        updatedAt: new Date().toISOString(),
-      };
-    });
+        return {
+          id: `google_${result.campaign.id}`,
+          name: result.campaign.name,
+          platform: "google" as const,
+          status: this.mapCampaignStatus(result.campaign.status),
+          budget: result.campaign_budget?.amount_micros
+            ? Number(result.campaign_budget.amount_micros) / 1_000_000
+            : 0,
+          impressions,
+          clicks,
+          cost,
+          conversions,
+          ctr,
+          conversionRate,
+          cpc,
+          cpa,
+          averageCpc: cpc, // same as cpc
+          averageCpm: result.metrics?.average_cpm || 0,
+          updatedAt: new Date().toISOString(),
+        };
+      });
+    } catch (error) {
+      this.handleGoogleAdsError(error);
+    }
   }
 
   // Toggle campaign status (ON/OFF)
@@ -114,29 +118,33 @@ export class GoogleAdsOAuthIntegrationService {
     campaignId: string,
     enable: boolean,
   ): Promise<void> {
-    const status = enable ? "ENABLED" : "PAUSED";
-    const googleCampaignId = campaignId.replace("google_", "");
+    try {
+      const status = enable ? "ENABLED" : "PAUSED";
+      const googleCampaignId = campaignId.replace("google_", "");
 
-    const operations = [
-      {
-        entity: "campaign",
-        operation: "update",
-        resource: {
-          resource_name: `customers/${this.client["credentials"].customerId}/campaigns/${googleCampaignId}`,
-          status: status,
+      const operations = [
+        {
+          entity: "campaign",
+          operation: "update",
+          resource: {
+            resource_name: `customers/${this.client["credentials"].customerId}/campaigns/${googleCampaignId}`,
+            status: status,
+          },
+          update_mask: {
+            paths: ["status"],
+          },
         },
-        update_mask: {
-          paths: ["status"],
-        },
-      },
-    ];
+      ];
 
-    await this.client.mutate(operations);
+      await this.client.mutate(operations);
 
-    log.info("Campaign status updated", {
-      campaignId,
-      status,
-    });
+      log.info("Campaign status updated", {
+        campaignId,
+        status,
+      });
+    } catch (error) {
+      this.handleGoogleAdsError(error);
+    }
   }
 
   // Update campaign budget
@@ -144,51 +152,56 @@ export class GoogleAdsOAuthIntegrationService {
     campaignId: string,
     budgetAmountMicros: number,
   ): Promise<void> {
-    const googleCampaignId = campaignId.replace("google_", "");
+    try {
+      const googleCampaignId = campaignId.replace("google_", "");
 
-    // First get the campaign to find its budget ID
-    const query = `
+      // First get the campaign to find its budget ID
+      const query = `
       SELECT
         campaign.campaign_budget
       FROM campaign
       WHERE campaign.id = ${googleCampaignId}
     `;
 
-    const [campaign] = await this.client.query<{
-      campaign: { campaign_budget: string };
-    }>(query);
+      const [campaign] = await this.client.query<{
+        campaign: { campaign_budget: string };
+      }>(query);
 
-    if (!campaign) {
-      throw new Error("Campaign not found");
+      if (!campaign) {
+        throw new Error("Campaign not found");
+      }
+
+      const budgetResourceName = campaign.campaign.campaign_budget;
+
+      const operations = [
+        {
+          entity: "campaign_budget",
+          operation: "update",
+          resource: {
+            resource_name: budgetResourceName,
+            amount_micros: budgetAmountMicros,
+          },
+          update_mask: {
+            paths: ["amount_micros"],
+          },
+        },
+      ];
+
+      await this.client.mutate(operations);
+
+      log.info("Campaign budget updated", {
+        campaignId,
+        budgetAmountMicros,
+      });
+    } catch (error) {
+      this.handleGoogleAdsError(error);
     }
-
-    const budgetResourceName = campaign.campaign.campaign_budget;
-
-    const operations = [
-      {
-        entity: "campaign_budget",
-        operation: "update",
-        resource: {
-          resource_name: budgetResourceName,
-          amount_micros: budgetAmountMicros,
-        },
-        update_mask: {
-          paths: ["amount_micros"],
-        },
-      },
-    ];
-
-    await this.client.mutate(operations);
-
-    log.info("Campaign budget updated", {
-      campaignId,
-      budgetAmountMicros,
-    });
   }
 
   // Get account info
   async getAccountInfo() {
-    const query = `
+    try {
+      const query = `
       SELECT
         customer.id,
         customer.descriptive_name,
@@ -199,22 +212,48 @@ export class GoogleAdsOAuthIntegrationService {
       LIMIT 1
     `;
 
-    const [result] = await this.client.query<{
-      customer: {
-        id: string;
-        descriptive_name: string;
-        currency_code: string;
-        time_zone: string;
-        manager: boolean;
-      };
-    }>(query);
+      const [result] = await this.client.query<{
+        customer: {
+          id: string;
+          descriptive_name: string;
+          currency_code: string;
+          time_zone: string;
+          manager: boolean;
+        };
+      }>(query);
 
-    return result?.customer || null;
+      return result?.customer || null;
+    } catch (error) {
+      this.handleGoogleAdsError(error);
+    }
   }
 
   // Get accessible customers (for MCC accounts)
   async getAccessibleCustomers(): Promise<string[]> {
-    return this.client.getAccessibleCustomers();
+    try {
+      return this.client.getAccessibleCustomers();
+    } catch (error) {
+      this.handleGoogleAdsError(error);
+    }
+  }
+
+  private handleGoogleAdsError(error: unknown): never {
+    if (error instanceof Error) {
+      if (error.message.includes("INVALID_CUSTOMER_ID")) {
+        log.error("Google Ads Error: Invalid Customer ID", error);
+        throw new Error(
+          "Invalid Google Ads Customer ID. Please reconnect your account.",
+        );
+      }
+      if (error.message.includes("UNAUTHENTICATED")) {
+        log.error("Google Ads Error: Unauthenticated", error);
+        throw new Error(
+          "Google Ads authentication failed. Please reconnect your account.",
+        );
+      }
+    }
+    log.error("An unexpected Google Ads error occurred", { error });
+    throw error;
   }
 
   // Helper to map Google Ads status to our status
