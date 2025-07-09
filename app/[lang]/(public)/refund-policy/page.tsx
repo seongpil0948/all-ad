@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function RefundPolicyPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-default-50 to-default-100">
+    <main className="min-h-screen bg-linear-to-b from-default-50 to-default-100">
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         <RefundPolicyContent />
       </div>
