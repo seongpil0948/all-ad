@@ -2,16 +2,9 @@
 
 import { createClient } from "@/utils/supabase/server";
 import log from "@/utils/logger";
-import { redirectWithToast } from "@/utils/server-toast";
+import { ResetPasswordState } from "@/types/auth.types";
 
-export interface ResetPasswordState {
-  errors?: {
-    password?: string;
-    confirmPassword?: string;
-    general?: string;
-  };
-  success?: boolean;
-}
+export type { ResetPasswordState };
 
 export async function updatePassword(
   prevState: ResetPasswordState,
@@ -21,7 +14,6 @@ export async function updatePassword(
 
   const password = formData.get("password") as string;
   const confirmPassword = formData.get("confirmPassword") as string;
-  // token은 이미 Supabase 세션에서 처리됨
 
   // Validation
   if (!password || password.length < 6) {
@@ -40,24 +32,65 @@ export async function updatePassword(
     };
   }
 
-  // Update password using the current session
-  const { error } = await supabase.auth.updateUser({
-    password,
-  });
+  try {
+    // Check if user has a valid session for password reset
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
 
-  if (error) {
-    log.error("Password update error:", error);
+    if (sessionError || !session) {
+      log.error("No valid session for password reset:", sessionError);
+
+      return {
+        errors: {
+          general:
+            "세션이 만료되었습니다. 비밀번호 재설정을 다시 요청해주세요.",
+        },
+      };
+    }
+
+    // Update password using the current session
+    const { error } = await supabase.auth.updateUser({
+      password,
+    });
+
+    if (error) {
+      log.error("Password update error:", error);
+
+      if (error.message.includes("session_not_found")) {
+        return {
+          errors: {
+            general:
+              "세션이 만료되었습니다. 비밀번호 재설정을 다시 요청해주세요.",
+          },
+        };
+      }
+
+      return {
+        errors: {
+          general: "비밀번호 변경에 실패했습니다. 다시 시도해주세요.",
+        },
+      };
+    }
+
+    log.info("Password updated successfully", { userId: session.user.id });
+
+    // Don't redirect here, let the component handle it
+    return {
+      success: true,
+      errors: {
+        general:
+          "비밀번호가 성공적으로 변경되었습니다. 잠시 후 로그인 페이지로 이동합니다.",
+      },
+    };
+  } catch (err) {
+    log.error("Unexpected error during password update:", err);
 
     return {
       errors: {
-        general: "비밀번호 변경에 실패했습니다. 다시 시도해주세요.",
+        general: "시스템 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
       },
     };
   }
-
-  redirectWithToast("/login", {
-    type: "success",
-    message: "비밀번호 변경 성공",
-    description: "비밀번호가 성공적으로 변경되었습니다. 로그인해주세요.",
-  });
 }

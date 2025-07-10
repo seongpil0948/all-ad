@@ -131,10 +131,10 @@ export function TeamManagement() {
     if (currentTeam) {
       startTransition(() => {
         Promise.all([
-          fetchTeamMembers().catch((err) => {
+          fetchTeamMembers().catch((err: Error) => {
             log.error("Failed to fetch team members", err);
           }),
-          fetchInvitations().catch((err) => {
+          fetchInvitations().catch((err: Error) => {
             log.error("Failed to fetch invitations", err);
           }),
         ]);

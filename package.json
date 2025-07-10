@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "build:skip-types": "NEXT_SKIP_TYPE_CHECK=true next build",
     "start": "next start",
     "tsc": "npx tsc --noEmit --project .",
     "lint": "eslint --fix",

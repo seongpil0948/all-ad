@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 
 import { ForgotPasswordForm } from "./ForgotPasswordForm";
@@ -15,7 +16,9 @@ export default function ForgotPasswordPage() {
           </p>
         </CardHeader>
         <CardBody className="px-6 py-4">
-          <ForgotPasswordForm />
+          <Suspense fallback={<div>Loading...</div>}>
+            <ForgotPasswordForm />
+          </Suspense>
         </CardBody>
       </Card>
     </div>

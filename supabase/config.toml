@@ -9,3 +9,9 @@ entrypoint = "./functions/resend/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/resend/*.html" ]
+
+[functions.auth-email-hook]
+enabled = true
+verify_jwt = false
+import_map = "./functions/auth-email-hook/deno.json"
+entrypoint = "./functions/auth-email-hook/index.ts"

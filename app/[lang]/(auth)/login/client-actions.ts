@@ -6,11 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useAuthStore } from "@/stores/useAuthStore";
 import log from "@/utils/logger";
 import { toast } from "@/utils/toast";
-
-export interface ClientLoginResult {
-  success: boolean;
-  error?: string;
-}
+import { ClientLoginResult } from "@/types/auth.types";
 
 export async function clientLogin(
   email: string,

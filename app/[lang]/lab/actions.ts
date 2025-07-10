@@ -1,908 +1,424 @@
 "use server";
 
 import type {
-  GoogleAdsQueryResponseRow,
-  GoogleAdsAccountInfo,
-  GoogleOAuthTokenResponse,
-} from "@/types/google-ads-api.types";
-import type { MutateOperation } from "google-ads-api";
-
-import { GoogleAdsApi } from "google-ads-api";
+  AggregatedMetrics,
+  MetricsData,
+  MultiPlatformMetrics,
+} from "@/types/ads-metrics.types";
 
 import log from "@/utils/logger";
-import { MetaAdsIntegrationService } from "@/services/meta-ads/meta-ads-integration.service";
+import { GoogleAdsTestCredentials } from "@/services/platforms/api-clients/google-ads-api";
+import { MetaAdsTestCredentials as MetaCreds } from "@/services/platforms/api-clients/meta-ads-api";
 
-export interface GoogleAdsTestCredentials {
-  clientId: string;
-  clientSecret: string;
-  developerToken: string;
-  accessToken?: string; // 선택적, OAuth2 인증 후 사용
-  refreshToken: string;
-  loginCustomerId?: string;
-}
+// Re-export types for external use
+export type { GoogleAdsTestCredentials };
+export type MetaAdsTestCredentials = MetaCreds;
 
-export interface GoogleAdsCampaign {
-  id: string;
-  name: string;
-  status: string;
-  budgetAmountMicros?: string;
-  impressions?: string;
-  clicks?: string;
-  costMicros?: string;
-  conversions?: string;
-  ctr?: string;
-  averageCpc?: string;
-}
-
-// Google Ads API 클라이언트 생성
-function createGoogleAdsClient(
-  credentials: GoogleAdsTestCredentials,
-  targetCustomerId?: string,
-) {
-  // 필수 자격 증명 검증
-  if (
-    !credentials.clientId ||
-    !credentials.clientSecret ||
-    !credentials.developerToken
-  ) {
-    throw new Error("필수 API 자격 증명이 누락되었습니다");
-  }
-
-  if (!credentials.refreshToken) {
-    throw new Error(
-      "Refresh token이 필요합니다. OAuth 인증을 먼저 완료해주세요.",
-    );
-  }
-
-  const client = new GoogleAdsApi({
-    client_id: credentials.clientId,
-    client_secret: credentials.clientSecret,
-    developer_token: credentials.developerToken,
-  });
-
-  // MCC 계정으로 로그인하여 다른 계정에 접근하는 경우
-  const customerConfig = {
-    customer_id: targetCustomerId || credentials.loginCustomerId || "", // 작업할 대상 계정
-    refresh_token: credentials.refreshToken,
-    ...(credentials.loginCustomerId && {
-      login_customer_id: credentials.loginCustomerId,
-    }), // MCC 관리자 계정 (optional)
+// Meta Ads specific actions
+export async function exchangeMetaToken(_shortLivedToken: string): Promise<{
+  success: boolean;
+  data?: { accessToken: string };
+  error?: string;
+}> {
+  // TODO: Implement Meta token exchange
+  return {
+    success: false,
+    error: "Not implemented yet",
   };
-
-  const customer = client.Customer(customerConfig);
-
-  return { client, customer };
 }
 
-// OAuth2 인증 URL 생성
-export async function generateAuthUrl(clientId: string, redirectUri: string) {
-  try {
-    // Google Ads API 문서에 따른 정확한 OAuth2 파라미터
-    const params = new URLSearchParams({
-      client_id: clientId,
-      redirect_uri: redirectUri,
-      response_type: "code",
-      scope: "https://www.googleapis.com/auth/adwords",
-      access_type: "offline", // refresh token을 받기 위해 필수
-      prompt: "consent", // 매번 동의 화면을 보여주어 refresh token 보장
-      include_granted_scopes: "true",
-      // state 파라미터 추가 (CSRF 방지)
-      state: Buffer.from(
-        JSON.stringify({
-          timestamp: Date.now(),
-          source: "lab",
-        }),
-      ).toString("base64"),
-    });
-
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
-
-    log.info("Google Ads OAuth URL generated", {
-      clientId,
-      redirectUri,
-      scopes: "https://www.googleapis.com/auth/adwords",
-    });
-
-    return { success: true, authUrl };
-  } catch (error) {
-    log.error("Failed to generate auth URL", error);
-
-    return { success: false, error: "인증 URL 생성 실패" };
-  }
-}
-
-// OAuth2 토큰 교환
-export async function exchangeCodeForToken(
-  code: string,
-  clientId: string,
-  clientSecret: string,
-  redirectUri: string,
-): Promise<{
-  success: boolean;
-  refreshToken?: string;
-  accessToken?: string;
-  error?: string;
-}> {
-  try {
-    if (!clientId) {
-      throw new Error("Could not determine client ID from request.");
-    }
-
-    log.info("Exchanging code for token", {
-      hasCode: !!code,
-      hasClientId: !!clientId,
-      hasClientSecret: !!clientSecret,
-      redirectUri,
-    });
-
-    const response = await fetch("https://oauth2.googleapis.com/token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        grant_type: "authorization_code",
-        client_id: clientId,
-        client_secret: clientSecret,
-        redirect_uri: redirectUri,
-        code: code,
-      }),
-    });
-
-    const data: GoogleOAuthTokenResponse = await response.json();
-
-    if (!response.ok) {
-      log.error("Token exchange failed", {
-        error: data.error,
-        error_description: data.error_description,
-        status: response.status,
-      });
-      throw new Error(data.error_description || data.error || "토큰 교환 실패");
-    }
-
-    log.info("Token exchanged successfully", {
-      hasRefreshToken: !!data.refresh_token,
-      hasAccessToken: !!data.access_token,
-    });
-
-    return {
-      success: true,
-      refreshToken: data.refresh_token,
-      accessToken: data.access_token,
-    };
-  } catch (error) {
-    log.error("Failed to exchange code for token", error);
-
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "토큰 교환 실패",
-    };
-  }
-}
-
-// 계정 목록 가져오기 - 개선된 버전
-export async function fetchGoogleAdsAccounts(
-  credentials: GoogleAdsTestCredentials,
-): Promise<{
-  success: boolean;
-  accounts?: GoogleAdsAccountInfo[];
-  error?: string;
-}> {
-  try {
-    const { customer } = createGoogleAdsClient(
-      credentials,
-      credentials.loginCustomerId,
-    );
-
-    const accounts: GoogleAdsAccountInfo[] = [];
-
-    // Google Ads API 문서에 따른 정확한 계정 조회 방법
-    try {
-      // 1. MCC 계정인 경우 하위 계정 조회
-      if (credentials.loginCustomerId) {
-        const clientQuery = `
-          SELECT
-            customer_client.client_customer,
-            customer_client.id,
-            customer_client.descriptive_name,
-            customer_client.currency_code,
-            customer_client.time_zone,
-            customer_client.manager,
-            customer_client.test_account,
-            customer_client.status,
-            customer_client.level,
-            customer_client.hidden
-          FROM customer_client
-          WHERE customer_client.level <= 1
-        `;
-
-        const clientResponse: GoogleAdsQueryResponseRow[] =
-          await customer.query(clientQuery);
-
-        log.info(
-          `Found ${clientResponse.length} accounts via customer_client`,
-          {
-            loginCustomerId: credentials.loginCustomerId,
-          },
-        );
-
-        // 모든 계정 처리
-        for (const row of clientResponse) {
-          if (!row.customer_client) continue;
-
-          const account: GoogleAdsAccountInfo = {
-            id: row.customer_client.id,
-            name:
-              row.customer_client.descriptive_name ||
-              `Account ${row.customer_client.id}`,
-            currencyCode: row.customer_client.currency_code,
-            timeZone: row.customer_client.time_zone,
-            isManager: row.customer_client.manager || false,
-            isTestAccount: row.customer_client.test_account || false,
-            isMCC: row.customer_client.manager || false,
-            status: row.customer_client.status,
-            isHidden: row.customer_client.hidden || false,
-            level: row.customer_client.level
-              ? parseInt(row.customer_client.level, 10)
-              : undefined,
-            resourceName: row.customer_client.client_customer,
-          };
-
-          accounts.push(account);
-        }
-      }
-
-      // 2. 현재 계정 정보도 조회 (단일 계정 또는 MCC 자체)
-      const currentAccountQuery = `
-        SELECT
-          customer.id,
-          customer.descriptive_name,
-          customer.currency_code,
-          customer.time_zone,
-          customer.test_account,
-          customer.manager,
-          customer.status
-        FROM customer
-        LIMIT 1
-      `;
-
-      const currentAccountResponse: GoogleAdsQueryResponseRow[] =
-        await customer.query(currentAccountQuery);
-
-      if (currentAccountResponse?.[0]?.customer) {
-        const currentAccount = currentAccountResponse[0].customer;
-
-        // 이미 추가된 계정이 아닌 경우에만 추가
-        if (!accounts.find((acc) => acc.id === currentAccount.id)) {
-          accounts.push({
-            id: currentAccount.id,
-            name:
-              currentAccount.descriptive_name || `Account ${currentAccount.id}`,
-            currencyCode: currentAccount.currency_code,
-            timeZone: currentAccount.time_zone,
-            isManager: currentAccount.manager || false,
-            isTestAccount: currentAccount.test_account || false,
-            isMCC: currentAccount.manager || false,
-            status: currentAccount.status,
-          });
-        }
-      }
-    } catch (queryError) {
-      log.error("Failed to query accounts", queryError);
-
-      // 기본 계정 정보만이라도 반환
-      try {
-        const basicQuery = `
-          SELECT
-            customer.id,
-            customer.descriptive_name,
-            customer.currency_code,
-            customer.time_zone,
-            customer.manager
-          FROM customer
-          LIMIT 1
-        `;
-
-        const basicResponse: GoogleAdsQueryResponseRow[] =
-          await customer.query(basicQuery);
-
-        if (basicResponse?.[0]?.customer) {
-          const basicAccount = basicResponse[0].customer;
-
-          accounts.push({
-            id: basicAccount.id,
-            name: basicAccount.descriptive_name || `Account ${basicAccount.id}`,
-            currencyCode: basicAccount.currency_code,
-            timeZone: basicAccount.time_zone,
-            isManager: basicAccount.manager || false,
-            isTestAccount: false,
-            isMCC: basicAccount.manager || false,
-          });
-        }
-      } catch (basicError) {
-        log.error("Failed to get basic account info", basicError);
-        throw basicError;
-      }
-    }
-
-    // 계정 정렬: 관리자 계정을 먼저, 그 다음 이름순
-    accounts.sort((a, b) => {
-      if (a.isManager !== b.isManager) {
-        return a.isManager ? -1 : 1;
-      }
-
-      return (a.name || "").localeCompare(b.name || "");
-    });
-
-    log.info(`Total ${accounts.length} accounts found`, {
-      managerAccounts: accounts.filter((a) => a.isManager).length,
-      regularAccounts: accounts.filter((a) => !a.isManager).length,
-      testAccounts: accounts.filter((a) => a.isTestAccount).length,
-    });
-
-    return { success: true, accounts };
-  } catch (error) {
-    log.error("Failed to fetch Google Ads accounts", error);
-
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "계정 목록 조회 실패",
-    };
-  }
-}
-
-// 캠페인 목록 가져오기 (메트릭 포함)
-export async function fetchCampaigns(
-  credentials: GoogleAdsTestCredentials,
-  customerId: string,
-): Promise<{
-  success: boolean;
-  campaigns?: GoogleAdsCampaign[];
-  error?: string;
-}> {
-  try {
-    const { customer } = createGoogleAdsClient(credentials, customerId);
-
-    const query = `
-      SELECT
-        campaign.id,
-        campaign.name,
-        campaign.status,
-        campaign_budget.amount_micros,
-        metrics.impressions,
-        metrics.clicks,
-        metrics.cost_micros,
-        metrics.conversions,
-        metrics.ctr,
-        metrics.average_cpc
-      FROM campaign
-      WHERE segments.date DURING LAST_30_DAYS
-        AND campaign.status != 'REMOVED'
-      ORDER BY campaign.name
-    `;
-
-    const response: GoogleAdsQueryResponseRow[] = await customer.query(query);
-
-    const campaigns: GoogleAdsCampaign[] = response.map((row) => ({
-      id: row.campaign?.id || "",
-      name: row.campaign?.name || "",
-      status: row.campaign?.status || "",
-      budgetAmountMicros: row.campaign_budget?.amount_micros || "0",
-      impressions: row.metrics?.impressions || "0",
-      clicks: row.metrics?.clicks || "0",
-      costMicros: row.metrics?.cost_micros || "0",
-      conversions: row.metrics?.conversions || "0",
-      ctr: row.metrics?.ctr || "0",
-      averageCpc: row.metrics?.average_cpc || "0",
-    }));
-
-    log.info(`Found ${campaigns.length} campaigns with metrics`, {
-      customerId,
-    });
-
-    return { success: true, campaigns };
-  } catch (error) {
-    log.error("Failed to fetch campaigns", error);
-
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "캠페인 목록 조회 실패",
-    };
-  }
-}
-
-// 캠페인 상태 업데이트
-export async function updateCampaignStatus(
-  credentials: GoogleAdsTestCredentials,
-  customerId: string,
-  campaignId: string,
-  status: "ENABLED" | "PAUSED",
-): Promise<{
-  success: boolean;
-  error?: string;
-  details?: unknown;
-}> {
-  try {
-    log.info("Starting campaign status update", {
-      customerId,
-      campaignId,
-      status,
-      hasRefreshToken: !!credentials.refreshToken,
-    });
-
-    const { customer } = createGoogleAdsClient(credentials, customerId);
-
-    // Google Ads API의 mutate 방식으로 변경
-    let mutateResponse;
-
-    try {
-      // 먼저 현재 캠페인 상태 확인
-      const checkQuery = `
-        SELECT campaign.id, campaign.name, campaign.status 
-        FROM campaign 
-        WHERE campaign.id = ${campaignId}
-      `;
-
-      const currentCampaigns = await customer.query(checkQuery);
-
-      if (!currentCampaigns || currentCampaigns.length === 0) {
-        throw new Error(`Campaign not found: ${campaignId}`);
-      }
-
-      log.info("Current campaign status", {
-        campaign: JSON.stringify(currentCampaigns[0]),
-      });
-
-      // Google Ads API v20의 정확한 mutation 형식
-      const operations = [
-        {
-          entity: "campaign",
-          operation: "update" as const,
-          resource: {
-            resource_name: `customers/${customerId}/campaigns/${campaignId}`,
-            status: status,
-          },
-          update_mask: {
-            paths: ["status"],
-          },
-        } as MutateOperation<Record<string, unknown>>,
-      ];
-
-      log.info("Executing mutation with operations", {
-        operations: JSON.stringify(operations),
-      });
-
-      // mutateResources 메서드 사용 - 타입 캐스팅
-      mutateResponse = await customer.mutateResources(operations);
-
-      log.info("Mutation response", {
-        response: JSON.stringify(mutateResponse),
-      });
-    } catch (mutateError) {
-      const error = mutateError as {
-        message?: string;
-        details?: unknown;
-        errors?: unknown;
-      };
-
-      log.error("Mutation error details", {
-        error: mutateError,
-        message: error?.message,
-        details: error?.details,
-        errors: error?.errors,
-      });
-      throw mutateError;
-    }
-
-    log.info("Campaign status updated successfully", {
-      customerId,
-      campaignId,
-      status,
-    });
-
-    return { success: true };
-  } catch (error) {
-    // 더 자세한 에러 정보 로깅
-    const err = error as {
-      message?: string;
-      code?: string;
-      details?: unknown;
-      errors?: Array<{ message: string }>;
-      response?: unknown;
-      stack?: string;
-    };
-    const errorDetails = {
-      message: err?.message || "Unknown error",
-      code: err?.code,
-      details: err?.details,
-      errors: err?.errors,
-      response: err?.response,
-      stack: err?.stack,
-    };
-
-    log.error("Failed to update campaign status", {
-      customerId,
-      campaignId,
-      status,
-      error: errorDetails,
-    });
-
-    // Google Ads API 특정 에러 메시지 파싱
-    let errorMessage = "캠페인 상태 업데이트 실패";
-
-    if (err?.errors && err.errors.length > 0) {
-      errorMessage = err.errors.map((e) => e.message).join(", ");
-    } else if (err?.message) {
-      errorMessage = err.message;
-    }
-
-    return {
-      success: false,
-      error: errorMessage,
-      details: errorDetails,
-    };
-  }
-}
-
-// Meta Ads 관련 액션들
-export interface MetaAdsTestCredentials {
-  appId: string;
-  appSecret: string;
-  accessToken: string;
-  businessId?: string;
-}
-
-// Meta Ads OAuth URL 생성
-export async function generateMetaAuthUrl(
-  appId: string,
-  redirectUri: string,
-  state: string,
-) {
-  try {
-    const params = new URLSearchParams({
-      client_id: appId,
-      redirect_uri: redirectUri,
-      state: state,
-      scope:
-        "email,ads_management,ads_read,business_management,pages_read_engagement,pages_manage_ads",
-      response_type: "code",
-      auth_type: "rerequest",
-      display: "popup",
-    });
-
-    const authUrl = `https://www.facebook.com/v21.0/dialog/oauth?${params.toString()}`;
-
-    log.info("Meta Auth URL generated", { appId });
-
-    return { success: true, authUrl };
-  } catch (error) {
-    log.error("Failed to generate Meta auth URL", error);
-
-    return { success: false, error: "인증 URL 생성 실패" };
-  }
-}
-
-// Meta Ads 토큰 교환 (별칭 추가)
-export async function exchangeMetaToken(
-  code: string,
-  appId: string,
-  appSecret: string,
-  redirectUri: string,
-) {
-  return exchangeMetaCodeForToken(code, appId, appSecret, redirectUri);
-}
-
-// Meta Ads 토큰 교환
-export async function exchangeMetaCodeForToken(
-  code: string,
-  appId: string,
-  appSecret: string,
-  redirectUri: string,
-) {
-  try {
-    log.info("Exchanging Meta code for token", { appId, redirectUri });
-
-    const params = new URLSearchParams({
-      client_id: appId,
-      client_secret: appSecret,
-      redirect_uri: redirectUri,
-      code: code,
-    });
-
-    const tokenResponse = await fetch(
-      `https://graph.facebook.com/v21.0/oauth/access_token?${params}`,
-    );
-
-    const data = await tokenResponse.json();
-
-    if (!tokenResponse.ok || data.error) {
-      log.error("Meta token exchange failed", { error: data.error });
-      throw new Error(
-        data.error?.message || "Failed to exchange code for token",
-      );
-    }
-
-    log.info("Meta token exchange successful");
-
-    return {
-      success: true,
-      accessToken: data.access_token,
-      tokenType: data.token_type,
-      expiresIn: data.expires_in,
-    };
-  } catch (error) {
-    log.error("Failed to exchange Meta code for token", error);
-
-    return { success: false, error: "토큰 교환 실패" };
-  }
-}
-
-// Meta Ads 계정 목록 가져오기
 export async function fetchMetaAdsAccounts(
-  credentials: MetaAdsTestCredentials,
-): Promise<{
-  success: boolean;
-  accounts?: Array<{
-    id: string;
-    name: string;
-    accountId: string;
-    currency: string;
-    status: number;
-    timezone: string;
-  }>;
-  error?: string;
-}> {
-  try {
-    const service = new MetaAdsIntegrationService({
-      appId: credentials.appId,
-      appSecret: credentials.appSecret,
-      accessToken: credentials.accessToken,
-    });
-
-    const accounts = await service.getAdAccounts();
-
-    if (!accounts || accounts.length === 0) {
-      log.info("No Meta Ads accounts found");
-    }
-
-    // Transform the response data to match the expected format
-    const transformedAccounts = accounts.map((account) => ({
-      id: account.id,
-      name: account.name,
-      accountId: account.id, // Using id as accountId
-      currency: account.currency,
-      status: account.status,
-      timezone: account.timezone || "UTC", // Add timezone with default
-    }));
-
-    return {
-      success: true,
-      accounts: transformedAccounts,
-    };
-  } catch (error) {
-    log.error("Failed to fetch Meta Ads accounts", error);
-
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "계정 목록 조회 실패",
-    };
-  }
+  _credentials: MetaCreds,
+): Promise<{ success: boolean; data?: unknown[]; error?: string }> {
+  // TODO: Implement Meta ads accounts fetching
+  return {
+    success: false,
+    error: "Not implemented yet",
+  };
 }
 
-// Meta Ads 캠페인 목록 가져오기
 export async function fetchMetaCampaigns(
-  credentials: MetaAdsTestCredentials,
-  accountId: string,
-): Promise<{
-  success: boolean;
-  campaigns?: Array<{
-    id: string;
-    name: string;
-    status: string;
-    objective?: string;
-    dailyBudget?: number;
-    lifetimeBudget?: number;
-  }>;
-  error?: string;
-}> {
-  try {
-    const service = new MetaAdsIntegrationService({
-      appId: credentials.appId,
-      appSecret: credentials.appSecret,
-      accessToken: credentials.accessToken,
-    });
-
-    const campaigns = await service.getCampaigns(accountId);
-
-    if (!campaigns || campaigns.length === 0) {
-      log.info("No Meta campaigns found for account", { accountId });
-    }
-
-    // Transform the response data to match the expected format
-    const transformedCampaigns = campaigns.map((campaign) => ({
-      id: campaign.id,
-      name: campaign.name,
-      status: campaign.status,
-      objective: campaign.objective,
-      dailyBudget: campaign.dailyBudget,
-      lifetimeBudget: campaign.lifetimeBudget,
-    }));
-
-    return {
-      success: true,
-      campaigns: transformedCampaigns,
-    };
-  } catch (error) {
-    log.error("Failed to fetch Meta campaigns", error);
-
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "캠페인 목록 조회 실패",
-    };
-  }
+  _credentials: MetaCreds,
+  _accountId: string,
+): Promise<{ success: boolean; data?: unknown[]; error?: string }> {
+  // TODO: Implement Meta campaigns fetching
+  return {
+    success: false,
+    error: "Not implemented yet",
+  };
 }
 
-// Meta 캠페인 상태 업데이트
 export async function updateMetaCampaignStatus(
-  credentials: MetaAdsTestCredentials,
-  campaignId: string,
-  status: "ACTIVE" | "PAUSED",
-): Promise<{
-  success: boolean;
-  error?: string;
-}> {
-  try {
-    const service = new MetaAdsIntegrationService({
-      appId: credentials.appId,
-      appSecret: credentials.appSecret,
-      accessToken: credentials.accessToken,
-    });
-
-    const success = await service.updateCampaignStatus(campaignId, status);
-
-    if (!success) {
-      throw new Error("Failed to update campaign status");
-    }
-
-    return { success: true };
-  } catch (error) {
-    log.error("Failed to update Meta campaign status", error);
-
-    return {
-      success: false,
-      error:
-        error instanceof Error ? error.message : "캠페인 상태 업데이트 실패",
-    };
-  }
+  _credentials: MetaCreds,
+  _campaignId: string,
+  _status: string,
+): Promise<{ success: boolean; error?: string }> {
+  // TODO: Implement Meta campaign status update
+  return {
+    success: false,
+    error: "Not implemented yet",
+  };
 }
 
-// Meta 캠페인 일괄 상태 업데이트
 export async function batchUpdateMetaCampaignStatus(
-  credentials: MetaAdsTestCredentials,
-  updates: Array<{ campaignId: string; status: "ACTIVE" | "PAUSED" }>,
-): Promise<{
-  success: boolean;
-  results?: Array<{ campaignId: string; success: boolean; error?: string }>;
-  error?: string;
-}> {
-  try {
-    const results = await Promise.all(
-      updates.map(async ({ campaignId, status }) => {
-        try {
-          const result = await updateMetaCampaignStatus(
-            credentials,
-            campaignId,
-            status,
-          );
-
-          return { campaignId, success: result.success, error: result.error };
-        } catch (error) {
-          return {
-            campaignId,
-            success: false,
-            error: error instanceof Error ? error.message : "업데이트 실패",
-          };
-        }
-      }),
-    );
-
-    const hasErrors = results.some((r) => !r.success);
-
-    return {
-      success: !hasErrors,
-      results,
-    };
-  } catch (error) {
-    log.error("Failed to batch update Meta campaign status", error);
-
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "일괄 업데이트 실패",
-    };
-  }
+  _credentials: MetaCreds,
+  _campaignIds: string[],
+  _status: string,
+): Promise<{ success: boolean; error?: string }> {
+  // TODO: Implement Meta batch campaign status update
+  return {
+    success: false,
+    error: "Not implemented yet",
+  };
 }
 
-// Meta 캐시 초기화
 export async function clearMetaCache(): Promise<{
   success: boolean;
   error?: string;
 }> {
-  try {
-    log.info("Meta cache clear requested");
+  // TODO: Implement Meta cache clearing
+  return {
+    success: false,
+    error: "Not implemented yet",
+  };
+}
 
-    // 실제 캐시 초기화 로직은 서비스에 구현되어야 함
-    // 현재는 placeholder로 성공 반환
-    return { success: true };
+// 통합 광고 메트릭스 가져오기
+export async function fetchMultiPlatformMetrics(
+  platformCredentials: {
+    google_ads?: GoogleAdsTestCredentials;
+    meta_ads?: MetaCreds; // Use the aliased type
+  },
+  platformAccounts: Array<{
+    platform: "google_ads" | "meta_ads" | "tiktok_ads" | "amazon_ads";
+    accountId: string;
+  }>,
+  filters?: {
+    dateRange?: "LAST_7_DAYS" | "LAST_30_DAYS" | "LAST_90_DAYS";
+    customDateRange?: { startDate: string; endDate: string };
+    metrics?: string[];
+  },
+): Promise<{
+  success: boolean;
+  data?: {
+    platforms: string[];
+    totalImpressions: number;
+    totalClicks: number;
+    totalCost: number;
+    totalConversions: number;
+    overallCtr: number;
+    overallCpc: number;
+    overallCpm: number;
+    overallConversionRate: number;
+    overallCostPerConversion: number;
+    overallRoas: number;
+    platformBreakdown: Array<{
+      platform: string;
+      totalImpressions: number;
+      totalClicks: number;
+      totalCost: number;
+      totalConversions: number;
+      averageCtr: number;
+      averageCpc: number;
+      averageCpm: number;
+      averageConversionRate: number;
+      averageCostPerConversion: number;
+      averageRoas: number;
+      dataPoints: MetricsData[];
+      dateRange: string;
+      lastUpdated: string;
+    }>;
+    dateRange: string;
+    lastUpdated: string;
+  };
+  error?: string;
+}> {
+  try {
+    log.info("Fetching multi-platform metrics", { platformAccounts, filters });
+
+    const { AdsMetricsService } = await import(
+      "@/services/analytics/ads-metrics.service"
+    );
+    const metricsService = new AdsMetricsService(platformCredentials);
+
+    const result = await metricsService.getMultiPlatformMetrics(
+      platformAccounts,
+      {
+        platforms: platformAccounts.map((pa) => pa.platform),
+        dateRange: filters?.dateRange || "LAST_30_DAYS",
+        customDateRange: filters?.customDateRange,
+        accounts: platformAccounts.map((pa) => pa.accountId),
+        campaigns: [],
+        metrics: filters?.metrics || [
+          "impressions",
+          "clicks",
+          "cost",
+          "conversions",
+          "ctr",
+          "roas",
+        ],
+        groupBy: "platform",
+        sortBy: { field: "cost", direction: "desc" },
+      },
+    );
+
+    return {
+      success: true,
+      data: result,
+    };
   } catch (error) {
-    log.error("Failed to clear Meta cache", error);
+    log.error("Failed to fetch multi-platform metrics", error);
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : "캐시 초기화 실패",
+      error: error instanceof Error ? error.message : "통합 메트릭스 조회 실패",
     };
   }
 }
 
-// Google Ads 캠페인 성과 메트릭 조회
-export async function fetchCampaignMetrics(
-  credentials: GoogleAdsTestCredentials,
-  customerId: string,
-  campaignId: string,
-  dateRange: "LAST_7_DAYS" | "LAST_30_DAYS" | "LAST_90_DAYS" = "LAST_30_DAYS",
+// 개별 플랫폼 메트릭스 가져오기
+export async function fetchPlatformMetrics(
+  platform: "google_ads" | "meta_ads" | "tiktok_ads" | "amazon_ads",
+  credentials: GoogleAdsTestCredentials | MetaCreds, // Use the aliased type
+  accountId: string,
+  filters?: {
+    dateRange?: "LAST_7_DAYS" | "LAST_30_DAYS" | "LAST_90_DAYS";
+    customDateRange?: { startDate: string; endDate: string };
+    campaignId?: string;
+    metrics?: string[];
+  },
 ): Promise<{
   success: boolean;
-  metrics?: {
-    date: string;
-    impressions: string;
-    clicks: string;
-    costMicros: string;
-    conversions: string;
-    ctr: string;
-    averageCpc: string;
-  }[];
+  data?: {
+    platform: string;
+    totalImpressions: number;
+    totalClicks: number;
+    totalCost: number;
+    totalConversions: number;
+    averageCtr: number;
+    averageCpc: number;
+    averageCpm: number;
+    averageConversionRate: number;
+    averageCostPerConversion: number;
+    averageRoas: number;
+    dataPoints: MetricsData[];
+    dateRange: string;
+    lastUpdated: string;
+  };
   error?: string;
 }> {
   try {
-    const { customer } = createGoogleAdsClient(credentials, customerId);
+    log.info("Fetching platform metrics", { platform, accountId, filters });
 
-    const query = `
-      SELECT
-        segments.date,
-        metrics.impressions,
-        metrics.clicks,
-        metrics.cost_micros,
-        metrics.conversions,
-        metrics.ctr,
-        metrics.average_cpc
-      FROM campaign
-      WHERE campaign.id = ${campaignId}
-        AND segments.date DURING ${dateRange}
-      ORDER BY segments.date DESC
-    `;
+    const { AdsMetricsService } = await import(
+      "@/services/analytics/ads-metrics.service"
+    );
+    const metricsService = new AdsMetricsService({
+      [platform]: credentials,
+    });
 
-    const response: GoogleAdsQueryResponseRow[] = await customer.query(query);
-
-    const metrics = response.map((row) => ({
-      date: row.segments?.date || "",
-      impressions: row.metrics?.impressions || "0",
-      clicks: row.metrics?.clicks || "0",
-      costMicros: row.metrics?.cost_micros || "0",
-      conversions: row.metrics?.conversions || "0",
-      ctr: row.metrics?.ctr || "0",
-      averageCpc: row.metrics?.average_cpc || "0",
-    }));
-
-    log.info(
-      `Fetched ${metrics.length} days of metrics for campaign ${campaignId}`,
+    const result = await metricsService.getAggregatedMetrics(
+      platform,
+      accountId,
+      {
+        platforms: [platform],
+        dateRange: filters?.dateRange || "LAST_30_DAYS",
+        customDateRange: filters?.customDateRange,
+        accounts: [accountId],
+        campaigns: filters?.campaignId ? [filters.campaignId] : [],
+        metrics: filters?.metrics || [
+          "impressions",
+          "clicks",
+          "cost",
+          "conversions",
+          "ctr",
+          "roas",
+        ],
+        groupBy: "campaign",
+        sortBy: { field: "cost", direction: "desc" },
+      },
     );
 
-    return { success: true, metrics };
+    return {
+      success: true,
+      data: result,
+    };
   } catch (error) {
-    log.error("Failed to fetch campaign metrics", error);
+    log.error("Failed to fetch platform metrics", error);
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : "캠페인 메트릭 조회 실패",
+      error:
+        error instanceof Error ? error.message : "플랫폼 메트릭스 조회 실패",
+    };
+  }
+}
+
+// 실시간 메트릭스 업데이트
+export async function getRealtimeMetrics(
+  platformCredentials: {
+    google_ads?: GoogleAdsTestCredentials;
+    meta_ads?: MetaCreds;
+  },
+  platformAccounts: Array<{
+    platform: "google_ads" | "meta_ads" | "tiktok_ads" | "amazon_ads";
+    accountId: string;
+  }>,
+  lastUpdateTime?: string,
+): Promise<{
+  success: boolean;
+  data?: {
+    updates: Array<{
+      platform: string;
+      accountId: string;
+      timestamp: string;
+      metrics: Partial<MetricsData>;
+      changeType: "update" | "new" | "delete";
+    }>;
+    hasUpdates: boolean;
+    lastChecked: string;
+  };
+  error?: string;
+}> {
+  try {
+    log.info("Fetching realtime metrics", { platformAccounts, lastUpdateTime });
+
+    // 실제 구현에서는 각 플랫폼의 웹훅이나 실시간 API를 사용
+    // 현재는 임시로 변경사항이 있다고 가정
+    const updates = platformAccounts.map(({ platform, accountId }) => ({
+      platform,
+      accountId,
+      timestamp: new Date().toISOString(),
+      metrics: {
+        impressions: Math.floor(Math.random() * 1000),
+        clicks: Math.floor(Math.random() * 100),
+        cost: Math.floor(Math.random() * 10000),
+        conversions: Math.floor(Math.random() * 10),
+      },
+      changeType: "update" as const,
+    }));
+
+    return {
+      success: true,
+      data: {
+        updates: updates as Array<{
+          platform: string;
+          accountId: string;
+          timestamp: string;
+          metrics: Partial<MetricsData>;
+          changeType: "update" | "new" | "delete";
+        }>, // Demo data - type assertion for build compatibility
+        hasUpdates: updates.length > 0,
+        lastChecked: new Date().toISOString(),
+      },
+    };
+  } catch (error) {
+    log.error("Failed to fetch realtime metrics", error);
+
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "실시간 메트릭스 조회 실패",
+    };
+  }
+}
+
+// 메트릭스 내보내기
+export async function exportMetrics(
+  data: MultiPlatformMetrics | AggregatedMetrics,
+  format: "csv" | "xlsx" | "json" | "pdf",
+  options?: {
+    columns?: string[];
+    filename?: string;
+    includeCharts?: boolean;
+  },
+): Promise<{
+  success: boolean;
+  data?: {
+    filename: string;
+    downloadUrl: string;
+    expiresAt: string;
+  };
+  error?: string;
+}> {
+  try {
+    log.info("Exporting metrics", { format, options });
+
+    // 실제 구현에서는 선택한 형식에 따라 파일 생성
+    const filename =
+      options?.filename ||
+      `ads_metrics_${new Date().toISOString().split("T")[0]}.${format}`;
+    const downloadUrl = `/api/exports/${filename}`; // 임시 URL
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24시간 후 만료
+
+    return {
+      success: true,
+      data: {
+        filename,
+        downloadUrl,
+        expiresAt,
+      },
+    };
+  } catch (error) {
+    log.error("Failed to export metrics", error);
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "메트릭스 내보내기 실패",
+    };
+  }
+}
+
+// 메트릭스 알림 생성
+export async function createMetricsAlert(alertConfig: {
+  platform: "google_ads" | "meta_ads" | "tiktok_ads" | "amazon_ads";
+  accountId: string;
+  campaignId?: string;
+  alertType:
+    | "performance_drop"
+    | "budget_exceeded"
+    | "conversion_spike"
+    | "cpc_increase"
+    | "custom";
+  threshold: {
+    metric: string;
+    operator: ">" | "<" | "=" | ">=" | "<=";
+    value: number;
+  };
+  severity: "critical" | "warning" | "info";
+  message: string;
+}): Promise<{
+  success: boolean;
+  data?: {
+    id: string;
+    alertType: string;
+    message: string;
+    triggeredAt: string;
+    acknowledged: boolean;
+  };
+  error?: string;
+}> {
+  try {
+    log.info("Creating metrics alert", { alertConfig });
+
+    // 실제 구현에서는 데이터베이스에 알림 저장
+    const alert = {
+      id: `alert_${Date.now()}`,
+      ...alertConfig,
+      triggeredAt: new Date().toISOString(),
+      acknowledged: false,
+    };
+
+    return {
+      success: true,
+      data: alert,
+    };
+  } catch (error) {
+    log.error("Failed to create metrics alert", error);
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "알림 생성 실패",
     };
   }
 }

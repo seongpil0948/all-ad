@@ -159,17 +159,12 @@ export default function MetaAdsTest() {
     setError(null);
 
     try {
-      const result = await exchangeMetaToken(
-        authCode,
-        credentials.appId,
-        credentials.appSecret,
-        getMetaRedirectUri(true), // Use the same redirect URI
-      );
+      const result = await exchangeMetaToken(authCode);
 
-      if (result.success && result.accessToken) {
-        setCredentials((prev) => ({
+      if (result.success && result.data?.accessToken) {
+        setCredentials((prev: MetaAdsTestCredentials) => ({
           ...prev,
-          accessToken: result.accessToken || "",
+          accessToken: result.data?.accessToken || "",
         }));
         setApiResponse(result);
         setTestItems((prev) =>
@@ -202,8 +197,8 @@ export default function MetaAdsTest() {
     try {
       const result = await fetchMetaAdsAccounts(credentials);
 
-      if (result.success && result.accounts) {
-        setAccounts(result.accounts);
+      if (result.success && result.data) {
+        setAccounts(result.data as MetaAdAccount[]);
         setApiResponse(result);
         setTestItems((prev) =>
           prev.map((item) =>
@@ -242,8 +237,8 @@ export default function MetaAdsTest() {
     try {
       const result = await fetchMetaCampaigns(credentials, selectedAccountId);
 
-      if (result.success && result.campaigns) {
-        setCampaigns(result.campaigns);
+      if (result.success && result.data) {
+        setCampaigns(result.data as MetaCampaign[]);
         setApiResponse(result);
         setTestItems((prev) =>
           prev.map((item) =>
@@ -527,16 +522,12 @@ export default function MetaAdsTest() {
                     variant="flat"
                     onPress={async () => {
                       setBatchProcessing(true);
-                      const updates = Array.from(selectedCampaigns).map(
-                        (id) => ({
-                          campaignId: id,
-                          status: "ACTIVE" as const,
-                        }),
-                      );
+                      const campaignIds = Array.from(selectedCampaigns);
 
                       const result = await batchUpdateMetaCampaignStatus(
                         credentials,
-                        updates,
+                        campaignIds,
+                        "ACTIVE",
                       );
 
                       if (result.success) {
@@ -548,9 +539,7 @@ export default function MetaAdsTest() {
                           ),
                         );
                         setSelectedCampaigns(new Set());
-                        if (result.results) {
-                          setApiResponse({ results: result.results });
-                        }
+                        setApiResponse(result);
                       } else {
                         setError(result.error || "배치 처리 실패");
                       }
@@ -566,16 +555,11 @@ export default function MetaAdsTest() {
                     variant="flat"
                     onPress={async () => {
                       setBatchProcessing(true);
-                      const updates = Array.from(selectedCampaigns).map(
-                        (id) => ({
-                          campaignId: id,
-                          status: "PAUSED" as const,
-                        }),
-                      );
 
                       const result = await batchUpdateMetaCampaignStatus(
                         credentials,
-                        updates,
+                        Array.from(selectedCampaigns),
+                        "PAUSED",
                       );
 
                       if (result.success) {
@@ -587,9 +571,7 @@ export default function MetaAdsTest() {
                           ),
                         );
                         setSelectedCampaigns(new Set());
-                        if (result.results) {
-                          setApiResponse({ results: result.results });
-                        }
+                        setApiResponse(result);
                       } else {
                         setError(result.error || "배치 처리 실패");
                       }

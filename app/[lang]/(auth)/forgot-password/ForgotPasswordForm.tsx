@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
 import { Link } from "@heroui/link";
@@ -9,8 +10,21 @@ import { FaEnvelope, FaArrowLeft } from "react-icons/fa";
 
 import { resetPassword, type ForgotPasswordState } from "./actions";
 
+import { ErrorMessage } from "@/components/common/ErrorMessage";
+
 export function ForgotPasswordForm() {
-  const initialState: ForgotPasswordState = { errors: {} };
+  const searchParams = useSearchParams();
+  const error = searchParams.get("error");
+
+  const initialState: ForgotPasswordState = {
+    errors:
+      error === "session_expired"
+        ? {
+            general:
+              "세션이 만료되었습니다. 비밀번호 재설정을 다시 요청해주세요.",
+          }
+        : {},
+  };
   const [state, action] = useActionState(resetPassword, initialState);
 
   return (
@@ -29,11 +43,10 @@ export function ForgotPasswordForm() {
         />
 
         {state.errors?.general && (
-          <div
-            className={`text-sm ${state.success ? "text-success" : "text-danger"}`}
-          >
-            {state.errors.general}
-          </div>
+          <ErrorMessage
+            isSuccess={state.success}
+            message={state.errors.general}
+          />
         )}
 
         <Button fullWidth color="primary" type="submit">

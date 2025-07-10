@@ -9,6 +9,8 @@ import { TeamDataSlice } from "./teamDataSlice";
 import { Team, TeamMemberWithProfile, TeamInvitation, UserRole } from "@/types";
 import { createClient } from "@/utils/supabase/client";
 import log from "@/utils/logger";
+import { TeamService } from "@/services/team/team.service";
+import { syncAllPlatformDataAction } from "@/app/[lang]/(private)/team/actions";
 
 // Type definitions
 
@@ -161,40 +163,23 @@ export const createTeamActionsSlice: StateCreator<
   },
 
   inviteTeamMember: async (email, role) => {
-    const currentTeam = get().currentTeam;
-    const userRole = get().userRole;
-
-    if (!currentTeam || userRole !== "master") {
-      set({ error: "권한이 없습니다." });
-
-      return;
-    }
-
-    const supabase = createClient();
-
     set({ isLoading: true, error: null });
-
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const teamService = new TeamService();
+      const result = await teamService.inviteTeamMember(email, role);
 
-      if (!user) throw new Error("No user logged in");
+      if (result?.error) {
+        throw new Error(result.error);
+      }
 
-      const { error } = await supabase.from("team_invitations").insert({
-        team_id: currentTeam.id,
-        email,
-        role,
-        invited_by: user.id,
-      });
-
-      if (error) throw error;
-
+      // Re-fetch invitations to show the new pending one
       await get().fetchInvitations();
       set({ isLoading: false });
     } catch (error) {
-      log.error("Failed to invite team member", error);
+      log.error("Failed to invite team member", { error });
       set({ error: (error as Error).message, isLoading: false });
+      // Re-throw the error to be caught by the UI component
+      throw error;
     }
   },
 
@@ -207,17 +192,15 @@ export const createTeamActionsSlice: StateCreator<
       return;
     }
 
-    const supabase = createClient();
-
     set({ isLoading: true, error: null });
 
     try {
-      const { error } = await supabase
-        .from("team_members")
-        .update({ role: newRole })
-        .eq("id", memberId);
+      const teamService = new TeamService();
+      const result = await teamService.updateTeamMemberRole(memberId, newRole);
 
-      if (error) throw error;
+      if (result?.error) {
+        throw new Error(result.error);
+      }
 
       await get().fetchTeamMembers();
       set({ isLoading: false });
@@ -236,17 +219,15 @@ export const createTeamActionsSlice: StateCreator<
       return;
     }
 
-    const supabase = createClient();
-
     set({ isLoading: true, error: null });
 
     try {
-      const { error } = await supabase
-        .from("team_members")
-        .delete()
-        .eq("id", memberId);
+      const teamService = new TeamService();
+      const result = await teamService.removeTeamMember(memberId);
 
-      if (error) throw error;
+      if (result?.error) {
+        throw new Error(result.error);
+      }
 
       await get().fetchTeamMembers();
       set({ isLoading: false });
@@ -345,6 +326,24 @@ export const createTeamActionsSlice: StateCreator<
     } catch (error) {
       log.error("Failed to fetch invitations", error);
       set({ error: (error as Error).message, isLoading: false });
+    }
+  },
+
+  syncAllPlatformData: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const result = await syncAllPlatformDataAction();
+
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+
+      set({ isLoading: false });
+      log.info("All platform data synced successfully.");
+    } catch (error) {
+      log.error("Failed to sync all platform data", { error });
+      set({ error: (error as Error).message, isLoading: false });
+      throw error;
     }
   },
 });
