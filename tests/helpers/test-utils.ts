@@ -2,7 +2,7 @@ import { Page } from "@playwright/test";
 import { test } from "../tester";
 
 /**
- * Common test utilities for All-AD tests
+ * Common test utilities for Sivera tests
  */
 
 export interface TestUser {

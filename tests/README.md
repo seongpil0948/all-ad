@@ -1,6 +1,6 @@
-# All-AD Playwright Tests
+# Sivera Playwright Tests
 
-This directory contains end-to-end tests for the All-AD platform using Playwright.
+This directory contains end-to-end tests for the Sivera platform using Playwright.
 
 ## Test Structure
 

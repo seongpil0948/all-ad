@@ -23,8 +23,8 @@ export default function SupportPage() {
     {
       icon: <FaEnvelope className="w-8 h-8" />,
       title: "이메일 지원",
-      description: "support@all-ad.co.kr로 문의해주세요",
-      link: "mailto:support@all-ad.co.kr",
+      description: "support@sivera.co.kr로 문의해주세요",
+      link: "mailto:support@sivera.co.kr",
       linkText: "이메일 보내기",
       isExternal: true,
     },

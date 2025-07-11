@@ -3,10 +3,10 @@ import { Metadata } from "next";
 import TermsOfServiceContent from "./TermsOfServiceContent";
 
 export const metadata: Metadata = {
-  title: "이용약관 | ALL AD",
+  title: "이용약관 | Sivera",
   description:
-    "ALL AD 서비스 이용약관을 확인하세요. 서비스 이용과 관련된 회사와 회원 간의 권리, 의무 및 책임사항을 규정합니다.",
-  keywords: ["이용약관", "서비스 약관", "올애드", "All-AD"],
+    "Sivera 서비스 이용약관을 확인하세요. 서비스 이용과 관련된 회사와 회원 간의 권리, 의무 및 책임사항을 규정합니다.",
+  keywords: ["이용약관", "서비스 약관", "시베라", "Sivera"],
 };
 
 export default function TermsOfServicePage() {

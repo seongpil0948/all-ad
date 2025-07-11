@@ -158,7 +158,7 @@ export async function GET(request: NextRequest) {
       account_id: accountId,
       account_name: userInfo.email || "Google Ads Account",
       is_active: true,
-      credentials: {}, // Empty - using All-AD's OAuth
+      credentials: {}, // Empty - using Sivera's OAuth
       created_by: stateData.user_id, // Use created_by instead of user_id
       // Store tokens as top-level columns
       access_token: tokens.access_token,

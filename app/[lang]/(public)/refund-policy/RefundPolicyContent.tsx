@@ -11,7 +11,7 @@ export default function RefundPolicyContent() {
     <div className="space-y-8">
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold text-default-900">
-          ALL AD 청약철회 및 환불규정
+          Sivera 청약철회 및 환불규정
         </h1>
         <Chip
           className="font-medium"
@@ -118,11 +118,11 @@ export default function RefundPolicyContent() {
           </CardHeader>
           <CardBody>
             <p className="text-default-700 leading-relaxed">
-              본 규정은 주식회사 올애드(이하 &quot;회사&quot;라 합니다)가
-              제공하는 All-AD 유료 서비스(이하 &quot;유료 서비스&quot;라
+              본 규정은 주식회사 시베라(이하 &quot;회사&quot;라 합니다)가
+              제공하는 Sivera 유료 서비스(이하 &quot;유료 서비스&quot;라
               합니다)의 이용 계약과 관련하여 회원의 청약철회 및 계약 해지,
               환불에 관한 조건 및 절차를 명확히 규정함을 목적으로 합니다. 본
-              규정은 회사의 &quot;All-AD 서비스 이용약관&quot; (이하
+              규정은 회사의 &quot;Sivera 서비스 이용약관&quot; (이하
               &quot;이용약관&quot;이라 합니다)의 일부를 구성합니다.
             </p>
           </CardBody>
@@ -163,7 +163,7 @@ export default function RefundPolicyContent() {
                 <p className="font-semibold">&quot;API 연동&quot;</p>
                 <p className="text-default-600 text-sm">
                   회원이 서비스를 통해 자신의 외부 광고 플랫폼 계정에 접근하여
-                  데이터를 동기화하고 올애드 대시보드 및 관련 기능을 이용할 수
+                  데이터를 동기화하고 시베라 대시보드 및 관련 기능을 이용할 수
                   있도록 연결하는 행위를 의미합니다.
                 </p>
               </div>
@@ -471,7 +471,7 @@ export default function RefundPolicyContent() {
 
       {/* Footer */}
       <div className="text-center py-8 text-default-500 text-sm">
-        <p>© 2025 주식회사 올애드. All rights reserved.</p>
+        <p>© 2025 주식회사 시베라. All rights reserved.</p>
       </div>
     </div>
   );
