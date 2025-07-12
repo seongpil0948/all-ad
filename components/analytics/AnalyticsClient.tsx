@@ -235,6 +235,7 @@ const AnalyticsClient = memo(function AnalyticsClient({
         <CardBody>
           <div className="flex flex-wrap gap-4 items-center">
             <DateRangePicker
+              aria-label="데이터 분석 기간 선택"
               className="max-w-xs"
               label="기간 선택"
               value={dateRange}
@@ -245,13 +246,23 @@ const AnalyticsClient = memo(function AnalyticsClient({
               }}
             />
             <Select
+              aria-label="분석 지표 선택"
               className="max-w-xs"
               label="지표 선택"
-              selectedKeys={[selectedMetric]}
+              selectedKeys={
+                metricOptions.some((option) => option.key === selectedMetric)
+                  ? [selectedMetric]
+                  : []
+              }
               onSelectionChange={(keys) => {
                 const value = Array.from(keys)[0] as string;
+                const validMetric = metricOptions.find(
+                  (option) => option.key === value,
+                );
 
-                handleMetricChange(value);
+                if (validMetric) {
+                  handleMetricChange(value);
+                }
               }}
             >
               {metricOptions.map((option) => (

@@ -205,20 +205,24 @@ export function MultiAccountPlatformManager({
 
     // For OAuth platforms, redirect to OAuth flow
     if (config.supportsOAuth) {
+      // Use unified OAuth route
+      const unifiedRoute = `/api/auth/oauth/${platform}`;
+
+      // Legacy individual routes for fallback
       const oauthRoutes = {
         google: "/api/auth/google-ads",
         facebook: "/api/auth/facebook-ads",
         kakao: "/api/auth/kakao-ads",
         amazon: "/api/auth/amazon-ads",
+        naver: "/api/auth/naver-ads",
       };
 
-      const route = oauthRoutes[platform as keyof typeof oauthRoutes];
+      const route =
+        oauthRoutes[platform as keyof typeof oauthRoutes] || unifiedRoute;
 
-      if (route) {
-        window.location.href = route;
+      window.location.href = route;
 
-        return;
-      }
+      return;
     }
 
     // For API key platforms (Naver, Coupang), show the form modal
