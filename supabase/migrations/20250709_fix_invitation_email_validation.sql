@@ -41,10 +41,17 @@ BEGIN
   
   -- 이메일 검증: 현재 로그인된 사용자의 이메일이 초대 이메일과 일치하는지 확인
   IF v_user_email != v_invitation.email THEN
-    RETURN jsonb_build_object(
-      'success', false, 
-      'error', 'Email mismatch: invitation sent to ' || v_invitation.email || ' but logged in as ' || v_user_email
-    );
+    DECLARE v_error_message TEXT;
+    BEGIN
+      v_error_message := format(
+        'Email mismatch: invitation sent to %s but logged in as %s',
+        v_invitation.email, v_user_email
+      );
+      RETURN jsonb_build_object(
+        'success', false, 
+        'error', v_error_message
+      );
+    END;
   END IF;
   
   -- 이미 멤버인지 확인
