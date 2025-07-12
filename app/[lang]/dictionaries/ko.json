@@ -724,12 +724,12 @@
       "subscribe": "구독하기"
     },
     "companyInfo": {
-      "name": "올애드",
-      "tagline": "모든 광고 플랫폼을 하나로. 광고 관리의 새로운 기준을 만들어갑니다.",
+      "name": "시베라",
+      "tagline": "광고 관리의 새로운 기준을 만들어갑니다.",
       "copyright": "© {{year}} {{company}}. All rights reserved.",
-      "address": "서울특별시 강남구 테헤란로 123",
-      "email": "support@allad.co.kr",
-      "phone": "02-1234-5678"
+      "address": "대한민국 경기도 남양주시 별내3로 322, 402호",
+      "email": "siveraofficial@gmail.com",
+      "phone": "+82.010.7727.7428"
     }
   },
   "faq": {
