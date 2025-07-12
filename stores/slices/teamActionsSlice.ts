@@ -178,8 +178,6 @@ export const createTeamActionsSlice: StateCreator<
     } catch (error) {
       log.error("Failed to invite team member", { error });
       set({ error: (error as Error).message, isLoading: false });
-      // Re-throw the error to be caught by the UI component
-      throw error;
     }
   },
 
