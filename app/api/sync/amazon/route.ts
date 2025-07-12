@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/utils/supabase/server";
 import { AmazonPlatformService } from "@/services/platforms/amazon-platform.service";
+import { Campaign } from "@/types";
 import log from "@/utils/logger";
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const supabase = await createClient();
 
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
         await amazonService.initialize(credential);
 
         // 캠페인 동기화
-        const campaigns = await amazonService.syncCampaigns();
+        const campaigns = await amazonService.fetchCampaigns();
 
         // 데이터베이스에 캠페인 저장
         for (const campaign of campaigns) {
@@ -87,7 +88,9 @@ export async function POST(request: NextRequest) {
 
         startDate.setDate(endDate.getDate() - 30);
 
-        const campaignIds = campaigns.map((c) => c.platform_campaign_id);
+        const campaignIds = campaigns.map(
+          (c: Campaign) => c.platform_campaign_id,
+        );
 
         if (campaignIds.length > 0) {
           try {

@@ -1,5 +1,6 @@
 import { PlatformServiceFactory } from "./platforms/platform-service-factory";
 import { PlatformDatabaseService, Logger } from "./platform-database.service";
+import { PlatformCredentials } from "./platforms/platform-service.interface";
 
 import { Campaign as DBCampaign, PlatformType, Json } from "@/types";
 import { PlatformCampaign, PlatformCampaignMetrics } from "@/types/platform";
@@ -80,7 +81,7 @@ export class PlatformSyncService {
       const service = this.platformServiceFactory.createService(platform);
 
       // Set credentials on the service
-      service.setCredentials(credentials);
+      service.setCredentials(credentials as PlatformCredentials);
 
       // Validate credentials first
       const isValid = await service.validateCredentials();
@@ -163,7 +164,9 @@ export class PlatformSyncService {
       // Update on the platform
       const service = this.platformServiceFactory.createService(platform);
 
-      service.setCredentials(platformCredential.credentials);
+      service.setCredentials(
+        platformCredential.credentials as PlatformCredentials,
+      );
 
       const platformSuccess = await service.updateCampaignBudget(
         platformCampaignId,
@@ -208,7 +211,9 @@ export class PlatformSyncService {
       // Update on the platform
       const service = this.platformServiceFactory.createService(platform);
 
-      service.setCredentials(platformCredential.credentials);
+      service.setCredentials(
+        platformCredential.credentials as PlatformCredentials,
+      );
 
       const platformSuccess = await service.updateCampaignStatus(
         platformCampaignId,

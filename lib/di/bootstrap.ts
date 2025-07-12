@@ -95,7 +95,7 @@ export async function bootstrapDI() {
         await container.resolve(ServiceTokens.COUPANG_PLATFORM_SERVICE),
       );
       factory.register(
-        "amazon" as any,
+        "amazon" as const,
         await container.resolve(ServiceTokens.AMAZON_PLATFORM_SERVICE),
       );
 

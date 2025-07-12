@@ -17,13 +17,14 @@ All-AD는 여러 광고 플랫폼(Facebook, Google, Kakao, Naver, Coupang)을 �
 
 ## 🚀 주요 기능
 
-### 1. 멀티 플랫폼 통합 관리
+### 1. 멀티 플랫폼 통합 관리 (2024.12 업데이트)
 
-- **Facebook Ads**: 페이스북/인스타그램 광고 캠페인 관리
-- **Google Ads**: 구글 검색/디스플레이 광고 관리
-- **Kakao Moment**: 카카오 모먼트 광고 관리
-- **Naver Search AD**: 네이버 검색광고 관리
-- **Coupang Ads**: 쿠팡 광고 관리
+- **Google Ads**: 구글 검색/디스플레이 광고 관리 (OAuth 2.0 지원)
+- **Meta (Facebook) Ads**: 페이스북/인스타그램 광고 캠페인 관리 (통합 비즈니스 계정)
+- **Amazon Ads**: 아마존 스폰서드 프로덕트 광고 관리 (멀티 리전)
+- **Kakao Moment**: 카카오 모먼트 광고 관리 (API 연동)
+- **Naver Search AD**: 네이버 검색광고 관리 (API 연동)
+- **Coupang Ads**: 쿠팡 광고 관리 (수동 관리)
 
 ### 2. 인증 및 팀 관리
 
@@ -31,18 +32,22 @@ All-AD는 여러 광고 플랫폼(Facebook, Google, Kakao, Naver, Coupang)을 �
 - **팀 협업**: 마스터/에디터/뷰어 권한 관리
 - **멀티 팀 지원**: 여러 팀 동시 관리 가능
 
-### 3. 캠페인 관리
+### 3. 캠페인 관리 (향상된 기능)
 
 - **통합 대시보드**: 모든 플랫폼의 캠페인을 한 눈에
 - **예산 관리**: 캠페인별 예산 실시간 조정
 - **상태 관리**: 캠페인 활성화/비활성화 제어
 - **원클릭 동기화**: 모든 플랫폼 데이터 한번에 동기화
+- **오류 처리**: 자동 재시도 로직과 상세한 오류 메시지
+- **배치 작업**: 여러 캠페인 일괄 관리
 
-### 4. 분석 및 리포팅
+### 4. 분석 및 리포팅 (강화된 통계)
 
 - **실시간 통계**: 캠페인 성과 실시간 모니터링
-- **통합 메트릭**: 플랫폼별 지표 통합 분석
+- **통합 메트릭**: 플랫폼별 지표 통합 분석 (CTR, CPC, ROAS 등)
 - **시계열 데이터**: 일별 성과 추이 분석
+- **사용자 정의 기간**: 자유로운 날짜 범위 선택
+- **데이터 내보내기**: CSV, Excel 형식 지원
 
 ## 🛠 기술 스택
 
@@ -56,24 +61,36 @@ All-AD는 여러 광고 플랫폼(Facebook, Google, Kakao, Naver, Coupang)을 �
 
 ```
 all-ad/
-├── app/                      # Next.js App Router
-│   ├── (auth)/              # 인증 관련 라우트
-│   ├── (private)/           # 로그인 필수 라우트
-│   │   ├── dashboard/       # 메인 대시보드
-│   │   ├── integrated/      # 통합 관리 페이지
-│   │   ├── team/           # 팀 관리
-│   │   └── settings/       # 설정
-│   └── api/                # API 라우트
-│       ├── campaigns/      # 캠페인 관리 API
-│       └── sync/          # 플랫폼 동기화 API
-├── components/             # 재사용 컴포넌트
-│   ├── dashboard/         # 대시보드 컴포넌트
-│   ├── platform/          # 플랫폼 관련 컴포넌트
-│   └── team/             # 팀 관리 컴포넌트
-├── services/             # 비즈니스 로직
-│   └── platforms/        # 플랫폼별 서비스
-├── stores/               # Zustand 상태 관리
-└── types/               # TypeScript 타입 정의
+├── app/                         # Next.js App Router
+│   ├── (auth)/                 # 인증 관련 라우트
+│   ├── (private)/              # 로그인 필수 라우트
+│   │   ├── dashboard/          # 메인 대시보드
+│   │   ├── integrated/         # 통합 관리 페이지
+│   │   ├── team/              # 팀 관리
+│   │   └── settings/          # 설정
+│   └── api/                   # API 라우트
+│       ├── auth/              # OAuth 콜백 처리
+│       ├── campaigns/         # 캠페인 관리 API
+│       └── sync/             # 플랫폼 동기화 API
+├── components/                # 재사용 컴포넌트
+│   ├── dashboard/            # 대시보드 컴포넌트
+│   ├── features/platform/    # 플랫폼 관련 컴포넌트
+│   └── team/                # 팀 관리 컴포넌트
+├── services/                 # 비즈니스 로직
+│   ├── platforms/           # 플랫폼별 서비스 (리팩토링됨)
+│   │   ├── base-platform.service.ts      # 공통 기본 서비스
+│   │   ├── google-ads-oauth-platform.service.ts  # Google Ads
+│   │   ├── facebook-platform.service.ts          # Meta Ads
+│   │   ├── amazon-platform.service.ts           # Amazon Ads
+│   │   ├── platform-service.interface.ts        # 통합 인터페이스
+│   │   └── platform-service-factory.ts          # 팩토리 패턴
+│   ├── google-ads/         # Google Ads 통합 서비스
+│   └── meta-ads/          # Meta Ads 통합 서비스
+├── stores/                  # Zustand 상태 관리
+├── types/                  # TypeScript 타입 정의
+│   ├── platform-errors.types.ts  # 플랫폼 오류 타입 (신규)
+│   └── ...                # 기타 타입들
+└── docs/                   # 플랫폼 연동 문서
 ```
 
 ## 🚦 시작하기
@@ -94,11 +111,23 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-# 플랫폼별 API 키 (선택사항)
-GOOGLE_ADS_CLIENT_ID=your_google_client_id
-GOOGLE_ADS_CLIENT_SECRET=your_google_client_secret
-FACEBOOK_APP_ID=your_facebook_app_id
-FACEBOOK_APP_SECRET=your_facebook_app_secret
+# 플랫폼별 API 키 (선택사항) - 2024.12 업데이트
+# Google Ads (OAuth 2.0)
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# Meta (Facebook) Ads - 환경변수명 변경됨
+META_APP_ID=your_meta_app_id
+META_APP_SECRET=your_meta_app_secret
+META_BUSINESS_ID=your_meta_business_id
+
+# Amazon Ads
+AMAZON_CLIENT_ID=your_amazon_client_id
+AMAZON_CLIENT_SECRET=your_amazon_client_secret
+
+# Redis (캐싱 및 토큰 관리)
+REDIS_URL=your_redis_url
+
 # ... 기타 플랫폼 키
 ```
 
@@ -189,10 +218,12 @@ supabase db push
 - 첫 가입 시 자동으로 마스터 권한 부여
 - 팀 자동 생성
 
-### 2. 플랫폼 연동
+### 2. 플랫폼 연동 (간편화된 OAuth)
 
-- 설정 > 플랫폼 연동에서 각 플랫폼의 API 키 입력
-- 플랫폼별 인증 정보 안전하게 암호화 저장
+- **간편한 연동**: 설정 > 플랫폼 연동에서 "연동하기" 버튼 클릭
+- **OAuth 인증**: 각 플랫폼의 공식 OAuth 화면에서 권한 승인
+- **자동 설정**: API 키 입력 없이 자동으로 연동 완료
+- **안전한 저장**: 인증 토큰 암호화 저장 및 자동 갱신
 
 ### 3. 캠페인 관리
 

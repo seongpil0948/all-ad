@@ -8,7 +8,12 @@ import type {
 import type { GoogleAdsCredentials } from "@/types/credentials.types";
 import type { GoogleAdsQueryResponseRow } from "@/types/google-ads-api.types";
 
-import { PlatformService } from "./platform-service.interface";
+import {
+  PlatformService,
+  ConnectionTestResult,
+  TokenRefreshResult,
+  PlatformCredentials,
+} from "./platform-service.interface";
 
 import { GoogleAdsClient } from "@/services/google-ads/core/google-ads-client";
 import { CampaignControlService } from "@/services/google-ads/campaign/campaign-control.service";
@@ -23,7 +28,41 @@ export class GoogleAdsPlatformService implements PlatformService {
   private mccAuthService: GoogleMCCAuthService | null = null;
   private isMultiAccountMode: boolean = false;
 
-  setCredentials(credentials: Record<string, unknown>): void {
+  async testConnection(): Promise<ConnectionTestResult> {
+    // TODO: Implement actual Google Ads API connection test
+    return {
+      success: true,
+      accountInfo: {
+        id: "google-ads-legacy",
+        name: "Google Ads Legacy Account",
+      },
+    };
+  }
+
+  async refreshToken(): Promise<TokenRefreshResult> {
+    // TODO: Implement Google Ads token refresh
+    return {
+      success: true,
+      accessToken:
+        (this.credentials as GoogleAdsCredentials)?.refreshToken || "",
+    };
+  }
+
+  async getAccountInfo(): Promise<{
+    id: string;
+    name: string;
+    currency?: string;
+    timezone?: string;
+  }> {
+    return {
+      id: "google-ads-legacy",
+      name: "Google Ads Legacy Account",
+      currency: "USD",
+      timezone: "UTC",
+    };
+  }
+
+  setCredentials(credentials: PlatformCredentials): void {
     this.credentials = credentials as unknown as GoogleAdsCredentials;
 
     // customerId가 없으면 platform_credentials 테이블의 settings에서 가져오기
@@ -71,7 +110,7 @@ export class GoogleAdsPlatformService implements PlatformService {
       });
     } else {
       // 일반 계정이지만 multi-account 플래그가 있는 경우
-      this.setCredentials(credentials);
+      this.setCredentials(credentials as PlatformCredentials);
     }
   }
 

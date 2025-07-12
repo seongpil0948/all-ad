@@ -1,12 +1,13 @@
 // Transform database campaign to application campaign
 import { Campaign as DBCampaign } from "@/types";
 import { Campaign as AppCampaign } from "@/types/campaign.types";
+import { PlatformType } from "@/types/base.types";
 
 export function transformDbCampaignToApp(dbCampaign: DBCampaign): AppCampaign {
   return {
     id: dbCampaign.id,
     teamId: dbCampaign.team_id,
-    platform: dbCampaign.platform as any, // Temporarily cast to any for Amazon support
+    platform: dbCampaign.platform as PlatformType,
     platform_campaign_id: dbCampaign.platform_campaign_id,
     is_active: dbCampaign.is_active ?? false,
     platformCampaignId: dbCampaign.platform_campaign_id,

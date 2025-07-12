@@ -1,4 +1,8 @@
 import { BasePlatformService } from "./base-platform.service";
+import {
+  ConnectionTestResult,
+  TokenRefreshResult,
+} from "./platform-service.interface";
 
 import {
   Campaign,
@@ -12,6 +16,47 @@ import { createClient } from "@/utils/supabase/server";
 
 export class CoupangPlatformService extends BasePlatformService {
   platform: PlatformType = "coupang";
+
+  async testConnection(): Promise<ConnectionTestResult> {
+    return this.executeWithErrorHandling(async () => {
+      // Coupang doesn't have API, so we just validate credentials format
+      const isValid = await this.validateCredentials();
+
+      return {
+        success: isValid,
+        accountInfo: {
+          id: "coupang-manual",
+          name: "Coupang Manual Account",
+        },
+      };
+    }, "testConnection");
+  }
+
+  async refreshToken(): Promise<TokenRefreshResult> {
+    return this.executeWithErrorHandling(async () => {
+      // Coupang doesn't use tokens, return current credentials
+      return {
+        success: true,
+        accessToken: this.credentials?.accessToken || "",
+      };
+    }, "refreshToken");
+  }
+
+  async getAccountInfo(): Promise<{
+    id: string;
+    name: string;
+    currency?: string;
+    timezone?: string;
+  }> {
+    return this.executeWithErrorHandling(async () => {
+      return {
+        id: "coupang-manual",
+        name: "Coupang Manual Account",
+        currency: "KRW",
+        timezone: "Asia/Seoul",
+      };
+    }, "getAccountInfo");
+  }
 
   async validateCredentials(): Promise<boolean> {
     const { accessKey, secretKey, vendorId } = this

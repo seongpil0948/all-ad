@@ -127,12 +127,16 @@ export async function getAllAdOAuthConfig(
       developerToken: process.env.GOOGLE_DEVELOPER_TOKEN,
     },
     facebook: {
-      clientId: process.env.META_CLIENT_ID,
-      clientSecret: process.env.META_CLIENT_SECRET,
+      clientId: process.env.META_APP_ID,
+      clientSecret: process.env.META_APP_SECRET,
     },
     meta: {
-      clientId: process.env.META_CLIENT_ID,
-      clientSecret: process.env.META_CLIENT_SECRET,
+      clientId: process.env.META_APP_ID,
+      clientSecret: process.env.META_APP_SECRET,
+    },
+    amazon: {
+      clientId: process.env.AMAZON_CLIENT_ID,
+      clientSecret: process.env.AMAZON_CLIENT_SECRET,
     },
     // Add more platforms as needed
   };

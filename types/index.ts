@@ -168,3 +168,6 @@ export * from "./platform";
 
 // Type utilities for database <-> application layer conversion
 export * from "./type-utils";
+
+// Re-export platform error types
+export * from "./platform-errors.types";
