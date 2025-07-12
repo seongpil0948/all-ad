@@ -27,38 +27,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Small delay to ensure cookies are properly set after server action redirect
         await new Promise((resolve) => setTimeout(resolve, 100));
 
-        // Get current session
+        // Get current user
         const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession();
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
 
-        if (sessionError) {
-          log.error("Error getting session:", sessionError);
+        if (userError) {
+          log.error("Error getting user:", userError);
           setUser(null);
 
           return;
         }
 
-        // If we have a session, get the user
-        if (session) {
-          const {
-            data: { user },
-            error: userError,
-          } = await supabase.auth.getUser();
-
-          if (userError) {
-            log.error("Error getting user:", userError);
-            setUser(null);
-          } else {
-            log.info("User authenticated:", {
-              userId: user?.id,
-              email: user?.email,
-            });
-            setUser(user);
-          }
+        if (user) {
+          log.info("User authenticated:", {
+            userId: user.id,
+            email: user.email,
+          });
+          setUser(user);
         } else {
-          log.info("No session found");
+          log.info("No user found");
           setUser(null);
         }
       } catch (error) {

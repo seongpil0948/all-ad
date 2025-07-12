@@ -149,6 +149,7 @@ export function dbCredentialToAppCredential(
     is_active: dbCred.is_active,
     created_by: dbCred.created_by,
     last_synced_at: dbCred.last_synced_at,
+    error_message: dbCred.error_message,
     created_at: dbCred.created_at,
     updated_at: dbCred.updated_at,
   };

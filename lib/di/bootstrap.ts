@@ -11,6 +11,7 @@ import { FacebookPlatformService } from "@/services/platforms/facebook-platform.
 import { NaverPlatformService } from "@/services/platforms/naver-platform.service";
 import { KakaoPlatformService } from "@/services/platforms/kakao-platform.service";
 import { CoupangPlatformService } from "@/services/platforms/coupang-platform.service";
+import { AmazonPlatformService } from "@/services/platforms/amazon-platform.service";
 import { PlatformSyncService } from "@/services/platform-sync.service";
 import { PlatformDatabaseService } from "@/services/platform-database.service";
 import { AdService } from "@/services/ads/ad-service";
@@ -61,6 +62,10 @@ export async function bootstrapDI() {
     ServiceTokens.COUPANG_PLATFORM_SERVICE,
     () => new CoupangPlatformService(),
   );
+  container.registerSingleton(
+    ServiceTokens.AMAZON_PLATFORM_SERVICE,
+    () => new AmazonPlatformService(),
+  );
 
   // Platform Service Factory
   container.registerSingleton(
@@ -88,6 +93,10 @@ export async function bootstrapDI() {
       factory.register(
         "coupang",
         await container.resolve(ServiceTokens.COUPANG_PLATFORM_SERVICE),
+      );
+      factory.register(
+        "amazon" as any,
+        await container.resolve(ServiceTokens.AMAZON_PLATFORM_SERVICE),
       );
 
       return factory;

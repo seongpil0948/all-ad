@@ -123,7 +123,7 @@ export function useCampaignSWR(platform?: PlatformType | "all") {
       filtered = filtered.filter(
         (campaign: Campaign) =>
           campaign.name.toLowerCase().includes(searchLower) ||
-          campaign.platformCampaignId.toLowerCase().includes(searchLower),
+          campaign.platformCampaignId?.toLowerCase().includes(searchLower),
       );
     }
 

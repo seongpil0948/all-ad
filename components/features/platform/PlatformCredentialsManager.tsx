@@ -56,13 +56,14 @@ function PlatformCredentialsManagerComponent({
       // For OAuth platforms with All-AD credentials, redirect directly
       if (
         config.supportsOAuth &&
-        ["google", "facebook", "kakao"].includes(platform)
+        ["google", "facebook", "kakao", "amazon"].includes(platform)
       ) {
         // Redirect to OAuth flow
         const oauthRoutes = {
           google: "/api/auth/google-ads",
           facebook: "/api/auth/facebook-ads",
           kakao: "/api/auth/kakao-ads",
+          amazon: "/api/auth/amazon-ads",
         };
 
         const route = oauthRoutes[platform as keyof typeof oauthRoutes];
@@ -101,6 +102,7 @@ function PlatformCredentialsManagerComponent({
           id: crypto.randomUUID(),
           is_active: true,
           last_synced_at: null,
+          error_message: null,
           platform: selectedPlatform,
           refresh_token: null,
           scope: null,

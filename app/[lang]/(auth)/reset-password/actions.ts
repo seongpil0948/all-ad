@@ -35,12 +35,12 @@ export async function updatePassword(
   try {
     // Check if user has a valid session for password reset
     const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    if (sessionError || !session) {
-      log.error("No valid session for password reset:", sessionError);
+    if (userError || !user) {
+      log.error("No valid user for password reset:", userError);
 
       return {
         errors: {
@@ -74,7 +74,7 @@ export async function updatePassword(
       };
     }
 
-    log.info("Password updated successfully", { userId: session.user.id });
+    log.info("Password updated successfully", { userId: user.id });
 
     // Don't redirect here, let the component handle it
     return {

@@ -6,22 +6,50 @@ import {
   DateRange,
 } from "./base.types";
 
+// Platform credentials interface
+export interface PlatformCredentials {
+  id: string;
+  team_id: string;
+  platform: PlatformType;
+  account_id: string;
+  account_name?: string;
+  credentials: any;
+  access_token?: string;
+  refresh_token?: string;
+  expires_at?: string;
+  scope?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  last_synced_at?: string;
+}
+
 // Application layer campaign interface
 export interface Campaign {
   id: string;
-  teamId: string;
+  team_id?: string;
   platform: PlatformType;
-  platformCampaignId: string;
-  accountId?: string;
+  platform_campaign_id: string;
+  platform_credential_id?: string;
   name: string;
-  status: CampaignStatus;
+  status?: string;
+  is_active: boolean;
   budget?: number;
+  raw_data?: any;
+  synced_at?: string;
+  created_at?: string;
+  updated_at?: string;
+
+  // Legacy fields for compatibility
+  teamId?: string;
+  platformCampaignId?: string;
+  accountId?: string;
   budgetType?: BudgetType;
   startDate?: string;
   endDate?: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
   metrics?: CampaignMetrics;
 }
 
@@ -38,17 +66,23 @@ export interface CampaignStats {
 
 // Campaign metrics interface
 export interface CampaignMetrics {
+  id?: string;
+  campaign_id?: string;
+  date: string;
   impressions: number;
   clicks: number;
   cost: number;
   conversions?: number;
   revenue?: number;
+  raw_data?: any;
+  created_at?: string;
+
+  // Calculated fields
   ctr?: number;
   cpc?: number;
   cpm?: number;
   roas?: number;
   roi?: number;
-  date?: string;
 }
 
 // Campaign filter interface

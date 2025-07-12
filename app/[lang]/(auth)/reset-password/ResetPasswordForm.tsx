@@ -26,44 +26,32 @@ export function ResetPasswordForm() {
       try {
         const supabase = createClient();
         const {
-          data: { session },
-          error,
-        } = await supabase.auth.getSession();
-
-        if (error) {
-          log.error("Error checking session:", error);
-          setIsValidSession(false);
-          setSessionChecked(true);
-
-          return;
-        }
-
-        if (!session) {
-          log.warn("No active session found for password reset");
-          setIsValidSession(false);
-          setSessionChecked(true);
-
-          return;
-        }
-
-        // Check if this is a password recovery session
-        const {
           data: { user },
+          error,
         } = await supabase.auth.getUser();
 
-        if (!user) {
-          log.warn("No user found in session");
+        if (error) {
+          log.error("Error checking user:", error);
           setIsValidSession(false);
           setSessionChecked(true);
 
           return;
         }
 
-        log.info("Valid session found for password reset", { userId: user.id });
+        if (!user) {
+          log.warn("No active user found for password reset");
+          setIsValidSession(false);
+          setSessionChecked(true);
+
+          return;
+        }
+
+        // Valid user found for password recovery
+        log.info("Valid user found for password reset", { userId: user.id });
         setIsValidSession(true);
         setSessionChecked(true);
       } catch (err) {
-        log.error("Unexpected error checking session:", err);
+        log.error("Unexpected error checking user:", err);
         setIsValidSession(false);
         setSessionChecked(true);
       }

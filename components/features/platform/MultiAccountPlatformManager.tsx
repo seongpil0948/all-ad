@@ -115,6 +115,7 @@ export function MultiAccountPlatformManager({
     kakao: createPlatformList("kakao"),
     naver: createPlatformList("naver"),
     coupang: createPlatformList("coupang"),
+    amazon: createPlatformList("amazon"),
   };
 
   // Reload lists when credentials change
@@ -129,7 +130,8 @@ export function MultiAccountPlatformManager({
       if (
         (credential.platform === "google" ||
           credential.platform === "facebook" ||
-          credential.platform === "kakao") &&
+          credential.platform === "kakao" ||
+          credential.platform === "amazon") &&
         credential.is_active
       ) {
         setTokenStatus((prev) => ({
@@ -199,6 +201,27 @@ export function MultiAccountPlatformManager({
   };
 
   const handleAddAccount = (platform: PlatformType) => {
+    const config = platformConfig[platform];
+
+    // For OAuth platforms, redirect to OAuth flow
+    if (config.supportsOAuth) {
+      const oauthRoutes = {
+        google: "/api/auth/google-ads",
+        facebook: "/api/auth/facebook-ads",
+        kakao: "/api/auth/kakao-ads",
+        amazon: "/api/auth/amazon-ads",
+      };
+
+      const route = oauthRoutes[platform as keyof typeof oauthRoutes];
+
+      if (route) {
+        window.location.href = route;
+
+        return;
+      }
+    }
+
+    // For API key platforms (Naver, Coupang), show the form modal
     setSelectedPlatform(platform);
     onOpen();
   };
@@ -320,6 +343,7 @@ export function MultiAccountPlatformManager({
         id: crypto.randomUUID(),
         is_active: true,
         last_synced_at: null,
+        error_message: null,
         platform: selectedPlatform,
         refresh_token: null,
         scope: null,

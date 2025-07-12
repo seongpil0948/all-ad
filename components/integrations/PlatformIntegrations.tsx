@@ -22,6 +22,7 @@ import {
   FaClock,
   FaPlus,
   FaShoppingCart,
+  FaAmazon,
 } from "react-icons/fa";
 import { SiKakao, SiNaver } from "react-icons/si";
 
@@ -62,6 +63,7 @@ const PlatformIcons = {
   KAKAO: SiKakao,
   NAVER: SiNaver,
   COUPANG: FaShoppingCart,
+  AMAZON: FaAmazon,
 } as const;
 
 // Platform colors
@@ -71,6 +73,7 @@ const PlatformColors = {
   KAKAO: "warning",
   NAVER: "success",
   COUPANG: "danger",
+  AMAZON: "warning",
 } as const;
 
 export function PlatformIntegrations() {
@@ -171,6 +174,13 @@ export function PlatformIntegrations() {
     }
 
     try {
+      // Amazon uses a different OAuth route
+      if (platform === "amazon") {
+        window.location.href = "/api/auth/amazon-ads";
+
+        return;
+      }
+
       const response = await fetch(
         `/api/auth/oauth/${platform.toLowerCase()}/callback`,
         {
@@ -499,7 +509,7 @@ export function PlatformIntegrations() {
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Object.entries(PlatformIcons).map(([platform, Icon]) => {
-            const platformType = platform as PlatformType;
+            const platformType = platform.toLowerCase() as PlatformType;
             const isConnected = refreshStatus?.credentials.some(
               (cred) => cred.platform === platformType,
             );

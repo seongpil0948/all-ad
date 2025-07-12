@@ -6,7 +6,9 @@ export function transformDbCampaignToApp(dbCampaign: DBCampaign): AppCampaign {
   return {
     id: dbCampaign.id,
     teamId: dbCampaign.team_id,
-    platform: dbCampaign.platform,
+    platform: dbCampaign.platform as any, // Temporarily cast to any for Amazon support
+    platform_campaign_id: dbCampaign.platform_campaign_id,
+    is_active: dbCampaign.is_active ?? false,
     platformCampaignId: dbCampaign.platform_campaign_id,
     name: dbCampaign.name,
     status: (dbCampaign.status?.toLowerCase() ||
