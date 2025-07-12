@@ -3,13 +3,14 @@
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/utils/supabase/server";
-import { UserRole } from "@/types";
 import log from "@/utils/logger";
+import { UserRole } from "@/types";
+import { createTeamForUser } from "@/lib/data/teams";
+import { getTeamInvitationEmailTemplate } from "@/utils/email-templates";
 
 export async function inviteTeamMemberAction(email: string, role: UserRole) {
-  const supabase = await createClient();
-
   try {
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -57,47 +58,115 @@ export async function inviteTeamMemberAction(email: string, role: UserRole) {
     // Check if there's already a pending invitation
     const { data: existingInvite } = await supabase
       .from("team_invitations")
-      .select("id")
+      .select("id, token")
       .eq("team_id", teamId)
       .eq("email", email)
       .eq("status", "pending")
       .maybeSingle();
 
+    let inviteToken: string;
+
     if (existingInvite) {
-      throw new Error("An invitation has already been sent to this email");
+      log.info("Resending invitation email to existing invitation", {
+        email,
+        teamId,
+      });
+      inviteToken = existingInvite.token;
+    } else {
+      // Create new invitation
+      const { data: invitation, error: invitationError } = await supabase
+        .from("team_invitations")
+        .insert({
+          team_id: teamId,
+          email,
+          role: role === "master" ? "viewer" : role, // Can't invite as master
+          invited_by: user.id,
+        })
+        .select("token")
+        .single();
+
+      if (invitationError) {
+        log.error("Failed to create invitation", invitationError);
+        throw invitationError;
+      }
+
+      inviteToken = invitation.token;
     }
 
-    // Create invitation
-    const { data: invitation, error } = await supabase
-      .from("team_invitations")
-      .insert({
-        team_id: teamId,
-        email,
-        role: role === "master" ? "viewer" : role, // Can't invite as master
-        invited_by: user.id,
-      })
-      .select("token")
+    const inviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/invite/${inviteToken}`;
+
+    // Fetch inviter's profile and team name for the email
+    const { data: inviterProfile, error: inviterProfileError } = await supabase
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", user.id)
       .single();
 
-    if (error) {
-      log.error("Failed to create invitation", error);
-      throw error;
+    if (inviterProfileError) {
+      log.error("Failed to fetch inviter profile", inviterProfileError);
+      throw inviterProfileError;
     }
 
-    const inviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/invite/${invitation.token}`;
+    const { data: team, error: teamError } = await supabase
+      .from("teams")
+      .select("name")
+      .eq("id", teamId)
+      .single();
 
-    log.info("Team invitation created successfully", {
+    if (teamError) {
+      log.error("Failed to fetch team name", teamError);
+      throw teamError;
+    }
+
+    const inviterName =
+      inviterProfile?.full_name || inviterProfile?.email || "Someone";
+    const teamName = team?.name || "Your Team";
+
+    // Generate email content
+    const emailSubject = `You're invited to join ${teamName} on AllAd!`;
+    const emailHtml = getTeamInvitationEmailTemplate({
+      inviterName,
+      teamName,
+      invitationLink: inviteUrl,
+    });
+
+    // Send email via Supabase Edge Function
+    const { data: edgeFunctionResponse, error: edgeFunctionError } =
+      await supabase.functions.invoke("resend", {
+        body: {
+          to: email,
+          subject: emailSubject,
+          html: emailHtml,
+        },
+      });
+
+    if (edgeFunctionError) {
+      log.error(
+        "Failed to send invitation email via Edge Function",
+        edgeFunctionError,
+      );
+    } else {
+      log.info("Invitation email sent successfully via Edge Function", {
+        email,
+        response: edgeFunctionResponse,
+      });
+    }
+
+    log.info("Team invitation processed successfully", {
       email,
       role,
       teamId,
-      token: invitation.token,
+      token: inviteToken,
+      isResend: !!existingInvite,
     });
 
     revalidatePath("/team");
 
     return {
       success: true,
-      message: `초대 링크가 생성되었습니다.`,
+      message: existingInvite
+        ? `초대 이메일이 다시 발송되었습니다.`
+        : `초대 링크가 생성되었습니다.`,
       inviteUrl,
     };
   } catch (error) {
@@ -118,9 +187,8 @@ export async function updateTeamMemberRoleAction(
   memberId: string,
   role: UserRole,
 ) {
-  const supabase = await createClient();
-
   try {
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -148,10 +216,16 @@ export async function updateTeamMemberRoleAction(
     }
 
     // Type assertion for the joined data
-    const teamData = teamMember.teams as unknown as { master_user_id: string };
+    const teamData = teamMember.teams as unknown as {
+      master_user_id: string;
+    };
 
     if (teamData.master_user_id !== user.id) {
       throw new Error("Only team master can update roles");
+    }
+
+    if (!teamMember.team_id) {
+      throw new Error("Team member does not have a valid team_id");
     }
 
     const { error } = await supabase
@@ -184,9 +258,8 @@ export async function updateTeamMemberRoleAction(
 }
 
 export async function removeTeamMemberAction(memberId: string) {
-  const supabase = await createClient();
-
   try {
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -214,10 +287,16 @@ export async function removeTeamMemberAction(memberId: string) {
     }
 
     // Type assertion for the joined data
-    const teamData = teamMember.teams as unknown as { master_user_id: string };
+    const teamData = teamMember.teams as unknown as {
+      master_user_id: string;
+    };
 
     if (teamData.master_user_id !== user.id) {
       throw new Error("Only team master can remove members");
+    }
+
+    if (!teamMember.team_id) {
+      throw new Error("Team member does not have a valid team_id");
     }
 
     const { error } = await supabase
@@ -250,9 +329,8 @@ export async function removeTeamMemberAction(memberId: string) {
 }
 
 export async function createTeamForUserAction() {
-  const supabase = await createClient();
-
   try {
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -261,21 +339,11 @@ export async function createTeamForUserAction() {
       throw new Error("No user logged in");
     }
 
-    const { data: newTeamId, error } = await supabase.rpc(
-      "create_team_for_user",
-      { user_id: user.id },
-    );
-
-    if (error) {
-      log.error("Failed to create team", error);
-      throw error;
-    }
-
-    log.info("Team created successfully", { teamId: newTeamId });
+    const result = await createTeamForUser(user.id);
 
     revalidatePath("/team");
 
-    return { success: true, teamId: newTeamId };
+    return result;
   } catch (error) {
     log.error(
       "Error in createTeamForUserAction",
@@ -285,6 +353,31 @@ export async function createTeamForUserAction() {
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to create team",
+    };
+  }
+}
+
+export async function syncAllPlatformDataAction() {
+  try {
+    // Import DataSyncService only when needed to avoid client/server issues
+    const { DataSyncService } = await import(
+      "@/services/sync/data-sync.service"
+    );
+    const dataSyncService = new DataSyncService();
+    const result = await dataSyncService.syncAllPlatformData();
+
+    revalidatePath("/team");
+
+    return result;
+  } catch (error) {
+    log.error(
+      "Error in syncAllPlatformDataAction",
+      error instanceof Error ? error : new Error(String(error)),
+    );
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to sync data",
     };
   }
 }

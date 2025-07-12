@@ -73,7 +73,11 @@ Deno.serve(async (req: Request) => {
       ...(emailData.replyTo && { reply_to: emailData.replyTo }),
     };
 
-    // Email sending attempt - no logging in edge function
+    console.log("Attempting to send email via Resend", {
+      to: resendData.to,
+      subject: resendData.subject,
+      from: resendData.from,
+    });
 
     // Send email using Resend API
     const response = await fetch(RESEND_API_URL, {
@@ -88,6 +92,12 @@ Deno.serve(async (req: Request) => {
     const responseData = await response.json();
 
     if (!response.ok) {
+      console.error("Resend API error", {
+        status: response.status,
+        statusText: response.statusText,
+        responseData,
+      });
+
       return new Response(
         JSON.stringify({
           error: "Failed to send email",
@@ -103,6 +113,8 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    console.log("Email sent successfully", { id: responseData.id });
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -116,6 +128,11 @@ Deno.serve(async (req: Request) => {
       },
     );
   } catch (error) {
+    console.error("Unexpected error in resend function", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
     return new Response(
       JSON.stringify({
         error: "Internal server error",

@@ -342,7 +342,7 @@ export function CampaignDashboardClient({
 
           return acc;
         },
-        {} as Record<PlatformType, number>,
+        {} as Record<string, number>,
       ),
     [campaigns],
   );

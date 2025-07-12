@@ -34,6 +34,11 @@ export const OAUTH_CONFIGS = {
     tokenUrl: "",
     scopes: [],
   },
+  amazon: {
+    authUrl: "https://www.amazon.com/ap/oa",
+    tokenUrl: "https://api.amazon.com/auth/o2/token",
+    scopes: ["advertising::campaign_management"],
+  },
 } as const;
 
 // OAuth state for CSRF protection
@@ -251,6 +256,13 @@ export async function getPlatformAccountInfo(
       apiUrl = "https://openapi.naver.com/v1/nid/me";
       headers = { Authorization: `Bearer ${accessToken}` };
       break;
+    case "amazon":
+      apiUrl = "https://advertising-api.amazon.com/v2/profiles";
+      headers = {
+        Authorization: `Bearer ${accessToken}`,
+        "Amazon-Advertising-API-ClientId": process.env.AMAZON_CLIENT_ID!,
+      };
+      break;
     default:
       throw new Error(`Account info not supported for platform: ${platform}`);
   }
@@ -296,6 +308,18 @@ export async function getPlatformAccountInfo(
           email: data.response.email,
         };
         break;
+      case "amazon": {
+        // Amazon returns array of profiles, use first one
+        const profile = Array.isArray(data) ? data[0] : data;
+
+        accountInfo = {
+          accountId: profile.profileId,
+          accountName:
+            profile.accountInfo?.name || `Amazon Profile ${profile.profileId}`,
+          email: undefined, // Amazon doesn't provide email in profiles API
+        };
+        break;
+      }
       default:
         throw new Error(`Unsupported platform: ${platform}`);
     }
@@ -334,6 +358,8 @@ export function getPlatformDisplayName(platform: PlatformType): string {
       return "네이버 검색광고";
     case "coupang":
       return "쿠팡 애즈";
+    case "amazon":
+      return "Amazon Ads";
     default:
       return platform;
   }

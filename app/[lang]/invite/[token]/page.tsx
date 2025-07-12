@@ -1,7 +1,9 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
+import { Button } from "@heroui/button";
 
 import InviteAcceptClient from "./InviteAcceptClient";
+import LogoutButton from "./LogoutButton";
 
 import { createClient } from "@/utils/supabase/server";
 import log from "@/utils/logger";
@@ -52,7 +54,7 @@ async function getInvitationDetails(token: string) {
     return { invitation: null, error: rpcError };
   }
 
-  if (!rpcResult || !rpcResult.invitation) {
+  if (!rpcResult) {
     log.error("No invitation found with RPC", { token, rpcResult });
 
     return { invitation: null, error: new Error("Invitation not found") };
@@ -60,9 +62,9 @@ async function getInvitationDetails(token: string) {
 
   // Transform the RPC result to match expected format
   const invitation = {
-    ...rpcResult.invitation,
-    teams: rpcResult.team,
-    profiles: rpcResult.inviter,
+    ...rpcResult,
+    teams: { name: rpcResult.team_name },
+    profiles: { email: rpcResult.invited_by_email },
   };
 
   log.info("Successfully fetched invitation via RPC", {
@@ -97,13 +99,52 @@ export default async function InvitePage({ params }: InvitePageProps) {
 
   // Check invitation status
   if (invitation.status !== "pending") {
+    // If user is logged in and invitation is already accepted
+    if (user && invitation.status === "accepted") {
+      // Check if the logged-in user matches the invitation email
+      const { data: userProfile } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("id", user.id)
+        .single();
+
+      if (userProfile?.email === invitation.email) {
+        // Same user - redirect to dashboard
+        redirect("/dashboard");
+      } else {
+        // Different user - need to logout and signup with correct email
+        return (
+          <div className="flex min-h-screen items-center justify-center p-4">
+            <div className="text-center max-w-md mx-auto">
+              <h1 className="text-2xl font-bold mb-4">
+                Invitation Already Used
+              </h1>
+              <p className="text-default-500 mb-4">
+                This invitation was sent to <strong>{invitation.email}</strong>{" "}
+                and has already been accepted.
+              </p>
+              <p className="text-default-500 mb-4">
+                You are currently logged in as{" "}
+                <strong>{userProfile?.email}</strong>.
+              </p>
+              <p className="text-default-500 mb-6">
+                Please log out and sign in with the correct email address to
+                access this team.
+              </p>
+              <LogoutButton inviteEmail={invitation.email} />
+            </div>
+          </div>
+        );
+      }
+    }
+
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Invitation Already Used</h1>
-          <p className="text-default-500">
+          <div className="text-default-500">
             This invitation has already been {invitation.status}.
-          </p>
+          </div>
         </div>
       </div>
     );
@@ -115,17 +156,64 @@ export default async function InvitePage({ params }: InvitePageProps) {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Invitation Expired</h1>
-          <p className="text-default-500">
+          <div className="text-default-500">
             This invitation has expired. Please request a new invitation.
-          </p>
+          </div>
         </div>
       </div>
     );
   }
 
-  // If user is not logged in, show invitation details and redirect to signup
+  // If user is not logged in, check if invited user account exists
   if (!user) {
-    // Show invitation preview page that redirects to signup
+    // Check if an account with the invitation email exists
+    const { data: existingUser } = await supabase
+      .from("profiles")
+      .select("id, email")
+      .eq("email", invitation.email)
+      .maybeSingle();
+
+    if (existingUser) {
+      // Account exists - redirect to login with password reset option
+      return (
+        <div className="flex min-h-screen items-center justify-center p-4">
+          <div className="text-center max-w-md mx-auto">
+            <h1 className="text-2xl font-bold mb-4">Account Already Exists</h1>
+            <p className="text-default-500 mb-4">
+              An account with email <strong>{invitation.email}</strong> already
+              exists.
+            </p>
+            <p className="text-default-500 mb-6">
+              Please log in with your existing account or reset your password if
+              you forgot it.
+            </p>
+            <div className="flex flex-col gap-3">
+              <Button
+                className="w-full"
+                color="primary"
+                onPress={() =>
+                  (window.location.href = `/login?email=${encodeURIComponent(invitation.email)}`)
+                }
+              >
+                Log In
+              </Button>
+              <Button
+                className="w-full"
+                color="default"
+                variant="bordered"
+                onPress={() =>
+                  (window.location.href = `/forgot-password?email=${encodeURIComponent(invitation.email)}`)
+                }
+              >
+                Reset Password
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // No account exists - show invitation preview page that redirects to signup
     return (
       <div className="flex min-h-screen items-center justify-center p-4">
         <InviteAcceptClient
@@ -151,21 +239,76 @@ export default async function InvitePage({ params }: InvitePageProps) {
     .eq("id", user.id)
     .single();
 
+  // Check if user is already a member of the team
+  const { data: existingMember } = await supabase
+    .from("team_members")
+    .select("id, role")
+    .eq("user_id", user.id)
+    .eq("team_id", invitation.team_id)
+    .maybeSingle();
+
+  // Check if user is the master of the team
+  const { data: teamMaster } = await supabase
+    .from("teams")
+    .select("master_user_id")
+    .eq("id", invitation.team_id)
+    .eq("master_user_id", user.id)
+    .maybeSingle();
+
+  // If user is already a member, mark invitation as accepted and redirect
+  if (existingMember || teamMaster) {
+    // Update invitation status to accepted
+    await supabase
+      .from("team_invitations")
+      .update({ status: "accepted", accepted_at: new Date().toISOString() })
+      .eq("id", invitation.id);
+
+    redirect("/dashboard");
+  }
+
   if (userProfile?.email !== invitation.email) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="text-center max-w-md mx-auto">
           <h1 className="text-2xl font-bold mb-4">Email Mismatch</h1>
-          <p className="text-default-500 mb-2">
+          <div className="text-default-500 mb-2">
             This invitation was sent to <strong>{invitation.email}</strong>
-          </p>
-          <p className="text-default-500">
+          </div>
+          <div className="text-default-500 mb-4">
             You are currently logged in as <strong>{userProfile?.email}</strong>
-          </p>
-          <p className="text-default-500 mt-4">
-            Please log in with the correct email address to accept this
-            invitation.
-          </p>
+          </div>
+          <div className="text-default-500 mb-6">
+            You have a few options to proceed:
+          </div>
+          <div className="space-y-3">
+            <div className="bg-default-100 p-4 rounded-lg">
+              <div className="text-sm text-default-600 mb-2">
+                <strong>Option 1:</strong> Log out and sign in with the invited
+                email address
+              </div>
+              <div className="flex gap-2">
+                <LogoutButton inviteEmail={invitation.email} />
+              </div>
+            </div>
+            <div className="bg-default-100 p-4 rounded-lg">
+              <div className="text-sm text-default-600 mb-2">
+                <strong>Option 2:</strong> Accept with current account (less
+                secure)
+              </div>
+              <div className="text-xs text-warning mb-2">
+                Warning: This will add your current account to the team even
+                though the invitation was sent to a different email.
+              </div>
+              <InviteAcceptClient
+                invitation={{
+                  ...invitation,
+                  teamName: invitation.teams?.name || "Unknown Team",
+                  inviterName: invitation.profiles?.email || "Someone",
+                }}
+                token={token}
+              />
+            </div>
+          </div>
         </div>
       </div>
     );

@@ -142,13 +142,13 @@ export default function InviteAcceptClient({
               )}
             </p>
             <h2 className="text-3xl font-bold mb-4">{invitation.teamName}</h2>
-            <p className="text-default-500 mb-4">
+            <div className="text-default-500 mb-4">
               {dict.team.invite.accept.asRole}{" "}
               <Chip color="primary" size="sm" variant="flat">
                 {roleLabels[invitation.role as keyof typeof roleLabels] ||
                   invitation.role}
               </Chip>
-            </p>
+            </div>
           </div>
 
           {isPreview && (

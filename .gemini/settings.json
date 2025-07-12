@@ -1,0 +1,20 @@
+{
+  "theme": "GitHub",
+  "contextFileName": "CLAUDE.md",
+  "mcpServers": {
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--read-only",
+        "--project-ref=dtttnnwrzbtjzjzmpvaf"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "sbp_8c8df140a76c69a0a44a0a00db76abf62403e426"
+      }
+    }
+  },
+  "usageStatisticsEnabled": true,
+  "hideTips": false
+}

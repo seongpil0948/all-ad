@@ -3,6 +3,7 @@ import {
   FaGoogle,
   FaComment,
   FaShoppingCart,
+  FaAmazon,
 } from "react-icons/fa";
 import { SiNaver } from "react-icons/si";
 import { IconType } from "react-icons";
@@ -52,6 +53,13 @@ export const platformConfig: Record<PlatformType, PlatformConfig> = {
     color: "secondary",
     bgColor: "bg-purple-500",
     supportsOAuth: false,
+  },
+  amazon: {
+    name: "Amazon",
+    icon: FaAmazon,
+    color: "warning",
+    bgColor: "bg-orange-500",
+    supportsOAuth: true,
   },
 };
 

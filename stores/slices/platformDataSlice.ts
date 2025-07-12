@@ -24,6 +24,7 @@ export const createPlatformDataSlice: StateCreator<
     kakao: 0,
     naver: 0,
     coupang: 0,
+    amazon: 0,
   },
   setCredentials: (credentials) => set({ credentials }),
   setSyncProgress: (platform, progress) =>

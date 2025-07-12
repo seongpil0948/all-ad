@@ -6,7 +6,8 @@ export type PlatformType =
   | "google"
   | "kakao"
   | "naver"
-  | "coupang";
+  | "coupang"
+  | "amazon";
 
 // Map legacy platform names to current ones
 export const PLATFORM_MAPPING = {
@@ -16,6 +17,7 @@ export const PLATFORM_MAPPING = {
   kakao: "kakao",
   naver: "naver",
   coupang: "coupang",
+  amazon: "amazon",
 } as const;
 
 // Campaign status types

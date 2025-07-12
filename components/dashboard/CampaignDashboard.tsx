@@ -241,12 +241,12 @@ export function CampaignDashboard() {
   // 플랫폼별 캠페인 수 계산
   const campaignCounts = useMemo(() => {
     return campaigns.reduce(
-      (acc: Record<PlatformType, number>, campaign: Campaign) => {
+      (acc: Record<string, number>, campaign: Campaign) => {
         acc[campaign.platform] = (acc[campaign.platform] || 0) + 1;
 
         return acc;
       },
-      {} as Record<PlatformType, number>,
+      {} as Record<string, number>,
     );
   }, [campaigns]);
 

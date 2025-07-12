@@ -107,6 +107,7 @@ async function getCampaignData(
 
     if (extendedCampaign.clicks !== undefined) {
       appCampaign.metrics = {
+        date: new Date().toISOString().split("T")[0],
         clicks: extendedCampaign.clicks,
         impressions: extendedCampaign.impressions || 0,
         cost: extendedCampaign.cost || 0,

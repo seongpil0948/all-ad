@@ -52,6 +52,7 @@ export default function IntegratedTabsClient() {
       is_active: cred.is_active,
       created_by: cred.created_by || user?.id || "",
       last_synced_at: cred.last_synced_at || null,
+      error_message: cred.error_message || null,
       created_at: cred.created_at,
       updated_at: cred.updated_at,
     }),

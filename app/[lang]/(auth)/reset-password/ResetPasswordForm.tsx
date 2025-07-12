@@ -1,7 +1,7 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
 import { Form } from "@heroui/form";
@@ -9,22 +9,63 @@ import { FaLock } from "react-icons/fa";
 
 import { updatePassword, type ResetPasswordState } from "./actions";
 
+import { createClient } from "@/utils/supabase/client";
 import log from "@/utils/logger";
+import { ErrorMessage } from "@/components/common/ErrorMessage";
 
 export function ResetPasswordForm() {
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const token = searchParams.get("token");
+  const [isValidSession, setIsValidSession] = useState<boolean | null>(null);
+  const [sessionChecked, setSessionChecked] = useState(false);
 
   const initialState: ResetPasswordState = { errors: {} };
   const [state, action] = useActionState(updatePassword, initialState);
 
   useEffect(() => {
-    if (!token) {
-      log.error("No reset token found in URL");
-      router.push("/forgot-password");
+    const checkSession = async () => {
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
+
+        if (error) {
+          log.error("Error checking user:", error);
+          setIsValidSession(false);
+          setSessionChecked(true);
+
+          return;
+        }
+
+        if (!user) {
+          log.warn("No active user found for password reset");
+          setIsValidSession(false);
+          setSessionChecked(true);
+
+          return;
+        }
+
+        // Valid user found for password recovery
+        log.info("Valid user found for password reset", { userId: user.id });
+        setIsValidSession(true);
+        setSessionChecked(true);
+      } catch (err) {
+        log.error("Unexpected error checking user:", err);
+        setIsValidSession(false);
+        setSessionChecked(true);
+      }
+    };
+
+    checkSession();
+  }, []);
+
+  useEffect(() => {
+    if (sessionChecked && !isValidSession) {
+      log.warn("Invalid session, redirecting to forgot password");
+      router.push("/forgot-password?error=session_expired");
     }
-  }, [token, router]);
+  }, [sessionChecked, isValidSession, router]);
 
   useEffect(() => {
     if (state.success) {
@@ -34,10 +75,31 @@ export function ResetPasswordForm() {
     }
   }, [state.success, router]);
 
+  // Show loading while checking session
+  if (!sessionChecked) {
+    return (
+      <div className="flex justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2" />
+          <p className="text-sm text-default-500">세션을 확인하는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if session is invalid
+  if (!isValidSession) {
+    return (
+      <div className="text-center">
+        <p className="text-danger text-sm">
+          유효하지 않은 세션입니다. 비밀번호 재설정을 다시 요청해주세요.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <Form action={action} validationErrors={state.errors}>
-      <input name="token" type="hidden" value={token || ""} />
-
       <div className="flex flex-col gap-4">
         <Input
           isRequired
@@ -64,11 +126,10 @@ export function ResetPasswordForm() {
         />
 
         {state.errors?.general && (
-          <div
-            className={`text-sm ${state.success ? "text-success" : "text-danger"}`}
-          >
-            {state.errors.general}
-          </div>
+          <ErrorMessage
+            isSuccess={state.success}
+            message={state.errors.general}
+          />
         )}
 
         <Button fullWidth color="primary" type="submit">
