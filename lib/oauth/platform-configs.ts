@@ -108,7 +108,7 @@ export async function getOAuthConfigWithCredentials(
   };
 }
 
-// Get OAuth config with All-AD's own credentials (for simplified OAuth)
+// Get OAuth config with Sivera's own credentials (for simplified OAuth)
 export async function getAllAdOAuthConfig(
   platform: string,
 ): Promise<OAuthConfig | null> {
@@ -119,7 +119,7 @@ export async function getAllAdOAuthConfig(
     return null;
   }
 
-  // Use All-AD's own OAuth credentials from environment variables
+  // Use Sivera's own OAuth credentials from environment variables
   const credentialMap = {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID,

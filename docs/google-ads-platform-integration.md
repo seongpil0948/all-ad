@@ -423,7 +423,7 @@ ResourceNames.geoTargetConstant(1010543); // 암스테르담
 
 ## 플랫폼 서비스 구현
 
-All-AD의 Google Ads 플랫폼 서비스 구현:
+Sivera의 Google Ads 플랫폼 서비스 구현:
 
 ```typescript
 // services/platforms/google-ads-oauth-platform.service.ts

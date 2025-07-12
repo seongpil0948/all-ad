@@ -25,7 +25,7 @@ serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Get All-AD OAuth credentials from environment
+    // Get Sivera OAuth credentials from environment
     const googleClientId = Deno.env.get("GOOGLE_CLIENT_ID");
     const googleClientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
 
@@ -71,7 +71,7 @@ serve(async (req: Request) => {
 
         switch (credential.platform) {
           case "google":
-            // Use All-AD's OAuth credentials if available
+            // Use Sivera's OAuth credentials if available
             const clientId =
               googleClientId || credential.credentials?.client_id;
             const clientSecret =

@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Get All-AD's OAuth config
+    // Get Sivera's OAuth config
     const oauthConfig = await getAllAdOAuthConfig("google");
 
     if (!oauthConfig) {

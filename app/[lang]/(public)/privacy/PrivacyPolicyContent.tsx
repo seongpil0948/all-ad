@@ -11,7 +11,7 @@ export default function PrivacyPolicyContent() {
     <div className="space-y-8">
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold text-default-900">
-          ALL AD 개인정보 처리방침
+          Sivera 개인정보 처리방침
         </h1>
         <Chip
           className="font-medium"
@@ -72,7 +72,7 @@ export default function PrivacyPolicyContent() {
           </CardHeader>
           <CardBody>
             <p className="text-default-700 leading-relaxed">
-              주식회사 올애드(이하 &quot;회사&quot;라 합니다)는 정보통신망
+              주식회사 시베라(이하 &quot;회사&quot;라 합니다)는 정보통신망
               이용촉진 및 정보보호 등에 관한 법률, 개인정보보호법 등 관련
               법령상의 개인정보보호 규정을 준수하며, 관련 법령에 의거한 개인정보
               처리방침을 정하여 이용자 권익 보호에 최선을 다하고 있습니다. 본
@@ -824,7 +824,7 @@ export default function PrivacyPolicyContent() {
 
       {/* Footer */}
       <div className="text-center py-8 text-default-500 text-sm">
-        <p>© 2025 주식회사 올애드. All rights reserved.</p>
+        <p>© 2025 주식회사 시베라. All rights reserved.</p>
       </div>
     </div>
   );

@@ -879,7 +879,7 @@ COMMENT ON TABLE public.sync_logs IS '각 플랫폼 통합의 동기화 이력�
 COMMENT ON TABLE public.platform_credentials IS 
 '플랫폼 자격증명 테이블 - OAuth 토큰은 최상위 컬럼(access_token, refresh_token, expires_at, scope)에 저장됨. 
 data JSONB 컬럼에는 user_email, user_id, connected_at 같은 민감하지 않은 메타데이터만 포함.
-credentials JSONB 컬럼에는 All-AD OAuth를 사용하지 않을 때 OAuth 클라이언트 자격증명(client_id, client_secret) 포함.';
+credentials JSONB 컬럼에는 Sivera OAuth를 사용하지 않을 때 OAuth 클라이언트 자격증명(client_id, client_secret) 포함.';
 COMMENT ON FUNCTION call_edge_function IS 'pg_cron 작업에서 Supabase Edge Functions를 호출하기 위한 헬퍼 함수';
 COMMENT ON TABLE public.manual_campaigns IS 'API가 없는 플랫폼(예: 쿠팡)의 캠페인 데이터를 수동으로 관리하기 위한 테이블';
 COMMENT ON TABLE public.oauth_states IS 'OAuth 2.0 CSRF 공격 방지를 위한 state 파라미터 저장 테이블';

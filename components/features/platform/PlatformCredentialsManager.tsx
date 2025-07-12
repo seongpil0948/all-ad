@@ -53,7 +53,7 @@ function PlatformCredentialsManagerComponent({
     (platform: PlatformType) => {
       const config = platformConfig[platform];
 
-      // For OAuth platforms with All-AD credentials, redirect directly
+      // For OAuth platforms with Sivera credentials, redirect directly
       if (
         config.supportsOAuth &&
         ["google", "facebook", "kakao"].includes(platform)

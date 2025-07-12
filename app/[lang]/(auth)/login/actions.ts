@@ -198,7 +198,7 @@ export async function signup(
     redirectWithToast(redirectPath, {
       type: "success",
       message: "회원가입이 완료되었습니다",
-      description: "All-AD에 오신 것을 환영합니다!",
+      description: "Sivera에 오신 것을 환영합니다!",
     });
   }
 

@@ -722,16 +722,16 @@
     "title": "常见问题",
     "questions": {
       "platforms": {
-        "question": "AllAd支持哪些广告平台？",
-        "answer": "AllAd目前支持Google Ads、Meta Ads（Facebook和Instagram）、Naver搜索广告、Kakao Moment等，并正在添加更多平台。"
+        "question": "Sivera支持哪些广告平台？",
+        "answer": "Sivera目前支持Google Ads、Meta Ads（Facebook和Instagram）、Naver搜索广告、Kakao Moment等，并正在添加更多平台。"
       },
       "migration": {
         "question": "可以迁移现有的广告系列吗？",
-        "answer": "是的，AllAd与您现有的广告账户无缝连接。您的广告系列保留在原始平台上，同时通过我们的统一仪表板进行管理。"
+        "answer": "是的，Sivera与您现有的广告账户无缝连接。您的广告系列保留在原始平台上，同时通过我们的统一仪表板进行管理。"
       },
       "contract": {
         "question": "有最低合同期限吗？",
-        "answer": "没有，AllAd提供灵活的月度订阅。您可以随时升级、降级或取消。"
+        "answer": "没有，Sivera提供灵活的月度订阅。您可以随时升级、降级或取消。"
       },
       "security": {
         "question": "如何管理数据安全？",

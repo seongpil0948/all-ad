@@ -6,7 +6,7 @@ echo "Testing Google Ads sync Edge Function..."
 
 # First, let's test if the function can be loaded without errors
 echo "1. Testing function syntax..."
-cd /Users/2309-n0015/Code/Project/all-ad
+cd /Users/2309-n0015/Code/Project/sivera
 supabase functions serve google-ads-sync --no-verify-jwt &
 SERVER_PID=$!
 
