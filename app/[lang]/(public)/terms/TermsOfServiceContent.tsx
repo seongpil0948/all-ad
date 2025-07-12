@@ -11,7 +11,7 @@ export default function TermsOfServiceContent() {
     <div className="space-y-8">
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold text-default-900">
-          All-AD 서비스 이용약관
+          Sivera 서비스 이용약관
         </h1>
         <Chip
           className="font-medium"
@@ -198,7 +198,7 @@ export default function TermsOfServiceContent() {
           </CardHeader>
           <CardBody>
             <p className="text-default-700 leading-relaxed">
-              본 약관은 주식회사 올애드(이하 &quot;회사&quot;라 합니다)가
+              본 약관은 주식회사 시베라(이하 &quot;회사&quot;라 합니다)가
               제공하는 All-AD 서비스 및 관련 제반 서비스(이하
               &quot;서비스&quot;라 합니다)의 이용과 관련하여 회사와 회원 간의
               권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로
@@ -220,7 +220,7 @@ export default function TermsOfServiceContent() {
               <div className="pl-4 border-l-3 border-primary">
                 <p className="font-semibold">&quot;서비스&quot;</p>
                 <p className="text-default-600 text-sm">
-                  회사가 제공하는 All-AD 웹사이트 및 관련 애플리케이션을 통해
+                  회사가 제공하는 Sivera 웹사이트 및 관련 애플리케이션을 통해
                   광고 플랫폼 데이터 통합, 대시보드, 리포팅, 광고 캠페인 관리
                   보조 기능 등 광고 운영 효율화를 위해 제공하는 모든 기능을
                   의미합니다.
@@ -666,7 +666,7 @@ export default function TermsOfServiceContent() {
                 개정)의 규정에 따라 공지합니다.
               </li>
               <li className="text-default-700">
-                청약철회 및 환불 규정은 별도로 정하는 &quot;All-AD 서비스
+                청약철회 및 환불 규정은 별도로 정하는 &quot;Sivera 서비스
                 청약철회 및 환불 규정&quot; 문서에 따르며, 해당 문서는 서비스
                 화면에 게시하거나 링크를 통해 제공합니다.
               </li>
@@ -965,7 +965,7 @@ export default function TermsOfServiceContent() {
           </div>
         </div>
         <p className="text-default-500 text-sm">
-          © 2025 주식회사 올애드. All rights reserved.
+          © 2025 주식회사 시베라. All rights reserved.
         </p>
       </div>
     </div>

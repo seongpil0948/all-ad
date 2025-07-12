@@ -704,28 +704,28 @@
       "subscribe": "Subscribe"
     },
     "companyInfo": {
-      "name": "AllAd",
-      "tagline": "All advertising platforms in one. Setting new standards for ad management.",
+      "name": "Sivera",
+      "tagline": "Setting new standards for ad management.",
       "copyright": "© {{year}} {{company}}. All rights reserved.",
-      "address": "123 Teheran-ro, Gangnam-gu, Seoul",
-      "email": "support@allad.co.kr",
-      "phone": "02-1234-5678"
+      "address": "#402, 322, Byeollae 3-ro, Namyangju-si, Gyeonggi-do, Republic of Korea",
+      "email": "siveraofficial@gmail.com",
+      "phone": "+82.010.7727.7428"
     }
   },
   "faq": {
     "title": "Frequently Asked Questions",
     "questions": {
       "platforms": {
-        "question": "Which advertising platforms does AllAd support?",
-        "answer": "AllAd currently supports Google Ads, Meta Ads (Facebook & Instagram), Naver Search Ads, Kakao Moment, and more platforms are being added."
+        "question": "Which advertising platforms does Sivera support?",
+        "answer": "Sivera currently supports Google Ads, Meta Ads (Facebook & Instagram), Naver Search Ads, Kakao Moment, and more platforms are being added."
       },
       "migration": {
         "question": "Can I migrate my existing ad campaigns?",
-        "answer": "Yes, AllAd seamlessly connects with your existing ad accounts. Your campaigns remain on their original platforms while being managed through our unified dashboard."
+        "answer": "Yes, Sivera seamlessly connects with your existing ad accounts. Your campaigns remain on their original platforms while being managed through our unified dashboard."
       },
       "contract": {
         "question": "Is there a minimum contract period?",
-        "answer": "No, AllAd offers flexible monthly subscriptions. You can upgrade, downgrade, or cancel anytime."
+        "answer": "No, Sivera offers flexible monthly subscriptions. You can upgrade, downgrade, or cancel anytime."
       },
       "security": {
         "question": "How is data security managed?",

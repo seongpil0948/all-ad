@@ -25,7 +25,7 @@ export class GoogleAdsOAuthClient {
 
   constructor(private credentials: GoogleAdsOAuthCredentials) {}
 
-  // Initialize client with All-AD's OAuth credentials
+  // Initialize client with Sivera's OAuth credentials
   private async initializeClient() {
     if (this.client) return;
 

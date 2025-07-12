@@ -6,7 +6,7 @@ import { title, subtitle } from "@/components/primitives";
 import {
   StatsSection,
   TestimonialsSection,
-  IntegrationProcessSection,
+  // IntegrationProcessSection,
   FAQSection,
   DashboardPreview,
   AnimatedBackground,
@@ -61,7 +61,7 @@ export default async function Home({
       <StatsSection />
 
       {/* Integration Process Section */}
-      <IntegrationProcessSection />
+      {/* <IntegrationProcessSection /> */}
 
       {/* Dashboard Preview */}
       <section className="px-6 py-20">

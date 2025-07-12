@@ -65,7 +65,8 @@ Deno.serve(async (req: Request) => {
 
     // Prepare email data for Resend API
     const resendData = {
-      from: "All Ad <noreply@all-ad.in>",
+      // from: emailData.from || "Acme <onboarding@resend.dev>", // Use Resend's test domain
+      from: "Sivera <noreply@sivera.in>',",
       to: Array.isArray(emailData.to) ? emailData.to : [emailData.to],
       subject: emailData.subject,
       html: emailData.html,

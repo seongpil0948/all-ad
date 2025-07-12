@@ -1,10 +1,10 @@
 # OAuth Configuration Guide
 
-This guide explains how to configure OAuth for Google Ads, Facebook Ads, and Kakao Ads in the All-AD platform.
+This guide explains how to configure OAuth for Google Ads, Facebook Ads, and Kakao Ads in the Sivera platform.
 
 ## Overview
 
-All-AD supports two methods for connecting advertising platforms:
+Sivera supports two methods for connecting advertising platforms:
 
 1. **OAuth Flow** (Recommended): Users provide their OAuth app credentials, and we handle token management automatically
 2. **Manual Token Input** (Fallback): Users can manually input refresh tokens if OAuth fails
@@ -37,7 +37,7 @@ All-AD supports two methods for connecting advertising platforms:
    - Visit [Google Ads API Center](https://ads.google.com/aw/apicenter)
    - Apply for a developer token if you don't have one
 
-4. **Connect in All-AD**
+4. **Connect in Sivera**
    - Go to Settings > Platform Credentials
    - Click "Connect" for Google
    - Enter your Client ID, Client Secret, and Developer Token
@@ -75,7 +75,7 @@ If OAuth fails, you can generate a refresh token manually:
      https://your-domain.com/api/auth/callback/facebook-ads  # For production
      ```
 
-3. **Connect in All-AD**
+3. **Connect in Sivera**
    - Go to Settings > Platform Credentials
    - Click "Connect" for Facebook
    - Enter your App ID and App Secret
@@ -118,7 +118,7 @@ If OAuth fails, you can generate an access token manually:
    - Go to Security settings
    - Generate and enable Client Secret
 
-4. **Connect in All-AD**
+4. **Connect in Sivera**
    - Go to Settings > Platform Credentials
    - Click "Connect" for Kakao
    - Enter your REST API Key and Client Secret
@@ -128,7 +128,7 @@ If OAuth fails, you can generate an access token manually:
 
 ### redirect_uri_mismatch Error
 
-This error occurs when the redirect URI in your OAuth app doesn't match the one used by All-AD.
+This error occurs when the redirect URI in your OAuth app doesn't match the one used by Sivera.
 
 **Solution:**
 
