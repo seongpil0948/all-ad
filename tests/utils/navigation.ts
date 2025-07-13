@@ -9,7 +9,7 @@ export async function gotoWithLang(page: Page, path: string) {
   // path가 빈 문자열이면 루트로, 아니면 앞에 '/'를 추가
   const normalizedPath = path === "" ? "" : `/${path}`;
   const urlWithLang = `/${LANG}${normalizedPath}`;
-  await page.goto(urlWithLang, { waitUntil: "networkidle" });
+  await page.goto(urlWithLang, { waitUntil: "domcontentloaded" });
   return urlWithLang;
 }
 
@@ -27,6 +27,6 @@ export function urlWithLangPattern(path: string) {
  */
 export async function expectUrl(page: Page, path: string) {
   const pattern = urlWithLangPattern(path);
-  await page.waitForURL(pattern, { timeout: 15000 });
+  await page.waitForURL(pattern, { timeout: 10000 });
   return pattern;
 }
