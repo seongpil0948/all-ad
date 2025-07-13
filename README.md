@@ -179,11 +179,8 @@ pnpm lint
 # 전체 프로젝트 포매팅
 pnpm format
 
-# 단위 테스트
-pnpm test:unit
-
-# E2E 테스트
-pnpm test:e2e
+# 테스트
+pnpm test:fast
 ```
 
 ### 테스트 실행
