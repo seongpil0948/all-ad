@@ -82,7 +82,7 @@ export interface AmazonReport {
   endTime?: string;
 }
 
-export interface AmazonReportRequest {
+export interface AmazonReportRequest extends Record<string, unknown> {
   reportDate?: string;
   campaignType: "sponsoredProducts" | "sponsoredBrands" | "sponsoredDisplay";
   segment?: "query" | "placement";
@@ -99,6 +99,41 @@ export interface RateLimitConfig {
   maxRetries: number;
   baseDelay: number;
   maxDelay: number;
+}
+
+export interface AmazonApiError {
+  response?: {
+    status: number;
+    headers: Record<string, string>;
+    data?: Record<string, unknown>;
+  };
+  config?: {
+    url?: string;
+    method?: string;
+  };
+  message: string;
+}
+
+export interface AmazonReportData {
+  [key: string]: string | number | null | undefined;
+}
+
+export interface AmazonApiFilters extends Record<string, string> {
+  [key: string]: string;
+}
+
+export interface AmazonProfileData {
+  profileId: string | number;
+  accountInfo: {
+    id: string;
+    type: string;
+    name: string;
+    validPaymentMethod: boolean;
+  };
+  countryCode: string;
+  currencyCode: string;
+  timezone: string;
+  marketplaceStringId: string;
 }
 
 export class AmazonAdsApiClient {
@@ -190,7 +225,7 @@ export class AmazonAdsApiClient {
   private async makeRequest<T>(
     method: string,
     endpoint: string,
-    data?: any,
+    data?: Record<string, unknown> | Record<string, unknown>[] | string,
     config?: AxiosRequestConfig,
   ): Promise<T> {
     let attempt = 0;
@@ -205,13 +240,15 @@ export class AmazonAdsApiClient {
         });
 
         return response.data;
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const apiError = error as AmazonApiError;
+
         if (
-          error.response?.status === 429 &&
+          apiError.response?.status === 429 &&
           attempt < this.rateLimitConfig.maxRetries
         ) {
           // Rate limit 에러 시 재시도
-          const retryAfter = error.response.headers["retry-after"];
+          const retryAfter = apiError.response.headers["retry-after"];
           const delay = retryAfter
             ? parseInt(retryAfter) * 1000
             : Math.min(
@@ -239,7 +276,7 @@ export class AmazonAdsApiClient {
   }
 
   // 캠페인 관리
-  async getCampaigns(filters?: any): Promise<AmazonCampaign[]> {
+  async getCampaigns(filters?: AmazonApiFilters): Promise<AmazonCampaign[]> {
     const queryParams = filters
       ? `?${new URLSearchParams(filters).toString()}`
       : "";
@@ -277,7 +314,7 @@ export class AmazonAdsApiClient {
   }
 
   // 키워드 관리
-  async getKeywords(filters?: any): Promise<AmazonKeyword[]> {
+  async getKeywords(filters?: AmazonApiFilters): Promise<AmazonKeyword[]> {
     const queryParams = filters
       ? `?${new URLSearchParams(filters).toString()}`
       : "";
@@ -298,7 +335,9 @@ export class AmazonAdsApiClient {
   }
 
   // 제품 타겟팅 관리
-  async getProductTargets(filters?: any): Promise<AmazonProductTarget[]> {
+  async getProductTargets(
+    filters?: AmazonApiFilters,
+  ): Promise<AmazonProductTarget[]> {
     const queryParams = filters
       ? `?${new URLSearchParams(filters).toString()}`
       : "";
@@ -329,7 +368,7 @@ export class AmazonAdsApiClient {
     return this.makeRequest("GET", `/v3/reports/${reportId}`);
   }
 
-  async downloadReport(reportUrl: string): Promise<any[]> {
+  async downloadReport(reportUrl: string): Promise<AmazonReportData[]> {
     try {
       const response = await axios.get(reportUrl, {
         headers: {
@@ -359,7 +398,7 @@ export class AmazonAdsApiClient {
   async generateReport(
     request: AmazonReportRequest,
     maxAttempts = 60,
-  ): Promise<any[]> {
+  ): Promise<AmazonReportData[]> {
     // 1. 보고서 요청 생성
     const { reportId } = await this.createReport(request);
 
@@ -385,7 +424,7 @@ export class AmazonAdsApiClient {
   }
 
   // 프로필 정보 조회
-  async getProfiles(): Promise<any[]> {
+  async getProfiles(): Promise<AmazonProfileData[]> {
     return this.makeRequest("GET", "/v2/profiles");
   }
 
@@ -412,9 +451,11 @@ export class AmazonAdsApiClient {
       );
 
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const apiError = error as AmazonApiError;
+
       log.error("Amazon token refresh failed", {
-        error: error.response?.data || error.message,
+        error: apiError.response?.data || apiError.message,
       });
       throw new Error("Failed to refresh Amazon token");
     }

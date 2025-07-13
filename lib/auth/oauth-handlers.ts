@@ -14,8 +14,8 @@ export const OAUTH_CONFIGS = {
     ],
   },
   facebook: {
-    authUrl: "https://www.facebook.com/v18.0/dialog/oauth",
-    tokenUrl: "https://graph.facebook.com/v18.0/oauth/access_token",
+    authUrl: "https://www.facebook.com/v23.0/dialog/oauth",
+    tokenUrl: "https://graph.facebook.com/v23.0/oauth/access_token",
     scopes: ["ads_management", "ads_read", "business_management"],
   },
   kakao: {
@@ -245,7 +245,7 @@ export async function getPlatformAccountInfo(
       headers = { Authorization: `Bearer ${accessToken}` };
       break;
     case "facebook":
-      apiUrl = "https://graph.facebook.com/v18.0/me?fields=id,name,email";
+      apiUrl = "https://graph.facebook.com/v23.0/me?fields=id,name,email";
       headers = { Authorization: `Bearer ${accessToken}` };
       break;
     case "kakao":

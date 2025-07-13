@@ -8,6 +8,7 @@
 - [개발 환경 설정](#개발-환경-설정)
 - [개발 워크플로우](#개발-워크플로우)
 - [코딩 가이드라인](#코딩-가이드라인)
+- [플랫폼 서비스 개발](#플랫폼-서비스-개발)
 - [커밋 가이드라인](#커밋-가이드라인)
 - [Pull Request 가이드라인](#pull-request-가이드라인)
 - [문제 해결](#문제-해결)
@@ -221,8 +222,91 @@ Closes #123
 - `auth`: 인증 관련
 - `dashboard`: 대시보드 관련
 - `api`: API 관련
+- `platforms`: 플랫폼 서비스 관련 (2024.12 추가)
 - `components`: 컴포넌트 관련
 - `utils`: 유틸리티 관련
+
+## 🔧 플랫폼 서비스 개발 (2024.12 업데이트)
+
+### 새로운 플랫폼 추가하기
+
+새로운 광고 플랫폼을 추가할 때는 다음 가이드라인을 따르세요:
+
+#### 1. 플랫폼 서비스 생성
+
+```typescript
+// services/platforms/your-platform.service.ts
+import { BasePlatformService } from "./base-platform.service";
+import {
+  PlatformCredentials,
+  ConnectionTestResult,
+  TokenRefreshResult,
+} from "./platform-service.interface";
+
+export class YourPlatformService extends BasePlatformService<YourApiClient> {
+  platform: PlatformType = "your_platform";
+
+  async testConnection(): Promise<ConnectionTestResult> {
+    return this.executeWithErrorHandling(async () => {
+      // 플랫폼 연결 테스트 로직
+      const isConnected = await this.service!.testConnection();
+      return {
+        success: isConnected,
+        accountInfo: { id: "account-id", name: "Account Name" },
+      };
+    }, "testConnection");
+  }
+
+  async refreshToken(): Promise<TokenRefreshResult> {
+    // 토큰 갱신 로직 구현
+  }
+
+  async getAccountInfo(): Promise<AccountInfo> {
+    // 계정 정보 조회 로직 구현
+  }
+
+  // 기타 필수 메서드들...
+}
+```
+
+#### 2. 에러 처리 규칙
+
+- 모든 플랫폼 작업은 `executeWithErrorHandling` 래퍼 사용
+- 플랫폼별 에러는 `PlatformError` 계열 클래스 사용
+- 재시도 가능한 에러와 불가능한 에러 구분
+
+```typescript
+// 좋은 예
+async fetchCampaigns(): Promise<Campaign[]> {
+  return this.executeWithErrorHandling(async () => {
+    const campaigns = await this.service!.getCampaigns();
+    return campaigns.map(this.transformCampaign);
+  }, "fetchCampaigns");
+}
+```
+
+#### 3. 팩토리 등록
+
+```typescript
+// services/platforms/platform-service-factory.ts
+private initializeServices(): void {
+  this.services.set("your_platform", () => new YourPlatformService());
+}
+```
+
+#### 4. 타입 정의
+
+```typescript
+// types/supabase.types.ts에 플랫폼 타입 추가
+export type PlatformType = "google" | "facebook" | "amazon" | "your_platform";
+```
+
+### 코드 품질 기준
+
+1. **TypeScript 엄격 모드**: 모든 타입 명시
+2. **에러 처리**: try-catch 대신 `executeWithErrorHandling` 사용
+3. **로깅**: `console.log` 금지, `log` 유틸리티 사용
+4. **테스트**: 새 플랫폼은 연결 테스트 필수
 
 ### 5. 푸시 및 Pull Request
 

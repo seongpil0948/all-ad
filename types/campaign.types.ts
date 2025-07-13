@@ -13,7 +13,7 @@ export interface PlatformCredentials {
   platform: PlatformType;
   account_id: string;
   account_name?: string;
-  credentials: any;
+  credentials: Record<string, unknown>;
   access_token?: string;
   refresh_token?: string;
   expires_at?: string;
@@ -35,7 +35,7 @@ export interface Campaign {
   status?: string;
   is_active: boolean;
   budget?: number;
-  raw_data?: any;
+  raw_data?: Record<string, unknown>;
   synced_at?: string;
   created_at?: string;
   updated_at?: string;
@@ -74,7 +74,7 @@ export interface CampaignMetrics {
   cost: number;
   conversions?: number;
   revenue?: number;
-  raw_data?: any;
+  raw_data?: Record<string, unknown>;
   created_at?: string;
 
   // Calculated fields

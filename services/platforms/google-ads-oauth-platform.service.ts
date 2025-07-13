@@ -5,76 +5,156 @@ import type {
   CampaignStatus,
 } from "@/types";
 
-import { PlatformService } from "./platform-service.interface";
+import {
+  ConnectionTestResult,
+  TokenRefreshResult,
+  PlatformCredentials,
+} from "./platform-service.interface";
+import { BasePlatformService } from "./base-platform.service";
 
+import { PlatformConfigError } from "@/types/platform-errors.types";
 import { GoogleAdsOAuthIntegrationService } from "@/services/google-ads/google-ads-oauth-integration.service";
 import log from "@/utils/logger";
 
-export class GoogleAdsOAuthPlatformService implements PlatformService {
+export class GoogleAdsOAuthPlatformService extends BasePlatformService<GoogleAdsOAuthIntegrationService> {
   platform: PlatformType = "google";
-  private integrationService: GoogleAdsOAuthIntegrationService | null = null;
-  private teamId: string | null = null;
   private customerId: string | null = null;
 
-  private initializeIntegrationService(
-    credentials: Record<string, unknown>,
-  ): void {
-    this.teamId = credentials.teamId as string;
+  constructor(credentials?: PlatformCredentials) {
+    super(credentials);
+  }
+
+  async initialize(credentials: PlatformCredentials): Promise<void> {
+    this.setCredentials(credentials);
+    this.teamId = credentials.accountId || "";
     this.customerId = credentials.customerId as string | null;
+    await this.initializeService();
+  }
+
+  private async initializeService(): Promise<void> {
+    this.ensureInitialized();
 
     if (!this.teamId) {
-      throw new Error("Team ID is required for Google Ads OAuth");
+      throw new PlatformConfigError(
+        this.platform,
+        "Team ID is required for Google Ads OAuth",
+      );
     }
 
     if (!this.customerId) {
-      throw new Error(
+      throw new PlatformConfigError(
+        this.platform,
         "Google Ads Customer ID is missing. Please disconnect and reconnect your Google Ads account to resolve this issue.",
       );
     }
 
-    this.integrationService = new GoogleAdsOAuthIntegrationService(
-      this.teamId,
-      this.customerId,
-    );
+    try {
+      this.service = new GoogleAdsOAuthIntegrationService(
+        this.teamId,
+        this.customerId,
+      );
+
+      log.info("Google Ads OAuth platform service initialized", {
+        teamId: this.teamId,
+        customerId: this.customerId,
+      });
+    } catch (error) {
+      throw new PlatformConfigError(
+        this.platform,
+        "Failed to initialize Google Ads OAuth service",
+        undefined,
+        error instanceof Error ? error : undefined,
+      );
+    }
   }
 
-  setCredentials(credentials: Record<string, unknown>): void {
-    this.initializeIntegrationService(credentials);
+  setCredentials(credentials: PlatformCredentials): void {
+    super.setCredentials(credentials);
+    this.teamId = credentials.accountId || "";
+    this.customerId = credentials.customerId as string | null;
   }
 
-  async setMultiAccountCredentials(
-    credentials: Record<string, unknown>,
-  ): Promise<void> {
-    this.initializeIntegrationService(credentials);
+  async testConnection(): Promise<ConnectionTestResult> {
+    return this.executeWithErrorHandling(async () => {
+      if (!this.service) {
+        await this.initializeService();
+      }
+
+      try {
+        await this.service!.getCampaigns();
+
+        return {
+          success: true,
+          accountInfo: {
+            id: this.customerId || "unknown",
+            name: "Google Ads Account",
+            currency: "USD", // Default, would need to be fetched from API
+            timezone: "UTC", // Default, would need to be fetched from API
+          },
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error:
+            error instanceof Error ? error.message : "Connection test failed",
+        };
+      }
+    }, "testConnection");
   }
 
   async validateCredentials(): Promise<boolean> {
-    if (!this.integrationService) {
-      return false;
-    }
+    return this.executeWithErrorHandling(async () => {
+      if (!this.validateRequiredFields(["accessToken"])) {
+        return false;
+      }
 
-    try {
-      // Try to get account info to validate credentials
-      const accountInfo = await this.integrationService.getAccountInfo();
+      const result = await this.testConnection();
 
-      return !!accountInfo;
-    } catch (error) {
-      log.error(
-        "Google Ads OAuth credentials validation failed",
-        error as Error,
-      );
+      return result.success;
+    }, "validateCredentials");
+  }
 
-      return false;
-    }
+  async refreshToken(): Promise<TokenRefreshResult> {
+    return this.executeWithErrorHandling(async () => {
+      this.ensureInitialized();
+
+      // Google Ads OAuth uses simplified flow - token managed by OAuth service
+      // Return current token as is since it's managed automatically
+      return {
+        success: true,
+        accessToken: this.credentials!.accessToken,
+        refreshToken: this.credentials!.refreshToken,
+      };
+    }, "refreshToken");
+  }
+
+  async getAccountInfo(): Promise<{
+    id: string;
+    name: string;
+    currency?: string;
+    timezone?: string;
+  }> {
+    return this.executeWithErrorHandling(async () => {
+      const testResult = await this.testConnection();
+
+      if (!testResult.success || !testResult.accountInfo) {
+        throw new PlatformConfigError(
+          this.platform,
+          "Failed to get account info",
+        );
+      }
+
+      return testResult.accountInfo;
+    }, "getAccountInfo");
   }
 
   async fetchCampaigns(): Promise<Campaign[]> {
-    if (!this.integrationService) {
-      throw new Error("Google Ads OAuth service not initialized");
-    }
+    return this.executeWithErrorHandling(async () => {
+      if (!this.service) {
+        await this.initializeService();
+      }
 
-    try {
-      const campaigns = await this.integrationService.getCampaigns();
+      const campaigns = await this.service!.getCampaigns();
 
       // Convert to Campaign type
       return campaigns.map((campaign) => ({
@@ -89,10 +169,7 @@ export class GoogleAdsOAuthPlatformService implements PlatformService {
         created_at: campaign.updatedAt,
         updated_at: campaign.updatedAt,
       }));
-    } catch (error) {
-      log.error("Failed to fetch Google Ads campaigns", error as Error);
-      throw error;
-    }
+    }, "fetchCampaigns");
   }
 
   async fetchCampaignMetrics(
@@ -100,79 +177,69 @@ export class GoogleAdsOAuthPlatformService implements PlatformService {
     _startDate: Date,
     _endDate: Date,
   ): Promise<CampaignMetrics[]> {
-    if (!this.integrationService) {
-      throw new Error("Google Ads OAuth service not initialized");
-    }
+    return this.executeWithErrorHandling(async () => {
+      if (!this.service) {
+        await this.initializeService();
+      }
 
-    // For now, return the current metrics
-    // In a full implementation, we'd query metrics for the date range
-    const campaigns = await this.integrationService.getCampaigns();
-    const campaign = campaigns.find((c) => c.id === campaignId);
+      // For now, return the current metrics
+      // In a full implementation, we'd query metrics for the date range
+      const campaigns = await this.service!.getCampaigns();
+      const campaign = campaigns.find((c) => c.id === campaignId);
 
-    if (!campaign) {
-      return [];
-    }
+      if (!campaign) {
+        return [];
+      }
 
-    return [
-      {
-        date: new Date().toISOString(),
-        impressions: campaign.impressions,
-        clicks: campaign.clicks,
-        cost: campaign.cost,
-        conversions: campaign.conversions,
-        ctr: campaign.ctr,
-      },
-    ];
+      return [
+        this.parseMetricsResponse({
+          campaign_id: campaignId,
+          date: new Date().toISOString(),
+          impressions: campaign.impressions,
+          clicks: campaign.clicks,
+          cost: campaign.cost,
+          conversions: campaign.conversions,
+          ctr: campaign.ctr,
+          raw_data: campaign as unknown as Record<string, unknown>,
+          created_at: new Date().toISOString(),
+        }),
+      ];
+    }, "fetchCampaignMetrics");
   }
 
   async updateCampaignStatus(
     campaignId: string,
     isActive: boolean,
   ): Promise<boolean> {
-    if (!this.integrationService) {
-      throw new Error("Google Ads OAuth service not initialized");
-    }
+    return this.executeWithErrorHandling(async () => {
+      if (!this.service) {
+        await this.initializeService();
+      }
 
-    try {
-      await this.integrationService.toggleCampaignStatus(campaignId, isActive);
-      log.info("Campaign status updated", { campaignId, isActive });
+      await this.service!.toggleCampaignStatus(campaignId, isActive);
+      log.info("Google Ads campaign status updated", { campaignId, isActive });
 
       return true;
-    } catch (error) {
-      log.error("Failed to update campaign status", error as Error, {
-        campaignId,
-        isActive,
-      });
-      throw error;
-    }
+    }, "updateCampaignStatus");
   }
 
   async updateCampaignBudget(
     campaignId: string,
     budget: number,
   ): Promise<boolean> {
-    if (!this.integrationService) {
-      throw new Error("Google Ads OAuth service not initialized");
-    }
+    return this.executeWithErrorHandling(async () => {
+      if (!this.service) {
+        await this.initializeService();
+      }
 
-    try {
       // Convert to micros (Google Ads uses micros)
       const budgetMicros = Math.round(budget * 1_000_000);
 
-      await this.integrationService.updateCampaignBudget(
-        campaignId,
-        budgetMicros,
-      );
-      log.info("Campaign budget updated", { campaignId, budget });
+      await this.service!.updateCampaignBudget(campaignId, budgetMicros);
+      log.info("Google Ads campaign budget updated", { campaignId, budget });
 
       return true;
-    } catch (error) {
-      log.error("Failed to update campaign budget", error as Error, {
-        campaignId,
-        budget,
-      });
-      throw error;
-    }
+    }, "updateCampaignBudget");
   }
 
   async createCampaign(_campaign: Partial<Campaign>): Promise<Campaign> {
@@ -180,15 +247,22 @@ export class GoogleAdsOAuthPlatformService implements PlatformService {
   }
 
   async deleteCampaign(campaignId: string): Promise<void> {
-    // In Google Ads, campaigns are not deleted but removed (status = REMOVED)
-    if (!this.integrationService) {
-      throw new Error("Google Ads OAuth service not initialized");
-    }
+    return this.executeWithErrorHandling(async () => {
+      // In Google Ads, campaigns are not deleted but removed (status = REMOVED)
+      // For now, we'll pause the campaign instead
+      await this.updateCampaignStatus(campaignId, false);
+      log.warn(
+        "Google Ads campaign deletion requested, campaign paused instead",
+        {
+          campaignId,
+        },
+      );
+    }, "deleteCampaign");
+  }
 
-    // For now, we'll pause the campaign instead
-    await this.updateCampaignStatus(campaignId, false);
-    log.warn("Campaign deletion requested, campaign paused instead", {
-      campaignId,
-    });
+  async cleanup(): Promise<void> {
+    await super.cleanup?.();
+    this.customerId = null;
+    log.info("Google Ads OAuth platform service cleanup completed");
   }
 }

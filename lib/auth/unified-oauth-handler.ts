@@ -236,7 +236,7 @@ function getClientId(platform: PlatformType): string | undefined {
     case "amazon":
       return process.env.AMAZON_CLIENT_ID;
     case "facebook":
-      return process.env.FACEBOOK_CLIENT_ID;
+      return process.env.META_APP_ID;
     case "kakao":
       return process.env.KAKAO_CLIENT_ID;
     case "naver":

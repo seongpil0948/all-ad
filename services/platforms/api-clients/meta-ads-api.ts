@@ -10,27 +10,65 @@ export interface MetaAdsTestCredentials {
   businessId?: string;
 }
 
-// Meta Ads OAuth URL 생성
+// Meta Ads OAuth URL 생성 (PKCE 지원)
 export async function generateMetaAuthUrl(
   appId: string,
   redirectUri: string,
   state: string,
+  options?: {
+    usePKCE?: boolean;
+    codeChallenge?: string;
+    codeChallengeMethod?: "S256" | "plain";
+    nonce?: string;
+    includeOpenId?: boolean;
+  },
 ) {
   try {
+    const scopes = [
+      "email",
+      "ads_management",
+      "ads_read",
+      "business_management",
+      "pages_read_engagement",
+      "pages_manage_ads",
+    ];
+
+    // OIDC 지원을 위해 openid 스코프 추가
+    if (options?.includeOpenId) {
+      scopes.unshift("openid");
+    }
+
     const params = new URLSearchParams({
       client_id: appId,
       redirect_uri: redirectUri,
       state: state,
-      scope:
-        "email,ads_management,ads_read,business_management,pages_read_engagement,pages_manage_ads",
+      scope: scopes.join(","),
       response_type: "code",
       auth_type: "rerequest",
       display: "popup",
     });
 
-    const authUrl = `https://www.facebook.com/v21.0/dialog/oauth?${params.toString()}`;
+    // PKCE 매개변수 추가
+    if (options?.usePKCE && options.codeChallenge) {
+      params.append("code_challenge", options.codeChallenge);
+      params.append(
+        "code_challenge_method",
+        options.codeChallengeMethod || "S256",
+      );
+    }
 
-    log.info("Meta Auth URL generated", { appId });
+    // OIDC nonce 추가
+    if (options?.nonce) {
+      params.append("nonce", options.nonce);
+    }
+
+    const authUrl = `https://www.facebook.com/v23.0/dialog/oauth?${params.toString()}`;
+
+    log.info("Meta Auth URL generated", {
+      appId,
+      usePKCE: options?.usePKCE,
+      includeOpenId: options?.includeOpenId,
+    });
 
     return { success: true, authUrl };
   } catch (error) {
@@ -46,29 +84,55 @@ export async function exchangeMetaToken(
   appId: string,
   appSecret: string,
   redirectUri: string,
+  codeVerifier?: string,
 ) {
-  return exchangeMetaCodeForToken(code, appId, appSecret, redirectUri);
+  return exchangeMetaCodeForToken(
+    code,
+    appId,
+    appSecret,
+    redirectUri,
+    codeVerifier,
+  );
 }
 
-// Meta Ads 토큰 교환
+// Meta Ads 토큰 교환 (PKCE 지원)
 export async function exchangeMetaCodeForToken(
   code: string,
   appId: string,
   appSecret: string,
   redirectUri: string,
+  codeVerifier?: string,
 ) {
   try {
-    log.info("Exchanging Meta code for token", { appId, redirectUri });
+    log.info("Exchanging Meta code for token", {
+      appId,
+      redirectUri,
+      usePKCE: !!codeVerifier,
+    });
 
     const params = new URLSearchParams({
       client_id: appId,
-      client_secret: appSecret,
       redirect_uri: redirectUri,
       code: code,
     });
 
+    // PKCE 지원: code_verifier가 제공되면 client_secret은 선택사항
+    if (codeVerifier) {
+      params.append("code_verifier", codeVerifier);
+    } else {
+      // PKCE를 사용하지 않는 경우 client_secret 필수
+      params.append("client_secret", appSecret);
+    }
+
     const tokenResponse = await fetch(
-      `https://graph.facebook.com/v21.0/oauth/access_token?${params}`,
+      `https://graph.facebook.com/v23.0/oauth/access_token`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: params,
+      },
     );
 
     const data = await tokenResponse.json();
@@ -87,6 +151,7 @@ export async function exchangeMetaCodeForToken(
       accessToken: data.access_token,
       tokenType: data.token_type,
       expiresIn: data.expires_in,
+      idToken: data.id_token, // OIDC ID Token (if openid scope was requested)
     };
   } catch (error) {
     log.error("Failed to exchange Meta code for token", error);
@@ -263,6 +328,97 @@ export async function batchUpdateMetaCampaignStatus(
     return {
       success: false,
       error: error instanceof Error ? error.message : "일괄 업데이트 실패",
+    };
+  }
+}
+
+// Meta Ads 캠페인 메트릭스 가져오기
+export async function fetchMetaCampaignMetrics(
+  credentials: MetaAdsTestCredentials,
+  accountId: string,
+  campaignId?: string,
+  dateRange: string = "last_30d",
+): Promise<{
+  success: boolean;
+  insights?: Array<{
+    impressions: string;
+    clicks: string;
+    spend: string;
+    actions?: Array<{ action_type: string; value: string }>;
+    ctr: string;
+    cpc: string;
+    cpm: string;
+    reach?: string;
+    frequency?: string;
+    date_start: string;
+    date_stop: string;
+    campaign_id?: string;
+    campaign_name?: string;
+  }>;
+  error?: string;
+}> {
+  try {
+    const service = new MetaAdsIntegrationService({
+      appId: credentials.appId,
+      appSecret: credentials.appSecret,
+      accessToken: credentials.accessToken,
+    });
+
+    const insights = await service.getCampaignInsights(
+      accountId,
+      campaignId,
+      dateRange,
+    );
+
+    return { success: true, insights };
+  } catch (error) {
+    log.error("Failed to fetch Meta campaign metrics", error);
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "메트릭스 조회 실패",
+    };
+  }
+}
+
+// Meta Ads 계정 인사이트 가져오기
+export async function fetchMetaAccountInsights(
+  credentials: MetaAdsTestCredentials,
+  accountId: string,
+  dateRange: string = "last_30d",
+): Promise<{
+  success: boolean;
+  insights?: {
+    impressions: string;
+    clicks: string;
+    spend: string;
+    actions?: Array<{ action_type: string; value: string }>;
+    ctr: string;
+    cpc: string;
+    cpm: string;
+    reach?: string;
+    frequency?: string;
+    date_start: string;
+    date_stop: string;
+  };
+  error?: string;
+}> {
+  try {
+    const service = new MetaAdsIntegrationService({
+      appId: credentials.appId,
+      appSecret: credentials.appSecret,
+      accessToken: credentials.accessToken,
+    });
+
+    const insights = await service.getAccountInsights(accountId, dateRange);
+
+    return { success: true, insights };
+  } catch (error) {
+    log.error("Failed to fetch Meta account insights", error);
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "계정 인사이트 조회 실패",
     };
   }
 }

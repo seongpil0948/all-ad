@@ -1,35 +1,60 @@
-import { PlatformService } from "./platform-service.interface";
+import { BasePlatformService } from "./base-platform.service";
+import {
+  ConnectionTestResult,
+  TokenRefreshResult,
+  PlatformCredentials,
+} from "./platform-service.interface";
 import {
   AmazonAdsApiClient,
   AmazonAdsCredentials,
   AmazonCampaign,
+  AmazonReportData,
+  AmazonKeyword,
+  AmazonProductTarget,
 } from "./api-clients/amazon-ads-api";
 
-import { Campaign, PlatformCredentials } from "@/types";
+import {
+  PlatformAuthError,
+  PlatformConfigError,
+} from "@/types/platform-errors.types";
+import { Campaign, PlatformType } from "@/types";
 import { CampaignMetrics } from "@/types/campaign.types";
-import { PlatformType } from "@/types/base.types";
+import { Json } from "@/types/supabase.types";
 import log from "@/utils/logger";
 
-export class AmazonPlatformService implements PlatformService {
-  public platform: PlatformType = "amazon" as any;
-  private client: AmazonAdsApiClient | null = null;
-  private credentials: Record<string, unknown> = {};
-  private teamId: string = "";
+export class AmazonPlatformService extends BasePlatformService<AmazonAdsApiClient> {
+  public platform: PlatformType = "amazon";
+
+  constructor(credentials?: PlatformCredentials) {
+    super(credentials);
+  }
 
   async initialize(credentials: PlatformCredentials): Promise<void> {
-    try {
-      const amazonCredentials: AmazonAdsCredentials =
-        credentials.credentials as AmazonAdsCredentials;
+    this.setCredentials(credentials);
+    this.teamId = credentials.accountId || "";
+    await this.initializeClient();
+  }
 
-      // Store teamId for use in transformCampaign
-      this.teamId = credentials.team_id;
+  private async initializeClient(): Promise<void> {
+    this.ensureInitialized();
+
+    try {
+      const amazonCredentials = this.credentials!
+        .additionalData as unknown as AmazonAdsCredentials;
+
+      if (!amazonCredentials) {
+        throw new PlatformConfigError(
+          this.platform,
+          "Amazon credentials not found in additionalData",
+        );
+      }
 
       // 지역 정보를 자격 증명에서 추출하거나 기본값 사용
       const region = this.getRegionFromCountryCode(
         amazonCredentials.country_code,
       );
 
-      this.client = new AmazonAdsApiClient(amazonCredentials, region);
+      this.service = new AmazonAdsApiClient(amazonCredentials, region);
 
       log.info("Amazon platform service initialized", {
         profileId: amazonCredentials.profile_id,
@@ -38,155 +63,160 @@ export class AmazonPlatformService implements PlatformService {
         teamId: this.teamId,
       });
     } catch (error) {
-      log.error("Failed to initialize Amazon platform service", { error });
-      throw new Error("Amazon platform service initialization failed");
+      throw new PlatformConfigError(
+        this.platform,
+        "Failed to initialize Amazon API client",
+        undefined,
+        error instanceof Error ? error : undefined,
+      );
     }
   }
 
-  private getRegionFromCountryCode(countryCode: string): string {
-    const regionMap: Record<string, string> = {
-      US: "NA",
-      CA: "NA",
-      MX: "NA",
-      UK: "EU",
-      DE: "EU",
-      FR: "EU",
-      IT: "EU",
-      ES: "EU",
-      NL: "EU",
-      SE: "EU",
-      PL: "EU",
-      TR: "EU",
-      JP: "FE",
-      AU: "FE",
-      SG: "FE",
-      IN: "FE",
-      AE: "FE",
-      SA: "FE",
-      EG: "FE",
-      BR: "NA",
-    };
+  async testConnection(): Promise<ConnectionTestResult> {
+    return this.executeWithErrorHandling(async () => {
+      if (!this.service) {
+        await this.initializeClient();
+      }
 
-    return regionMap[countryCode] || "NA";
+      try {
+        const profiles = await this.service!.getProfiles();
+        const profile = profiles[0];
+
+        return {
+          success: true,
+          accountInfo: {
+            id: profile?.profileId?.toString() || "unknown",
+            name: profile?.accountInfo?.name || "Amazon Account",
+            currency: profile?.currencyCode,
+            timezone: profile?.timezone,
+          },
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error:
+            error instanceof Error ? error.message : "Connection test failed",
+        };
+      }
+    }, "testConnection");
   }
 
-  async getCampaigns(): Promise<Campaign[]> {
-    if (!this.client) {
-      throw new Error("Amazon client not initialized");
-    }
+  async validateCredentials(): Promise<boolean> {
+    return this.executeWithErrorHandling(async () => {
+      if (!this.validateRequiredFields(["accessToken"])) {
+        return false;
+      }
 
-    try {
-      const amazonCampaigns = await this.client.getCampaigns({
+      const result = await this.testConnection();
+
+      return result.success;
+    }, "validateCredentials");
+  }
+
+  async refreshToken(): Promise<TokenRefreshResult> {
+    return this.executeWithErrorHandling(async () => {
+      this.ensureInitialized();
+
+      if (!this.service) {
+        await this.initializeClient();
+      }
+
+      const refreshToken = this.credentials!.refreshToken;
+
+      if (!refreshToken) {
+        throw new PlatformAuthError(
+          this.platform,
+          "Refresh token not available",
+        );
+      }
+
+      try {
+        const newTokens = await this.service!.refreshToken(refreshToken);
+
+        // 클라이언트의 액세스 토큰 업데이트
+        this.service!.updateAccessToken(newTokens.access_token);
+
+        return {
+          success: true,
+          accessToken: newTokens.access_token,
+          refreshToken: newTokens.refresh_token,
+          expiresAt: new Date(Date.now() + newTokens.expires_in * 1000),
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error:
+            error instanceof Error ? error.message : "Token refresh failed",
+        };
+      }
+    }, "refreshToken");
+  }
+
+  async getAccountInfo(): Promise<{
+    id: string;
+    name: string;
+    currency?: string;
+    timezone?: string;
+  }> {
+    return this.executeWithErrorHandling(async () => {
+      const testResult = await this.testConnection();
+
+      if (!testResult.success || !testResult.accountInfo) {
+        throw new PlatformConfigError(
+          this.platform,
+          "Failed to get account info",
+        );
+      }
+
+      return testResult.accountInfo;
+    }, "getAccountInfo");
+  }
+
+  async fetchCampaigns(): Promise<Campaign[]> {
+    return this.executeWithErrorHandling(async () => {
+      if (!this.service) {
+        await this.initializeClient();
+      }
+
+      const amazonCampaigns = await this.service!.getCampaigns({
         stateFilter: "enabled,paused",
       });
 
       return amazonCampaigns.map((campaign) =>
         this.transformCampaign(campaign, this.teamId),
       );
-    } catch (error) {
-      log.error("Failed to fetch Amazon campaigns", { error });
-      throw error;
-    }
+    }, "fetchCampaigns");
   }
 
-  async createCampaign(campaignData: Partial<Campaign>): Promise<Campaign> {
-    if (!this.client) {
-      throw new Error("Amazon client not initialized");
-    }
-
-    try {
-      const amazonCampaignData = this.transformToAmazonCampaign(campaignData);
-      const createdCampaign =
-        await this.client.createCampaign(amazonCampaignData);
-
-      return this.transformCampaign(createdCampaign, this.teamId);
-    } catch (error) {
-      log.error("Failed to create Amazon campaign", { error, campaignData });
-      throw error;
-    }
-  }
-
-  async updateCampaign(
+  async fetchCampaignMetrics(
     campaignId: string,
-    updates: Partial<Campaign>,
-  ): Promise<Campaign> {
-    if (!this.client) {
-      throw new Error("Amazon client not initialized");
-    }
+    startDate: Date,
+    endDate: Date,
+  ): Promise<CampaignMetrics[]> {
+    return this.executeWithErrorHandling(async () => {
+      if (!this.service) {
+        await this.initializeClient();
+      }
 
-    try {
-      const amazonUpdates = this.transformToAmazonCampaign(updates);
-      const updatedCampaign = await this.client.updateCampaign(
-        campaignId,
-        amazonUpdates,
-      );
+      const dateRange = {
+        startDate: this.formatDate(startDate),
+        endDate: this.formatDate(endDate),
+      };
 
-      return this.transformCampaign(updatedCampaign, this.teamId);
-    } catch (error) {
-      log.error("Failed to update Amazon campaign", {
-        error,
-        campaignId,
-        updates,
-      });
-      throw error;
-    }
-  }
-
-  async deleteCampaign(campaignId: string): Promise<void> {
-    if (!this.client) {
-      throw new Error("Amazon client not initialized");
-    }
-
-    try {
-      await this.client.archiveCampaign(campaignId);
-      log.info("Amazon campaign archived", { campaignId });
-    } catch (error) {
-      log.error("Failed to archive Amazon campaign", { error, campaignId });
-      throw error;
-    }
-  }
-
-  async updateCampaignStatus(
-    campaignId: string,
-    isActive: boolean,
-  ): Promise<boolean> {
-    if (!this.client) {
-      throw new Error("Amazon client not initialized");
-    }
-
-    try {
-      const state = isActive ? "enabled" : "paused";
-
-      await this.client.updateCampaign(campaignId, { state });
-
-      log.info("Amazon campaign status updated", {
-        campaignId,
-        isActive,
-        state,
-      });
-
-      return true;
-    } catch (error) {
-      log.error("Failed to update Amazon campaign status", {
-        error,
-        campaignId,
-        isActive,
-      });
-
-      return false;
-    }
+      return await this.getCampaignMetrics([campaignId], dateRange);
+    }, "fetchCampaignMetrics");
   }
 
   async updateCampaignBudget(
     campaignId: string,
     budget: number,
   ): Promise<boolean> {
-    if (!this.client) {
-      throw new Error("Amazon client not initialized");
-    }
+    return this.executeWithErrorHandling(async () => {
+      if (!this.service) {
+        await this.initializeClient();
+      }
 
-    try {
-      await this.client.updateCampaign(campaignId, {
+      await this.service!.updateCampaign(campaignId, {
         budget: {
           budget,
           budgetType: "daily",
@@ -196,26 +226,86 @@ export class AmazonPlatformService implements PlatformService {
       log.info("Amazon campaign budget updated", { campaignId, budget });
 
       return true;
-    } catch (error) {
-      log.error("Failed to update Amazon campaign budget", {
-        error,
+    }, "updateCampaignBudget");
+  }
+
+  async updateCampaignStatus(
+    campaignId: string,
+    isActive: boolean,
+  ): Promise<boolean> {
+    return this.executeWithErrorHandling(async () => {
+      if (!this.service) {
+        await this.initializeClient();
+      }
+
+      const state = isActive ? "enabled" : "paused";
+
+      await this.service!.updateCampaign(campaignId, { state });
+
+      log.info("Amazon campaign status updated", {
         campaignId,
-        budget,
+        isActive,
+        state,
       });
 
-      return false;
-    }
+      return true;
+    }, "updateCampaignStatus");
+  }
+
+  // Amazon-specific methods
+  async createCampaign(campaignData: Partial<Campaign>): Promise<Campaign> {
+    return this.executeWithErrorHandling(async () => {
+      if (!this.service) {
+        await this.initializeClient();
+      }
+
+      const amazonCampaignData = this.transformToAmazonCampaign(campaignData);
+      const createdCampaign =
+        await this.service!.createCampaign(amazonCampaignData);
+
+      return this.transformCampaign(createdCampaign, this.teamId);
+    }, "createCampaign");
+  }
+
+  async updateCampaign(
+    campaignId: string,
+    updates: Partial<Campaign>,
+  ): Promise<Campaign> {
+    return this.executeWithErrorHandling(async () => {
+      if (!this.service) {
+        await this.initializeClient();
+      }
+
+      const amazonUpdates = this.transformToAmazonCampaign(updates);
+      const updatedCampaign = await this.service!.updateCampaign(
+        campaignId,
+        amazonUpdates,
+      );
+
+      return this.transformCampaign(updatedCampaign, this.teamId);
+    }, "updateCampaign");
+  }
+
+  async deleteCampaign(campaignId: string): Promise<void> {
+    return this.executeWithErrorHandling(async () => {
+      if (!this.service) {
+        await this.initializeClient();
+      }
+
+      await this.service!.archiveCampaign(campaignId);
+      log.info("Amazon campaign archived", { campaignId });
+    }, "deleteCampaign");
   }
 
   async getCampaignMetrics(
     campaignIds: string[],
     dateRange: { startDate: string; endDate: string },
   ): Promise<CampaignMetrics[]> {
-    if (!this.client) {
-      throw new Error("Amazon client not initialized");
-    }
+    return this.executeWithErrorHandling(async () => {
+      if (!this.service) {
+        await this.initializeClient();
+      }
 
-    try {
       const reportRequest = {
         campaignType: "sponsoredProducts" as const,
         metrics: [
@@ -248,42 +338,95 @@ export class AmazonPlatformService implements PlatformService {
         ],
       };
 
-      const reportData = await this.client.generateReport(reportRequest);
+      const reportData = await this.service!.generateReport(reportRequest);
 
       return reportData.map(this.transformMetrics);
-    } catch (error) {
-      log.error("Failed to fetch Amazon campaign metrics", {
-        error,
-        campaignIds,
-        dateRange,
-      });
-      throw error;
-    }
+    }, "getCampaignMetrics");
   }
 
-  async refreshToken(credentials: PlatformCredentials): Promise<{
-    access_token: string;
-    refresh_token: string;
-    expires_in: number;
-  }> {
-    if (!this.client) {
-      throw new Error("Amazon client not initialized");
-    }
+  // Amazon specialized methods
+  async getKeywords(campaignId?: string): Promise<AmazonKeyword[]> {
+    return this.executeWithErrorHandling(async () => {
+      if (!this.service) {
+        await this.initializeClient();
+      }
 
-    try {
-      const amazonCredentials = credentials.credentials as AmazonAdsCredentials;
-      const newTokens = await this.client.refreshToken(
-        amazonCredentials.refresh_token,
-      );
+      const filters: Record<string, string> | undefined = campaignId
+        ? { campaignIdFilter: campaignId }
+        : undefined;
 
-      // 클라이언트의 액세스 토큰 업데이트
-      this.client.updateAccessToken(newTokens.access_token);
+      return await this.service!.getKeywords(filters);
+    }, "getKeywords");
+  }
 
-      return newTokens;
-    } catch (error) {
-      log.error("Failed to refresh Amazon token", { error });
-      throw error;
-    }
+  async createKeywords(
+    keywords: Partial<AmazonKeyword>[],
+  ): Promise<AmazonKeyword[]> {
+    return this.executeWithErrorHandling(async () => {
+      if (!this.service) {
+        await this.initializeClient();
+      }
+
+      return await this.service!.createKeywords(keywords);
+    }, "createKeywords");
+  }
+
+  async getProductTargets(campaignId?: string): Promise<AmazonProductTarget[]> {
+    return this.executeWithErrorHandling(async () => {
+      if (!this.service) {
+        await this.initializeClient();
+      }
+
+      const filters: Record<string, string> | undefined = campaignId
+        ? { campaignIdFilter: campaignId }
+        : undefined;
+
+      return await this.service!.getProductTargets(filters);
+    }, "getProductTargets");
+  }
+
+  async createProductTargets(
+    targets: Partial<AmazonProductTarget>[],
+  ): Promise<AmazonProductTarget[]> {
+    return this.executeWithErrorHandling(async () => {
+      if (!this.service) {
+        await this.initializeClient();
+      }
+
+      return await this.service!.createProductTargets(targets);
+    }, "createProductTargets");
+  }
+
+  // Helper methods
+  private convertToJson(obj: Record<string, unknown>): Json {
+    return JSON.parse(JSON.stringify(obj)) as Json;
+  }
+
+  private getRegionFromCountryCode(countryCode: string): string {
+    const regionMap: Record<string, string> = {
+      US: "NA",
+      CA: "NA",
+      MX: "NA",
+      UK: "EU",
+      DE: "EU",
+      FR: "EU",
+      IT: "EU",
+      ES: "EU",
+      NL: "EU",
+      SE: "EU",
+      PL: "EU",
+      TR: "EU",
+      JP: "FE",
+      AU: "FE",
+      SG: "FE",
+      IN: "FE",
+      AE: "FE",
+      SA: "FE",
+      EG: "FE",
+      BR: "NA",
+    };
+
+    return regionMap[countryCode] || "NA";
   }
 
   private transformCampaign(
@@ -294,14 +437,16 @@ export class AmazonPlatformService implements PlatformService {
 
     return {
       id: campaignId,
-      team_id: teamId || "", // Required field
+      team_id: teamId || "",
       platform_campaign_id: campaignId,
       name: amazonCampaign.name,
-      platform: "amazon" as any,
+      platform: "amazon",
       status: amazonCampaign.state,
       is_active: amazonCampaign.state === "enabled",
       budget: amazonCampaign.budget?.budget || amazonCampaign.dailyBudget || 0,
-      raw_data: amazonCampaign as any,
+      raw_data: this.convertToJson(
+        amazonCampaign as unknown as Record<string, unknown>,
+      ),
       synced_at: new Date().toISOString(),
       created_at: amazonCampaign.creationDate || new Date().toISOString(),
       updated_at: amazonCampaign.lastUpdatedDate || new Date().toISOString(),
@@ -338,125 +483,24 @@ export class AmazonPlatformService implements PlatformService {
     return amazonCampaign;
   }
 
-  private transformMetrics(amazonMetrics: any): CampaignMetrics {
+  private transformMetrics(amazonMetrics: AmazonReportData): CampaignMetrics {
     return {
       campaign_id: amazonMetrics.campaignId?.toString() || "",
-      date: amazonMetrics.date,
-      impressions: parseInt(amazonMetrics.impressions) || 0,
-      clicks: parseInt(amazonMetrics.clicks) || 0,
-      cost: parseFloat(amazonMetrics.cost) || 0,
-      conversions: parseInt(amazonMetrics.purchases7d) || 0,
-      revenue: parseFloat(amazonMetrics.sales7d) || 0,
+      date:
+        (amazonMetrics.date as string) ||
+        new Date().toISOString().split("T")[0],
+      impressions: parseInt((amazonMetrics.impressions as string) || "0") || 0,
+      clicks: parseInt((amazonMetrics.clicks as string) || "0") || 0,
+      cost: parseFloat((amazonMetrics.cost as string) || "0") || 0,
+      conversions: parseInt((amazonMetrics.purchases7d as string) || "0") || 0,
+      revenue: parseFloat((amazonMetrics.sales7d as string) || "0") || 0,
       raw_data: amazonMetrics,
       created_at: new Date().toISOString(),
     };
   }
 
-  private mapAmazonStatusToUnified(amazonStatus: string): string {
-    const statusMap: Record<string, string> = {
-      enabled: "ACTIVE",
-      paused: "PAUSED",
-      archived: "REMOVED",
-    };
-
-    return statusMap[amazonStatus] || "UNKNOWN";
-  }
-
-  async testConnection(): Promise<boolean> {
-    if (!this.client) {
-      return false;
-    }
-
-    try {
-      await this.client.getProfiles();
-
-      return true;
-    } catch (error) {
-      log.error("Amazon connection test failed", { error });
-
-      return false;
-    }
-  }
-
-  async syncCampaigns(): Promise<Campaign[]> {
-    try {
-      const campaigns = await this.getCampaigns();
-
-      log.info("Amazon campaigns synced", { count: campaigns.length });
-
-      return campaigns;
-    } catch (error) {
-      log.error("Failed to sync Amazon campaigns", { error });
-      throw error;
-    }
-  }
-
-  // Amazon 특화 메서드들
-  async getKeywords(campaignId?: string): Promise<any[]> {
-    if (!this.client) {
-      throw new Error("Amazon client not initialized");
-    }
-
-    const filters = campaignId ? { campaignIdFilter: campaignId } : {};
-
-    return await this.client.getKeywords(filters);
-  }
-
-  async createKeywords(keywords: any[]): Promise<any[]> {
-    if (!this.client) {
-      throw new Error("Amazon client not initialized");
-    }
-
-    return await this.client.createKeywords(keywords);
-  }
-
-  async getProductTargets(campaignId?: string): Promise<any[]> {
-    if (!this.client) {
-      throw new Error("Amazon client not initialized");
-    }
-
-    const filters = campaignId ? { campaignIdFilter: campaignId } : {};
-
-    return await this.client.getProductTargets(filters);
-  }
-
-  async createProductTargets(targets: any[]): Promise<any[]> {
-    if (!this.client) {
-      throw new Error("Amazon client not initialized");
-    }
-
-    return await this.client.createProductTargets(targets);
-  }
-
-  // Required interface methods
-  setCredentials(credentials: Record<string, unknown>): void {
-    this.credentials = credentials;
-  }
-
-  async validateCredentials(): Promise<boolean> {
-    return await this.testConnection();
-  }
-
-  async fetchCampaigns(): Promise<Campaign[]> {
-    const campaigns = await this.getCampaigns();
-
-    // Ensure team_id is set for all campaigns
-    return campaigns.map((campaign) => ({
-      ...campaign,
-      team_id: campaign.team_id || "",
-    }));
-  }
-
-  async fetchCampaignMetrics(
-    campaignId: string,
-    startDate: Date,
-    endDate: Date,
-  ): Promise<CampaignMetrics[]> {
-    const dateRange = {
-      startDate: startDate.toISOString().split("T")[0],
-      endDate: endDate.toISOString().split("T")[0],
-    };
-
-    return await this.getCampaignMetrics([campaignId], dateRange);
+  async cleanup(): Promise<void> {
+    await super.cleanup?.();
+    log.info("Amazon platform service cleanup completed");
   }
 }

@@ -2,13 +2,14 @@ import { redirect } from "next/navigation";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { User } from "@supabase/supabase-js";
 
-import { DashboardClient } from "./components/DashboardClient";
 import {
   savePlatformCredentials,
   deletePlatformCredentialById,
   togglePlatformCredentialById,
-  syncAllPlatformsAction,
-} from "./actions";
+} from "../settings/actions";
+import { syncAllPlatformsAction } from "../integrated/actions";
+
+import { DashboardClient } from "./components/DashboardClient";
 
 import { createClient } from "@/utils/supabase/server";
 import { SyncButton } from "@/components/dashboard/SyncButton";

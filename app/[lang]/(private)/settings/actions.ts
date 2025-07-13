@@ -8,6 +8,7 @@ import {
   getPlatformServiceFactory,
 } from "@/lib/di/service-resolver";
 import { PlatformType } from "@/types";
+import { PlatformCredentials } from "@/services/platforms/platform-service.interface";
 
 export async function savePlatformCredentials(
   platform: PlatformType,
@@ -89,7 +90,7 @@ export async function savePlatformCredentials(
     const platformServiceFactory = await getPlatformServiceFactory();
     const service = platformServiceFactory.createService(platform);
 
-    service.setCredentials(credentials);
+    service.setCredentials(credentials as PlatformCredentials);
     const isValid = await service.validateCredentials();
 
     if (!isValid) {

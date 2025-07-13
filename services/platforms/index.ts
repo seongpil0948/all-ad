@@ -1,5 +1,4 @@
 import { PlatformServiceFactory } from "./platform-service-factory";
-import { GoogleAdsPlatformService } from "./google-ads-platform.service";
 // import { MetaAdsPlatformService } from "./meta-ads-platform.service";
 // import { NaverAdsPlatformService } from "./naver-ads-platform.service";
 // import { KakaoAdsPlatformService } from "./kakao-ads-platform.service";
@@ -12,8 +11,8 @@ export function getPlatformServiceFactory(): PlatformServiceFactory {
   if (!platformServiceFactory) {
     platformServiceFactory = new PlatformServiceFactory();
 
-    // 각 플랫폼 서비스 등록
-    platformServiceFactory.register("google", new GoogleAdsPlatformService());
+    // 각 플랫폼 서비스 등록 - factory에서 자동으로 생성되므로 불필요
+    // platformServiceFactory.register("google", () => new GoogleAdsPlatformService());
     // platformServiceFactory.register("META", new MetaAdsPlatformService());
     // platformServiceFactory.register("NAVER", new NaverAdsPlatformService());
     // platformServiceFactory.register("KAKAO", new KakaoAdsPlatformService());
@@ -24,5 +23,4 @@ export function getPlatformServiceFactory(): PlatformServiceFactory {
 }
 
 export { PlatformServiceFactory } from "./platform-service-factory";
-export { GoogleAdsPlatformService } from "./google-ads-platform.service";
 export type { PlatformService } from "./platform-service.interface";

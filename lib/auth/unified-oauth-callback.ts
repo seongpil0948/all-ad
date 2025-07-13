@@ -25,7 +25,7 @@ interface PlatformProfile {
   accountId: string;
   accountName: string;
   email?: string;
-  additionalData?: Record<string, any>;
+  additionalData?: Record<string, unknown>;
 }
 
 export async function handleOAuthCallback(
@@ -37,13 +37,19 @@ export async function handleOAuthCallback(
     const code = searchParams.get("code");
     const state = searchParams.get("state");
     const error = searchParams.get("error");
+    const error_description = searchParams.get("error_description");
+
+    // Get locale from headers
+    const acceptLanguage = request.headers.get("accept-language") || "";
+    const locale = acceptLanguage.startsWith("ko") ? "ko" : "en";
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
     // OAuth 에러 처리
     if (error) {
-      log.error(`${platform} OAuth error`, { error });
+      log.error(`${platform} OAuth error`, { error, error_description });
 
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/en/settings?error=oauth_cancelled&platform=${platform}`,
+        `${baseUrl}/${locale}/settings?error=oauth_cancelled&platform=${platform}&message=${encodeURIComponent(error_description || error)}`,
       );
     }
 
@@ -51,9 +57,11 @@ export async function handleOAuthCallback(
       log.error(`Missing code or state in ${platform} OAuth callback`);
 
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/en/settings?error=invalid_oauth_response&platform=${platform}`,
+        `${baseUrl}/${locale}/settings?error=invalid_oauth_response&platform=${platform}`,
       );
     }
+
+    // Handle Facebook OAuth with standard flow like other platforms
 
     const supabase = await createClient();
 
@@ -69,7 +77,7 @@ export async function handleOAuthCallback(
       log.error(`Invalid OAuth state for ${platform}`, { state });
 
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/en/settings?error=invalid_oauth_response&platform=${platform}&message=${encodeURIComponent("Invalid state parameter")}`,
+        `${baseUrl}/${locale}/settings?error=invalid_oauth_response&platform=${platform}&message=${encodeURIComponent("Invalid state parameter")}`,
       );
     }
 
@@ -108,13 +116,18 @@ export async function handleOAuthCallback(
     });
 
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_SITE_URL}/en/settings?success=platform_connected&platform=${platform}&account=${encodeURIComponent(profiles[0]?.accountName || `${platform} Profile`)}`,
+      `${baseUrl}/${locale}/settings?success=platform_connected&platform=${platform}&account=${encodeURIComponent(profiles[0]?.accountName || `${platform} Profile`)}`,
     );
   } catch (error) {
     log.error(`${platform} OAuth callback error`, { error });
 
+    // Get locale from headers for error redirect
+    const acceptLanguage = request.headers.get("accept-language") || "";
+    const locale = acceptLanguage.startsWith("ko") ? "ko" : "en";
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_SITE_URL}/en/settings?error=oauth_failed&platform=${platform}&message=${encodeURIComponent(`${platform} OAuth integration failed`)}`,
+      `${baseUrl}/${locale}/settings?error=oauth_failed&platform=${platform}&message=${encodeURIComponent(`${platform} OAuth integration failed`)}`,
     );
   }
 }
@@ -196,14 +209,16 @@ async function getAmazonProfiles(
         },
       );
 
-      return response.data.map((profile: any) => ({
-        profileId: profile.profileId,
-        accountId: profile.profileId,
-        accountName:
-          profile.accountInfo?.name || `Amazon Profile ${profile.profileId}`,
-        additionalData: profile,
-      }));
-    } catch (adsError) {
+      return response.data.map(
+        (profile: { profileId: string; accountInfo?: { name?: string } }) => ({
+          profileId: profile.profileId,
+          accountId: profile.profileId,
+          accountName:
+            profile.accountInfo?.name || `Amazon Profile ${profile.profileId}`,
+          additionalData: profile,
+        }),
+      );
+    } catch {
       // If advertising API fails, try basic profile API
       const response = await axios.get("https://api.amazon.com/user/profile", {
         headers: {
@@ -213,25 +228,27 @@ async function getAmazonProfiles(
 
       return [
         {
-          accountId: response.data.user_id || "amazon_user",
-          accountName: response.data.name || "Amazon User",
-          email: response.data.email,
-          additionalData: response.data,
+          accountId:
+            (response.data as { user_id?: string }).user_id || "amazon_user",
+          accountName:
+            (response.data as { name?: string }).name || "Amazon User",
+          email: (response.data as { email?: string }).email,
+          additionalData: response.data as Record<string, unknown>,
         },
       ];
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     log.error("Failed to fetch Amazon profiles", {
-      error: error.response?.data || error.message,
+      error: error instanceof Error ? error.message : "Unknown error",
     });
     throw new Error("Failed to fetch Amazon profiles");
   }
 }
 
 async function saveCredentials(
-  supabase: any,
+  supabase: Awaited<ReturnType<typeof createClient>>,
   platform: PlatformType,
-  oauthState: any,
+  oauthState: { team_id: string; user_id: string },
   tokenResponse: OAuthTokenResponse,
   profile: PlatformProfile,
 ) {
@@ -271,7 +288,7 @@ function getClientId(platform: PlatformType): string | undefined {
     case "amazon":
       return process.env.AMAZON_CLIENT_ID;
     case "facebook":
-      return process.env.FACEBOOK_CLIENT_ID;
+      return process.env.META_APP_ID;
     case "kakao":
       return process.env.KAKAO_CLIENT_ID;
     case "naver":
@@ -288,7 +305,7 @@ function getClientSecret(platform: PlatformType): string | undefined {
     case "amazon":
       return process.env.AMAZON_CLIENT_SECRET;
     case "facebook":
-      return process.env.FACEBOOK_CLIENT_SECRET;
+      return process.env.META_APP_SECRET;
     case "kakao":
       return process.env.KAKAO_CLIENT_SECRET;
     case "naver":

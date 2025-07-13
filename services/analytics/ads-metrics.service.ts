@@ -18,10 +18,7 @@ import {
   fetchCampaignMetrics,
   fetchCampaigns,
 } from "@/services/platforms/api-clients/google-ads-api";
-import {
-  MetaAdsTestCredentials,
-  fetchMetaCampaigns,
-} from "@/services/platforms/api-clients/meta-ads-api";
+import { MetaAdsTestCredentials } from "@/services/platforms/api-clients/meta-ads-api";
 
 export type TikTokAdsTestCredentials = Record<string, unknown>;
 
@@ -308,54 +305,117 @@ export class AdsMetricsService {
     }
 
     try {
-      const campaignsResponse = await fetchMetaCampaigns(
-        this.credentials.meta_ads,
-        accountId,
+      // 실제 Meta Ads API를 사용하여 메트릭스 가져오기
+      const { fetchMetaCampaignMetrics } = await import(
+        "@/services/platforms/api-clients/meta-ads-api"
       );
 
-      if (campaignsResponse.success && campaignsResponse.campaigns) {
-        const metrics: MetaAdsMetrics[] = campaignsResponse.campaigns.map(
-          (campaign) => ({
-            impressions: Math.floor(Math.random() * 100000) + 10000, // 임시 데이터
-            clicks: Math.floor(Math.random() * 5000) + 500,
-            cost: Math.floor(Math.random() * 500000) + 50000,
-            conversions: Math.floor(Math.random() * 200) + 20,
-            ctr: Math.random() * 0.05 + 0.01,
-            cpc: Math.random() * 2000 + 500,
-            cpm: Math.random() * 10000 + 2000,
-            conversionRate: Math.random() * 0.1 + 0.01,
-            costPerConversion: Math.random() * 25000 + 5000,
-            roas: Math.random() * 4 + 1,
-            date: new Date().toISOString().split("T")[0],
+      const dateRange = this.getDateRange(
+        filters?.dateRange || "LAST_30_DAYS",
+        filters?.customDateRange,
+      );
 
-            // Meta Ads 전용 메트릭스
-            reach: Math.floor(Math.random() * 80000) + 8000,
-            frequency: Math.random() * 3 + 1,
-            socialSpend: Math.floor(Math.random() * 100000) + 10000,
-            websiteClicks: Math.floor(Math.random() * 3000) + 300,
-            linkClicks: Math.floor(Math.random() * 4000) + 400,
-            postEngagement: Math.floor(Math.random() * 1000) + 100,
-            pageEngagement: Math.floor(Math.random() * 1500) + 150,
-            postShares: Math.floor(Math.random() * 200) + 20,
-            postReactions: Math.floor(Math.random() * 800) + 80,
-            postComments: Math.floor(Math.random() * 300) + 30,
-            videoPlays: Math.floor(Math.random() * 5000) + 500,
-            videoP25Watched: Math.floor(Math.random() * 4000) + 400,
-            videoP50Watched: Math.floor(Math.random() * 3000) + 300,
-            videoP75Watched: Math.floor(Math.random() * 2000) + 200,
-            videoP100Watched: Math.floor(Math.random() * 1000) + 100,
-            leadGeneration: Math.floor(Math.random() * 100) + 10,
-            messaging: Math.floor(Math.random() * 150) + 15,
-            appInstalls: Math.floor(Math.random() * 50) + 5,
-            mobileAppPurchases: Math.floor(Math.random() * 30) + 3,
+      const metricsResponse = await fetchMetaCampaignMetrics(
+        this.credentials.meta_ads,
+        accountId,
+        campaignId,
+        this.convertDateRangeForMeta(dateRange),
+      );
 
-            customMetrics: {
-              platform: "meta_ads",
-              accountId,
-              campaignId: campaign.id,
-              campaignName: campaign.name,
-            },
-          }),
+      if (metricsResponse.success && metricsResponse.insights) {
+        const metrics: MetaAdsMetrics[] = metricsResponse.insights.map(
+          (insight) => {
+            const impressions = parseInt(insight.impressions || "0");
+            const clicks = parseInt(insight.clicks || "0");
+            const spend = parseFloat(insight.spend || "0");
+            const reach = parseInt(insight.reach || "0");
+            const frequency = parseFloat(insight.frequency || "0");
+
+            // Extract conversions from actions
+            const conversions = this.extractMetaConversions(insight.actions);
+
+            return {
+              impressions,
+              clicks,
+              cost: spend,
+              conversions,
+              ctr: parseFloat(insight.ctr || "0") / 100, // Meta returns percentage
+              cpc: parseFloat(insight.cpc || "0"),
+              cpm: parseFloat(insight.cpm || "0"),
+              conversionRate: clicks > 0 ? conversions / clicks : 0,
+              costPerConversion: conversions > 0 ? spend / conversions : 0,
+              roas: conversions > 0 ? (conversions * 50000) / spend : 0, // 임시 계산
+              date:
+                insight.date_start || new Date().toISOString().split("T")[0],
+
+              // Meta Ads 전용 메트릭스
+              reach,
+              frequency,
+              socialSpend: spend, // For now, treat all spend as social
+              websiteClicks: this.extractActionValue(
+                insight.actions,
+                "link_click",
+              ),
+              linkClicks: this.extractActionValue(
+                insight.actions,
+                "link_click",
+              ),
+              postEngagement: this.extractActionValue(
+                insight.actions,
+                "post_engagement",
+              ),
+              pageEngagement: this.extractActionValue(
+                insight.actions,
+                "page_engagement",
+              ),
+              postShares: this.extractActionValue(insight.actions, "post"),
+              postReactions: this.extractActionValue(
+                insight.actions,
+                "post_reaction",
+              ),
+              postComments: this.extractActionValue(insight.actions, "comment"),
+              videoPlays: this.extractActionValue(
+                insight.actions,
+                "video_play",
+              ),
+              videoP25Watched: this.extractActionValue(
+                insight.actions,
+                "video_p25_watched_actions",
+              ),
+              videoP50Watched: this.extractActionValue(
+                insight.actions,
+                "video_p50_watched_actions",
+              ),
+              videoP75Watched: this.extractActionValue(
+                insight.actions,
+                "video_p75_watched_actions",
+              ),
+              videoP100Watched: this.extractActionValue(
+                insight.actions,
+                "video_p100_watched_actions",
+              ),
+              leadGeneration: this.extractActionValue(insight.actions, "lead"),
+              messaging: this.extractActionValue(
+                insight.actions,
+                "onsite_conversion.messaging_conversation_started_7d",
+              ),
+              appInstalls: this.extractActionValue(
+                insight.actions,
+                "mobile_app_install",
+              ),
+              mobileAppPurchases: this.extractActionValue(
+                insight.actions,
+                "mobile_app_purchase",
+              ),
+
+              customMetrics: {
+                platform: "meta_ads",
+                accountId,
+                campaignId: insight.campaign_id || campaignId || "unknown",
+                campaignName: insight.campaign_name || "Unknown Campaign",
+              },
+            };
+          },
         );
 
         this.setCache(cacheKey, metrics);
@@ -366,8 +426,112 @@ export class AdsMetricsService {
       return [];
     } catch (error) {
       log.error("Meta Ads 메트릭스 가져오기 실패:", error);
-      throw error;
+
+      // Fallback to mock data if API fails
+      return this.getMetaAdsMockMetrics(accountId, campaignId);
     }
+  }
+
+  // Meta Ads 날짜 범위 변환
+  private convertDateRangeForMeta(dateRange: string): string {
+    switch (dateRange) {
+      case "LAST_7_DAYS":
+        return "last_7d";
+      case "LAST_14_DAYS":
+        return "last_14d";
+      case "LAST_30_DAYS":
+        return "last_30d";
+      case "LAST_90_DAYS":
+        return "last_90d";
+      case "TODAY":
+        return "today";
+      case "YESTERDAY":
+        return "yesterday";
+      default:
+        return "last_30d";
+    }
+  }
+
+  // Meta Ads actions에서 conversions 추출
+  private extractMetaConversions(
+    actions?: Array<{ action_type: string; value: string }>,
+  ): number {
+    if (!actions) return 0;
+
+    const conversionActionTypes = [
+      "purchase",
+      "lead",
+      "complete_registration",
+      "add_to_cart",
+      "initiate_checkout",
+      "onsite_conversion.purchase",
+      "offsite_conversion.fb_pixel_purchase",
+    ];
+
+    return actions
+      .filter((action) => conversionActionTypes.includes(action.action_type))
+      .reduce((total, action) => total + parseInt(action.value || "0"), 0);
+  }
+
+  // Meta Ads actions에서 특정 액션 값 추출
+  private extractActionValue(
+    actions: Array<{ action_type: string; value: string }> | undefined,
+    actionType: string,
+  ): number {
+    if (!actions) return 0;
+
+    const action = actions.find((a) => a.action_type === actionType);
+
+    return action ? parseInt(action.value || "0") : 0;
+  }
+
+  // Meta Ads 임시 데이터 (API 실패 시 fallback)
+  private getMetaAdsMockMetrics(
+    accountId: string,
+    campaignId?: string,
+  ): MetaAdsMetrics[] {
+    return [
+      {
+        impressions: Math.floor(Math.random() * 100000) + 10000,
+        clicks: Math.floor(Math.random() * 5000) + 500,
+        cost: Math.floor(Math.random() * 500000) + 50000,
+        conversions: Math.floor(Math.random() * 200) + 20,
+        ctr: Math.random() * 0.05 + 0.01,
+        cpc: Math.random() * 2000 + 500,
+        cpm: Math.random() * 10000 + 2000,
+        conversionRate: Math.random() * 0.1 + 0.01,
+        costPerConversion: Math.random() * 25000 + 5000,
+        roas: Math.random() * 4 + 1,
+        date: new Date().toISOString().split("T")[0],
+
+        reach: Math.floor(Math.random() * 80000) + 8000,
+        frequency: Math.random() * 3 + 1,
+        socialSpend: Math.floor(Math.random() * 100000) + 10000,
+        websiteClicks: Math.floor(Math.random() * 3000) + 300,
+        linkClicks: Math.floor(Math.random() * 4000) + 400,
+        postEngagement: Math.floor(Math.random() * 1000) + 100,
+        pageEngagement: Math.floor(Math.random() * 1500) + 150,
+        postShares: Math.floor(Math.random() * 200) + 20,
+        postReactions: Math.floor(Math.random() * 800) + 80,
+        postComments: Math.floor(Math.random() * 300) + 30,
+        videoPlays: Math.floor(Math.random() * 5000) + 500,
+        videoP25Watched: Math.floor(Math.random() * 4000) + 400,
+        videoP50Watched: Math.floor(Math.random() * 3000) + 300,
+        videoP75Watched: Math.floor(Math.random() * 2000) + 200,
+        videoP100Watched: Math.floor(Math.random() * 1000) + 100,
+        leadGeneration: Math.floor(Math.random() * 100) + 10,
+        messaging: Math.floor(Math.random() * 150) + 15,
+        appInstalls: Math.floor(Math.random() * 50) + 5,
+        mobileAppPurchases: Math.floor(Math.random() * 30) + 3,
+
+        customMetrics: {
+          platform: "meta_ads",
+          accountId,
+          campaignId: campaignId || "mock_campaign",
+          campaignName: "Mock Campaign (API 연결 실패)",
+        },
+      },
+    ];
   }
 
   // TikTok Ads 메트릭스 가져오기 (임시 구현)

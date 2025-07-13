@@ -105,12 +105,57 @@ Core tables with RLS:
 
 ## Common Tasks
 
-### Adding New Platform
+### Adding New Platform (Updated Process)
 
-1. Create service in `/services/platforms/{platform}-platform.service.ts`
-2. Implement `PlatformService` interface
-3. Register in `PlatformServiceFactory`
-4. Add platform type to enums
+1. **Create Platform Service**:
+
+   ```typescript
+   // services/platforms/{platform}-platform.service.ts
+   export class YourPlatformService extends BasePlatformService<YourApiClient> {
+     platform: PlatformType = "your_platform";
+
+     async testConnection(): Promise<ConnectionTestResult> {
+       /* implement */
+     }
+     async refreshToken(): Promise<TokenRefreshResult> {
+       /* implement */
+     }
+     async getAccountInfo(): Promise<AccountInfo> {
+       /* implement */
+     }
+     // ... other required methods
+   }
+   ```
+
+2. **Register in Factory**:
+
+   ```typescript
+   // services/platforms/platform-service-factory.ts
+   this.services.set("your_platform", () => new YourPlatformService());
+   ```
+
+3. **Add Platform Type**:
+
+   ```sql
+   -- Add to Supabase enum
+   ALTER TYPE platform_type ADD VALUE 'your_platform';
+   ```
+
+4. **Add OAuth Configuration**:
+
+   ```typescript
+   // lib/oauth/platform-configs.ts
+   your_platform: {
+     clientId: process.env.YOUR_PLATFORM_CLIENT_ID,
+     clientSecret: process.env.YOUR_PLATFORM_CLIENT_SECRET,
+   }
+   ```
+
+5. **Update Environment Variables**:
+   ```bash
+   YOUR_PLATFORM_CLIENT_ID=your_client_id
+   YOUR_PLATFORM_CLIENT_SECRET=your_client_secret
+   ```
 
 ### Server Actions Pattern
 
@@ -146,28 +191,92 @@ export async function actionName(data: FormData) {
 - Manual management only
 - Consider automation workarounds
 
-## Google Ads Integration
+## Platform Integration Architecture (2024.12 Updated)
 
-### Authentication (Simplified OAuth)
+### Enhanced Platform Service Architecture
 
-All-AD now uses its own OAuth credentials, eliminating the need for users to input Client IDs:
+All advertising platforms now use a unified service architecture:
 
-1. **User Flow**:
-   - Click "Google Ads 연동하기" button
-   - Redirected to Google OAuth consent screen
-   - Approve permissions
-   - Automatically redirected back with account connected
+1. **Base Platform Service**: `BasePlatformService<T>` - Common error handling, retry logic
+2. **Platform-Specific Services**: Extend base service with platform implementations
+3. **Unified Interface**: All platforms implement `PlatformService` interface
+4. **Factory Pattern**: `PlatformServiceFactory` for service creation and management
 
-2. **OAuth Route**: `/api/auth/google-ads`
-3. **Callback Route**: `/api/auth/callback/google-ads`
-4. **Service**: `GoogleAdsOAuthPlatformService` (when env vars are set)
+### Core Platform Services
 
-### Key Services
+#### Google Ads Integration
 
-- `GoogleAdsOAuthClient`: Handles automatic token refresh
-- `GoogleAdsOAuthIntegrationService`: Simplified API interface
-- Campaign Control with ON/OFF toggle
-- Automatic token management
+- **Service**: `GoogleAdsOAuthPlatformService`
+- **OAuth Flow**: Simplified with environment variables (no user config needed)
+- **Features**: Campaign management, budget control, real-time metrics
+- **Environment Variables**: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
+
+#### Meta (Facebook) Ads Integration
+
+- **Service**: `FacebookPlatformService`
+- **OAuth Flow**: Simplified with project credentials
+- **Features**: Campaign management, batch operations, account insights
+- **Environment Variables**: `META_APP_ID`, `META_APP_SECRET`, `META_BUSINESS_ID`
+
+#### Amazon Ads Integration
+
+- **Service**: `AmazonPlatformService`
+- **OAuth Flow**: Region-aware authentication
+- **Features**: Multi-region support, keyword management, product targets
+- **Environment Variables**: `AMAZON_CLIENT_ID`, `AMAZON_CLIENT_SECRET`
+
+### Platform Service Interface
+
+All platform services implement the following standard interface:
+
+```typescript
+interface PlatformService {
+  // Connection Management
+  testConnection(): Promise<ConnectionTestResult>;
+  validateCredentials(): Promise<boolean>;
+  refreshToken(): Promise<TokenRefreshResult>;
+  getAccountInfo(): Promise<AccountInfo>;
+
+  // Campaign Operations
+  fetchCampaigns(): Promise<Campaign[]>;
+  fetchCampaignMetrics(
+    campaignId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<CampaignMetrics[]>;
+  updateCampaignStatus(campaignId: string, isActive: boolean): Promise<boolean>;
+  updateCampaignBudget(campaignId: string, budget: number): Promise<boolean>;
+
+  // Lifecycle
+  cleanup?(): Promise<void>;
+}
+```
+
+### Error Handling & Retry Logic
+
+All platform services use enhanced error handling:
+
+```typescript
+// Platform-specific error types
+class PlatformError extends Error {
+  platform: PlatformType;
+  code: string;
+  retryable: boolean;
+  userMessage: string;
+}
+
+// Automatic retry with exponential backoff
+await service.executeWithErrorHandling(async () => {
+  // Platform operation
+}, "operationName");
+```
+
+### Authentication Flows
+
+1. **Simplified OAuth**: Users only need to authenticate, no app configuration required
+2. **Environment-based Credentials**: All platform app credentials from environment variables
+3. **Automatic Token Refresh**: Background token management with error handling
+4. **Multi-Account Support**: Team-based credential isolation
 
 ## Multi-Platform Architecture
 
@@ -218,25 +327,81 @@ All-AD now uses its own OAuth credentials, eliminating the need for users to inp
 - Server actions include permission checks
 - No client-side external API calls
 
-## Implementation Tips
+## Implementation Tips (Updated 2024.12)
 
-### Error Handling
+### Enhanced Error Handling
 
-```javascript
-const retryConfig = {
-  kakao: { maxRetries: 3, backoff: 5000 },
-  naver: { maxRetries: 5, backoff: 1000 },
-  coupang: { maxRetries: 0 }, // Manual only
-};
+```typescript
+// Platform-specific error handling with retry logic
+class PlatformAuthError extends PlatformError {
+  retryable = true; // Auth errors are retryable
+}
+
+class PlatformRateLimitError extends PlatformError {
+  retryable = true; // Rate limits are retryable with backoff
+}
+
+class PlatformConfigError extends PlatformError {
+  retryable = false; // Config errors are not retryable
+}
+
+// Usage in platform services
+await this.executeWithErrorHandling(async () => {
+  // Your platform operation
+}, "operationName");
 ```
 
-### Data Normalization
+### Data Normalization & Transformation
 
-```javascript
-const metricMappings = {
-  kakao: { impressions: "impCnt", clicks: "clickCnt" },
-  naver: { impressions: "impressions", clicks: "clicks" },
-};
+```typescript
+// Unified metrics interface
+interface CampaignMetrics {
+  campaign_id: string;
+  date: string;
+  impressions: number;
+  clicks: number;
+  cost: number;
+  conversions: number;
+  revenue?: number;
+  ctr?: number;
+  cpc?: number;
+  cpm?: number;
+  roas?: number;
+  roi?: number;
+  raw_data: unknown;
+  created_at: string;
+}
+
+// Platform-specific transformation
+protected parseMetricsResponse(data: any): CampaignMetrics {
+  return {
+    campaign_id: data.campaign_id,
+    date: data.date,
+    impressions: Number(data.impressions) || 0,
+    clicks: Number(data.clicks) || 0,
+    cost: Number(data.cost) || 0,
+    conversions: Number(data.conversions) || 0,
+    ctr: data.ctr ? Number(data.ctr) / 100 : 0,
+    raw_data: data,
+    created_at: new Date().toISOString(),
+  };
+}
+```
+
+### Platform Service Testing
+
+```typescript
+// Test connection and credentials
+const connectionTest = await service.testConnection();
+if (!connectionTest.success) {
+  console.error("Connection failed:", connectionTest.error);
+}
+
+// Validate credentials before operations
+const isValid = await service.validateCredentials();
+if (!isValid) {
+  // Handle invalid credentials
+}
 ```
 
 ## Infinite Scroll Table Pattern
