@@ -5,8 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### 작업 전후 (필수!) 작업
 
 - 작업전 테스트 코드를 먼저 생성 또는 수정하여 목적을 확실히 해야해
-- 작업 후 (pnpm typecheck && pnpm format && pnpm lint) 를 통해 문제가 없음을 증명해야해
-- pnpm test 는 너무 오래걸리는 작업이기 때문에 왠만하면 사용하지마
+- 작업 후 (pnpm typecheck && pnpm format && pnpm lint && pnpm test:fast) 를 통해 문제가 없음을 증명해야해
 - 만약 작업후 테스트코드가 잘못된거라면 수정하고 아니면 어플리케이션 코드를 수정해야해
 - 작업 후 미사용 코드나 잘못된 코드가 없는지 확인후 리팩토링해줘
 

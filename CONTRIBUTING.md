@@ -143,8 +143,9 @@ pnpm lint
 pnpm format
 
 # 테스트 실행
-pnpm test:unit
-pnpm test:e2e
+pnpm exec playwright install
+
+pnpm test:fast
 ```
 
 #### 실시간 개발 도구

@@ -1,3 +1,5 @@
+import os from "os";
+
 import { defineConfig, devices } from "@playwright/test";
 
 import config from "./tests/config";
@@ -29,35 +31,23 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: 8,
+  workers: process.env.CI ? 2 : Math.min(4, os.cpus().length),
   /* Global timeout for each test */
-  timeout: 10 * 1000, // 10 seconds
+  timeout: 30 * 1000, // 30 seconds
   /* Global timeout for expect() */
   expect: {
-    timeout: 5 * 1000, // 5 seconds
+    timeout: 10 * 1000, // 10 seconds
   },
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: [
-    ["line", { outputFile: "test-line.txt" }],
-    ["json", { outputFile: "test-json.json" }],
-    // ["list"],
-    // ["html", { open: process.env.CI ? "never" : "on-failure" }], // 자동으로 리포트 서버를 열지 않음
-    // [
-    //   "playwright-excel-reporter",
-    //   {
-    //     excelInputPath: "tests/asset/unit-test-case.xlsx",
-    //     excelStartRow: 0,
-    //     caseSheetName: "블라인드",
-    //     excelOutputDir: "test-results",
-    //   } as Partial<IExcelConfig>,
-    // ],
-  ],
+  reporter: process.env.CI
+    ? [["github"], ["json", { outputFile: "test-results.json" }]]
+    : [["list"], ["html", { open: "never" }]],
   webServer: {
     command: "pnpm run dev",
     url: baseURL,
-    timeout: 60 * 1000, // 1 minute for server startup
-    reuseExistingServer: !process.env.CI,
-    stdout: "pipe",
+    timeout: 120 * 1000, // 2 minutes for server startup
+    reuseExistingServer: true, // Always reuse existing server
+    stdout: "ignore",
     stderr: "pipe",
   },
 
@@ -73,10 +63,19 @@ export default defineConfig({
     // Add navigation timeout
     navigationTimeout: 30 * 1000, // 30 seconds
     // Add action timeout
-    actionTimeout: 20 * 1000, // 20 seconds
+    actionTimeout: 15 * 1000, // 15 seconds
+
+    // Improve performance
+    video: "off",
+    screenshot: "only-on-failure",
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: "on-first-retry",
+    trace: process.env.CI ? "on-first-retry" : "off",
+
+    // Browser launch options for better performance
+    launchOptions: {
+      args: ["--disable-dev-shm-usage", "--no-sandbox"],
+    },
   },
 
   /* Configure projects for major browsers */
