@@ -1,5 +1,7 @@
 // Data synchronization types
-import { PlatformType, BaseSyncResult } from "./base.types";
+import { BaseSyncResult } from "./base.types";
+
+import { PlatformType } from ".";
 
 // Sync status enum
 export enum SyncStatus {

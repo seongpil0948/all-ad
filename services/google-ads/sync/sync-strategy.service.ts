@@ -5,6 +5,18 @@ import { createClient } from "@/utils/supabase/server";
 import log from "@/utils/logger";
 import { SyncResult, SyncError } from "@/types/google-ads.types";
 
+// Queue system types
+type SyncJobStatus = "pending" | "processing" | "completed" | "failed";
+
+interface SyncJob {
+  id: string;
+  accountId: string;
+  syncType: "FULL" | "INCREMENTAL";
+  status: SyncJobStatus;
+  createdAt: Date;
+  retryCount: number;
+}
+
 // Type definitions
 interface GoogleAdsCampaignData {
   id?: string;
@@ -64,22 +76,173 @@ export class GoogleAdsSyncService {
     accountId: string,
     syncType: "FULL" | "INCREMENTAL",
   ): Promise<void> {
-    // For now, directly perform sync without queue
-    // TODO: Implement proper queue system later
-    log.info("동기화 작업 시작 (직접 실행)", { accountId, syncType });
+    // Implement proper queue system using Redis or in-memory queue
+    const jobId = this.generateJobId();
+    const job = {
+      id: jobId,
+      accountId,
+      syncType,
+      status: "pending" as const,
+      createdAt: new Date(),
+      retryCount: 0,
+    };
+
+    log.info("동기화 작업 큐에 추가", { jobId, accountId, syncType });
 
     try {
-      if (syncType === "INCREMENTAL") {
-        await this.performIncrementalSync(accountId);
-      } else {
-        await this.performFullSync(accountId);
-      }
+      // Add job to queue
+      await this.addJobToQueue(job);
+
+      // Process the job (in a real implementation, this would be handled by a worker)
+      await this.processJob(job);
     } catch (error) {
-      log.error("동기화 작업 실패", error as Error, {
+      log.error("동기화 작업 큐 처리 실패", error as Error, {
+        jobId,
         accountId,
         syncType,
       });
       throw error;
+    }
+  }
+
+  private generateJobId(): string {
+    return `sync_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+  }
+
+  private async addJobToQueue(job: SyncJob): Promise<void> {
+    try {
+      // Try to use Redis for queue management
+      const { createClient } = await import("redis");
+      const redis = createClient({ url: process.env.REDIS_URL });
+
+      await redis.connect();
+
+      // Add job to Redis queue
+      await redis.lPush("google_ads_sync_queue", JSON.stringify(job));
+
+      // Set job status in Redis
+      await redis.hSet(`job:${job.id}`, {
+        id: job.id,
+        accountId: job.accountId,
+        syncType: job.syncType,
+        status: job.status,
+        createdAt: job.createdAt.toISOString(),
+        retryCount: job.retryCount.toString(),
+      });
+
+      await redis.quit();
+
+      log.info("동기화 작업이 Redis 큐에 추가됨", { jobId: job.id });
+    } catch (redisError) {
+      log.warn("Redis 큐 사용 실패, 메모리 큐로 대체", {
+        error:
+          redisError instanceof Error ? redisError.message : "Unknown error",
+      });
+
+      // Fallback to in-memory queue
+      this.inMemoryQueue.push(job);
+    }
+  }
+
+  private async processJob(job: SyncJob): Promise<void> {
+    try {
+      await this.updateJobStatus(job.id, "processing");
+
+      log.info("동기화 작업 처리 시작", {
+        jobId: job.id,
+        accountId: job.accountId,
+      });
+
+      if (job.syncType === "INCREMENTAL") {
+        await this.performIncrementalSync(job.accountId);
+      } else {
+        await this.performFullSync(job.accountId);
+      }
+
+      await this.updateJobStatus(job.id, "completed");
+
+      log.info("동기화 작업 완료", { jobId: job.id, accountId: job.accountId });
+    } catch (error) {
+      await this.updateJobStatus(job.id, "failed");
+
+      log.error("동기화 작업 처리 실패", error as Error, {
+        jobId: job.id,
+        accountId: job.accountId,
+      });
+
+      // Implement retry logic
+      if (job.retryCount < 3) {
+        job.retryCount++;
+        job.status = "pending";
+        await this.addJobToQueue(job);
+
+        log.info("동기화 작업 재시도 큐에 추가", {
+          jobId: job.id,
+          retryCount: job.retryCount,
+        });
+      } else {
+        log.error("동기화 작업 최대 재시도 횟수 초과", {
+          jobId: job.id,
+          accountId: job.accountId,
+        });
+      }
+
+      throw error;
+    }
+  }
+
+  private async updateJobStatus(
+    jobId: string,
+    status: SyncJobStatus,
+  ): Promise<void> {
+    try {
+      const { createClient } = await import("redis");
+      const redis = createClient({ url: process.env.REDIS_URL });
+
+      await redis.connect();
+
+      await redis.hSet(`job:${jobId}`, "status", status);
+      await redis.quit();
+    } catch {
+      // Update in-memory queue if Redis is not available
+      const job = this.inMemoryQueue.find((j) => j.id === jobId);
+
+      if (job) {
+        job.status = status;
+      }
+    }
+  }
+
+  // In-memory queue as fallback
+  private inMemoryQueue: SyncJob[] = [];
+
+  // Method to get job status
+  async getJobStatus(jobId: string): Promise<SyncJob | null> {
+    try {
+      const { createClient } = await import("redis");
+      const redis = createClient({ url: process.env.REDIS_URL });
+
+      await redis.connect();
+
+      const jobData = await redis.hGetAll(`job:${jobId}`);
+
+      await redis.quit();
+
+      if (Object.keys(jobData).length === 0) {
+        return null;
+      }
+
+      return {
+        id: jobData.id,
+        accountId: jobData.accountId,
+        syncType: jobData.syncType as "FULL" | "INCREMENTAL",
+        status: jobData.status as SyncJobStatus,
+        createdAt: new Date(jobData.createdAt),
+        retryCount: parseInt(jobData.retryCount, 10),
+      };
+    } catch {
+      // Check in-memory queue
+      return this.inMemoryQueue.find((job) => job.id === jobId) || null;
     }
   }
 

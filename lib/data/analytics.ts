@@ -230,8 +230,13 @@ export const getPlatformAnalytics = cache(
           100;
       }
 
-      // TODO: Calculate trend from previous period
-      const trend = 0;
+      // Calculate trend from previous period
+      const trend = await calculateTrendForPlatform(
+        platform,
+        teamId,
+        dateRange,
+        metrics,
+      );
 
       platformAnalytics.push({
         platform,
@@ -272,6 +277,69 @@ export const getTimeSeriesData = cache(
       .sort((a, b) => a.date.localeCompare(b.date));
   },
 );
+
+// Calculate trend from previous period
+async function calculateTrendForPlatform(
+  platform: PlatformType,
+  teamId: string,
+  dateRange: { start: Date; end: Date },
+  currentMetrics: AnalyticsSummary,
+): Promise<number> {
+  // Calculate previous period (same duration)
+  const periodDuration = dateRange.end.getTime() - dateRange.start.getTime();
+  const previousStart = new Date(dateRange.start.getTime() - periodDuration);
+  const previousEnd = new Date(dateRange.end.getTime() - periodDuration);
+
+  try {
+    // Get previous period data
+    const previousData = await getAnalyticsData(teamId, {
+      start: previousStart,
+      end: previousEnd,
+    });
+
+    // Filter for current platform
+    const previousPlatformData = previousData.filter(
+      (item) => item.platform === platform,
+    );
+
+    if (previousPlatformData.length === 0) {
+      return 0; // No previous data available
+    }
+
+    // Calculate previous period metrics
+    const previousMetrics = previousPlatformData.reduce(
+      (acc, item) => {
+        acc.totalRevenue += item.revenue || 0;
+        acc.totalCost += item.cost || 0;
+
+        return acc;
+      },
+      { totalRevenue: 0, totalCost: 0 },
+    );
+
+    // Calculate ROAS trend (most important metric)
+    const previousRoas =
+      previousMetrics.totalCost > 0
+        ? previousMetrics.totalRevenue / previousMetrics.totalCost
+        : 0;
+
+    const currentRoas = currentMetrics.roas;
+
+    if (previousRoas === 0) {
+      return currentRoas > 0 ? 100 : 0; // 100% increase if we had no previous revenue
+    }
+
+    // Calculate percentage change
+    const trend = ((currentRoas - previousRoas) / previousRoas) * 100;
+
+    // Cap trend at reasonable limits
+    return Math.max(-100, Math.min(1000, trend));
+  } catch (error) {
+    log.error("Error calculating trend", error);
+
+    return 0;
+  }
+}
 
 // Preload all analytics data in parallel
 export const preloadAnalyticsData = (

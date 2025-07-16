@@ -2,8 +2,7 @@ import { PlatformServiceFactory } from "./platforms/platform-service-factory";
 import { PlatformDatabaseService, Logger } from "./platform-database.service";
 import { PlatformCredentials } from "./platforms/platform-service.interface";
 
-import { Campaign as DBCampaign, PlatformType, Json } from "@/types";
-import { PlatformCampaign, PlatformCampaignMetrics } from "@/types/platform";
+import { Campaign as DBCampaign, PlatformType } from "@/types";
 import { createClient } from "@/utils/supabase/server";
 
 // Type definitions
@@ -13,6 +12,10 @@ interface PlatformCredential {
   platform: string;
   credentials: Record<string, unknown>;
   is_active: boolean;
+  access_token?: string;
+  refresh_token?: string;
+  account_id?: string;
+  account_name?: string;
 }
 
 export class PlatformSyncService {
@@ -40,7 +43,7 @@ export class PlatformSyncService {
           const success = await this.syncPlatform(
             teamId,
             credential.platform as PlatformType,
-            credential.credentials,
+            credential,
           );
 
           results[credential.platform] = { success };
@@ -75,13 +78,23 @@ export class PlatformSyncService {
   async syncPlatform(
     teamId: string,
     platform: PlatformType,
-    credentials: Record<string, unknown>,
+    credentialData: PlatformCredential,
   ): Promise<boolean> {
     try {
       const service = this.platformServiceFactory.createService(platform);
 
+      // Create proper PlatformCredentials object
+      const platformCredentials: PlatformCredentials = {
+        accessToken: credentialData.access_token || "",
+        refreshToken: credentialData.refresh_token,
+        accountId: credentialData.account_id || "",
+        accountName: credentialData.account_name || "",
+        customerId: credentialData.credentials?.customerId as string,
+        ...credentialData.credentials,
+      };
+
       // Set credentials on the service
-      service.setCredentials(credentials as PlatformCredentials);
+      service.setCredentials(platformCredentials);
 
       // Validate credentials first
       const isValid = await service.validateCredentials();
@@ -91,8 +104,7 @@ export class PlatformSyncService {
       }
 
       // Fetch campaigns from the platform
-      const campaigns =
-        (await service.fetchCampaigns()) as unknown as PlatformCampaign[];
+      const campaigns = await service.fetchCampaigns();
 
       // Save campaigns to database and get saved campaigns with IDs
       const savedCampaigns = await this.syncCampaigns(
@@ -114,11 +126,11 @@ export class PlatformSyncService {
 
         if (platformCampaign && platformCampaign.platform_campaign_id) {
           try {
-            const metrics = (await service.fetchCampaignMetrics(
+            const metrics = await service.fetchCampaignMetrics(
               platformCampaign.platform_campaign_id,
               startDate,
               endDate,
-            )) as unknown as PlatformCampaignMetrics[];
+            );
 
             // Save metrics to database
             if (metrics.length > 0) {
@@ -244,7 +256,9 @@ export class PlatformSyncService {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("platform_credentials")
-      .select("*")
+      .select(
+        "id, team_id, platform, credentials, is_active, access_token, refresh_token, account_id, account_name",
+      )
       .eq("team_id", teamId)
       .eq("is_active", true);
 
@@ -260,7 +274,7 @@ export class PlatformSyncService {
   private async syncCampaigns(
     teamId: string,
     platform: PlatformType,
-    campaigns: PlatformCampaign[],
+    campaigns: DBCampaign[],
   ): Promise<DBCampaign[]> {
     const savedCampaigns: DBCampaign[] = [];
 
@@ -271,9 +285,9 @@ export class PlatformSyncService {
         platform_campaign_id: campaign.platform_campaign_id,
         name: campaign.name,
         status: campaign.status,
-        budget: campaign.budget,
+        budget: campaign.budget || 0,
         is_active: campaign.is_active,
-        raw_data: (campaign.raw_data || null) as Json | null,
+        raw_data: null,
       });
 
       if (savedCampaign) {
@@ -286,14 +300,21 @@ export class PlatformSyncService {
 
   private async saveCampaignMetrics(
     campaignId: string,
-    metrics: PlatformCampaignMetrics[],
+    metrics: Array<{
+      date?: string;
+      impressions?: number;
+      clicks?: number;
+      conversions?: number;
+      cost?: number;
+      revenue?: number;
+    }>,
   ): Promise<void> {
     for (const metric of metrics) {
       await this.databaseService.upsertCampaignMetrics({
         campaign_id: campaignId,
-        date: metric.date,
-        impressions: metric.impressions,
-        clicks: metric.clicks,
+        date: metric.date || new Date().toISOString().split("T")[0],
+        impressions: metric.impressions || 0,
+        clicks: metric.clicks || 0,
         conversions: metric.conversions || 0,
         cost: metric.cost || 0,
         revenue: metric.revenue || 0,

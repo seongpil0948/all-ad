@@ -47,18 +47,27 @@ export async function savePlatformCredentials(
     // Check if using manual refresh token
     if (manual_refresh_token || manual_token) {
       // Store with manual refresh token
-      // Legacy OAuth manager removed - manual token storage needs reimplementation
-      // TODO: Implement manual token storage
-      console.warn("Manual token storage needs to be reimplemented");
-
-      // Generate a unique account ID for manual token
       const accountId = `${platform}_manual_${Date.now()}`;
 
-      // Save credentials with manual token flag
+      // Create credentials object for manual token
+      const credentialsData = {
+        client_id,
+        client_secret,
+        refresh_token: manual_refresh_token,
+        access_token: manual_token,
+        expires_at: manual_token
+          ? new Date(Date.now() + 3600000).toISOString()
+          : null, // 1 hour from now
+        scope: "default",
+        token_type: "Bearer",
+        manual_token: true,
+      };
+
+      // Save credentials with manual token
       const success = await dbService.savePlatformCredentials(
         team.id,
         platform,
-        { client_id, client_secret },
+        credentialsData,
         user.id,
         {
           manual_token: true,

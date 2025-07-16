@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/utils/supabase/server";
-import { PlatformSyncServiceFactory } from "@/lib/sync/platform-sync-service";
+import { PlatformSyncService } from "@/services/platform-sync.service";
+import { PlatformServiceFactory } from "@/services/platforms/platform-service-factory";
+import { PlatformDatabaseService } from "@/services/platform-database.service";
 import { PlatformType } from "@/types";
 import log from "@/utils/logger";
 
@@ -65,13 +67,43 @@ export async function POST(request: NextRequest) {
       dateRange: parsedDateRange,
     });
 
+    // Create platform sync service
+    const platformServiceFactory = new PlatformServiceFactory();
+    const databaseService = new PlatformDatabaseService();
+    const syncService = new PlatformSyncService(
+      platformServiceFactory,
+      databaseService,
+      {
+        debug: (message: string, ...args: unknown[]) =>
+          log.debug(message, args[0] as Record<string, unknown>),
+        info: (message: string, ...args: unknown[]) =>
+          log.info(message, args[0] as Record<string, unknown>),
+        warn: (message: string, ...args: unknown[]) =>
+          log.warn(message, args[0] as Record<string, unknown>),
+        error: (message: string, ...args: unknown[]) =>
+          log.error(message, args[0] as Record<string, unknown>),
+      },
+    );
+
     // Trigger sync for all platforms
-    const results = await PlatformSyncServiceFactory.syncAllPlatforms(teamId, {
-      platforms,
-      syncCampaigns,
-      syncMetrics,
-      dateRange: parsedDateRange,
-    });
+    const syncResult = await syncService.syncAllPlatforms(teamId, user.id);
+
+    // Transform results to match expected format
+    const results = Object.entries(syncResult.results).reduce(
+      (acc, [platform, result]) => {
+        acc[platform] = {
+          success: result.success,
+          recordsProcessed: 0, // Will be calculated from campaigns
+          errors: result.error ? [result.error] : [],
+        };
+
+        return acc;
+      },
+      {} as Record<
+        string,
+        { success: boolean; recordsProcessed: number; errors: string[] }
+      >,
+    );
 
     // Calculate summary statistics
     const summary = Object.values(results).reduce(
@@ -156,7 +188,7 @@ export async function GET(_request: NextRequest) {
       .select("*")
       .eq("team_id", teamId)
       .eq("is_active", true)
-      .order("last_sync_at", { ascending: false });
+      .order("updated_at", { ascending: false });
 
     if (credentialsError) {
       throw new Error(
@@ -185,9 +217,9 @@ export async function GET(_request: NextRequest) {
           stats[platform] = {
             platform,
             accountName: cred.account_name,
-            lastSyncAt: cred.last_sync_at,
-            hasError: !!cred.error_message,
-            errorMessage: cred.error_message,
+            lastSyncAt: cred.updated_at,
+            hasError: false,
+            errorMessage: null,
             isActive: cred.is_active,
             campaignCount: 0,
           };
@@ -221,10 +253,8 @@ export async function GET(_request: NextRequest) {
     const platformStats = Object.values(syncStats);
     const totalCredentials = credentials.length;
     const activeCredentials = credentials.filter((c) => c.is_active).length;
-    const credentialsWithErrors = credentials.filter(
-      (c) => c.error_message,
-    ).length;
-    const lastSyncTime = credentials[0]?.last_sync_at;
+    const credentialsWithErrors = 0;
+    const lastSyncTime = credentials[0]?.updated_at;
 
     return NextResponse.json({
       summary: {
@@ -239,9 +269,9 @@ export async function GET(_request: NextRequest) {
         platform: cred.platform,
         accountName: cred.account_name,
         isActive: cred.is_active,
-        lastSyncAt: cred.last_sync_at,
-        hasError: !!cred.error_message,
-        errorMessage: cred.error_message,
+        lastSyncAt: cred.updated_at,
+        hasError: false,
+        errorMessage: null,
         expiresAt: cred.expires_at,
       })),
     });

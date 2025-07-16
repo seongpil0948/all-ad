@@ -1,10 +1,7 @@
 // Campaign related types
-import {
-  PlatformType,
-  CampaignStatus,
-  BudgetType,
-  DateRange,
-} from "./base.types";
+import { CampaignStatus, BudgetType, DateRange } from "./base.types";
+
+import { PlatformType } from "@/types";
 
 // Platform credentials interface
 export interface PlatformCredentials {

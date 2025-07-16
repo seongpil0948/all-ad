@@ -254,7 +254,7 @@ export async function syncAllPlatformsAction() {
     const syncPromises = credentials.map(async (cred) => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_APP_URL}/api/sync/${cred.platform}`,
+          `${process.env.NEXT_PUBLIC_SITE_URL}/api/sync/${cred.platform}`,
           {
             method: "POST",
             headers: {

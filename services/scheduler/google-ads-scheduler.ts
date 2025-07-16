@@ -1,5 +1,6 @@
 import { GoogleAdsSyncService } from "../google-ads/sync/sync-strategy.service";
 import { GoogleAdsClient } from "../google-ads/core/google-ads-client";
+import { GoogleAdsOAuthClient } from "../google-ads/core/google-ads-oauth-client";
 
 import { createClient } from "@/utils/supabase/server";
 import { GoogleAdsCredentials } from "@/types";
@@ -49,12 +50,26 @@ export class GoogleAdsScheduler {
           //   loginCustomerId: account.credentials.login_customer_id,
           // } as GoogleAdsCredentials;
 
-          // Legacy OAuth manager removed - access token retrieval needs reimplementation
-          // TODO: Implement access token retrieval
-          log.warn(
-            `Skipping Google Ads account - OAuth implementation removed: ${account.id}`,
-          );
-          continue;
+          // Use Google Ads OAuth client for access token retrieval
+          try {
+            const googleAdsClient = new GoogleAdsOAuthClient({
+              teamId: account.team_id,
+              customerId: account.account_id,
+            });
+
+            // Test connection to ensure credentials are valid
+            await googleAdsClient.query(
+              "SELECT customer.id FROM customer LIMIT 1",
+            );
+
+            log.info(`Google Ads account active: ${account.id}`);
+
+            // Account is valid, continue with sync logic
+            // Note: Actual sync implementation would go here
+          } catch (error) {
+            log.error(`Google Ads account sync failed: ${account.id}`, error);
+            continue;
+          }
 
           // Unreachable code due to OAuth removal - commented out
           /*

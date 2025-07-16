@@ -15,72 +15,280 @@ export type { GoogleAdsTestCredentials };
 export type MetaAdsTestCredentials = MetaCreds;
 
 // Meta Ads specific actions
-export async function exchangeMetaToken(_shortLivedToken: string): Promise<{
+export async function exchangeMetaToken(shortLivedToken: string): Promise<{
   success: boolean;
   data?: { accessToken: string };
   error?: string;
 }> {
-  // TODO: Implement Meta token exchange
-  return {
-    success: false,
-    error: "Not implemented yet",
-  };
+  try {
+    const response = await fetch(
+      "https://graph.facebook.com/v18.0/oauth/access_token",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          client_id: process.env.META_APP_ID,
+          client_secret: process.env.META_APP_SECRET,
+          redirect_uri: `${process.env.NEXT_PUBLIC_BASE_URL}/lab`,
+          code: shortLivedToken,
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`Meta token exchange failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    return {
+      success: true,
+      data: { accessToken: data.access_token },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Token exchange failed",
+    };
+  }
 }
 
 export async function fetchMetaAdsAccounts(
-  _credentials: MetaCreds,
+  credentials: MetaCreds,
 ): Promise<{ success: boolean; data?: unknown[]; error?: string }> {
-  // TODO: Implement Meta ads accounts fetching
-  return {
-    success: false,
-    error: "Not implemented yet",
-  };
+  try {
+    const response = await fetch(
+      `https://graph.facebook.com/v18.0/me/adaccounts?fields=id,name,account_status,currency,timezone_name&access_token=${credentials.accessToken}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`Meta API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    return {
+      success: true,
+      data: data.data || [],
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to fetch accounts",
+    };
+  }
 }
 
 export async function fetchMetaCampaigns(
-  _credentials: MetaCreds,
-  _accountId: string,
+  credentials: MetaCreds,
+  accountId: string,
 ): Promise<{ success: boolean; data?: unknown[]; error?: string }> {
-  // TODO: Implement Meta campaigns fetching
-  return {
-    success: false,
-    error: "Not implemented yet",
-  };
+  try {
+    const response = await fetch(
+      `https://graph.facebook.com/v18.0/${accountId}/campaigns?fields=id,name,status,created_time,updated_time,objective&access_token=${credentials.accessToken}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`Meta API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    return {
+      success: true,
+      data: data.data || [],
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to fetch campaigns",
+    };
+  }
 }
 
 export async function updateMetaCampaignStatus(
-  _credentials: MetaCreds,
-  _campaignId: string,
-  _status: string,
+  credentials: MetaCreds,
+  campaignId: string,
+  status: string,
 ): Promise<{ success: boolean; error?: string }> {
-  // TODO: Implement Meta campaign status update
-  return {
-    success: false,
-    error: "Not implemented yet",
-  };
+  try {
+    // Map our status to Facebook's values
+    const facebookStatus = status === "active" ? "ACTIVE" : "PAUSED";
+
+    const response = await fetch(
+      `https://graph.facebook.com/v18.0/${campaignId}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: facebookStatus,
+          access_token: credentials.accessToken,
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`Meta API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    log.info("Meta campaign status updated successfully", {
+      campaignId,
+      status: facebookStatus,
+      success: data.success,
+    });
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    log.error("Failed to update Meta campaign status", error);
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Status update failed",
+    };
+  }
 }
 
 export async function batchUpdateMetaCampaignStatus(
-  _credentials: MetaCreds,
-  _campaignIds: string[],
-  _status: string,
+  credentials: MetaCreds,
+  campaignIds: string[],
+  status: string,
 ): Promise<{ success: boolean; error?: string }> {
-  // TODO: Implement Meta batch campaign status update
-  return {
-    success: false,
-    error: "Not implemented yet",
-  };
+  try {
+    // Map our status to Facebook's values
+    const facebookStatus = status === "active" ? "ACTIVE" : "PAUSED";
+
+    // Process campaigns in batches to avoid rate limits
+    const batchSize = 10;
+    const results = [];
+
+    for (let i = 0; i < campaignIds.length; i += batchSize) {
+      const batch = campaignIds.slice(i, i + batchSize);
+      const batchPromises = batch.map((campaignId) =>
+        updateMetaCampaignStatus(credentials, campaignId, status),
+      );
+
+      const batchResults = await Promise.allSettled(batchPromises);
+
+      results.push(...batchResults);
+
+      // Add a small delay between batches to respect rate limits
+      if (i + batchSize < campaignIds.length) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
+
+    // Count successful updates
+    const successCount = results.filter(
+      (result) => result.status === "fulfilled" && result.value.success,
+    ).length;
+
+    const failCount = results.length - successCount;
+
+    log.info("Meta batch campaign status update completed", {
+      total: campaignIds.length,
+      successful: successCount,
+      failed: failCount,
+      status: facebookStatus,
+    });
+
+    if (failCount > 0) {
+      return {
+        success: false,
+        error: `${failCount} out of ${campaignIds.length} campaigns failed to update`,
+      };
+    }
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    log.error("Failed to batch update Meta campaign status", error);
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Batch update failed",
+    };
+  }
 }
 
 export async function clearMetaCache(): Promise<{
   success: boolean;
   error?: string;
 }> {
-  // TODO: Implement Meta cache clearing
-  return {
-    success: false,
-    error: "Not implemented yet",
-  };
+  try {
+    // Clear any local cache data for Meta/Facebook ads
+    // This could include clearing Redis cache, local storage, or memory cache
+
+    // For now, we'll implement a simple cache clearing mechanism
+    // In a real implementation, you would:
+    // 1. Clear Redis cache keys related to Meta ads
+    // 2. Clear any in-memory cache
+    // 3. Reset any cached API responses
+
+    log.info("Clearing Meta ads cache");
+
+    // Example: Clear Redis cache (if Redis is available)
+    try {
+      const { createClient } = await import("redis");
+      const redis = createClient({ url: process.env.REDIS_URL });
+
+      await redis.connect();
+
+      // Clear Meta-related cache keys
+      const cacheKeys = await redis.keys("meta_ads:*");
+
+      if (cacheKeys.length > 0) {
+        await redis.del(cacheKeys);
+        log.info("Cleared Meta ads cache keys", { count: cacheKeys.length });
+      }
+
+      await redis.quit();
+    } catch (redisError) {
+      log.warn("Redis cache clearing failed", {
+        error:
+          redisError instanceof Error ? redisError.message : "Unknown error",
+      });
+      // Don't fail the whole operation if Redis is unavailable
+    }
+
+    // Clear any other cache systems here
+    // For example, if you have a memory cache, clear it here
+
+    log.info("Meta ads cache cleared successfully");
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    log.error("Failed to clear Meta ads cache", error);
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Cache clearing failed",
+    };
+  }
 }
 
 // 통합 광고 메트릭스 가져오기

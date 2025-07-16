@@ -370,8 +370,8 @@ export class CoupangPlatformService extends BasePlatformService {
 
       if (error) throw error;
 
-      // TODO: Update campaign totals - need to implement RPC or fetch-update pattern
-      // For now, the totals will be calculated from the metrics table when displaying
+      // Update campaign totals using aggregated metrics
+      await this.updateCampaignTotals(campaignId);
 
       log.info("Successfully updated Coupang manual campaign metrics", {
         campaignId,
@@ -384,6 +384,90 @@ export class CoupangPlatformService extends BasePlatformService {
       log.error("Failed to update Coupang manual campaign metrics", error);
 
       return false;
+    }
+  }
+
+  /**
+   * Update campaign totals by aggregating metrics data
+   */
+  private async updateCampaignTotals(campaignId: string): Promise<void> {
+    try {
+      const supabase = await createClient();
+
+      // Get aggregated metrics for the campaign
+      const { data: metrics, error: metricsError } = await supabase
+        .from("campaign_metrics")
+        .select("impressions, clicks, cost, conversions, revenue")
+        .eq("campaign_id", campaignId);
+
+      if (metricsError) {
+        log.error(
+          "Failed to fetch campaign metrics for totals update",
+          metricsError,
+        );
+
+        return;
+      }
+
+      // Calculate totals
+      const totals = metrics.reduce(
+        (acc, metric) => ({
+          totalImpressions: acc.totalImpressions + (metric.impressions || 0),
+          totalClicks: acc.totalClicks + (metric.clicks || 0),
+          totalCost: acc.totalCost + (metric.cost || 0),
+          totalConversions: acc.totalConversions + (metric.conversions || 0),
+          totalRevenue: acc.totalRevenue + (metric.revenue || 0),
+        }),
+        {
+          totalImpressions: 0,
+          totalClicks: 0,
+          totalCost: 0,
+          totalConversions: 0,
+          totalRevenue: 0,
+        },
+      );
+
+      // Calculate derived metrics
+      const ctr =
+        totals.totalImpressions > 0
+          ? totals.totalClicks / totals.totalImpressions
+          : 0;
+      const cpc =
+        totals.totalClicks > 0 ? totals.totalCost / totals.totalClicks : 0;
+      const roas =
+        totals.totalCost > 0 ? totals.totalRevenue / totals.totalCost : 0;
+
+      // Update campaign with calculated totals
+      const { error: updateError } = await supabase
+        .from("campaigns")
+        .update({
+          raw_data: {
+            totalImpressions: totals.totalImpressions,
+            totalClicks: totals.totalClicks,
+            totalCost: totals.totalCost,
+            totalConversions: totals.totalConversions,
+            totalRevenue: totals.totalRevenue,
+            ctr,
+            cpc,
+            roas,
+            lastUpdated: new Date().toISOString(),
+          },
+        })
+        .eq("id", campaignId);
+
+      if (updateError) {
+        log.error("Failed to update campaign totals", updateError);
+
+        return;
+      }
+
+      log.info("Successfully updated campaign totals", {
+        campaignId,
+        totals,
+        derivedMetrics: { ctr, cpc, roas },
+      });
+    } catch (error) {
+      log.error("Error updating campaign totals", error);
     }
   }
 }

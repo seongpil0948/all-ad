@@ -22,9 +22,11 @@ export function LoadingState({
   return (
     <motion.div
       animate="animate"
+      aria-label="Loading"
       className={containerClass}
       exit="exit"
       initial="initial"
+      role="status"
       variants={fadeIn}
     >
       <motion.div
@@ -37,6 +39,7 @@ export function LoadingState({
         {defaultMessage && (
           <motion.p
             animate={{ opacity: 1, y: 0 }}
+            aria-live="polite"
             className="text-default-500 text-sm"
             initial={{ opacity: 0, y: 10 }}
             transition={{ delay: 0.2 }}

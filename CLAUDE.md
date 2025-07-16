@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 작업전 테스트 코드를 먼저 생성 또는 수정하여 목적을 확실히 해야해
 - 작업 후 (pnpm typecheck && pnpm format && pnpm lint && pnpm test:fast) 를 통해 문제가 없음을 증명해야해
 - 만약 작업후 테스트코드가 잘못된거라면 수정하고 아니면 어플리케이션 코드를 수정해야해
-- 작업 후 미사용 코드나 잘못된 코드가 없는지 확인후 리팩토링해줘
+- 작업 후 미사용 코드나 잘못된 코드가 없는지 확인후 리팩토링작업이 이루어져야해 즉 모든 코드는 참조되고 사용되고 있어야만 해
 
 ## Project Overview
 

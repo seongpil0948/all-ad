@@ -28,6 +28,8 @@ import {
   FaChartBar,
 } from "react-icons/fa";
 
+import { CampaignMetricsModal } from "./CampaignMetricsModal";
+
 import {
   useCampaignMutation,
   useCampaignBudgetMutation,
@@ -56,6 +58,9 @@ export function CampaignDashboard() {
   const [selectedPlatform, setSelectedPlatform] = useState<
     PlatformType | "all"
   >("all");
+  const [selectedCampaignForMetrics, setSelectedCampaignForMetrics] =
+    useState<Campaign | null>(null);
+  const [isMetricsModalOpen, setIsMetricsModalOpen] = useState(false);
 
   // SWR hooks for data fetching and mutations
   const { campaigns, filteredCampaigns, stats, isLoading, error } =
@@ -161,10 +166,25 @@ export function CampaignDashboard() {
     [updateStatus],
   );
 
-  const handleViewMetrics = useCallback((campaignId: string) => {
-    // TODO: Implement metrics view when metrics API is available
-    log.info("View metrics for campaign:", { campaignId });
-  }, []);
+  const handleViewMetrics = useCallback(
+    (campaignId: string) => {
+      log.info("View metrics for campaign:", { campaignId });
+
+      // Find the campaign to get platform info
+      const campaign = campaigns.find((c) => c.id === campaignId);
+
+      if (!campaign) {
+        log.error("Campaign not found:", { campaignId });
+
+        return;
+      }
+
+      // Set the selected campaign and open the modal
+      setSelectedCampaignForMetrics(campaign);
+      setIsMetricsModalOpen(true);
+    },
+    [campaigns],
+  );
 
   // Render cell content - memoized for performance
   const renderCell = useCallback(
@@ -411,6 +431,13 @@ export function CampaignDashboard() {
           )}
         </ModalContent>
       </Modal>
+
+      {/* 캠페인 메트릭스 모달 */}
+      <CampaignMetricsModal
+        campaign={selectedCampaignForMetrics}
+        isOpen={isMetricsModalOpen}
+        onClose={() => setIsMetricsModalOpen(false)}
+      />
     </div>
   );
 }

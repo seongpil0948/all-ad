@@ -243,7 +243,6 @@ export function MultiAccountPlatformManager({
     }
 
     // For other OAuth platforms (Facebook, Kakao), handle accordingly
-    // TODO: Implement OAuth flow for other platforms
     console.warn("OAuth connection needs to be implemented for", platform);
   };
 

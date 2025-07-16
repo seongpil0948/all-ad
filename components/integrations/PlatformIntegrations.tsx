@@ -238,7 +238,6 @@ export function PlatformIntegrations() {
     async (credentialId: string) => {
       try {
         startTransition(async () => {
-          // TODO: Implement disconnect API
           const response = await fetch(`/api/auth/disconnect/${credentialId}`, {
             method: "DELETE",
           });

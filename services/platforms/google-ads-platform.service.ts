@@ -29,23 +29,126 @@ export class GoogleAdsPlatformService implements PlatformService {
   private isMultiAccountMode: boolean = false;
 
   async testConnection(): Promise<ConnectionTestResult> {
-    // TODO: Implement actual Google Ads API connection test
-    return {
-      success: true,
-      accountInfo: {
-        id: "google-ads-legacy",
-        name: "Google Ads Legacy Account",
-      },
-    };
+    if (!this.credentials?.refreshToken) {
+      return {
+        success: false,
+        error: "Refresh token not found",
+      };
+    }
+
+    try {
+      const { GoogleAdsApi } = await import("google-ads-api");
+
+      // Initialize Google Ads API client
+      const client = new GoogleAdsApi({
+        client_id: process.env.GOOGLE_CLIENT_ID || "",
+        client_secret: process.env.GOOGLE_CLIENT_SECRET || "",
+        developer_token: process.env.GOOGLE_DEVELOPER_TOKEN || "",
+      });
+
+      // Set up customer with credentials
+      const customer = client.Customer({
+        customer_id: this.credentials.customerId,
+        login_customer_id: this.credentials.customerId,
+        refresh_token: this.credentials.refreshToken,
+      });
+
+      // Test connection by fetching customer info
+      const customerInfo = await customer.query(`
+        SELECT
+          customer.id,
+          customer.descriptive_name,
+          customer.currency_code,
+          customer.time_zone
+        FROM customer
+        WHERE customer.id = ${this.credentials.customerId}
+      `);
+
+      if (customerInfo.length > 0) {
+        const info = customerInfo[0].customer;
+
+        return {
+          success: true,
+          accountInfo: {
+            id: info?.id?.toString() || this.credentials.customerId,
+            name: info?.descriptive_name || "Google Ads Account",
+            currency: info?.currency_code || undefined,
+            timezone: info?.time_zone || undefined,
+          },
+        };
+      }
+
+      return {
+        success: false,
+        error: "No customer information found",
+      };
+    } catch (error) {
+      log.error("Google Ads connection test failed", error);
+
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Connection failed",
+      };
+    }
   }
 
   async refreshToken(): Promise<TokenRefreshResult> {
-    // TODO: Implement Google Ads token refresh
-    return {
-      success: true,
-      accessToken:
-        (this.credentials as GoogleAdsCredentials)?.refreshToken || "",
-    };
+    if (!this.credentials?.refreshToken) {
+      return {
+        success: false,
+        error: "Refresh token not found",
+      };
+    }
+
+    try {
+      // Use Google OAuth2 to refresh the access token
+      const response = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          grant_type: "refresh_token",
+          client_id: process.env.GOOGLE_CLIENT_ID || "",
+          client_secret: process.env.GOOGLE_CLIENT_SECRET || "",
+          refresh_token: this.credentials.refreshToken,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+
+        log.error("Google Ads token refresh failed", {
+          status: response.status,
+          error: errorData,
+        });
+
+        return {
+          success: false,
+          error: `Token refresh failed: ${errorData.error || response.status}`,
+        };
+      }
+
+      const tokenData = await response.json();
+
+      log.info("Google Ads token refreshed successfully", {
+        customerId: this.credentials.customerId,
+        hasNewToken: !!tokenData.access_token,
+      });
+
+      return {
+        success: true,
+        accessToken: tokenData.access_token,
+        refreshToken: tokenData.refresh_token || this.credentials.refreshToken,
+      };
+    } catch (error) {
+      log.error("Google Ads token refresh error", error);
+
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Token refresh failed",
+      };
+    }
   }
 
   async getAccountInfo(): Promise<{
