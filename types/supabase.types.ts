@@ -632,6 +632,7 @@ export type Database = {
         | "naver"
         | "coupang"
         | "amazon"
+        | "tiktok"
       user_role: "master" | "team_mate" | "viewer"
     }
     CompositeTypes: {
@@ -771,6 +772,7 @@ export const Constants = {
         "naver",
         "coupang",
         "amazon",
+        "tiktok",
       ],
       user_role: ["master", "team_mate", "viewer"],
     },

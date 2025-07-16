@@ -187,6 +187,14 @@ export class PlatformServiceFactory
       kakao: ["campaigns", "reporting"],
       naver: ["campaigns", "keywords", "reporting"],
       coupang: ["manual-campaigns"],
+      tiktok: [
+        "campaigns",
+        "adgroups",
+        "ads",
+        "audiences",
+        "reporting",
+        "oauth",
+      ],
     };
 
     return {

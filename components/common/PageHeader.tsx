@@ -11,7 +11,7 @@ export function PageHeader({
   const containerClasses = centered ? "text-center" : "";
 
   return (
-    <div className={containerClasses}>
+    <header className={containerClasses}>
       <h1 className={title({ size: "md" })}>
         {pageTitle}
         {highlight && (
@@ -32,6 +32,6 @@ export function PageHeader({
           {pageSubtitle}
         </p>
       )}
-    </div>
+    </header>
   );
 }

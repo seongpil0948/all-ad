@@ -39,6 +39,12 @@ export const OAUTH_CONFIGS = {
     tokenUrl: "https://api.amazon.com/auth/o2/token",
     scopes: ["advertising::campaign_management"],
   },
+  tiktok: {
+    authUrl: "https://business-api.tiktok.com/open_api/v1.3/oauth2/authorize/",
+    tokenUrl:
+      "https://business-api.tiktok.com/open_api/v1.3/oauth2/access_token/",
+    scopes: ["business.manage", "ads.manage", "ads.read"],
+  },
 } as const;
 
 // OAuth state for CSRF protection

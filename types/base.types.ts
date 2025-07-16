@@ -1,14 +1,5 @@
 // Base types used across the application
 
-// Platform types aligned with database enum
-export type PlatformType =
-  | "facebook"
-  | "google"
-  | "kakao"
-  | "naver"
-  | "coupang"
-  | "amazon";
-
 // Map legacy platform names to current ones
 export const PLATFORM_MAPPING = {
   meta: "facebook",
@@ -18,6 +9,7 @@ export const PLATFORM_MAPPING = {
   naver: "naver",
   coupang: "coupang",
   amazon: "amazon",
+  tiktok: "tiktok",
 } as const;
 
 // Campaign status types

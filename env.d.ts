@@ -7,7 +7,7 @@ declare global {
       NODE_ENV: "development" | "production" | "test";
 
       // App
-      NEXT_PUBLIC_APP_URL: string;
+      NEXT_PUBLIC_SITE_URL: string;
 
       // Supabase
       NEXT_PUBLIC_SUPABASE_URL: string;

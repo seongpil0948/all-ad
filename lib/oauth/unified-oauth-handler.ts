@@ -187,18 +187,18 @@ export async function handleUnifiedOAuthCallback(
     try {
       const tokenData = await params.exchangeCodeForToken(code, oauthConfig);
 
-      // Legacy OAuth manager removed - token storage needs reimplementation
-      // TODO: Implement token storage
-      console.warn("Token storage needs to be reimplemented");
-
-      // For Google Ads, we need to get the customer ID later
-      // For now, we'll use a temporary account ID
-      const accountId = `${params.platform}_${teamId}_${Date.now()}`;
+      // Store token in platform_credentials table
+      await storeTokenData({
+        teamId,
+        _userId: userId,
+        platform: params.platform,
+        tokenData,
+      });
 
       log.info(`${params.platform} OAuth successful`, {
         teamId,
         userId,
-        accountId,
+        // accountId: (tokenData as any).account_id,
         hasRefreshToken: !!tokenData.refresh_token,
       });
 
@@ -230,6 +230,135 @@ export async function handleUnifiedOAuthCallback(
         `${redirectUrl}?error=oauth_error&platform=${params.platform}`,
       );
     }
+  }
+}
+
+/**
+ * Store OAuth token data in the database
+ */
+async function storeTokenData({
+  teamId,
+  _userId,
+  platform,
+  tokenData,
+}: {
+  teamId: string;
+  _userId: string;
+  platform: PlatformType;
+  tokenData: {
+    access_token: string;
+    refresh_token?: string;
+    expires_in?: number;
+  };
+}) {
+  const { createClient } = await import("@/utils/supabase/server");
+  const supabase = await createClient();
+
+  // Calculate expiration time
+  const expiresAt = tokenData.expires_in
+    ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
+    : null;
+
+  // Get platform account information if available
+  let accountId = "";
+  let accountName = "";
+
+  try {
+    // For different platforms, we might need to make an API call to get account info
+    // This is a simplified implementation
+    if (platform === "google") {
+      // For Google Ads, we might need to fetch customer ID
+      accountId = "google-ads-account";
+      accountName = "Google Ads Account";
+    } else if (platform === "facebook") {
+      // For Meta Ads, we might need to fetch ad account ID
+      accountId = "meta-ads-account";
+      accountName = "Meta Ads Account";
+    } else if (platform === "kakao") {
+      accountId = "kakao-account";
+      accountName = "Kakao Moment Account";
+    } else if (platform === "naver") {
+      accountId = "naver-account";
+      accountName = "Naver Search Ad Account";
+    } else if (platform === "amazon") {
+      accountId = "amazon-ads-account";
+      accountName = "Amazon Ads Account";
+    } else if (platform === "coupang") {
+      accountId = "coupang-ads-account";
+      accountName = "Coupang Ads Account";
+    }
+  } catch (error) {
+    log.warn("Failed to fetch account info during token storage", {
+      platform,
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+
+  // Check if credentials already exist for this team and platform
+  const { data: existingCredentials } = await supabase
+    .from("platform_credentials")
+    .select("id")
+    .eq("team_id", teamId)
+    .eq("platform", platform)
+    .eq("account_id", accountId)
+    .single();
+
+  if (existingCredentials) {
+    // Update existing credentials
+    const { error: updateError } = await supabase
+      .from("platform_credentials")
+      .update({
+        access_token: tokenData.access_token,
+        refresh_token: tokenData.refresh_token,
+        expires_at: expiresAt,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", existingCredentials.id);
+
+    if (updateError) {
+      log.error("Failed to update platform credentials", {
+        platform,
+        teamId,
+        error: updateError,
+      });
+      throw new Error("Failed to update platform credentials");
+    }
+
+    log.info("Updated existing platform credentials", {
+      platform,
+      teamId,
+      accountId,
+    });
+  } else {
+    // Create new credentials
+    const { error: insertError } = await supabase
+      .from("platform_credentials")
+      .insert({
+        team_id: teamId,
+        platform,
+        account_id: accountId,
+        account_name: accountName,
+        access_token: tokenData.access_token,
+        refresh_token: tokenData.refresh_token,
+        expires_at: expiresAt,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+
+    if (insertError) {
+      log.error("Failed to insert platform credentials", {
+        platform,
+        teamId,
+        error: insertError,
+      });
+      throw new Error("Failed to store platform credentials");
+    }
+
+    log.info("Created new platform credentials", {
+      platform,
+      teamId,
+      accountId,
+    });
   }
 }
 

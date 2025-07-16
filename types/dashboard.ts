@@ -1,5 +1,6 @@
 // Dashboard and report type definitions
-import { PlatformType } from "./base.types";
+
+import { PlatformType } from ".";
 
 export interface DashboardFilter {
   dateRange: DashboardDateRange;

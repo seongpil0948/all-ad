@@ -4,6 +4,7 @@ import {
   FaComment,
   FaShoppingCart,
   FaAmazon,
+  FaTiktok,
 } from "react-icons/fa";
 import { SiNaver } from "react-icons/si";
 
@@ -48,6 +49,13 @@ export const platformConfig = {
     icon: FaAmazon,
     color: "warning" as const,
     bgColor: "bg-orange-500",
+    supportsOAuth: true,
+  },
+  tiktok: {
+    name: "TikTok",
+    icon: FaTiktok,
+    color: "secondary" as const,
+    bgColor: "bg-black",
     supportsOAuth: true,
   },
 } as const;

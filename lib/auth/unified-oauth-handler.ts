@@ -44,6 +44,9 @@ const PLATFORM_OVERRIDES: Record<PlatformType, OAuthConfigOverride> = {
   coupang: {
     additionalParams: {},
   },
+  tiktok: {
+    additionalParams: {},
+  },
 };
 
 export async function handleOAuthInitiation(

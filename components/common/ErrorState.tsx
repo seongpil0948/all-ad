@@ -27,10 +27,14 @@ export function ErrorState({
   };
 
   return (
-    <Card className={`bg-${colorMap[type]}-50 border-${colorMap[type]}-200`}>
+    <Card
+      className={`bg-${colorMap[type]}-50 border-${colorMap[type]}-200`}
+      role="alert"
+    >
       <CardBody className="text-center py-8">
         <div className="flex flex-col items-center gap-4">
           <FaExclamationTriangle
+            aria-hidden="true"
             className={`w-12 h-12 ${iconColorMap[type]}`}
           />
           <div>

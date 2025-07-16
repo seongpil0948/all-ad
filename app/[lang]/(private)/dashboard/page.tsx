@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { User } from "@supabase/supabase-js";
+import { Metadata } from "next";
 
 import {
   savePlatformCredentials,
@@ -229,6 +230,39 @@ async function getIntegratedDashboardData(
     teamMembers: teamMembersWithProfiles,
     stats,
     userRole,
+  };
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  const dict = await getDictionary(lang as Locale);
+
+  return {
+    title: dict.dashboard.title,
+    description: dict.dashboard.subtitle,
+    openGraph: {
+      title: `${dict.dashboard.title} - A.ll + Ad`,
+      description: dict.dashboard.subtitle,
+      url: `/${lang}/dashboard`,
+      images: [
+        {
+          url: "/og-dashboard.png",
+          width: 1200,
+          height: 630,
+          alt: dict.dashboard.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${dict.dashboard.title} - A.ll + Ad`,
+      description: dict.dashboard.subtitle,
+      images: ["/og-dashboard.png"],
+    },
   };
 }
 

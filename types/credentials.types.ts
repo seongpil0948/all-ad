@@ -1,6 +1,7 @@
 // Platform credentials types
-import { PlatformType } from "./base.types";
 import { Database } from "./supabase.types";
+
+import { PlatformType } from ".";
 
 // Unified credential values interface for forms
 export type CredentialValues =

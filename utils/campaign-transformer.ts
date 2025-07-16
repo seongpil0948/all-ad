@@ -1,7 +1,6 @@
 // Transform database campaign to application campaign
-import { Campaign as DBCampaign } from "@/types";
+import { Campaign as DBCampaign, PlatformType } from "@/types";
 import { Campaign as AppCampaign } from "@/types/campaign.types";
-import { PlatformType } from "@/types/base.types";
 
 export function transformDbCampaignToApp(dbCampaign: DBCampaign): AppCampaign {
   return {

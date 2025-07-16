@@ -87,7 +87,7 @@ export function getTeamInvitationEmailTemplate(
       <div style="${baseStyles.container}">
         <!-- Header -->
         <div style="${baseStyles.header}">
-          <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://allad.com"}" style="${baseStyles.logo}">
+          <a href="${process.env.NEXT_PUBLIC_SITE_URL || "https://all-ad.in"}" style="${baseStyles.logo}">
             AllAd
           </a>
         </div>
@@ -163,7 +163,7 @@ export function getWelcomeEmailTemplate(data: {
       <div style="${baseStyles.container}">
         <!-- Header -->
         <div style="${baseStyles.header}">
-          <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://allad.com"}" style="${baseStyles.logo}">
+          <a href="${process.env.NEXT_PUBLIC_SITE_URL || "https://all-ad.in"}" style="${baseStyles.logo}">
             AllAd
           </a>
         </div>
@@ -198,7 +198,7 @@ export function getWelcomeEmailTemplate(data: {
 
         <!-- CTA Button -->
         <div style="${baseStyles.buttonContainer}">
-          <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://allad.com"}/dashboard" style="${baseStyles.button}">
+          <a href="${process.env.NEXT_PUBLIC_SITE_URL || "https://all-ad.in"}/dashboard" style="${baseStyles.button}">
             대시보드로 이동
           </a>
         </div>
@@ -235,7 +235,7 @@ export function getPasswordResetEmailTemplate(data: {
       <div style="${baseStyles.container}">
         <!-- Header -->
         <div style="${baseStyles.header}">
-          <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://allad.com"}" style="${baseStyles.logo}">
+          <a href="${process.env.NEXT_PUBLIC_SITE_URL || "https://all-ad.in"}" style="${baseStyles.logo}">
             AllAd
           </a>
         </div>
