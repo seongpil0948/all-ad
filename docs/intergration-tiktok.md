@@ -1,5 +1,3 @@
-틱톡 광고 API 연동 가이드를 한글로 번역해서 제공하겠습니다.# TikTok Ads API 연동: 종합 구현 가이드
-
 ## 1. OAuth 2.0 인증 방법
 
 TikTok Ads API는 안전한 인증을 위해 **OAuth 2.0 인증 코드 플로우**를 사용합니다. 이 과정은 사용자로부터 인증 코드를 받은 후 액세스 토큰으로 교환하는 방식입니다.
@@ -615,4 +613,1106 @@ const runCampaign = async () => {
 };
 ```
 
-이 종합 가이드는 TikTok Ads API와의 통합을 위한 기초를 제공하며, 인증, 캠페인 관리, 성과 추적 및 실용적인 구현 패턴을 다룹니다. API는 프로그래매틱 광고 관리를 위한 강력한 기능을 제공하지만, 광고 이벤트에 대한 웹훅 지원은 여전히 제한적이어서 폴링 기반 솔루션이 필요합니다.
+Login Kit for Web
+This guide details how to enable authentication from your web app to TikTok. After successfully completing authentication with TikTok, developers can obtain an access_token for the TikTok user.
+
+Prerequisites
+Register your app
+Register your app following these steps. Then obtain a client key and secret from the developer portal on https://developers.tiktok.com under Manage apps.
+
+Configure redirect URI
+Redirect URI is required for web apps. After the user completes authorization with Login Kit on the web, they will be redirected to a URI provided by you. This redirect URI must be registered in the Login Kit product configuration for your app.
+
+The following are restrictions for registering redirect URIs.
+
+A maximum of 10 URIs is supported.
+The length of each URI must be less than 512 characters.
+URIs must be absolute and begin with https. For example:
+Correct: https://dev.example.com/auth/callback/
+Incorrect: dev.example.com/auth/callback/
+URIs must be static. Parameters will be denied. For example:
+Correct: https://dev.example.com/auth/callback/
+Incorrect: https://dev.example.com/auth/callback/?id=1
+URIs cannot include a fragment, or hash character (#):
+Correct: https://dev.example.com/auth/callback/
+Incorrect: https://dev.example.com/auth/callback/#100
+Integration Guide
+Implement the front-end code
+Get started by connecting your front-end login button to the server endpoint. The following is an example in HTML:
+
+<a href='{SERVER_ENDPOINT_OAUTH}'>Continue with TikTok</a>
+Implement the server code to handle authorization grant flow
+The server code must be responsible for the following:
+
+Ensuring that the client secret and refresh token are stored securely.
+Ensuring that the security for each user is protected by preventing request forgery attacks.
+Handling the refresh flow before access token expiry.
+Managing the access token request flow for each user.
+Redirect request to TikTok's authorization server
+Create an anti-forgery state token
+You must prevent request forgery attacks to protect the security of your users. The first step before making the redirect request to TikTok's authorization server is to create a unique session token to maintain the state between the request and callback.
+
+You will later match this unique session token with the authentication response to verify that the user is making the request and not a malicious attacker.
+
+One of the simple approaches to a state token is a randomly generated alphanumeric string constructed using a random-number generator. For example:
+
+let array = new Uint8Array(30);
+const csrfState = window.crypto.getRandomValues(array);
+Initial redirect to TikTok's authorization page
+To make the initial redirect request to TikTok's authorization server, the following query parameters below must be added to the Authorization Page URL using the application/x-www-form-urlencoded format.
+
+For example, you can use an online URL encoder to encode parameters. Select UTF-8 as the destination character set.
+
+Parameter
+
+Type
+
+Description
+
+client_key
+
+String
+
+The unique identification key provisioned to the partner.
+
+scope
+
+String
+
+A comma (,) separated string of authorization scope(s). These scope(s) are assigned to your application on the TikTok for Developers website. They handle what content your application can and cannot access. If a scope is toggleable, the user can deny access to one scope while granting access to others.
+
+redirect_uri
+
+String
+
+The redirect URI that you requested for your application. It must match one of the redirect URIs you registered for the app.
+
+state
+
+String
+
+The state is used to maintain the state of your request and callback. This value will be included when redirecting the user back to the client. Check if the state returned in the callback matches what you sent earlier to prevent cross-site request forgery.
+
+The state can also include customized parameters that you want TikTok service to return.
+
+response_type
+
+String
+
+This value should always be set to code.
+
+disable_auto_auth
+
+int
+
+Controls whether the authorization page is automatically presented to users. When set to 0, skips the authorization page for valid sessions. When set to 1, always displays the authorization page.
+
+Redirect your users to the authorization page URL and supply the necessary query parameters. Note that the page can only be accessed through HTTPS.
+
+Type
+
+Description
+
+URL
+
+https://www.tiktok.com/v2/auth/authorize/
+
+Query parameters
+
+client_key=<client_key>&response_type=code&scope=<scope>&redirect_uri=<redirect_uri>&state=<state>
+
+Note: If you are an existing client and use https://www.tiktok.com/auth/authorize/ as the authorization page URL, please register a redirect URI for your app and migrate to the new URL mentioned above.
+
+The following is an example using Node, Express, and JavaScript:
+
+const express = require('express');
+const app = express();
+const fetch = require('node-fetch');
+const cookieParser = require('cookie-parser');
+const cors = require('cors');
+
+app.use(cookieParser());
+app.use(cors());
+app.listen(process.env.PORT || 5000).
+
+const CLIENT_KEY = 'your_client_key' // this value can be found in app's developer portal
+
+app.get('/oauth', (req, res) => {
+const csrfState = Math.random().toString(36).substring(2);
+res.cookie('csrfState', csrfState, { maxAge: 60000 });
+
+    let url = 'https://www.tiktok.com/v2/auth/authorize/';
+
+    // the following params need to be in `application/x-www-form-urlencoded` format.
+    url += '?client_key={CLIENT_KEY}';
+    url += '&scope=user.info.basic';
+    url += '&response_type=code';
+    url += '&redirect_uri={SERVER_ENDPOINT_REDIRECT}';
+    url += '&state=' + csrfState;
+
+    res.redirect(url);
+
+})
+TikTok prompts a users to log in or sign up
+The authorization page takes the user to the TikTok website if the user is not logged in. They are then prompted to log in or sign up for TikTok.
+
+TikTok prompts a user for consent
+After logging in or signing up, an authorization page asks the user for consent to allow your application to access your requested permissions.
+
+Manage authorization response
+If the user authorizes access, they will be redirected to redirect_uri with the following query parameters appended using application/x-www-form-urlencoded format:
+
+Parameter
+
+Type
+
+Description
+
+code
+
+String
+
+Authorization code that is used in getting an access token.
+
+scopes
+
+String
+
+A comma-separated (,) string of authorization scope(s), which the user has granted.
+
+state
+
+String
+
+A unique, non-guessable string when making the initial authorization request. This value allows you to prevent CSRF attacks by confirming that the value coming from the response matches the one you sent.
+
+error
+
+String
+
+If this field is set, it means that the current user is not eligible for using third-party login or authorization. The partner is responsible for handling the error gracefully.
+
+error_description
+
+String
+
+If this field is set, it will be a human-readable description about the error.
+
+Manage access token
+Using the code appended to your redirect_uri, you can obtain access_token for the user, which completes the flow for logging in with TikTok.
+
+See Manage User Access Tokens for related endpoints.
+
+Scopes Overview
+Scopes represent end user granted permissions to access specific data resources or perform specific actions. Every TikTok for Developer API requires a scope to be accessed, and sensitive fields are protected by additional scopes. For example, the scope user.info.basic allows access to APIs and data related to the basic user of a TikTok user.
+
+Managing scopes
+Scopes are available on your app page. The scope user.info.basic will be added by default for all apps with Login Kit. Developers can also request additional scopes and manage existing scopes on their app page after logging in.
+
+To add scopes to your app, do the following:
+
+Navigate to the section titled Scopes to view your scopes.
+Click the Add Scopes button, then add your desired scopes.
+To remove a scope, click the minus button next to it.
+
+Note: Remember that applying and being approved for a scope alone does not give you access to a user's data. Each user must also authorize your app for access to specific scopes.
+
+User authorization
+After you are approved for certain scopes on TikTok for Developers, users will be asked to authorize and confirm your access. This is explained further in the tutorials for Login Kit on iOS, Android, Desktop, and Web. Users can grant or deny the requested scopes or any subset of them, and revoke the authorization at any time on their TikTok apps.
+
+After a user grants the requested scopes, a code will be sent to your registered callback URL. You can obtain an access_token and start invoking TikTok for Developers APIs to get that user's information or perform actions on the user's behalf.
+
+See how to manage user access tokens for access_token related endpoints.
+
+Scopes Reference
+You can find the list of available scopes and their explanation on the scopes reference page.
+
+copes Reference
+Topic
+
+Scope
+
+Definition
+
+User Display
+
+Target APIs
+
+Music Certification
+
+artist.certification.read
+
+Read user's basic artist certification information like status, matched song names, artist id.
+
+Read your basic artist certification information like status, matched song names, artist id.
+
+artist.certification.update
+
+Update user's artist certification information
+
+Update your artist certification information
+
+Local Service
+
+local.product.manage
+
+Create and manage the product listing.
+
+Create and manage the product listing.
+
+local.shop.manage
+
+Create and manage the local shops.
+
+Create and manage the local shops.
+
+local.voucher.manage
+
+Validate and redeem the voucher.
+
+Validate and redeem the voucher.
+
+Portability
+
+portability.activity.ongoing
+
+Make ongoing requests for activity data on the user's behalf
+
+Export copies of your activity data
+
+portability.activity.single
+
+Make a single request for activity data on the user's behalf
+
+Export a copy of your activity data
+
+portability.all.ongoing
+
+Make ongoing requests for all available data on the user's behalf
+
+Export copies of your full user data archive
+
+portability.all.single
+
+Make a single request for all available data on the user's behalf
+
+Export a copy of your full user data archive
+
+portability.directmessages.ongoing
+
+Make ongoing requests for direct message data on the user's behalf
+
+Export copies of your direct message data
+
+portability.directmessages.single
+
+Make a single request for direct message data on the user's behalf
+
+Export a copy of your direct message data
+
+portability.postsandprofile.ongoing
+
+Make ongoing requests for posts and profile data on the user's behalf
+
+Export copies of your posts and profile data
+
+portability.postsandprofile.single
+
+Make a single request for posts and profile data on the user's behalf
+
+Export a copy of your posts and profile data
+
+research_adlib
+
+research.adlib.basic
+
+Access to public commercial data for research purposes
+
+Access to public commercial data for research purposes
+
+research
+
+research.data.basic
+
+Access to TikTok public data for research purposes
+
+Access to TikTok public data for research purposes
+
+Research API
+
+research.data.u18eu
+
+Allow access to data from European users under 18, and all other public data, for research purposes
+
+Allow access to data from European users under 18, and all other public data, for research purposes
+
+user
+
+user.info.basic
+
+Read a user's profile info (open id, avatar, display name ...)
+
+Read your profile info (avatar, display name)
+
+User Info
+user.info.profile
+
+Read access to profile_web_link, profile_deep_link, bio_description, is_verified.
+
+Read your additional profile information, such as bio description, profile link, and account verification status
+
+User Info
+user.info.stats
+
+Read access to a user's statistical data, such as likes count, follower count, following count, and video count
+
+Read your profile engagement statistics, such as like count, follower count, following count, and video count
+
+User Info
+video
+
+video.list
+
+Read a user's public videos on TikTok
+
+Read your public videos on TikTok
+
+List Videos
+Query Videos
+video.publish
+
+Directly post content to a user's TikTok profile.
+
+Post content to TikTok.
+
+Direct Post
+Get Post Status
+video.upload
+
+Share content to creator's account as a draft to further edit and post in TikTok.
+
+Share content as a draft to your TikTok account.
+
+Get Post Status
+Upload
+Share Video API
+
+Query Ads
+Use POST /v2/research/adlib/ad/query to query ads.
+
+HTTP URL
+
+https://open.tiktokapis.com/v2/research/adlib/ad/query/
+
+HTTP Method
+
+POST
+
+Scopes
+
+research.adlib.basic
+
+Request
+Headers
+Key
+
+Type
+
+Description
+
+Example
+
+Required
+
+Authorization
+
+string
+
+The token that bears the authorization of the TikTok user, which is obtained through /v2/oauth/token/.
+
+Bearer clt.example12345Example12345Example
+
+true
+
+Content-Type
+
+string
+
+The original media type of the resource.
+
+application/json
+
+true
+
+Query parameters
+Key
+
+Type
+
+Description
+
+Example
+
+Required
+
+fields
+
+string
+
+The requested fields:
+
+ad.id
+ad.first_shown_date
+ad.last_shown_date
+ad.status
+ad.status_statement
+ad.videos
+ad.image_urls
+ad.reach
+advertiser.business_id
+advertiser.business_name
+advertiser.paid_for_by
+ad.id, ad.first_shown_date, ad.last_shown_date
+
+true
+
+Body
+Key
+
+Type
+
+Description
+
+Example
+
+Required
+
+filters
+
+RequestFilters
+
+The filters that will be applied to the query.
+
+See the "Request example" section below
+
+true
+
+search_term
+
+string
+
+The terms to search for in the query. The limit of the string is 50 characters or less.
+
+If you provide "search_term", the "advertiser_business_ids" filter will be ignored
+
+mobile games
+
+false
+
+search_type
+
+string
+
+The search type (which is case insensitive):
+
+"exact_phrase": Returns results that contain an exact match for the search term. The default search type.
+"fuzzy_phrase": Returns results that contain any or all of the words in the search term in any order.
+fuzzy_phrase
+
+false
+
+max_count
+
+i64
+
+The maximum number of results returned at once. The default value is 10 and the maximum value is 50.
+
+20
+
+false
+
+search_id
+
+string
+
+A search_id is a unique identifier assigned to a cached search result. This identifier enables the resumption of a prior search and retrieval of additional results based on the same search criteria.
+
+If you want to start a new search with an updatedsearch_term or filters value in the request, remove the search_id to avoid getting unexpected results.
+
+20230501124205358FF99E4D6D1294A2A7
+
+false
+
+Data structures
+RequestFilters
+Key
+
+Type
+
+Description
+
+Example
+
+Required
+
+ad_published_date_range
+
+DateRange
+
+The date range during which the ads were published.
+
+The "min" value should represent a date after October 1, 2022.
+
+{
+
+"min": 20230102,
+
+"max": 20230109
+
+}
+
+true
+
+country_code
+
+string
+
+The country where the ads were targeted. The default value is ALL.
+
+Supported Countries
+
+FR
+
+false
+
+advertiser_business_ids
+
+list<i64>
+
+The advertiser's business ID of the ads.
+
+If you provide "search_term", this filter will be ignored.
+
+[294854736284058, 495736284058473]
+
+false
+
+unique_users_seen_size_range
+
+SizeRange
+
+The range of the number of users who've seen the content of this ad.
+
+{
+
+"min": "10K",
+
+"max": "20K"
+
+}
+
+false
+
+DateRange
+Key
+
+Type
+
+Description
+
+Example
+
+Required
+
+min
+
+string
+
+The first date of the range and this needs to be after October 1, 2022.
+
+20230102
+
+true
+
+max
+
+string
+
+The last date of the range.
+
+20230109
+
+true
+
+SizeRange
+Key
+
+Type
+
+Description
+
+Example
+
+Required
+
+min
+
+string
+
+The minimum size in thousands (K), millions (M), or billions (B).
+
+The number before "K", "M", and "B" must be an integer less than 1000.
+
+Valid: 0K, 120K, 2M, 1B
+
+Invalid: 2000K, 1.1M, 1B2M
+
+false
+
+max
+
+string
+
+The maximum size in thousands (K), millions (M), or billions (B)
+
+The number before "K", "M", and "B" must be an integer less than 1000.
+
+The value must be greater than 0.
+
+Valid: 120K, 2M, 1B
+
+Invalid: 0K, 2000K, 1.1M, 1B2M
+
+false
+
+Request example
+curl -L -X POST 'https://open.tiktokapis.com/v2/research/adlib/ad/query/?fields=ad.id,ad.first_shown_date,ad.last_shown_date' \
+-H 'Authorization: Bearer clt.example12345Example12345Example' \
+-H 'Content-Type: application/json' \
+--data-raw '{
+"filters":{
+"advertiser_business_ids": [3847236290405, 319282903829],
+"ad_published_date_range": {
+"min": "20210102",
+"max": "20210109"
+},
+"country_code": "FR",
+"unique_users_seen_size_range": {
+"min": "10K",
+"max": "1M"
+},
+},
+"search_term": "mobile games"
+}'
+Response
+Key
+
+Type
+
+Example
+
+data
+
+QueryAdData
+
+See the response example below.
+
+error
+
+ErrorStructV2
+
+See the response example below.
+
+Response example
+{
+"data": {
+"ads": [
+{
+"ad": {
+"first_shown_date": 20210101,
+"id": 1923845247192304,
+"image_urls": [
+"https://asdfcdn.com/17392712.jpeg?x-expires=1679169600\u0026x-signature=asdf"
+],
+"last_shown_date": 20210101,
+"status": "active",
+"videos": [
+{"url": "https://asdfcdn.com/..../127364jmdfjsa93d8cn30dm2di/?mime_type=video_mp4"},
+{"url": "https://asdfcdn.com/..../1kmeidhfb38u21nd82hsk389fd/?mime_type=video_mp4"}
+],
+"reach": {
+"unique_user_seen": "11K"
+}
+},
+"advertiser": {
+"buisness_id": 3847236290405,
+"business_name": "Awe Food Co.",
+"paid_by": "Awe Co."
+}
+}
+],
+"has_more": "true",
+"search_id": "2837438294054038"
+},
+"error": {
+"code": "ok",
+"http_status_code": 200,
+"log_id": "202304280326050102231031430C7E754E",
+"message": ""
+}
+}
+Data structures
+QueryAdData
+Key
+
+Type
+
+Description
+
+Example
+
+ads
+
+list<AdDto>
+
+The list of ads that match all the criteria.
+
+has_more
+
+bool
+
+The flag that indicates if there are more items to be returned.
+
+true
+
+search_id
+
+string
+
+A unique identifier assigned to a cached search result. This identifier enables the resumption of a prior search and retrieval of additional results based on the same search criteria.
+
+2837438294054038
+
+AdDto
+Key
+
+Type
+
+Description
+
+Example
+
+ad
+
+Ad
+
+The metadata of this ad.
+
+advertiser
+
+Advertiser
+
+The metadata of the advertiser.
+
+Ad
+Key
+
+Type
+
+Description
+
+Example
+
+id
+
+i64
+
+The ad ID.
+
+1923845247192304
+
+first_shown_date
+
+string
+
+The first day when this ad was shown.
+
+20210101
+
+last_shown_date
+
+string
+
+The last day when this ad was shown.
+
+20210101
+
+status
+
+string
+
+The audit status of this ad: active or inactive.
+
+active
+
+videos
+
+list<AdVideo>
+
+The list of videos.
+
+image_urls
+
+list<string>
+
+The image URL list of this ad.
+
+[
+
+"https://asdfcdn.com/17392712.jpeg?x-expires=1679169600\u0026x-signature=asdf"
+
+]
+
+reach
+
+Reach
+
+The number of users who have seen this ad.
+
+{
+
+"unique_users_seen": "11K"
+
+}
+
+AdVideo
+Key
+
+Type
+
+Description
+
+Example
+
+url
+
+string
+
+The video url of this ad
+
+https://asdfcdn.com/..../127364jmdfjsa93d8cn30dm2di/?mime_type=video_mp4
+
+Reach
+Key
+
+Type
+
+Description
+
+Example
+
+unique_users_seen
+
+string
+
+The number of users who have seen this ad.
+
+"11K"
+
+Advertiser
+Key
+
+Type
+
+Description
+
+Example
+
+business_id
+
+i64
+
+The advertiser's business ID.
+
+1755645247067185
+
+business_name
+
+string
+
+The advertiser's business name.
+
+Awe Food Co.
+
+paid_by
+
+string
+
+The advertiser's funding source.
+
+Awe Co.
+
+ErrorStructV2
+Key
+
+Type
+
+Description
+
+Example
+
+code
+
+string
+
+The error category in string.
+
+ok
+
+message
+
+string
+
+The detailed error description.
+
+log_id
+
+string
+
+The unique ID associated with every request for debugging purporse.
+
+202207280326050102231031430C7E754E
+
+http_status_code
+
+i32
+
+The http status code.
+
+200
+
+Getting Started
+This guide will show you how to use the Commercial Content API. Learn how to use the Commercial Content API to query ad data and fetch public advertiser data in the following use case example.
+
+View your client registration
+Once your application is approved, a research client will be generated for your project. You can view your approved research projects here. Select a project from the list to see the research client details.
+
+The provided Client key and Client secret are required to connect to the Commercial Content API endpoints. The client key and secret are hidden by default but can be displayed by clicking the Display button (eye icon).
+
+Note: The client secret is a credential used to authenticate your connection to TikTok's APIs. Do not share this with anyone!
+
+Obtain a client access token
+Once you have obtained the client key and secret for your project, generate a client access token. Add this access token in the authorization header of the http requests to connect to the Commercial Content API endpoints.
+
+Query TikTok public content data
+The cURL command below shows an example of how you can query the TikTok ads created in Italy between January 2, 2021 to January 9, 2021 with the keyword "coffee".
+
+curl -X POST 'https://open.tiktokapis.com/v2/research/adlib/ad/query/?fields=ad,ad_group' \
+ -H 'authorization: bearer clt.example12345Example12345Example' \
+ -d '{
+"filters": {
+"ad_published_date_range": {
+"min": "20221001",
+"max": "20230510"
+},
+"country": "IT"
+},
+"search_term": "coffee",
+"max_count": 20
+}'
+Pagination
+If the total number of ads that match the search criteria is larger than the maximum number of ads that can be returned in a single request, the response data will be returned with different requests.
+
+Field
+
+Type
+
+Description
+
+Example
+
+Required?
+
+max_count
+
+number
+
+The maximum count of TikTok videos in the response. The default value is 10 and the maximum value is 50.
+
+12
+
+FALSE
+
+search_id
+
+string
+
+The ID of a previous search to provide sequential calls for paging.
+
+"eyJsYXN0X3NvcnQiOls3NDA3OCwiMzUwNDIwOTgzOD"
+
+FALSE
+
+First page
+When you send the first request, you do not need to set the search_id in the request body. In the http response, has_more and search_id are returned, which are used in the subsequent requests.
+
+Try out this request:
+
+curl -X POST 'https://open.tiktokapis.com/v2/research/adlib/ad/query/?fields=ad,ad_group' \
+ -H 'authorization: bearer clt.example12345Example12345Example' \
+ -d '{
+"filters": {
+"ad_published_date_range": {
+"min": "20221001",
+"max": "20230510"
+},
+"country": "IT"
+},
+"search_term": "coffee",
+"max_count": 20
+}'
+The following example data is returned from the response.
+
+{
+"data": {
+"has_more": true,
+"search_id": "eyJsYXN0X3NvcnQiOls3NDA3OCwiMzUwNDIwOTgzOD",
+"ads": [
+...
+]
+},
+"error": {
+...
+}
+}
+Next page
+With the cURL command below, you can get the next page of query results.
+
+curl -X POST 'https://open.tiktokapis.com/v2/research/adlib/ad/query/?fields=ad,ad_group' \
+ -H 'authorization: bearer clt.example12345Example12345Example' \
+ -d '{
+"filters": {
+"ad_published_date_range": {
+"min": "20221001",
+"max": "20230510"
+},
+"country": "IT"
+},
+"search_term": "coffee",
+"max_count": 20,
+"search_id": "eyJsYXN0X3NvcnQiOls3NDA3OCwiMzUwNDIwOTgzOD"
+}'
+The following example data is returned from the response.
+
+{
+"data": {
+"has_more": true,
+"search_id": "eyJsYXN0X3NvcnQiOlsyNTQxMTkwLCIzNDk1NzA4NjI",
+"ads": [
+...
+]
+},
+"error": {
+...
+}
+}
