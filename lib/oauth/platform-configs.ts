@@ -49,15 +49,9 @@ const baseOAuthConfigs = {
     tokenUrl: "https://api.amazon.com/auth/o2/token",
   },
   tiktok: {
-    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback/tiktok-ads`,
-    scope: [
-      "ad.group.read",
-      "ad.group.write",
-      "campaign.read",
-      "campaign.write",
-    ],
-    authorizationUrl:
-      "https://business-api.tiktok.com/open_api/v1.3/oauth2/authorize/",
+    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback/tiktok`,
+    scope: ["ads.management", "reporting"],
+    authorizationUrl: "https://www.tiktok.com/v2/auth/authorize/",
     tokenUrl:
       "https://business-api.tiktok.com/open_api/v1.3/oauth2/access_token/",
   },
@@ -137,6 +131,10 @@ export async function getAllAdOAuthConfig(
     amazon: {
       clientId: process.env.AMAZON_CLIENT_ID,
       clientSecret: process.env.AMAZON_CLIENT_SECRET,
+    },
+    tiktok: {
+      clientId: process.env.TIKTOK_APP_ID,
+      clientSecret: process.env.TIKTOK_APP_SECRET,
     },
     // Add more platforms as needed
   };

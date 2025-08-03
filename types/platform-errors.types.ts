@@ -1,7 +1,7 @@
 import { PlatformType } from "@/types";
 
 // 플랫폼 공통 에러 클래스
-export abstract class PlatformError extends Error {
+export abstract class BasePlatformError extends Error {
   abstract readonly platform: PlatformType;
   abstract readonly code: string;
   abstract readonly userMessage: string;
@@ -16,8 +16,22 @@ export abstract class PlatformError extends Error {
   }
 }
 
+// 구체적인 PlatformError 클래스
+export class PlatformError extends BasePlatformError {
+  constructor(
+    message: string,
+    public readonly platform: PlatformType,
+    public readonly code: string,
+    public readonly retryable: boolean,
+    public readonly userMessage: string,
+    originalError?: Error,
+  ) {
+    super(message, originalError);
+  }
+}
+
 // 인증 관련 에러
-export class PlatformAuthError extends PlatformError {
+export class PlatformAuthError extends BasePlatformError {
   readonly code = "AUTH_ERROR";
   readonly retryable = false;
 
@@ -32,7 +46,7 @@ export class PlatformAuthError extends PlatformError {
 }
 
 // 토큰 만료 에러
-export class PlatformTokenExpiredError extends PlatformError {
+export class PlatformTokenExpiredError extends BasePlatformError {
   readonly code = "TOKEN_EXPIRED";
   readonly retryable = true;
 
@@ -47,7 +61,7 @@ export class PlatformTokenExpiredError extends PlatformError {
 }
 
 // API 호출 제한 에러
-export class PlatformRateLimitError extends PlatformError {
+export class PlatformRateLimitError extends BasePlatformError {
   readonly code = "RATE_LIMIT";
   readonly retryable = true;
 
@@ -63,7 +77,7 @@ export class PlatformRateLimitError extends PlatformError {
 }
 
 // 계정 권한 에러
-export class PlatformPermissionError extends PlatformError {
+export class PlatformPermissionError extends BasePlatformError {
   readonly code = "PERMISSION_ERROR";
   readonly retryable = false;
 
@@ -78,7 +92,7 @@ export class PlatformPermissionError extends PlatformError {
 }
 
 // 잘못된 계정 ID 에러
-export class PlatformInvalidAccountError extends PlatformError {
+export class PlatformInvalidAccountError extends BasePlatformError {
   readonly code = "INVALID_ACCOUNT";
   readonly retryable = false;
 
@@ -94,7 +108,7 @@ export class PlatformInvalidAccountError extends PlatformError {
 }
 
 // API 연결 에러
-export class PlatformConnectionError extends PlatformError {
+export class PlatformConnectionError extends BasePlatformError {
   readonly code = "CONNECTION_ERROR";
   readonly retryable = true;
 
@@ -109,7 +123,7 @@ export class PlatformConnectionError extends PlatformError {
 }
 
 // 구성 에러
-export class PlatformConfigError extends PlatformError {
+export class PlatformConfigError extends BasePlatformError {
   readonly code = "CONFIG_ERROR";
   readonly retryable = false;
 
@@ -124,7 +138,7 @@ export class PlatformConfigError extends PlatformError {
 }
 
 // 데이터 처리 에러
-export class PlatformDataError extends PlatformError {
+export class PlatformDataError extends BasePlatformError {
   readonly code = "DATA_ERROR";
   readonly retryable = false;
 

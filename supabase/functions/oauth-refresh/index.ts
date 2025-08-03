@@ -11,6 +11,7 @@ const platformTokenUrls: Record<string, string> = {
   google: "https://oauth2.googleapis.com/token",
   facebook: "https://graph.facebook.com/v18.0/oauth/access_token",
   kakao: "https://kauth.kakao.com/oauth/token",
+  tiktok: "https://business-api.tiktok.com/open_api/v1.3/oauth2/access_token/",
 };
 
 async function refreshOAuthToken(
@@ -24,18 +25,31 @@ async function refreshOAuthToken(
     throw new Error(`Unsupported platform: ${platform}`);
   }
 
-  const params = new URLSearchParams({
-    grant_type: "refresh_token",
-    refresh_token: refreshToken,
-    client_id: clientId,
-    client_secret: clientSecret,
-  });
+  let params: URLSearchParams;
+  let headers: Record<string, string> = {
+    "Content-Type": "application/x-www-form-urlencoded",
+  };
+
+  // TikTok uses different parameter names
+  if (platform === "tiktok") {
+    params = new URLSearchParams({
+      app_id: clientId,
+      secret: clientSecret,
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+    });
+  } else {
+    params = new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+      client_id: clientId,
+      client_secret: clientSecret,
+    });
+  }
 
   const response = await fetch(tokenUrl, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
+    headers,
     body: params.toString(),
   });
 
@@ -44,7 +58,14 @@ async function refreshOAuthToken(
     throw new Error(`Failed to refresh token: ${error}`);
   }
 
-  return response.json();
+  const data = await response.json();
+
+  // TikTok returns data wrapped in a "data" field
+  if (platform === "tiktok" && data.code === 0) {
+    return data.data;
+  }
+
+  return data;
 }
 
 serve(async (req: Request) => {

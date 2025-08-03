@@ -73,6 +73,7 @@ serve(async (req: Request) => {
       case "facebook":
       case "kakao":
       case "naver":
+      case "tiktok":
         // Similar implementation for other platforms
         syncResults.campaigns_count = Math.floor(Math.random() * 5) + 1;
         syncResults.metrics_count = syncResults.campaigns_count * 7;

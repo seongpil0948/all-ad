@@ -8,6 +8,7 @@ import { BasePlatformServiceFactory } from "./base-platform.service";
 import { GoogleAdsOAuthPlatformService } from "./google-ads-oauth-platform.service";
 import { AmazonPlatformService } from "./amazon-platform.service";
 import { FacebookPlatformService } from "./facebook-platform.service";
+import { TikTokPlatformService } from "./tiktok-platform.service";
 
 import { PlatformConfigError } from "@/types/platform-errors.types";
 import { PlatformType } from "@/types";
@@ -35,6 +36,7 @@ export class PlatformServiceFactory
     this.services.set("google", () => new GoogleAdsOAuthPlatformService());
     this.services.set("facebook", () => new FacebookPlatformService());
     this.services.set("amazon", () => new AmazonPlatformService());
+    this.services.set("tiktok", () => new TikTokPlatformService());
 
     // Register integration services (for future use)
     // this.integrationServices.set("google", () => new GoogleAdsIntegrationService());
@@ -228,3 +230,4 @@ export { GoogleAdsPlatformService } from "./google-ads-platform.service";
 export { GoogleAdsOAuthPlatformService } from "./google-ads-oauth-platform.service";
 export { AmazonPlatformService } from "./amazon-platform.service";
 export { FacebookPlatformService } from "./facebook-platform.service";
+export { TikTokPlatformService } from "./tiktok-platform.service";

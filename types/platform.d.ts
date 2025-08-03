@@ -120,4 +120,9 @@ export const PLATFORM_CONFIG: Record<
     icon: "coupang",
     color: "#FF5A5F",
   },
+  tiktok: {
+    name: "TikTok Ads",
+    icon: "tiktok",
+    color: "#000000",
+  },
 };

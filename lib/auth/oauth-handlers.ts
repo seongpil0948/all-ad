@@ -40,10 +40,10 @@ export const OAUTH_CONFIGS = {
     scopes: ["advertising::campaign_management"],
   },
   tiktok: {
-    authUrl: "https://business-api.tiktok.com/open_api/v1.3/oauth2/authorize/",
+    authUrl: "https://www.tiktok.com/v2/auth/authorize/",
     tokenUrl:
       "https://business-api.tiktok.com/open_api/v1.3/oauth2/access_token/",
-    scopes: ["business.manage", "ads.manage", "ads.read"],
+    scopes: ["ads.management", "reporting"],
   },
 } as const;
 
@@ -80,14 +80,17 @@ export async function generateOAuthUrl(
     }),
   );
 
+  // TikTok uses different parameter names
   const params = new URLSearchParams({
     response_type: "code",
-    client_id: clientId,
+    [platform === "tiktok" ? "client_key" : "client_id"]: clientId,
     redirect_uri: redirectUri,
-    scope: config.scopes.join(" "),
+    scope: config.scopes.join(platform === "tiktok" ? "," : " "),
     state,
-    access_type: "offline", // For refresh tokens
-    prompt: "consent", // Force consent to get refresh token
+    ...(platform !== "tiktok" && {
+      access_type: "offline", // For refresh tokens
+      prompt: "consent", // Force consent to get refresh token
+    }),
   });
 
   const url = `${config.authUrl}?${params.toString()}`;
@@ -137,13 +140,22 @@ export async function exchangeCodeForTokens(
     throw new Error("OAuth state expired");
   }
 
-  const tokenParams = new URLSearchParams({
-    grant_type: "authorization_code",
-    client_id: clientId,
-    client_secret: clientSecret,
-    code,
-    redirect_uri: redirectUri,
-  });
+  // TikTok uses different parameter names
+  const tokenParams =
+    platform === "tiktok"
+      ? new URLSearchParams({
+          app_id: clientId,
+          secret: clientSecret,
+          auth_code: code,
+          grant_type: "authorization_code",
+        })
+      : new URLSearchParams({
+          grant_type: "authorization_code",
+          client_id: clientId,
+          client_secret: clientSecret,
+          code,
+          redirect_uri: redirectUri,
+        });
 
   try {
     const response = await fetch(config.tokenUrl, {
@@ -194,12 +206,21 @@ export async function refreshAccessToken(
     throw new Error(`Token refresh not supported for platform: ${platform}`);
   }
 
-  const refreshParams = new URLSearchParams({
-    grant_type: "refresh_token",
-    client_id: clientId,
-    client_secret: clientSecret,
-    refresh_token: refreshToken,
-  });
+  // TikTok uses different parameter names
+  const refreshParams =
+    platform === "tiktok"
+      ? new URLSearchParams({
+          app_id: clientId,
+          secret: clientSecret,
+          grant_type: "refresh_token",
+          refresh_token: refreshToken,
+        })
+      : new URLSearchParams({
+          grant_type: "refresh_token",
+          client_id: clientId,
+          client_secret: clientSecret,
+          refresh_token: refreshToken,
+        });
 
   try {
     const response = await fetch(config.tokenUrl, {
@@ -269,6 +290,14 @@ export async function getPlatformAccountInfo(
         "Amazon-Advertising-API-ClientId": process.env.AMAZON_CLIENT_ID!,
       };
       break;
+    case "tiktok":
+      // TikTok requires getting advertiser list first
+      apiUrl =
+        "https://business-api.tiktok.com/open_api/v1.3/oauth2/advertiser/get/";
+      headers = {
+        "Access-Token": accessToken,
+      };
+      break;
     default:
       throw new Error(`Account info not supported for platform: ${platform}`);
   }
@@ -326,6 +355,23 @@ export async function getPlatformAccountInfo(
         };
         break;
       }
+      case "tiktok": {
+        // TikTok returns wrapped response with advertiser list
+        if (data.code !== 0) {
+          throw new Error(`TikTok API error: ${data.message}`);
+        }
+        const advertiser = data.data?.list?.[0];
+
+        if (!advertiser) {
+          throw new Error("No TikTok advertiser account found");
+        }
+        accountInfo = {
+          accountId: advertiser.advertiser_id,
+          accountName: advertiser.advertiser_name || "TikTok Advertiser",
+          email: undefined, // TikTok doesn't provide email in advertiser API
+        };
+        break;
+      }
       default:
         throw new Error(`Unsupported platform: ${platform}`);
     }
@@ -366,6 +412,8 @@ export function getPlatformDisplayName(platform: PlatformType): string {
       return "쿠팡 애즈";
     case "amazon":
       return "Amazon Ads";
+    case "tiktok":
+      return "TikTok Ads";
     default:
       return platform;
   }
