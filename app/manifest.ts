@@ -12,14 +12,20 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#667eea",
     icons: [
       {
-        src: "/android-chrome-192x192.png",
-        sizes: "192x192",
+        src: "/icon?<generated>",
+        sizes: "32x32",
         type: "image/png",
       },
       {
-        src: "/android-chrome-512x512.png",
-        sizes: "512x512",
+        src: "/apple-icon?<generated>",
+        sizes: "180x180",
         type: "image/png",
+        purpose: "maskable",
+      },
+      {
+        src: "/favicon.ico",
+        sizes: "48x48",
+        type: "image/x-icon",
       },
     ],
     categories: ["business", "productivity", "marketing"],
@@ -33,14 +39,14 @@ export default function manifest(): MetadataRoute.Manifest {
         short_name: "Dashboard",
         description: "Go to dashboard",
         url: "/dashboard",
-        icons: [{ src: "/android-chrome-192x192.png", sizes: "192x192" }],
+        icons: [{ src: "/icon?<generated>", sizes: "32x32" }],
       },
       {
         name: "Settings",
         short_name: "Settings",
         description: "Go to settings",
         url: "/settings",
-        icons: [{ src: "/android-chrome-192x192.png", sizes: "192x192" }],
+        icons: [{ src: "/icon?<generated>", sizes: "32x32" }],
       },
     ],
   };

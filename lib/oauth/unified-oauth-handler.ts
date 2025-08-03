@@ -286,6 +286,9 @@ async function storeTokenData({
     } else if (platform === "coupang") {
       accountId = "coupang-ads-account";
       accountName = "Coupang Ads Account";
+    } else if (platform === "tiktok") {
+      accountId = "tiktok-ads-account";
+      accountName = "TikTok Ads Account";
     }
   } catch (error) {
     log.warn("Failed to fetch account info during token storage", {

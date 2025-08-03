@@ -171,3 +171,6 @@ export * from "./type-utils";
 
 // Re-export platform error types
 export * from "./platform-errors.types";
+
+// Re-export platform service types
+export * from "./platform-service.types";

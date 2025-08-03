@@ -8,6 +8,70 @@ import log from "@/utils/logger";
 const locales = ["en", "ko", "zh"];
 const defaultLocale = "en";
 
+// Paths or patterns that should skip locale redirect
+const LOCALE_SKIP_PATTERNS = {
+  // Exact paths
+  exactPaths: [
+    "/robots.txt",
+    "/sitemap.xml",
+    "/manifest.json",
+    "/manifest.webmanifest",
+    "/favicon.ico",
+    "/icon",
+    "/apple-icon",
+    "/opengraph-image",
+    "/twitter-image",
+  ],
+  // Path prefixes
+  prefixes: ["/api/", "/_next/", "/static/"],
+  // File extensions
+  extensions: [
+    ".txt",
+    ".xml",
+    ".ico",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".webp",
+    ".svg",
+  ],
+  // String patterns to check if path includes
+  includes: [
+    "tiktok",
+    "facebook-domain-verification",
+    "google-site-verification",
+  ],
+};
+
+function shouldSkipLocaleRedirect(pathname: string): boolean {
+  // Check exact paths
+  if (LOCALE_SKIP_PATTERNS.exactPaths.includes(pathname)) {
+    return true;
+  }
+
+  // Check prefixes
+  if (
+    LOCALE_SKIP_PATTERNS.prefixes.some((prefix) => pathname.startsWith(prefix))
+  ) {
+    return true;
+  }
+
+  // Check file extensions
+  if (LOCALE_SKIP_PATTERNS.extensions.some((ext) => pathname.endsWith(ext))) {
+    return true;
+  }
+
+  // Check if path includes specific patterns
+  if (
+    LOCALE_SKIP_PATTERNS.includes.some((pattern) => pathname.includes(pattern))
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 function getLocale(request: NextRequest): string {
   try {
     const negotiatorHeaders: Record<string, string> = {};
@@ -43,13 +107,16 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const method = request.method;
 
+  // Check if this path should skip locale redirect
+  const skipLocale = shouldSkipLocaleRedirect(pathname);
+
   // Check if there is any supported locale in the pathname
   const pathnameHasLocale = locales.some(
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`,
   );
 
-  // Redirect if there is no locale
-  if (!pathnameHasLocale) {
+  // Redirect if there is no locale (unless it's a path we want to skip)
+  if (!pathnameHasLocale && !skipLocale) {
     const locale = getLocale(request);
 
     request.nextUrl.pathname = `/${locale}${pathname}`;
