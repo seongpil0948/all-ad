@@ -8,8 +8,6 @@ import { ensureUserHasTeam } from "@/lib/data/teams";
 import log from "@/utils/logger";
 import { redirectWithToast } from "@/utils/server-toast";
 
-export type { ActionState };
-
 export async function login(
   prevState: ActionState,
   formData: FormData,
