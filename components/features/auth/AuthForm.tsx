@@ -14,12 +14,13 @@ import { Tabs, Tab } from "@heroui/tabs";
 import { Card, CardBody } from "@heroui/card";
 
 import { clientLogin } from "@/app/[lang]/(auth)/login/client-actions";
-import { signup, type ActionState } from "@/app/[lang]/(auth)/login/actions";
+import { signup } from "@/app/[lang]/(auth)/login/actions";
 import { toast } from "@/utils/toast";
 import { useDictionary } from "@/hooks/use-dictionary";
 import TermsOfServiceContent from "@/app/[lang]/(public)/terms/TermsOfServiceContent";
 import RefundPolicyContent from "@/app/[lang]/(public)/refund-policy/RefundPolicyContent";
 import CookiePolicyContent from "@/app/[lang]/(public)/cookies/CookiePolicyContent";
+import { ActionState } from "@/types/actions";
 
 interface AuthFormProps {
   initialMode?: "login" | "signup";
