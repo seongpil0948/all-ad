@@ -17,6 +17,7 @@ export async function GET(
     "amazon",
     "naver",
     "coupang",
+    "tiktok",
   ];
 
   if (!validPlatforms.includes(platform as PlatformType)) {

@@ -172,5 +172,12 @@ export * from "./type-utils";
 // Re-export platform error types
 export * from "./platform-errors.types";
 
-// Re-export platform service types
-export * from "./platform-service.types";
+// Re-export platform service types (with explicit exports to avoid conflicts)
+export type {
+  PlatformType as ServicePlatformType,
+  PlatformCredentials as ServicePlatformCredentials,
+  CampaignMetrics as ServiceCampaignMetrics,
+  AccountInfo,
+  ConnectionTestResult,
+  TokenRefreshResult,
+} from "./platform-service.types";

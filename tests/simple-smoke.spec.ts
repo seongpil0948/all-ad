@@ -1,14 +1,14 @@
 import { test, expect } from "@playwright/test";
 import { gotoWithLang, expectUrl } from "./utils/navigation";
 
-test.describe("Smoke Tests", () => {
-  test("intro page loads", async ({ page }) => {
+test.describe("Smoke Tests @smoke", () => {
+  test("intro page loads @smoke", async ({ page }) => {
     await gotoWithLang(page, "intro");
     await expect(page).toHaveURL(/\/(en|ko)\/intro/);
     await expect(page.locator("h1").first()).toBeVisible();
   });
 
-  test("FAQ page loads", async ({ page }) => {
+  test("FAQ page loads @smoke", async ({ page }) => {
     await gotoWithLang(page, "faq");
     await expect(page).toHaveURL(/\/(en|ko)\/faq/);
     await expect(
@@ -16,7 +16,7 @@ test.describe("Smoke Tests", () => {
     ).toBeVisible();
   });
 
-  test("login page loads", async ({ page }) => {
+  test("login page loads @smoke", async ({ page }) => {
     await gotoWithLang(page, "login");
     await expect(page).toHaveURL(/\/(en|ko)\/login/);
     await expect(page.getByTestId("login-input-id")).toBeVisible();

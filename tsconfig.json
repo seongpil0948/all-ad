@@ -32,8 +32,7 @@
     "**/*.tsx",
     "**/*.d.ts",
     ".next/types/**/*.ts",
-    "playwright.config.ts",
-    ".playwright-fast.config.ts"
+    "playwright.config.ts"
   ],
   "exclude": ["node_modules", "supabase/functions/**/*"]
 }

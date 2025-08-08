@@ -25,7 +25,7 @@ export class GoogleAdsOAuthClient {
   private client: GoogleAdsApi | null = null;
 
   private async initializeClient() {
-    const config = await getAllAdOAuthConfig("google");
+    const config = await getOAuthConfig("google");
 
     this.client = new GoogleAdsApi({
       client_id: config.clientId,

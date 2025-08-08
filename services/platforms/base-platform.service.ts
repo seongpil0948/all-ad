@@ -294,7 +294,15 @@ export abstract class BasePlatformServiceFactory
 
   // Helper method to validate platform support
   protected validatePlatformSupport(platform: PlatformType): void {
-    const supportedPlatforms = ["google", "facebook", "amazon"] as const;
+    const supportedPlatforms = [
+      "google",
+      "facebook",
+      "amazon",
+      "tiktok",
+      "kakao",
+      "naver",
+      "coupang",
+    ] as const;
 
     if (
       !supportedPlatforms.includes(

@@ -10,6 +10,7 @@ export interface OAuthConfig {
   state?: string;
   codeChallenge?: string;
   codeChallengeMethod?: "S256" | "plain";
+  developerToken?: string; // Google Ads specific
 }
 
 export interface TokenData {

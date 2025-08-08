@@ -21,6 +21,11 @@ import { Campaign, PlatformType } from "@/types";
 import { CampaignMetrics } from "@/types/campaign.types";
 import { Json } from "@/types/supabase.types";
 import log from "@/utils/logger";
+import {
+  parseIntValue,
+  parseNumericValue,
+  sanitizeForJson,
+} from "@/utils/platform-utils";
 
 export class AmazonPlatformService extends BasePlatformService<AmazonAdsApiClient> {
   public platform: PlatformType = "amazon";
@@ -489,12 +494,25 @@ export class AmazonPlatformService extends BasePlatformService<AmazonAdsApiClien
       date:
         (amazonMetrics.date as string) ||
         new Date().toISOString().split("T")[0],
-      impressions: parseInt((amazonMetrics.impressions as string) || "0") || 0,
-      clicks: parseInt((amazonMetrics.clicks as string) || "0") || 0,
-      cost: parseFloat((amazonMetrics.cost as string) || "0") || 0,
-      conversions: parseInt((amazonMetrics.purchases7d as string) || "0") || 0,
-      revenue: parseFloat((amazonMetrics.sales7d as string) || "0") || 0,
-      raw_data: amazonMetrics,
+      impressions: parseIntValue(amazonMetrics.impressions),
+      clicks: parseIntValue(amazonMetrics.clicks),
+      cost: parseNumericValue(amazonMetrics.cost),
+      conversions: parseIntValue(amazonMetrics.purchases7d),
+      revenue: parseNumericValue(amazonMetrics.sales7d),
+      ctr: parseNumericValue(amazonMetrics.clickThroughRate),
+      cpc:
+        parseNumericValue(amazonMetrics.cost) /
+        Math.max(parseNumericValue(amazonMetrics.clicks), 1),
+      cpm:
+        (parseNumericValue(amazonMetrics.cost) /
+          Math.max(parseNumericValue(amazonMetrics.impressions), 1)) *
+        1000,
+      roas: parseNumericValue(amazonMetrics.roas),
+      roi:
+        (parseNumericValue(amazonMetrics.sales7d) -
+          parseNumericValue(amazonMetrics.cost)) /
+        Math.max(parseNumericValue(amazonMetrics.cost), 1),
+      raw_data: sanitizeForJson(amazonMetrics) as Record<string, unknown>,
       created_at: new Date().toISOString(),
     };
   }

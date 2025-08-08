@@ -9,6 +9,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 만약 작업후 테스트코드가 잘못된거라면 수정하고 아니면 어플리케이션 코드를 수정해야해
 - 작업 후 미사용 코드나 잘못된 코드가 없는지 확인후 리팩토링작업이 이루어져야해 즉 모든 코드는 참조되고 사용되고 있어야만 해
 
+### 로컬 개발 환경 (2025.02 업데이트)
+
+- **로컬 Supabase 필수**: 모든 개발과 테스트는 로컬 Supabase 환경에서 진행
+- **마이그레이션 기반 개발**: 모든 DB 변경사항은 마이그레이션 파일로 관리
+- **테스트 우선**: pgTAP으로 DB 테스트, Playwright로 통합/E2E 테스트
+- **독립적 테스트**: 각 테스트는 고유 ID를 사용하여 독립적으로 실행
+
 ## Project Overview
 
 Next.js 15 multi-tenant advertising platform integrating multiple ad platforms (Facebook, Google, Kakao, Naver, Coupang) into a unified dashboard. Server-first architecture with Supabase backend.
@@ -60,12 +67,30 @@ Next.js 15 multi-tenant advertising platform integrating multiple ad platforms (
 ## Development Commands
 
 ```bash
-pnpm install           # Install dependencies
-npm run dev           # Development server
-npm run build         # Production build
-npm run lint          # Lint with auto-fix
-npm run format        # Format code
-npm run gen:type:supabase  # Generate types from Supabase
+# Installation & Setup
+pnpm install                    # Install dependencies
+npx supabase start              # Start local Supabase
+npx supabase db reset           # Reset database with migrations
+
+# Development
+npm run dev                     # Development server
+npm run build                   # Production build
+npm run lint                    # Lint with auto-fix
+npm run format                  # Format code
+npm run typecheck               # Type checking
+npm run gen:type:supabase       # Generate types from Supabase
+
+# Testing
+npx supabase test db           # Database tests (pgTAP)
+pnpm test:unit                 # Unit tests
+pnpm test:integration          # Integration tests
+pnpm test:fast                 # Fast smoke tests
+pnpm test:e2e                  # E2E tests
+
+# Supabase Management
+npx supabase status            # Check local Supabase status
+npx supabase migration new     # Create new migration
+npx supabase db push           # Push migrations to remote
 ```
 
 ## Architecture Patterns
@@ -96,11 +121,33 @@ npm run gen:type:supabase  # Generate types from Supabase
 
 Core tables with RLS:
 
-- `profiles`: User profiles
-- `teams`: Organizations
-- `team_members`: Role-based permissions
+- `profiles`: User profiles (auto-created on signup)
+- `teams`: Organizations (auto-created on signup)
+- `team_members`: Role-based permissions (master, team_mate, viewer)
+- `team_invitations`: Team invitation system
 - `platform_credentials`: Encrypted API credentials
 - `campaigns`: Unified campaign data
+- `campaign_metrics`: Performance metrics
+- `activity_logs`: Audit trail
+
+### Local Development Database
+
+```bash
+# Start local Supabase
+npx supabase start
+
+# Access local Studio
+open http://localhost:54323
+
+# Reset database (applies all migrations)
+npx supabase db reset
+
+# Create new migration
+npx supabase migration new <name>
+
+# Run database tests
+npx supabase test db
+```
 
 ## Common Tasks
 
