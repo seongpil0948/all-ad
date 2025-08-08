@@ -1,7 +1,7 @@
 -- =====================================================
--- UNIFIED SCHEMA - Complete Version
+-- UNIFIED SCHEMA - Complete Optimized Version
 -- Generated on: 2025-02-08
--- Description: 완전한 통합 스키마 - 로컬 개발 환경용
+-- Description: 완전한 통합 스키마 - RLS 성능 최적화 및 로컬 환경 지원
 -- =====================================================
 
 -- =====================================================
@@ -85,7 +85,7 @@ CREATE TABLE public.platform_credentials (
   refresh_token TEXT,
   expires_at TIMESTAMP WITH TIME ZONE,
   scope TEXT,
-  -- Error message column from 20250712052000_add_error_message_column.sql
+  -- Error message column
   error_message TEXT,
   UNIQUE(team_id, platform, account_id),
   CONSTRAINT check_oauth_tokens CHECK (
@@ -195,7 +195,7 @@ CREATE TABLE public.oauth_states (
 );
 
 -- =====================================================
--- INDEXES
+-- INDEXES (성능 최적화를 위한 추가 인덱스 포함)
 -- =====================================================
 
 -- 팀 및 멤버 인덱스
@@ -230,13 +230,21 @@ CREATE INDEX idx_manual_campaign_metrics_date ON public.manual_campaign_metrics(
 CREATE INDEX idx_oauth_states_state ON public.oauth_states(state);
 CREATE INDEX idx_oauth_states_created_at ON public.oauth_states(created_at);
 
+-- RLS 성능 최적화를 위한 추가 인덱스
+CREATE INDEX idx_teams_master_user_id ON public.teams(master_user_id);
+CREATE INDEX idx_platform_credentials_created_by ON public.platform_credentials(created_by);
+
 -- =====================================================
 -- FUNCTIONS
 -- =====================================================
 
 -- 새 사용자 생성 처리 함수
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger AS $$
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
 DECLARE
   new_team_id UUID;
 BEGIN
@@ -252,11 +260,15 @@ BEGIN
   
   RETURN new;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- 사용자를 위한 팀 생성 함수
 CREATE OR REPLACE FUNCTION public.create_team_for_user(user_id UUID)
-RETURNS UUID AS $$
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
 DECLARE
   new_team_id UUID;
   user_email TEXT;
@@ -271,11 +283,15 @@ BEGIN
   
   RETURN new_team_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- 팀 초대 수락 함수
 CREATE OR REPLACE FUNCTION public.accept_team_invitation(invitation_token TEXT)
-RETURNS JSONB AS $$
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
 DECLARE
   v_invitation RECORD;
   v_user_id UUID;
@@ -323,11 +339,15 @@ BEGIN
     'role', v_invitation.role
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- 팀 멤버 제한 확인 함수
 CREATE OR REPLACE FUNCTION public.check_team_member_limit(team_id_param UUID)
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   member_count INTEGER;
   team_limit INTEGER := 5; -- V1.0 기본 제한
@@ -342,11 +362,15 @@ BEGIN
   
   RETURN member_count < team_limit;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- 토큰으로 초대 가져오기 (공개 접근)
 CREATE OR REPLACE FUNCTION public.get_invitation_by_token(invitation_token TEXT)
-RETURNS JSONB AS $$
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
 DECLARE
   v_invitation RECORD;
 BEGIN
@@ -380,20 +404,27 @@ BEGIN
     'expires_at', v_invitation.expires_at
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- 업데이트 타임스탬프 트리거 함수
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
 BEGIN
   NEW.updated_at = timezone('utc'::text, now());
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- 사용자 팀 가져오기 (RLS 정책용 헬퍼)
 CREATE OR REPLACE FUNCTION public.user_teams(user_id UUID)
-RETURNS TABLE(team_id UUID) AS $$
+RETURNS TABLE(team_id UUID)
+LANGUAGE plpgsql
+SECURITY DEFINER STABLE
+SET search_path = public
+AS $$
 BEGIN
   RETURN QUERY
   SELECT t.id AS team_id
@@ -404,11 +435,15 @@ BEGIN
   FROM public.team_members tm
   WHERE tm.user_id = $1;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
+$$;
 
--- 사용자가 팀을 가지도록 보장하는 함수
+-- 사용자가 팀을 가지도록 보장하는 함수 (UUID 매개변수 버전)
 CREATE OR REPLACE FUNCTION public.ensure_user_has_team(user_id_param UUID)
-RETURNS UUID AS $$
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
 DECLARE
   existing_team_id UUID;
   new_team_id UUID;
@@ -443,26 +478,106 @@ BEGIN
   
   RETURN new_team_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
+
+-- 사용자가 팀을 가지도록 보장하는 함수 (매개변수 없는 버전, 현재 인증된 사용자용)
+CREATE OR REPLACE FUNCTION public.ensure_user_has_team()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+DECLARE
+    team_count int;
+    new_team_id uuid;
+    current_user_id uuid;
+BEGIN
+    -- 현재 사용자 ID 가져오기
+    current_user_id := auth.uid();
+    
+    IF current_user_id IS NULL THEN
+        RAISE EXCEPTION 'User not authenticated';
+    END IF;
+    
+    -- 현재 사용자의 팀 수 확인
+    SELECT COUNT(*) INTO team_count
+    FROM (
+        SELECT t.id FROM public.teams t WHERE t.master_user_id = current_user_id
+        UNION
+        SELECT tm.team_id FROM public.team_members tm WHERE tm.user_id = current_user_id
+    ) AS user_teams;
+    
+    -- 팀이 없으면 생성
+    IF team_count = 0 THEN
+        new_team_id := public.create_team_for_user(current_user_id);
+    END IF;
+END;
+$$;
 
 -- 수동 캠페인 타임스탬프 업데이트 함수
-CREATE OR REPLACE FUNCTION update_manual_campaign_updated_at()
-RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION public.update_manual_campaign_updated_at()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public, auth
+AS $$
 BEGIN
   NEW.last_updated_at = NOW();
   NEW.updated_by = auth.uid();
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- 오래된 OAuth 상태 정리 함수
-CREATE OR REPLACE FUNCTION cleanup_old_oauth_states()
-RETURNS void AS $$
+CREATE OR REPLACE FUNCTION public.cleanup_old_oauth_states()
+RETURNS void
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
 BEGIN
   DELETE FROM public.oauth_states
   WHERE created_at < NOW() - INTERVAL '1 hour';
 END;
-$$ LANGUAGE plpgsql;
+$$;
+
+-- 크론 작업 상태 가져오기 함수 (로컬 환경용 - 단순화된 버전)
+CREATE OR REPLACE FUNCTION public.get_cron_job_status()
+RETURNS TABLE(
+  jobname text,
+  status text,
+  message text
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- 로컬 환경에서는 단순화된 상태 반환
+  RETURN QUERY
+  SELECT 
+    'refresh-oauth-tokens'::text as jobname,
+    'simulated'::text as status,
+    'Local environment - cron jobs are simulated'::text as message
+  UNION ALL
+  SELECT 
+    'google-ads-sync-hourly'::text as jobname,
+    'simulated'::text as status,
+    'Local environment - cron jobs are simulated'::text as message;
+END;
+$$;
+
+-- Edge Function 호출 함수 (로컬 환경용 - 단순화된 버전)
+CREATE OR REPLACE FUNCTION public.call_edge_function(function_name text, payload jsonb DEFAULT '{}')
+RETURNS bigint
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- 로컬 환경에서는 단순히 로그만 남기고 더미 ID 반환
+  RAISE NOTICE 'Local environment: Edge function % called with payload %', function_name, payload;
+  RETURN 1;
+END;
+$$;
 
 -- =====================================================
 -- TRIGGERS
@@ -489,10 +604,10 @@ CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON public.profiles
 CREATE TRIGGER update_manual_campaigns_updated_at
   BEFORE UPDATE ON public.manual_campaigns
   FOR EACH ROW
-  EXECUTE FUNCTION update_manual_campaign_updated_at();
+  EXECUTE FUNCTION public.update_manual_campaign_updated_at();
 
 -- =====================================================
--- ROW LEVEL SECURITY (RLS)
+-- ROW LEVEL SECURITY (RLS) - 성능 최적화 적용
 -- =====================================================
 
 -- 모든 테이블에 RLS 활성화
@@ -508,222 +623,293 @@ ALTER TABLE public.manual_campaigns ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.manual_campaign_metrics ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.oauth_states ENABLE ROW LEVEL SECURITY;
 
--- Profiles 정책
+-- Profiles 정책 (성능 최적화 적용)
 CREATE POLICY "Users can view their own profile" ON public.profiles
-  FOR SELECT USING (auth.uid() = id);
+  FOR SELECT 
+  TO authenticated
+  USING ((SELECT auth.uid()) = id);
 
 CREATE POLICY "Users can update their own profile" ON public.profiles
-  FOR UPDATE USING (auth.uid() = id);
+  FOR UPDATE 
+  TO authenticated
+  USING ((SELECT auth.uid()) = id);
 
--- Teams 정책
+-- Teams 정책 (성능 최적화 적용)
 CREATE POLICY "Users can view teams they belong to" ON public.teams
-  FOR SELECT USING (
-    id IN (SELECT team_id FROM public.user_teams(auth.uid()))
+  FOR SELECT 
+  TO authenticated
+  USING (
+    id IN (SELECT team_id FROM public.user_teams((SELECT auth.uid())))
   );
 
 CREATE POLICY "Users can create their own teams" ON public.teams
-  FOR INSERT WITH CHECK (master_user_id = auth.uid());
+  FOR INSERT 
+  TO authenticated
+  WITH CHECK (master_user_id = (SELECT auth.uid()));
 
 CREATE POLICY "Masters can update their teams" ON public.teams
-  FOR UPDATE USING (master_user_id = auth.uid());
+  FOR UPDATE 
+  TO authenticated
+  USING (master_user_id = (SELECT auth.uid()));
 
 CREATE POLICY "Masters can delete their teams" ON public.teams
-  FOR DELETE USING (master_user_id = auth.uid());
+  FOR DELETE 
+  TO authenticated
+  USING (master_user_id = (SELECT auth.uid()));
 
--- Team members 정책
+-- Team members 정책 (성능 최적화 적용)
 CREATE POLICY "Users can view their team memberships" ON public.team_members
-  FOR SELECT USING (
-    user_id = auth.uid() OR
+  FOR SELECT 
+  TO authenticated
+  USING (
+    user_id = (SELECT auth.uid()) OR
     EXISTS (
       SELECT 1 FROM public.teams t
       WHERE t.id = team_members.team_id
-      AND t.master_user_id = auth.uid()
+      AND t.master_user_id = (SELECT auth.uid())
     )
   );
 
 CREATE POLICY "Masters can manage team members" ON public.team_members
-  FOR INSERT WITH CHECK (
+  FOR INSERT 
+  TO authenticated
+  WITH CHECK (
     EXISTS (
       SELECT 1 FROM public.teams t
       WHERE t.id = team_members.team_id
-      AND t.master_user_id = auth.uid()
+      AND t.master_user_id = (SELECT auth.uid())
     )
   );
 
 CREATE POLICY "Masters can update team members" ON public.team_members
-  FOR UPDATE USING (
+  FOR UPDATE 
+  TO authenticated
+  USING (
     EXISTS (
       SELECT 1 FROM public.teams t
       WHERE t.id = team_members.team_id
-      AND t.master_user_id = auth.uid()
+      AND t.master_user_id = (SELECT auth.uid())
     )
   );
 
 CREATE POLICY "Masters can remove team members" ON public.team_members
-  FOR DELETE USING (
+  FOR DELETE 
+  TO authenticated
+  USING (
     EXISTS (
       SELECT 1 FROM public.teams t
       WHERE t.id = team_members.team_id
-      AND t.master_user_id = auth.uid()
+      AND t.master_user_id = (SELECT auth.uid())
     )
   );
 
--- Team invitations 정책
+-- Team invitations 정책 (성능 최적화 적용)
 CREATE POLICY "Team members can view invitations" ON public.team_invitations
-  FOR SELECT USING (
-    team_id IN (SELECT team_id FROM public.user_teams(auth.uid()))
+  FOR SELECT 
+  TO authenticated
+  USING (
+    team_id IN (SELECT team_id FROM public.user_teams((SELECT auth.uid())))
   );
 
 CREATE POLICY "Team members can create invitations" ON public.team_invitations
-  FOR INSERT WITH CHECK (
-    invited_by = auth.uid() 
-    AND team_id IN (SELECT team_id FROM public.user_teams(auth.uid()))
+  FOR INSERT 
+  TO authenticated
+  WITH CHECK (
+    invited_by = (SELECT auth.uid())
+    AND team_id IN (SELECT team_id FROM public.user_teams((SELECT auth.uid())))
   );
 
 CREATE POLICY "Masters can update invitations" ON public.team_invitations
-  FOR UPDATE USING (
-    team_id IN (SELECT t.id FROM public.teams t WHERE t.master_user_id = auth.uid())
+  FOR UPDATE 
+  TO authenticated
+  USING (
+    team_id IN (SELECT t.id FROM public.teams t WHERE t.master_user_id = (SELECT auth.uid()))
   );
 
--- Platform credentials 정책
+-- Platform credentials 정책 (성능 최적화 적용)
 CREATE POLICY "Team members can view credentials" ON public.platform_credentials
-  FOR SELECT USING (
-    team_id IN (SELECT team_id FROM public.user_teams(auth.uid()))
+  FOR SELECT 
+  TO authenticated
+  USING (
+    team_id IN (SELECT team_id FROM public.user_teams((SELECT auth.uid())))
   );
 
 CREATE POLICY "Team members can create credentials" ON public.platform_credentials
-  FOR INSERT WITH CHECK (
-    team_id IN (SELECT team_id FROM public.user_teams(auth.uid()))
-    AND created_by = auth.uid()
+  FOR INSERT 
+  TO authenticated
+  WITH CHECK (
+    team_id IN (SELECT team_id FROM public.user_teams((SELECT auth.uid())))
+    AND created_by = (SELECT auth.uid())
   );
 
 CREATE POLICY "Team members can update credentials" ON public.platform_credentials
-  FOR UPDATE USING (
-    team_id IN (SELECT team_id FROM public.user_teams(auth.uid()))
+  FOR UPDATE 
+  TO authenticated
+  USING (
+    team_id IN (SELECT team_id FROM public.user_teams((SELECT auth.uid())))
   )
   WITH CHECK (
-    team_id IN (SELECT team_id FROM public.user_teams(auth.uid()))
+    team_id IN (SELECT team_id FROM public.user_teams((SELECT auth.uid())))
   );
 
 CREATE POLICY "Team members can delete credentials" ON public.platform_credentials
-  FOR DELETE USING (
-    team_id IN (SELECT team_id FROM public.user_teams(auth.uid()))
+  FOR DELETE 
+  TO authenticated
+  USING (
+    team_id IN (SELECT team_id FROM public.user_teams((SELECT auth.uid())))
   );
 
--- Campaigns 정책
+-- Campaigns 정책 (성능 최적화 적용)
 CREATE POLICY "Team members can view campaigns" ON public.campaigns
-  FOR SELECT USING (
-    team_id IN (SELECT team_id FROM public.user_teams(auth.uid()))
+  FOR SELECT 
+  TO authenticated
+  USING (
+    team_id IN (SELECT team_id FROM public.user_teams((SELECT auth.uid())))
   );
 
 CREATE POLICY "Team members can manage campaigns" ON public.campaigns
-  FOR ALL USING (
-    team_id IN (SELECT team_id FROM public.user_teams(auth.uid()))
+  FOR ALL 
+  TO authenticated
+  USING (
+    team_id IN (SELECT team_id FROM public.user_teams((SELECT auth.uid())))
   );
 
--- Campaign metrics 정책
+-- Campaign metrics 정책 (성능 최적화 적용)
 CREATE POLICY "Team members can view campaign metrics" ON public.campaign_metrics
-  FOR SELECT USING (
+  FOR SELECT 
+  TO authenticated
+  USING (
     EXISTS (
       SELECT 1 FROM public.campaigns c
       WHERE c.id = campaign_metrics.campaign_id
-      AND c.team_id IN (SELECT team_id FROM public.user_teams(auth.uid()))
+      AND c.team_id IN (SELECT team_id FROM public.user_teams((SELECT auth.uid())))
     )
   );
 
--- Sync logs 정책
+-- Sync logs 정책 (성능 최적화 적용)
 CREATE POLICY "Team members can view sync logs" ON public.sync_logs
-  FOR SELECT USING (
-    team_id IN (SELECT team_id FROM public.user_teams(auth.uid()))
+  FOR SELECT 
+  TO authenticated
+  USING (
+    team_id IN (SELECT team_id FROM public.user_teams((SELECT auth.uid())))
   );
 
 CREATE POLICY "Service role can manage sync logs" ON public.sync_logs
-  FOR ALL USING (auth.jwt()->>'role' = 'service_role');
+  FOR ALL 
+  TO service_role
+  USING (auth.role() = 'service_role');
 
--- Manual campaigns 정책
+-- Manual campaigns 정책 (성능 최적화 적용)
 CREATE POLICY "Team members can view manual campaigns" ON public.manual_campaigns
-  FOR SELECT USING (
-    team_id IN (SELECT team_id FROM public.user_teams(auth.uid()))
+  FOR SELECT 
+  TO authenticated
+  USING (
+    team_id IN (SELECT team_id FROM public.user_teams((SELECT auth.uid())))
   );
 
 CREATE POLICY "Team members can create manual campaigns" ON public.manual_campaigns
-  FOR INSERT WITH CHECK (
-    team_id IN (SELECT team_id FROM public.user_teams(auth.uid()))
+  FOR INSERT 
+  TO authenticated
+  WITH CHECK (
+    team_id IN (SELECT team_id FROM public.user_teams((SELECT auth.uid())))
   );
 
 CREATE POLICY "Team members can update manual campaigns" ON public.manual_campaigns
-  FOR UPDATE USING (
-    team_id IN (SELECT team_id FROM public.user_teams(auth.uid()))
+  FOR UPDATE 
+  TO authenticated
+  USING (
+    team_id IN (SELECT team_id FROM public.user_teams((SELECT auth.uid())))
   );
 
 CREATE POLICY "Masters can delete manual campaigns" ON public.manual_campaigns
-  FOR DELETE USING (
+  FOR DELETE 
+  TO authenticated
+  USING (
     EXISTS (
       SELECT 1 FROM public.teams t
       WHERE t.id = manual_campaigns.team_id
-      AND t.master_user_id = auth.uid()
+      AND t.master_user_id = (SELECT auth.uid())
     )
   );
 
--- Manual campaign metrics 정책
+-- Manual campaign metrics 정책 (성능 최적화 적용)
 CREATE POLICY "Team members can view manual metrics" ON public.manual_campaign_metrics
-  FOR SELECT USING (
+  FOR SELECT 
+  TO authenticated
+  USING (
     EXISTS (
       SELECT 1 FROM public.manual_campaigns mc
       WHERE mc.id = manual_campaign_metrics.manual_campaign_id
-      AND mc.team_id IN (SELECT team_id FROM public.user_teams(auth.uid()))
+      AND mc.team_id IN (SELECT team_id FROM public.user_teams((SELECT auth.uid())))
     )
   );
 
 CREATE POLICY "Team members can manage manual metrics" ON public.manual_campaign_metrics
-  FOR ALL USING (
+  FOR ALL 
+  TO authenticated
+  USING (
     EXISTS (
       SELECT 1 FROM public.manual_campaigns mc
       WHERE mc.id = manual_campaign_metrics.manual_campaign_id
-      AND mc.team_id IN (SELECT team_id FROM public.user_teams(auth.uid()))
+      AND mc.team_id IN (SELECT team_id FROM public.user_teams((SELECT auth.uid())))
     )
   );
 
--- OAuth states 정책
+-- OAuth states 정책 (성능 최적화 적용)
 CREATE POLICY "Users can manage their oauth states" ON public.oauth_states
-  FOR ALL USING (auth.uid() = user_id);
+  FOR ALL 
+  TO authenticated
+  USING ((SELECT auth.uid()) = user_id);
 
 CREATE POLICY "Service role can manage oauth states" ON public.oauth_states
-  FOR ALL USING (auth.jwt()->>'role' = 'service_role');
+  FOR ALL 
+  TO service_role
+  USING (auth.role() = 'service_role');
 
 CREATE POLICY "Anonymous users can view oauth states" ON public.oauth_states
-  FOR SELECT TO anon USING (true);
+  FOR SELECT 
+  TO anon 
+  USING (true);
 
 -- =====================================================
--- STORAGE CONFIGURATION
+-- STORAGE CONFIGURATION (For hosted environments only)
 -- =====================================================
 
--- 아바타 스토리지 버킷 생성
-INSERT INTO storage.buckets (id, name, public) 
-VALUES ('avatars', 'avatars', true) 
-ON CONFLICT (id) DO NOTHING;
+-- Note: Storage configuration is skipped in local development
+-- These would be applied in hosted Supabase environments
 
--- 아바타 스토리지 정책
-CREATE POLICY "Avatar images are publicly accessible" ON storage.objects
-  FOR SELECT USING (bucket_id = 'avatars');
-
-CREATE POLICY "Users can upload their own avatar" ON storage.objects
-  FOR INSERT WITH CHECK (
-    bucket_id = 'avatars' AND 
-    auth.uid()::text = (storage.foldername(name))[1]
-  );
-
-CREATE POLICY "Users can update their own avatar" ON storage.objects
-  FOR UPDATE USING (
-    bucket_id = 'avatars' AND 
-    auth.uid()::text = (storage.foldername(name))[1]
-  );
-
-CREATE POLICY "Users can delete their own avatar" ON storage.objects
-  FOR DELETE USING (
-    bucket_id = 'avatars' AND 
-    auth.uid()::text = (storage.foldername(name))[1]
-  );
+-- DO $$
+-- BEGIN
+--   -- 아바타 스토리지 버킷 생성 (hosted only)
+--   IF EXISTS (SELECT FROM information_schema.schemata WHERE schema_name = 'storage') THEN
+--     INSERT INTO storage.buckets (id, name, public) 
+--     VALUES ('avatars', 'avatars', true) 
+--     ON CONFLICT (id) DO NOTHING;
+--     
+--     -- 아바타 스토리지 정책
+--     CREATE POLICY "Avatar images are publicly accessible" ON storage.objects
+--       FOR SELECT USING (bucket_id = 'avatars');
+--     
+--     CREATE POLICY "Users can upload their own avatar" ON storage.objects
+--       FOR INSERT WITH CHECK (
+--         bucket_id = 'avatars' AND 
+--         auth.uid()::text = (storage.foldername(name))[1]
+--       );
+--     
+--     CREATE POLICY "Users can update their own avatar" ON storage.objects
+--       FOR UPDATE USING (
+--         bucket_id = 'avatars' AND 
+--         auth.uid()::text = (storage.foldername(name))[1]
+--       );
+--     
+--     CREATE POLICY "Users can delete their own avatar" ON storage.objects
+--       FOR DELETE USING (
+--         bucket_id = 'avatars' AND 
+--         auth.uid()::text = (storage.foldername(name))[1]
+--       );
+--   END IF;
+-- END;
+-- $$;
 
 -- =====================================================
 -- PERMISSIONS
@@ -747,6 +933,7 @@ GRANT EXECUTE ON FUNCTION public.user_teams(UUID) TO anon;
 
 -- 특정 함수 권한
 GRANT EXECUTE ON FUNCTION public.ensure_user_has_team(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.ensure_user_has_team() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.user_teams(UUID) TO authenticated;
 
 -- =====================================================
@@ -763,5 +950,13 @@ COMMENT ON TABLE public.oauth_states IS 'OAuth 2.0 CSRF 공격 방지를 위한 
 COMMENT ON COLUMN platform_credentials.error_message IS 'Error message from last token refresh attempt, null if successful';
 
 -- =====================================================
+-- SEED DATA (for development)
+-- =====================================================
+
+-- Note: 개발용 시드 데이터는 별도 seed.sql 파일에서 관리
+
+-- =====================================================
 -- END OF UNIFIED SCHEMA
 -- =====================================================
+
+SELECT 'Unified schema with RLS performance optimizations applied successfully!' as message;
