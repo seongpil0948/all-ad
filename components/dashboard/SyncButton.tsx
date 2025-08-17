@@ -89,7 +89,7 @@ export function SyncButton({
     } finally {
       setIsSyncing(false);
     }
-  }, [targetPlatforms]);
+  }, [targetPlatforms, dict]);
 
   const buttonContent = (
     <Button

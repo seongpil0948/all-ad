@@ -87,7 +87,7 @@ export function CampaignDashboardClient({
   useEffect(() => {
     setCampaigns(initialCampaigns);
     setStats(initialStats);
-  }, []);
+  }, [initialCampaigns, initialStats, setCampaigns, setStats]);
 
   // Debounce search input
   useEffect(() => {

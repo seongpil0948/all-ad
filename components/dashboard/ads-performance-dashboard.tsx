@@ -292,7 +292,7 @@ export function AdsPerformanceDashboard({
     if (!initialData && onDataLoad) {
       loadData();
     }
-  }, []);
+  }, [initialData, loadData, onDataLoad]);
 
   return (
     <div className={`space-y-6 ${className}`}>

@@ -374,6 +374,7 @@ export function MultiPlatformChart({
     showLegend,
     isAnimated,
     showDataLabels,
+    dict,
   ]);
 
   // 메트릭 카드 데이터

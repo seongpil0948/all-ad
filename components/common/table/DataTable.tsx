@@ -133,7 +133,17 @@ export function DataTable<T extends Record<string, unknown>>({
         ))}
       </TableBody>
     );
-  }, [isLoading, data, columns, keyField, renderCell, emptyMessage]);
+  }, [
+    isLoading,
+    data,
+    columns,
+    keyField,
+    renderCell,
+    emptyMessage,
+    striped,
+    density,
+    onRowClick,
+  ]);
 
   // Memoize selection props
   const selectionProps = useMemo(() => {

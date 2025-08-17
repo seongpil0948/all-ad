@@ -34,13 +34,6 @@ export function CampaignMetricsModal({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch metrics when modal opens
-  useEffect(() => {
-    if (isOpen && campaign) {
-      fetchMetrics();
-    }
-  }, [isOpen, campaign]);
-
   const fetchMetrics = useCallback(async () => {
     if (!campaign) return;
 
@@ -80,6 +73,13 @@ export function CampaignMetricsModal({
       setIsLoading(false);
     }
   }, [campaign]);
+
+  // Fetch metrics when modal opens
+  useEffect(() => {
+    if (isOpen && campaign) {
+      fetchMetrics();
+    }
+  }, [isOpen, campaign, fetchMetrics]);
 
   // Calculate aggregated metrics
   const aggregatedMetrics = metrics.reduce(

@@ -80,7 +80,7 @@ export function ProfileForm({
         }
       });
     },
-    [startTransition],
+    [startTransition, dict],
   );
 
   const handleAvatarDelete = useCallback(async () => {
@@ -97,7 +97,7 @@ export function ProfileForm({
         });
       }
     });
-  }, [startTransition]);
+  }, [startTransition, dict]);
 
   const handleNameChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -66,7 +66,7 @@ export function DataProvider<T>({
     return () => {
       isMounted.current = false;
     };
-  }, []); // 의도적으로 의존성 배열 비움 - 초기 마운트 시에만 실행
+  }, [initialData, onMount]);
 
   return <>{children}</>;
 }

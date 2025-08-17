@@ -37,7 +37,7 @@ export async function withAuth<T>(
     }
 
     let teamRole: UserRole | undefined;
-    let teamId = options.teamId;
+    const teamId = options.teamId;
 
     // Check team permissions if teamId is provided
     if (teamId && options.requiredRole) {

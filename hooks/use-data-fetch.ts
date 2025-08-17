@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, DependencyList } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 import log from "@/utils/logger";
 
@@ -11,7 +11,6 @@ interface UseDataFetchResult<T> {
 
 export function useDataFetch<T>(
   fetchFn: () => Promise<T>,
-  deps: DependencyList = [],
 ): UseDataFetchResult<T> {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,7 +37,7 @@ export function useDataFetch<T>(
 
   useEffect(() => {
     fetchData();
-  }, deps);
+  }, [fetchData]);
 
   return {
     data,
@@ -67,7 +66,6 @@ interface UsePaginatedDataFetchResult<T>
 export function usePaginatedDataFetch<T>(
   fetchFn: (page: number, pageSize: number) => Promise<PaginatedData<T>>,
   initialPageSize: number = 10,
-  deps: DependencyList = [],
 ): UsePaginatedDataFetchResult<T> {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(initialPageSize);
@@ -77,7 +75,7 @@ export function usePaginatedDataFetch<T>(
     [fetchFn, page, pageSize],
   );
 
-  const result = useDataFetch(paginatedFetchFn, [...deps, page, pageSize]);
+  const result = useDataFetch(paginatedFetchFn);
 
   const nextPage = useCallback(() => {
     if (result.data && page < Math.ceil(result.data.total / pageSize)) {

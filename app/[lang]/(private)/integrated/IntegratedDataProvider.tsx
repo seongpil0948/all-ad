@@ -57,7 +57,15 @@ export function IntegratedDataProvider({
 
     // Set user data to auth store
     useAuthStore.setState({ user: initialData.user });
-  }, []);
+  }, [
+    initialData.credentials,
+    initialData.team,
+    initialData.teamMembers,
+    initialData.user,
+    initialData.userRole,
+    setCredentials,
+    setInitialData,
+  ]);
 
   return <>{children}</>;
 }

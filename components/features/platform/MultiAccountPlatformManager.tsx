@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Switch } from "@heroui/switch";
@@ -88,47 +88,114 @@ export function MultiAccountPlatformManager({
     { key: "actions", label: dict.common.actions },
   ];
 
-  // Create async list for a platform
-  const createPlatformList = (platform: PlatformType) => {
-    return useAsyncList<PlatformCredential>({
-      async load({ cursor }) {
-        const platformCreds = credentials.filter(
-          (c) => c.platform === platform,
-        );
-        const start = cursor ? parseInt(cursor) : 0;
-        const items = platformCreds.slice(start, start + ITEMS_PER_PAGE);
+  const facebookList = useAsyncList<PlatformCredential>({
+    async load({ cursor }) {
+      const platformCreds = credentials.filter(
+        (c) => c.platform === "facebook",
+      );
+      const start = cursor ? parseInt(cursor) : 0;
+      const items = platformCreds.slice(start, start + ITEMS_PER_PAGE);
+      const hasMore = start + ITEMS_PER_PAGE < platformCreds.length;
+      setHasMoreItems((prev) => ({ ...prev, facebook: hasMore }));
+      return {
+        items,
+        cursor: hasMore ? String(start + ITEMS_PER_PAGE) : undefined,
+      };
+    },
+    getKey: (item) => item.id,
+  });
 
-        const hasMore = start + ITEMS_PER_PAGE < platformCreds.length;
+  const googleList = useAsyncList<PlatformCredential>({
+    async load({ cursor }) {
+      const platformCreds = credentials.filter((c) => c.platform === "google");
+      const start = cursor ? parseInt(cursor) : 0;
+      const items = platformCreds.slice(start, start + ITEMS_PER_PAGE);
+      const hasMore = start + ITEMS_PER_PAGE < platformCreds.length;
+      setHasMoreItems((prev) => ({ ...prev, google: hasMore }));
+      return {
+        items,
+        cursor: hasMore ? String(start + ITEMS_PER_PAGE) : undefined,
+      };
+    },
+    getKey: (item) => item.id,
+  });
 
-        setHasMoreItems((prev) => ({ ...prev, [platform]: hasMore }));
+  const kakaoList = useAsyncList<PlatformCredential>({
+    async load({ cursor }) {
+      const platformCreds = credentials.filter((c) => c.platform === "kakao");
+      const start = cursor ? parseInt(cursor) : 0;
+      const items = platformCreds.slice(start, start + ITEMS_PER_PAGE);
+      const hasMore = start + ITEMS_PER_PAGE < platformCreds.length;
+      setHasMoreItems((prev) => ({ ...prev, kakao: hasMore }));
+      return {
+        items,
+        cursor: hasMore ? String(start + ITEMS_PER_PAGE) : undefined,
+      };
+    },
+    getKey: (item) => item.id,
+  });
 
-        return {
-          items,
-          cursor: hasMore ? String(start + ITEMS_PER_PAGE) : undefined,
-        };
-      },
-      getKey: (item) => item.id,
-    });
-  };
+  const naverList = useAsyncList<PlatformCredential>({
+    async load({ cursor }) {
+      const platformCreds = credentials.filter((c) => c.platform === "naver");
+      const start = cursor ? parseInt(cursor) : 0;
+      const items = platformCreds.slice(start, start + ITEMS_PER_PAGE);
+      const hasMore = start + ITEMS_PER_PAGE < platformCreds.length;
+      setHasMoreItems((prev) => ({ ...prev, naver: hasMore }));
+      return {
+        items,
+        cursor: hasMore ? String(start + ITEMS_PER_PAGE) : undefined,
+      };
+    },
+    getKey: (item) => item.id,
+  });
 
-  // Infinite scroll setup for each platform
-  const platformLists = {
-    facebook: createPlatformList("facebook"),
-    google: createPlatformList("google"),
-    kakao: createPlatformList("kakao"),
-    naver: createPlatformList("naver"),
-    coupang: createPlatformList("coupang"),
-    amazon: createPlatformList("amazon"),
-  };
+  const coupangList = useAsyncList<PlatformCredential>({
+    async load({ cursor }) {
+      const platformCreds = credentials.filter((c) => c.platform === "coupang");
+      const start = cursor ? parseInt(cursor) : 0;
+      const items = platformCreds.slice(start, start + ITEMS_PER_PAGE);
+      const hasMore = start + ITEMS_PER_PAGE < platformCreds.length;
+      setHasMoreItems((prev) => ({ ...prev, coupang: hasMore }));
+      return {
+        items,
+        cursor: hasMore ? String(start + ITEMS_PER_PAGE) : undefined,
+      };
+    },
+    getKey: (item) => item.id,
+  });
 
-  // Reload lists when credentials change
-  useEffect(() => {
-    Object.values(platformLists).forEach((list) => list.reload());
-    checkTokensStatus();
-  }, [credentials.length]);
+  const amazonList = useAsyncList<PlatformCredential>({
+    async load({ cursor }) {
+      const platformCreds = credentials.filter((c) => c.platform === "amazon");
+      const start = cursor ? parseInt(cursor) : 0;
+      const items = platformCreds.slice(start, start + ITEMS_PER_PAGE);
+      const hasMore = start + ITEMS_PER_PAGE < platformCreds.length;
+      setHasMoreItems((prev) => ({ ...prev, amazon: hasMore }));
+      return {
+        items,
+        cursor: hasMore ? String(start + ITEMS_PER_PAGE) : undefined,
+      };
+    },
+    getKey: (item) => item.id,
+  });
+
+  const platformLists = useMemo(
+    () => ({
+      facebook: facebookList,
+      google: googleList,
+      kakao: kakaoList,
+      naver: naverList,
+      coupang: coupangList,
+      amazon: amazonList,
+    }),
+    [facebookList, googleList, kakaoList, naverList, coupangList, amazonList],
+  );
+
+  // Reload lists when credentials change (declared after checkTokensStatus)
 
   // Check token status for OAuth platforms
-  const checkTokensStatus = async () => {
+  const checkTokensStatus = useCallback(async () => {
     for (const credential of credentials) {
       if (
         (credential.platform === "google" ||
@@ -201,7 +268,13 @@ export function MultiAccountPlatformManager({
         }
       }
     }
-  };
+  }, [credentials]);
+
+  // Reload lists when credentials change
+  useEffect(() => {
+    Object.values(platformLists).forEach((list) => list.reload());
+    checkTokensStatus();
+  }, [credentials.length, platformLists, checkTokensStatus]);
 
   const handleAddAccount = async (platform: PlatformType) => {
     const config = platformConfig[platform];

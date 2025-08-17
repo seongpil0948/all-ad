@@ -214,14 +214,14 @@ export function TeamManagement() {
     startTransition(() => {
       membersList.reload();
     });
-  }, [teamMembers?.length]);
+  }, [teamMembers?.length, membersList]);
 
   // Effect 4: Reload invitations list when data changes - separate concern
   useEffect(() => {
     startTransition(() => {
       invitationsList.reload();
     });
-  }, [teamInvitations?.length]);
+  }, [teamInvitations?.length, invitationsList]);
 
   const handleInvite = useCallback(async () => {
     if (!inviteEmail) {

@@ -2,7 +2,6 @@ import { AuthForm } from "@/components/features/auth/AuthForm";
 
 export default async function LoginPage({
   searchParams,
-  params,
 }: {
   searchParams: Promise<{
     mode?: string;
@@ -10,9 +9,7 @@ export default async function LoginPage({
     email?: string;
     inviteToken?: string;
   }>;
-  params: Promise<{ lang: string }>;
 }) {
-  const { lang } = await params;
   const { mode, returnUrl, email, inviteToken } = await searchParams;
 
   return (

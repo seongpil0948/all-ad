@@ -64,7 +64,6 @@ export function EChart({
   useEffect(() => {
     if (!chartRef.current) return;
     chartInstance.current = echarts.init(chartRef.current);
-    chartInstance.current.setOption(mergedOption);
 
     // Observe container size for responsive resizing
     const ro = new ResizeObserver(() => {

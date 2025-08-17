@@ -136,7 +136,7 @@ export function InfiniteScrollTable<T extends { id: string | number }>({
     }
     previousCountRef.current = count;
     if (liveRegionRef.current) liveRegionRef.current.ariaBusy = "false";
-  }, [items.items.length, isBusy]);
+  }, [items.items.length, isBusy, dict]);
 
   return (
     <div
