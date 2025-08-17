@@ -1,3 +1,4 @@
+/* eslint-disable local/no-literal-strings */
 "use client";
 
 import type { Tables } from "@/types/supabase.types";

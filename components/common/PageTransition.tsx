@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 import { pageTransition } from "@/utils/animations";
 
@@ -10,12 +10,15 @@ interface PageTransitionProps {
 }
 
 export function PageTransition({ children, className }: PageTransitionProps) {
-  return (
+  const prefersReducedMotion = useReducedMotion();
+  return prefersReducedMotion ? (
+    <div className={className}>{children}</div>
+  ) : (
     <motion.div
-      animate="animate"
+      animate={"animate"}
       className={className}
-      exit="exit"
-      initial="initial"
+      exit={"exit"}
+      initial={"initial"}
       variants={pageTransition}
     >
       {children}

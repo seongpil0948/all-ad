@@ -3,7 +3,11 @@ import { Suspense } from "react";
 
 import { createClient } from "@/utils/supabase/server";
 import { ToastHandler } from "@/components/toast/ToastHandler";
-import { SWRProvider } from "@/app/swr-provider";
+
+// Private area should always be dynamic and never use the Data/Full Route cache
+export const dynamic = "force-dynamic";
+export const fetchCache = "default-no-store";
+export const experimental_ppr = false;
 
 interface PrivateLayoutProps {
   children: React.ReactNode;
@@ -25,11 +29,11 @@ export default async function PrivateLayout({
   }
 
   return (
-    <SWRProvider>
+    <>
       <Suspense fallback={null}>
         <ToastHandler />
       </Suspense>
       {children}
-    </SWRProvider>
+    </>
   );
 }

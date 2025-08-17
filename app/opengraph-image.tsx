@@ -1,8 +1,9 @@
 import { ImageResponse } from "next/og";
+import { siteConfig } from "@/config/site";
 
 export const runtime = "edge";
 
-export const alt = "A.ll + Ad - 모든 광고를 하나로";
+export const alt = `${siteConfig.name} - ${siteConfig.description}`;
 export const size = {
   width: 1200,
   height: 630,
@@ -30,13 +31,13 @@ export default async function Image() {
         <div
           style={{ fontSize: "72px", fontWeight: "bold", marginBottom: "20px" }}
         >
-          A.ll + Ad
+          {siteConfig.name}
         </div>
         <div style={{ fontSize: "36px", opacity: 0.8, textAlign: "center" }}>
-          모든 광고를 하나로
+          {siteConfig.description}
         </div>
         <div style={{ fontSize: "28px", opacity: 0.6, marginTop: "40px" }}>
-          All-in-one Advertising Platform
+          {siteConfig.description}
         </div>
       </div>
     ),

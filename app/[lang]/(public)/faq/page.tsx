@@ -1,6 +1,9 @@
 import { Metadata } from "next";
 
 import FAQContent from "./FAQContent";
+import { Container } from "@/components/layouts/Container";
+
+const CONTAINER_MAX_4XL = "4xl" as const;
 
 export const metadata: Metadata = {
   title: "자주 묻는 질문 | Sivera",
@@ -12,9 +15,9 @@ export const metadata: Metadata = {
 export default function FAQPage() {
   return (
     <main className="min-h-screen bg-linear-to-b from-default-50 to-default-100">
-      <div className="container mx-auto px-4 py-12 max-w-4xl">
+      <Container className="py-12" max={CONTAINER_MAX_4XL}>
         <FAQContent />
-      </div>
+      </Container>
     </main>
   );
 }

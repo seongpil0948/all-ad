@@ -13,10 +13,12 @@ import {
 import { createClient } from "@/utils/supabase/server";
 import { MultiAccountPlatformManager } from "@/components/features/platform/MultiAccountPlatformManager";
 import { getDictionary, type Locale } from "@/app/[lang]/dictionaries";
+import { Container } from "@/components/layouts/Container";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+const CONTAINER_MAX_4XL = "4xl" as const;
 
 export default async function SettingsPage({
   params,
@@ -48,7 +50,7 @@ export default async function SettingsPage({
   const credentials = await getTeamCredentials();
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <Container className="py-8" max={CONTAINER_MAX_4XL}>
       <h1 className="text-3xl font-bold mb-8">{dict.settings.title}</h1>
 
       <div className="space-y-6">
@@ -179,6 +181,6 @@ export default async function SettingsPage({
           </CardBody>
         </Card>
       </div>
-    </div>
+    </Container>
   );
 }

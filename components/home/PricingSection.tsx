@@ -1,13 +1,16 @@
+/* eslint-disable local/no-literal-strings */
 "use client";
 
 import { Card, CardBody, CardHeader, CardFooter } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Chip } from "@heroui/chip";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { FaCheck } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 
 import { title, subtitle } from "@/components/primitives";
+import { Container } from "@/components/layouts/Container";
+import { AutoGrid } from "@/components/common/AutoGrid";
 
 interface PricingPlan {
   name: string;
@@ -21,14 +24,17 @@ interface PricingPlan {
 }
 
 const PricingCard = ({ plan, index }: { plan: PricingPlan; index: number }) => {
+  const prefersReducedMotion = useReducedMotion();
   const router = useRouter();
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
+      initial={prefersReducedMotion ? undefined : { opacity: 0, y: 20 }}
+      transition={
+        prefersReducedMotion ? undefined : { duration: 0.5, delay: index * 0.1 }
+      }
       viewport={{ once: true }}
-      whileInView={{ opacity: 1, y: 0 }}
+      whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
     >
       <Card
         className={`h-full ${
@@ -76,6 +82,7 @@ const PricingCard = ({ plan, index }: { plan: PricingPlan; index: number }) => {
 };
 
 export const PricingSection = () => {
+  const prefersReducedMotion = useReducedMotion();
   const plans: PricingPlan[] = [
     {
       name: "Starter",
@@ -125,14 +132,14 @@ export const PricingSection = () => {
   ];
 
   return (
-    <section className="px-6 py-20 bg-default-50" data-testid="pricing-section">
-      <div className="max-w-7xl mx-auto">
+    <section className="py-20 bg-default-50" data-testid="pricing-section">
+      <Container>
         <motion.div
           className="text-center mb-12"
-          initial={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
+          initial={prefersReducedMotion ? undefined : { opacity: 0 }}
+          transition={prefersReducedMotion ? undefined : { duration: 0.5 }}
           viewport={{ once: true }}
-          whileInView={{ opacity: 1 }}
+          whileInView={prefersReducedMotion ? undefined : { opacity: 1 }}
         >
           <h2 className={title({ size: "md" })}>
             비즈니스에 맞는 플랜을 선택하세요
@@ -142,25 +149,27 @@ export const PricingSection = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
+        <AutoGrid minItemWidth={280} className="items-stretch">
           {plans.map((plan, index) => (
             <PricingCard key={index} index={index} plan={plan} />
           ))}
-        </div>
+        </AutoGrid>
 
         <motion.div
           className="text-center mt-12"
-          initial={{ opacity: 0 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
+          initial={prefersReducedMotion ? undefined : { opacity: 0 }}
+          transition={
+            prefersReducedMotion ? undefined : { duration: 0.5, delay: 0.5 }
+          }
           viewport={{ once: true }}
-          whileInView={{ opacity: 1 }}
+          whileInView={prefersReducedMotion ? undefined : { opacity: 1 }}
         >
           <p className="text-default-600">
             모든 플랜에는 14일 무료 체험이 포함되어 있습니다. 언제든지 취소할 수
             있습니다.
           </p>
         </motion.div>
-      </div>
+      </Container>
     </section>
   );
 };

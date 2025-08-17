@@ -1,7 +1,7 @@
 "use client";
 
 import { Tabs, Tab } from "@heroui/tabs";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Key, ReactNode } from "react";
 
 import { tabVariants } from "@/utils/animations";
@@ -37,19 +37,24 @@ export function AnimatedTabs({
   disableAnimation = false,
   className,
 }: AnimatedTabsProps) {
+  const prefersReducedMotion = !!useReducedMotion();
   return (
     <Tabs
       aria-label={ariaLabel}
       className={className}
       color={color}
-      disableAnimation={disableAnimation}
+      disableAnimation={disableAnimation || prefersReducedMotion}
       fullWidth={fullWidth}
-      motionProps={{
-        initial: { opacity: 0 },
-        animate: { opacity: 1 },
-        exit: { opacity: 0 },
-        transition: { duration: 0.3 },
-      }}
+      motionProps={
+        prefersReducedMotion
+          ? undefined
+          : {
+              initial: { opacity: 0 },
+              animate: { opacity: 1 },
+              exit: { opacity: 0 },
+              transition: { duration: 0.3 },
+            }
+      }
       selectedKey={selectedKey}
       size={size}
       variant={variant}
@@ -67,19 +72,24 @@ interface AnimatedTabProps {
 }
 
 export function AnimatedTab({ key, title, children }: AnimatedTabProps) {
+  const prefersReducedMotion = useReducedMotion();
   return (
     <Tab key={key} title={title}>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={key}
-          animate="animate"
-          exit="exit"
-          initial="initial"
-          variants={tabVariants}
-        >
-          {children}
-        </motion.div>
-      </AnimatePresence>
+      {prefersReducedMotion ? (
+        <div>{children}</div>
+      ) : (
+        <AnimatePresence mode={"wait"}>
+          <motion.div
+            key={key}
+            animate={"animate"}
+            exit={"exit"}
+            initial={"initial"}
+            variants={tabVariants}
+          >
+            {children}
+          </motion.div>
+        </AnimatePresence>
+      )}
     </Tab>
   );
 }

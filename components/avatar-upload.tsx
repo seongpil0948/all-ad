@@ -17,6 +17,8 @@ export function AvatarUpload({
   onUploadComplete,
   onDeleteComplete,
 }: AvatarUploadProps) {
+  const ACCEPTED_TYPES = "image/jpeg,image/png,image/webp" as const;
+  const RADIUS_FULL = "full" as const;
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -114,7 +116,7 @@ export function AvatarUpload({
 
       <input
         ref={fileInputRef}
-        accept="image/jpeg,image/png,image/webp"
+        accept={ACCEPTED_TYPES}
         className="hidden"
         type="file"
         onChange={handleFileSelect}
@@ -125,7 +127,7 @@ export function AvatarUpload({
           isIconOnly
           color="primary"
           isLoading={uploading}
-          radius="full"
+          radius={RADIUS_FULL}
           size="sm"
           onClick={() => fileInputRef.current?.click()}
         >
@@ -137,7 +139,7 @@ export function AvatarUpload({
             isIconOnly
             color="danger"
             isLoading={deleting}
-            radius="full"
+            radius={RADIUS_FULL}
             size="sm"
             onClick={handleDelete}
           >

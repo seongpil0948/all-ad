@@ -3,7 +3,7 @@
 import type { LoadingStateProps } from "@/types/components";
 
 import { Spinner } from "@heroui/spinner";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 import { fadeIn, scaleIn } from "@/utils/animations";
 import { useDictionary } from "@/hooks/use-dictionary";
@@ -18,31 +18,33 @@ export function LoadingState({
   const containerClass = fullScreen
     ? "fixed inset-0 flex justify-center items-center bg-background/80 backdrop-blur-sm z-50"
     : "flex justify-center items-center h-64";
+  const prefersReducedMotion = useReducedMotion();
 
   return (
     <motion.div
-      animate="animate"
-      aria-label="Loading"
+      animate={prefersReducedMotion ? undefined : "animate"}
+      aria-label={defaultMessage}
       className={containerClass}
-      exit="exit"
-      initial="initial"
+      data-testid="loading-state"
+      exit={prefersReducedMotion ? undefined : "exit"}
+      initial={prefersReducedMotion ? undefined : "initial"}
       role="status"
-      variants={fadeIn}
+      variants={prefersReducedMotion ? undefined : fadeIn}
     >
       <motion.div
-        animate="animate"
+        animate={prefersReducedMotion ? undefined : "animate"}
         className="flex flex-col items-center gap-4"
-        initial="initial"
-        variants={scaleIn}
+        initial={prefersReducedMotion ? undefined : "initial"}
+        variants={prefersReducedMotion ? undefined : scaleIn}
       >
-        <Spinner size={size} />
+        <Spinner size={size} data-testid="loading-spinner" />
         {defaultMessage && (
           <motion.p
-            animate={{ opacity: 1, y: 0 }}
-            aria-live="polite"
+            animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+            aria-live={"polite"}
             className="text-default-500 text-sm"
-            initial={{ opacity: 0, y: 10 }}
-            transition={{ delay: 0.2 }}
+            initial={prefersReducedMotion ? undefined : { opacity: 0, y: 10 }}
+            transition={prefersReducedMotion ? undefined : { delay: 0.2 }}
           >
             {defaultMessage}
           </motion.p>

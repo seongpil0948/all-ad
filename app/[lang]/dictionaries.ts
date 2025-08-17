@@ -8,7 +8,8 @@ const dictionaries = {
   zh: () => import("./dictionaries/zh.json").then((module) => module.default),
 };
 
-export type Dictionary = Awaited<ReturnType<(typeof dictionaries)[Locale]>>;
+import type { Dictionary } from "@/types/i18n";
+export type { Dictionary };
 
 export const getDictionary = async (locale: Locale) => {
   if (!dictionaries[locale]) {

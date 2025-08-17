@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 
 import { EChart } from "./echart";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface MultiPlatformChartProps {
   data: MultiPlatformMetrics;
@@ -67,28 +68,30 @@ const PLATFORM_NAMES = {
 } as const;
 
 const CHART_TYPES = [
-  { key: "line", label: "선 차트" },
-  { key: "bar", label: "막대 차트" },
-  { key: "area", label: "영역 차트" },
-  { key: "pie", label: "원형 차트" },
+  { key: "line" },
+  { key: "bar" },
+  { key: "area" },
+  { key: "pie" },
 ] as const;
 
 const METRICS_OPTIONS = [
-  { key: "impressions", label: "노출수" },
-  { key: "clicks", label: "클릭수" },
-  { key: "cost", label: "비용" },
-  { key: "conversions", label: "전환수" },
-  { key: "ctr", label: "CTR" },
-  { key: "cpc", label: "CPC" },
-  { key: "cpm", label: "CPM" },
-  { key: "conversionRate", label: "전환율" },
-  { key: "costPerConversion", label: "전환당 비용" },
-  { key: "roas", label: "ROAS" },
+  { key: "impressions" },
+  { key: "clicks" },
+  { key: "cost" },
+  { key: "conversions" },
+  { key: "ctr" },
+  { key: "cpc" },
+  { key: "cpm" },
+  { key: "conversionRate" },
+  { key: "costPerConversion" },
+  { key: "roas" },
 ] as const;
+
+type MetricOptionKey = (typeof METRICS_OPTIONS)[number]["key"];
 
 export function MultiPlatformChart({
   data,
-  title = "다중 플랫폼 광고 성과 비교",
+  title,
   subtitle,
   chartType = "bar",
   showPlatformComparison = true,
@@ -104,9 +107,10 @@ export function MultiPlatformChart({
   autoRefresh = false,
   refreshInterval = 30000,
 }: MultiPlatformChartProps) {
+  const { dictionary: dict } = useDictionary();
   const { theme } = useTheme();
   const [selectedMetric, setSelectedMetric] =
-    React.useState<string>("impressions");
+    React.useState<MetricOptionKey>("impressions");
   const [selectedChartType, setSelectedChartType] =
     React.useState<ChartType>(chartType);
   const [isAnimated, setIsAnimated] = React.useState(true);
@@ -153,6 +157,9 @@ export function MultiPlatformChart({
     const isDark = theme === "dark";
     const textColor = isDark ? "#ffffff" : "#000000";
     const backgroundColor = isDark ? "#18181b" : "#ffffff";
+
+    const getMetricLabel = (key: (typeof METRICS_OPTIONS)[number]["key"]) =>
+      String(dict.analytics[key as keyof typeof dict.analytics] ?? key);
 
     const baseOption = {
       backgroundColor,
@@ -206,7 +213,7 @@ export function MultiPlatformChart({
             formattedValue = value.toLocaleString();
           }
 
-          return `${platform}<br/>${METRICS_OPTIONS.find((m) => m.key === selectedMetric)?.label}: ${formattedValue}`;
+          return `${platform}<br/>${getMetricLabel(selectedMetric)}: ${formattedValue}`;
         },
       },
       legend: showLegend
@@ -234,7 +241,7 @@ export function MultiPlatformChart({
         ...baseOption,
         series: [
           {
-            name: METRICS_OPTIONS.find((m) => m.key === selectedMetric)?.label,
+            name: getMetricLabel(selectedMetric),
             type: "pie",
             radius: "70%",
             center: ["50%", "50%"],
@@ -315,7 +322,7 @@ export function MultiPlatformChart({
       },
       series: [
         {
-          name: METRICS_OPTIONS.find((m) => m.key === selectedMetric)?.label,
+          name: getMetricLabel(selectedMetric),
           type: selectedChartType === "area" ? "line" : selectedChartType,
           data: chartData.map((item) => ({
             value: item.metrics[selectedMetric as keyof typeof item.metrics],
@@ -367,6 +374,7 @@ export function MultiPlatformChart({
     showLegend,
     isAnimated,
     showDataLabels,
+    dict,
   ]);
 
   // 메트릭 카드 데이터
@@ -444,7 +452,7 @@ export function MultiPlatformChart({
     [onExport],
   );
 
-  const handleMetricChange = useCallback((metric: string) => {
+  const handleMetricChange = useCallback((metric: MetricOptionKey) => {
     setSelectedMetric(metric);
   }, []);
 
@@ -507,7 +515,7 @@ export function MultiPlatformChart({
     return (
       <Card className={className}>
         <CardBody className="text-center py-8">
-          <div className="text-red-500 mb-2">오류가 발생했습니다</div>
+          <div className="text-red-500 mb-2">{dict.common.error}</div>
           <div className="text-small text-gray-500">{error}</div>
           {onRefresh && (
             <Button
@@ -517,7 +525,7 @@ export function MultiPlatformChart({
               variant="light"
               onClick={onRefresh}
             >
-              다시 시도
+              {dict.common.retry}
             </Button>
           )}
         </CardBody>
@@ -581,11 +589,12 @@ export function MultiPlatformChart({
             <div className="flex items-center gap-2">
               {autoRefresh && (
                 <Badge color="success" variant="flat">
-                  실시간
+                  {dict.adsPerformanceDashboard?.realtime ?? "Realtime"}
                 </Badge>
               )}
               <span className="text-small text-gray-500">
-                마지막 업데이트: {new Date(data.lastUpdated).toLocaleString()}
+                {(dict.analytics.ui?.lastUpdated ?? "Last updated:") + " "}
+                {new Date(data.lastUpdated).toLocaleString()}
               </span>
             </div>
           </div>
@@ -596,21 +605,26 @@ export function MultiPlatformChart({
           <div className="flex flex-wrap items-center gap-4 mb-6">
             <Select
               className="max-w-xs"
-              label="메트릭 선택"
-              placeholder="메트릭을 선택하세요"
+              label={dict.analytics.ui?.selectMetric ?? dict.common.select}
               size="sm"
               value={selectedMetric}
-              onChange={(e) => handleMetricChange(e.target.value)}
+              onChange={(e) =>
+                handleMetricChange(e.target.value as MetricOptionKey)
+              }
             >
               {METRICS_OPTIONS.map((metric) => (
-                <SelectItem key={metric.key}>{metric.label}</SelectItem>
+                <SelectItem key={metric.key}>
+                  {String(
+                    dict.analytics[metric.key as keyof typeof dict.analytics] ??
+                      metric.key,
+                  )}
+                </SelectItem>
               ))}
             </Select>
 
             <Select
               className="max-w-xs"
-              label="차트 타입"
-              placeholder="차트 타입을 선택하세요"
+              label={dict.adsPerformanceDashboard?.chartType ?? "Chart Type"}
               size="sm"
               value={selectedChartType}
               onChange={(e) =>
@@ -618,7 +632,15 @@ export function MultiPlatformChart({
               }
             >
               {CHART_TYPES.map((type) => (
-                <SelectItem key={type.key}>{type.label}</SelectItem>
+                <SelectItem key={type.key}>
+                  {type.key === "line"
+                    ? dict.adsPerformanceDashboard?.lineChart
+                    : type.key === "bar"
+                      ? dict.adsPerformanceDashboard?.barChart
+                      : type.key === "area"
+                        ? dict.adsPerformanceDashboard?.areaChart
+                        : dict.adsPerformanceDashboard?.pieChart}
+                </SelectItem>
               ))}
             </Select>
 
@@ -628,7 +650,7 @@ export function MultiPlatformChart({
                 size="sm"
                 onValueChange={setIsAnimated}
               >
-                애니메이션
+                {dict.analytics.ui?.animation ?? "Animation"}
               </Switch>
 
               <Switch
@@ -636,13 +658,13 @@ export function MultiPlatformChart({
                 size="sm"
                 onValueChange={setShowDataLabels}
               >
-                데이터 라벨
+                {dict.analytics.ui?.dataLabels ?? "Data labels"}
               </Switch>
             </div>
 
             <div className="flex items-center gap-2 ml-auto">
               {onRefresh && (
-                <Tooltip content="새로고침">
+                <Tooltip content={dict.common.refresh}>
                   <Button
                     isIconOnly
                     isLoading={loading}
@@ -656,7 +678,7 @@ export function MultiPlatformChart({
               )}
 
               {onExport && (
-                <Tooltip content="내보내기">
+                <Tooltip content={dict.common.export}>
                   <Button
                     isIconOnly
                     size="sm"
@@ -679,7 +701,7 @@ export function MultiPlatformChart({
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2" />
                   <div className="text-small text-gray-500">
-                    데이터 로딩 중...
+                    {dict.common.loading}
                   </div>
                 </div>
               </div>
@@ -699,10 +721,11 @@ export function MultiPlatformChart({
           {showPlatformComparison && chartData && (
             <div className="mt-6">
               <h4 className="text-medium font-semibold mb-4">
-                플랫폼별 상세 비교
+                {dict.analytics.ui?.platformComparisonTitle ??
+                  dict.dashboard.charts.platforms}
               </h4>
               <Table
-                aria-label="Platform Comparison Table"
+                aria-label={dict.dashboard.charts.platforms}
                 classNames={{
                   wrapper: "overflow-x-auto",
                   table: "w-full text-small",
@@ -718,7 +741,7 @@ export function MultiPlatformChart({
                   )}
                 </TableHeader>
                 <TableBody
-                  emptyContent="데이터가 없습니다"
+                  emptyContent={dict.common.noData}
                   items={chartData || []}
                 >
                   {(item) => (

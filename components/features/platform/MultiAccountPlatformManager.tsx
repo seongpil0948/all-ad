@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Switch } from "@heroui/switch";
@@ -16,7 +16,10 @@ import { useDisclosure } from "@heroui/modal";
 import { useAsyncList } from "@react-stately/data";
 import { FaPlus, FaSync, FaExclamationTriangle } from "react-icons/fa";
 
-import { PlatformCredentialForm } from "./PlatformCredentialForm";
+import {
+  PlatformCredentialForm,
+  CREDENTIAL_FORM_ID,
+} from "./PlatformCredentialForm";
 import { CoupangManualCampaignManager } from "./coupang/CoupangManualCampaignManager";
 
 // OAuth imports removed - legacy OAuth implementation
@@ -85,47 +88,114 @@ export function MultiAccountPlatformManager({
     { key: "actions", label: dict.common.actions },
   ];
 
-  // Create async list for a platform
-  const createPlatformList = (platform: PlatformType) => {
-    return useAsyncList<PlatformCredential>({
-      async load({ cursor }) {
-        const platformCreds = credentials.filter(
-          (c) => c.platform === platform,
-        );
-        const start = cursor ? parseInt(cursor) : 0;
-        const items = platformCreds.slice(start, start + ITEMS_PER_PAGE);
+  const facebookList = useAsyncList<PlatformCredential>({
+    async load({ cursor }) {
+      const platformCreds = credentials.filter(
+        (c) => c.platform === "facebook",
+      );
+      const start = cursor ? parseInt(cursor) : 0;
+      const items = platformCreds.slice(start, start + ITEMS_PER_PAGE);
+      const hasMore = start + ITEMS_PER_PAGE < platformCreds.length;
+      setHasMoreItems((prev) => ({ ...prev, facebook: hasMore }));
+      return {
+        items,
+        cursor: hasMore ? String(start + ITEMS_PER_PAGE) : undefined,
+      };
+    },
+    getKey: (item) => item.id,
+  });
 
-        const hasMore = start + ITEMS_PER_PAGE < platformCreds.length;
+  const googleList = useAsyncList<PlatformCredential>({
+    async load({ cursor }) {
+      const platformCreds = credentials.filter((c) => c.platform === "google");
+      const start = cursor ? parseInt(cursor) : 0;
+      const items = platformCreds.slice(start, start + ITEMS_PER_PAGE);
+      const hasMore = start + ITEMS_PER_PAGE < platformCreds.length;
+      setHasMoreItems((prev) => ({ ...prev, google: hasMore }));
+      return {
+        items,
+        cursor: hasMore ? String(start + ITEMS_PER_PAGE) : undefined,
+      };
+    },
+    getKey: (item) => item.id,
+  });
 
-        setHasMoreItems((prev) => ({ ...prev, [platform]: hasMore }));
+  const kakaoList = useAsyncList<PlatformCredential>({
+    async load({ cursor }) {
+      const platformCreds = credentials.filter((c) => c.platform === "kakao");
+      const start = cursor ? parseInt(cursor) : 0;
+      const items = platformCreds.slice(start, start + ITEMS_PER_PAGE);
+      const hasMore = start + ITEMS_PER_PAGE < platformCreds.length;
+      setHasMoreItems((prev) => ({ ...prev, kakao: hasMore }));
+      return {
+        items,
+        cursor: hasMore ? String(start + ITEMS_PER_PAGE) : undefined,
+      };
+    },
+    getKey: (item) => item.id,
+  });
 
-        return {
-          items,
-          cursor: hasMore ? String(start + ITEMS_PER_PAGE) : undefined,
-        };
-      },
-      getKey: (item) => item.id,
-    });
-  };
+  const naverList = useAsyncList<PlatformCredential>({
+    async load({ cursor }) {
+      const platformCreds = credentials.filter((c) => c.platform === "naver");
+      const start = cursor ? parseInt(cursor) : 0;
+      const items = platformCreds.slice(start, start + ITEMS_PER_PAGE);
+      const hasMore = start + ITEMS_PER_PAGE < platformCreds.length;
+      setHasMoreItems((prev) => ({ ...prev, naver: hasMore }));
+      return {
+        items,
+        cursor: hasMore ? String(start + ITEMS_PER_PAGE) : undefined,
+      };
+    },
+    getKey: (item) => item.id,
+  });
 
-  // Infinite scroll setup for each platform
-  const platformLists = {
-    facebook: createPlatformList("facebook"),
-    google: createPlatformList("google"),
-    kakao: createPlatformList("kakao"),
-    naver: createPlatformList("naver"),
-    coupang: createPlatformList("coupang"),
-    amazon: createPlatformList("amazon"),
-  };
+  const coupangList = useAsyncList<PlatformCredential>({
+    async load({ cursor }) {
+      const platformCreds = credentials.filter((c) => c.platform === "coupang");
+      const start = cursor ? parseInt(cursor) : 0;
+      const items = platformCreds.slice(start, start + ITEMS_PER_PAGE);
+      const hasMore = start + ITEMS_PER_PAGE < platformCreds.length;
+      setHasMoreItems((prev) => ({ ...prev, coupang: hasMore }));
+      return {
+        items,
+        cursor: hasMore ? String(start + ITEMS_PER_PAGE) : undefined,
+      };
+    },
+    getKey: (item) => item.id,
+  });
 
-  // Reload lists when credentials change
-  useEffect(() => {
-    Object.values(platformLists).forEach((list) => list.reload());
-    checkTokensStatus();
-  }, [credentials.length]);
+  const amazonList = useAsyncList<PlatformCredential>({
+    async load({ cursor }) {
+      const platformCreds = credentials.filter((c) => c.platform === "amazon");
+      const start = cursor ? parseInt(cursor) : 0;
+      const items = platformCreds.slice(start, start + ITEMS_PER_PAGE);
+      const hasMore = start + ITEMS_PER_PAGE < platformCreds.length;
+      setHasMoreItems((prev) => ({ ...prev, amazon: hasMore }));
+      return {
+        items,
+        cursor: hasMore ? String(start + ITEMS_PER_PAGE) : undefined,
+      };
+    },
+    getKey: (item) => item.id,
+  });
+
+  const platformLists = useMemo(
+    () => ({
+      facebook: facebookList,
+      google: googleList,
+      kakao: kakaoList,
+      naver: naverList,
+      coupang: coupangList,
+      amazon: amazonList,
+    }),
+    [facebookList, googleList, kakaoList, naverList, coupangList, amazonList],
+  );
+
+  // Reload lists when credentials change (declared after checkTokensStatus)
 
   // Check token status for OAuth platforms
-  const checkTokensStatus = async () => {
+  const checkTokensStatus = useCallback(async () => {
     for (const credential of credentials) {
       if (
         (credential.platform === "google" ||
@@ -198,30 +268,40 @@ export function MultiAccountPlatformManager({
         }
       }
     }
-  };
+  }, [credentials]);
 
-  const handleAddAccount = (platform: PlatformType) => {
+  // Reload lists when credentials change
+  useEffect(() => {
+    Object.values(platformLists).forEach((list) => list.reload());
+    checkTokensStatus();
+  }, [credentials.length, platformLists, checkTokensStatus]);
+
+  const handleAddAccount = async (platform: PlatformType) => {
     const config = platformConfig[platform];
 
     // For OAuth platforms, redirect to OAuth flow
     if (config.supportsOAuth) {
-      // Use unified OAuth route
-      const unifiedRoute = `/api/auth/oauth/${platform}`;
+      try {
+        const response = await fetch(`/api/auth/oauth/${platform}/callback`, {
+          method: "POST",
+        });
+        const data = await response.json();
 
-      // Legacy individual routes for fallback
-      const oauthRoutes = {
-        google: "/api/auth/google-ads",
-        facebook: "/api/auth/facebook-ads",
-        kakao: "/api/auth/kakao-ads",
-        amazon: "/api/auth/amazon-ads",
-        naver: "/api/auth/naver-ads",
-      };
-
-      const route =
-        oauthRoutes[platform as keyof typeof oauthRoutes] || unifiedRoute;
-
-      window.location.href = route;
-
+        if (response.ok && data.authUrl) {
+          window.location.href = data.authUrl;
+        } else {
+          toast.error({
+            title: dict.common.error,
+            description: data.error || "Failed to start OAuth flow.",
+          });
+        }
+      } catch (error) {
+        log.error("Failed to start OAuth flow", error);
+        toast.error({
+          title: dict.common.error,
+          description: "An unexpected error occurred.",
+        });
+      }
       return;
     }
 
@@ -230,20 +310,28 @@ export function MultiAccountPlatformManager({
     onOpen();
   };
 
-  const handleOAuthConnect = async (
-    platform: PlatformType,
-    _credentials: CredentialValues,
-  ) => {
-    // For Google Ads, use simplified OAuth flow
-    if (platform === "google") {
-      // Redirect to OAuth flow directly
-      window.location.href = "/api/auth/google-ads";
+  const handleOAuthConnect = async (platform: PlatformType) => {
+    try {
+      const response = await fetch(`/api/auth/oauth/${platform}/callback`, {
+        method: "POST",
+      });
+      const data = await response.json();
 
-      return;
+      if (response.ok && data.authUrl) {
+        window.location.href = data.authUrl;
+      } else {
+        toast.error({
+          title: dict.common.error,
+          description: data.error || "Failed to start OAuth flow.",
+        });
+      }
+    } catch (error) {
+      log.error("Failed to start OAuth connect", error);
+      toast.error({
+        title: dict.common.error,
+        description: "An unexpected error occurred.",
+      });
     }
-
-    // For other OAuth platforms (Facebook, Kakao), handle accordingly
-    console.warn("OAuth connection needs to be implemented for", platform);
   };
 
   const handleReAuthenticate = async (credential: PlatformCredential) => {
@@ -299,14 +387,7 @@ export function MultiAccountPlatformManager({
 
         const platform = credential.platform as PlatformType;
 
-        if (platform === "google") {
-          window.location.href = "/api/auth/google-ads";
-
-          return;
-        }
-
-        // For other OAuth platforms
-        await handleOAuthConnect(platform, credential);
+        await handleOAuthConnect(platform);
       }
     } catch (error) {
       log.error("Re-authentication failed:", error);
@@ -360,7 +441,7 @@ export function MultiAccountPlatformManager({
           selectedPlatform === "kakao") &&
         platformInfo.supportsOAuth
       ) {
-        await handleOAuthConnect(selectedPlatform, credentials);
+        await handleOAuthConnect(selectedPlatform);
       } else {
         await onSave(selectedPlatform, credentials);
         onOpenChange();
@@ -484,7 +565,7 @@ export function MultiAccountPlatformManager({
         hasMore={hasMoreItems[platform] || false}
         isLoading={list.isLoading && list.items.length === 0}
         items={list}
-        maxHeight="300px"
+        maxHeight={300}
         renderCell={renderCell}
         onLoadMore={() => list.loadMore()}
       />
@@ -592,7 +673,7 @@ export function MultiAccountPlatformManager({
                 </Button>
                 <Button
                   color="primary"
-                  form="credential-form"
+                  form={CREDENTIAL_FORM_ID}
                   isLoading={isLoading}
                   type="submit"
                 >

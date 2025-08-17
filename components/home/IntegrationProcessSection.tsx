@@ -1,11 +1,14 @@
+/* eslint-disable local/no-literal-strings */
 "use client";
 
 import { Card, CardBody } from "@heroui/card";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { FaPlug, FaCog, FaChartBar, FaRocket } from "react-icons/fa";
 import { Badge } from "@heroui/badge";
 
 import { title, subtitle } from "@/components/primitives";
+import { Container } from "@/components/layouts/Container";
+import { AutoGrid } from "@/components/common/AutoGrid";
 
 interface ProcessStepProps {
   icon: React.ReactNode;
@@ -42,6 +45,7 @@ const ProcessStep = ({
 };
 
 export const IntegrationProcessSection = () => {
+  const prefersReducedMotion = useReducedMotion();
   const steps = [
     {
       icon: <FaPlug className="w-8 h-8" />,
@@ -74,14 +78,14 @@ export const IntegrationProcessSection = () => {
   ];
 
   return (
-    <section className="px-6 py-20 bg-default-50">
-      <div className="max-w-7xl mx-auto">
+    <section className="py-20 bg-default-50">
+      <Container>
         <motion.div
           className="text-center mb-12"
-          initial={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
+          initial={prefersReducedMotion ? undefined : { opacity: 0 }}
+          transition={prefersReducedMotion ? undefined : { duration: 0.5 }}
           viewport={{ once: true }}
-          whileInView={{ opacity: 1 }}
+          whileInView={prefersReducedMotion ? undefined : { opacity: 1 }}
         >
           <h2 className={title({ size: "md" })}>간단한 시작, 강력한 성과</h2>
           <p className={subtitle({ class: "mt-2" })}>
@@ -89,19 +93,25 @@ export const IntegrationProcessSection = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <AutoGrid minItemWidth={260}>
           {steps.map((step, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 20 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              initial={prefersReducedMotion ? undefined : { opacity: 0, y: 20 }}
+              transition={
+                prefersReducedMotion
+                  ? undefined
+                  : { duration: 0.5, delay: index * 0.1 }
+              }
               viewport={{ once: true }}
-              whileInView={{ opacity: 1, y: 0 }}
+              whileInView={
+                prefersReducedMotion ? undefined : { opacity: 1, y: 0 }
+              }
             >
               <ProcessStep {...step} />
             </motion.div>
           ))}
-        </div>
+        </AutoGrid>
 
         {/* Connection lines for desktop */}
         <div className="hidden lg:block relative -mt-32 mb-16">
@@ -121,7 +131,7 @@ export const IntegrationProcessSection = () => {
             />
           </svg>
         </div>
-      </div>
+      </Container>
     </section>
   );
 };

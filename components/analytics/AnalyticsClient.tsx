@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  useState,
-  useEffect,
-  useCallback,
-  useTransition,
-  useMemo,
-  memo,
-} from "react";
+import { useEffect, useCallback, useTransition, useMemo, memo } from "react";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { DateRangePicker } from "@heroui/date-picker";
@@ -25,56 +18,54 @@ import {
 import { useAnalyticsStore } from "@/stores";
 import { EChart } from "@/components/charts/echart";
 import { AnalyticsSummary, PlatformAnalytics } from "@/lib/data/analytics";
-import { TimeSeriesData } from "@/stores/slices/analyticsDataSlice";
 import log from "@/utils/logger";
+import { useDictionary } from "@/hooks/use-dictionary";
+
+import { MetricKey, ChartType } from "@/stores/slices/analyticsUiSlice";
 
 interface AnalyticsClientProps {
   initialSummary: AnalyticsSummary;
   initialPlatformData: PlatformAnalytics[];
 }
 
-// Chart type options
+// Chart type options (labels from dictionary at render time)
 const chartTypes = [
-  { key: "line", label: "라인 차트", icon: FaChartLine },
-  { key: "bar", label: "바 차트", icon: FaChartBar },
-  { key: "pie", label: "파이 차트", icon: FaChartPie },
+  { key: "line", icon: FaChartLine },
+  { key: "bar", icon: FaChartBar },
+  { key: "pie", icon: FaChartPie },
 ] as const;
 
-// Metric options for charts
+// Metric options for charts (labels from dictionary at render time)
 const metricOptions = [
-  { key: "impressions", label: "노출수" },
-  { key: "clicks", label: "클릭수" },
-  { key: "cost", label: "비용" },
-  { key: "conversions", label: "전환수" },
-  { key: "revenue", label: "매출" },
+  { key: "impressions" },
+  { key: "clicks" },
+  { key: "cost" },
+  { key: "conversions" },
+  { key: "revenue" },
 ] as const;
 
-type MetricKey = keyof TimeSeriesData;
+const ARROW_UP = "▲" as const;
+const ARROW_DOWN = "▼" as const;
 
 const AnalyticsClient = memo(function AnalyticsClient({
-  initialSummary: _initialSummary,
   initialPlatformData,
 }: AnalyticsClientProps) {
+  const { dictionary: dict } = useDictionary();
   const [isPending, startTransition] = useTransition();
-  const [selectedMetric, setSelectedMetric] =
-    useState<MetricKey>("impressions");
-  const [selectedChartType, setSelectedChartType] = useState("line");
-  const [dateRange, setDateRange] = useState({
-    start: parseDate(
-      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split("T")[0],
-    ),
-    end: parseDate(new Date().toISOString().split("T")[0]),
-  });
 
-  // Use Zustand store with useShallow
+  // Use Zustand store with useShallow for all state
   const {
     platformData = initialPlatformData,
     timeSeriesData,
     isLoading,
     fetchAnalytics,
     exportData,
+    selectedMetric,
+    selectedChartType,
+    dateRange,
+    setSelectedMetric,
+    setSelectedChartType,
+    setDateRange,
   } = useAnalyticsStore(
     useShallow((state) => ({
       summary: state.summary,
@@ -83,46 +74,26 @@ const AnalyticsClient = memo(function AnalyticsClient({
       isLoading: state.isLoading,
       fetchAnalytics: state.fetchAnalytics,
       exportData: state.exportData,
+      selectedMetric: state.selectedMetric,
+      selectedChartType: state.selectedChartType,
+      dateRange: state.dateRange,
+      setSelectedMetric: state.setSelectedMetric,
+      setSelectedChartType: state.setSelectedChartType,
+      setDateRange: state.setDateRange,
     })),
   );
 
-  // Effect 1: Fetch analytics when date range changes - separate concern
+  // Effect to fetch analytics when date range changes
   useEffect(() => {
     startTransition(() => {
       fetchAnalytics({
-        start: new Date(dateRange.start.toString()),
-        end: new Date(dateRange.end.toString()),
+        start: dateRange.start,
+        end: dateRange.end,
       }).catch((err) => {
         log.error("Failed to fetch analytics", err);
       });
     });
   }, [dateRange, fetchAnalytics]);
-
-  // Effect 2: Extract time series data from DOM - separate concern
-  useEffect(() => {
-    const container = document.querySelector(".time-series-data");
-
-    if (container) {
-      const impressions = container.getAttribute("data-impressions");
-      const clicks = container.getAttribute("data-clicks");
-      const cost = container.getAttribute("data-cost");
-      const conversions = container.getAttribute("data-conversions");
-      const revenue = container.getAttribute("data-revenue");
-
-      if (impressions && clicks && cost && conversions && revenue) {
-        // Update store with time series data
-        useAnalyticsStore.setState({
-          timeSeriesData: {
-            impressions: JSON.parse(impressions),
-            clicks: JSON.parse(clicks),
-            cost: JSON.parse(cost),
-            conversions: JSON.parse(conversions),
-            revenue: JSON.parse(revenue),
-          },
-        });
-      }
-    }
-  }, []);
 
   // Memoized chart options
   const chartOptions = useMemo(() => {
@@ -216,18 +187,6 @@ const AnalyticsClient = memo(function AnalyticsClient({
     }
   }, [exportData]);
 
-  const handleMetricChange = useCallback((value: string) => {
-    startTransition(() => {
-      setSelectedMetric(value as MetricKey);
-    });
-  }, []);
-
-  const handleChartTypeChange = useCallback((key: string) => {
-    startTransition(() => {
-      setSelectedChartType(key);
-    });
-  }, []);
-
   return (
     <div className="space-y-6">
       {/* Controls */}
@@ -235,38 +194,42 @@ const AnalyticsClient = memo(function AnalyticsClient({
         <CardBody>
           <div className="flex flex-wrap gap-4 items-center">
             <DateRangePicker
-              aria-label="데이터 분석 기간 선택"
+              aria-label={dict.dashboard.filters.dateRange}
               className="max-w-xs"
-              label="기간 선택"
-              value={dateRange}
+              label={dict.dashboard.filters.dateRange}
+              value={{
+                start: parseDate(dateRange.start),
+                end: parseDate(dateRange.end),
+              }}
               onChange={(value) => {
                 if (value) {
-                  setDateRange(value);
+                  setDateRange({
+                    start: value.start.toString(),
+                    end: value.end.toString(),
+                  });
                 }
               }}
             />
             <Select
-              aria-label="분석 지표 선택"
+              aria-label={dict.analytics.ui?.selectMetric ?? dict.common.select}
               className="max-w-xs"
-              label="지표 선택"
-              selectedKeys={
-                metricOptions.some((option) => option.key === selectedMetric)
-                  ? [selectedMetric]
-                  : []
-              }
+              label={dict.analytics.ui?.selectMetric ?? dict.common.select}
+              selectedKeys={[selectedMetric]}
               onSelectionChange={(keys) => {
-                const value = Array.from(keys)[0] as string;
-                const validMetric = metricOptions.find(
-                  (option) => option.key === value,
-                );
-
-                if (validMetric) {
-                  handleMetricChange(value);
+                const value = Array.from(keys)[0] as MetricKey;
+                if (value) {
+                  setSelectedMetric(value);
                 }
               }}
             >
               {metricOptions.map((option) => (
-                <SelectItem key={option.key}>{option.label}</SelectItem>
+                <SelectItem key={option.key}>
+                  {
+                    dict.analytics[
+                      option.key as keyof typeof dict.analytics
+                    ] as string
+                  }
+                </SelectItem>
               ))}
             </Select>
             <Button
@@ -274,7 +237,7 @@ const AnalyticsClient = memo(function AnalyticsClient({
               startContent={<FaDownload />}
               onPress={handleExport}
             >
-              데이터 내보내기
+              {dict.common.export}
             </Button>
           </div>
         </CardBody>
@@ -283,7 +246,7 @@ const AnalyticsClient = memo(function AnalyticsClient({
       {/* Chart Type Tabs */}
       <Tabs
         selectedKey={selectedChartType}
-        onSelectionChange={(key) => handleChartTypeChange(key as string)}
+        onSelectionChange={(key) => setSelectedChartType(key as ChartType)}
       >
         {chartTypes.map((type) => {
           const Icon = type.icon;
@@ -294,27 +257,36 @@ const AnalyticsClient = memo(function AnalyticsClient({
               title={
                 <div className="flex items-center gap-2">
                   <Icon className="w-4 h-4" />
-                  <span>{type.label}</span>
+                  <span>
+                    {type.key === "line"
+                      ? dict.adsPerformanceDashboard?.lineChart
+                      : type.key === "bar"
+                        ? dict.adsPerformanceDashboard?.barChart
+                        : dict.adsPerformanceDashboard?.pieChart}
+                  </span>
                 </div>
               }
             >
               <Card className="mt-4">
                 <CardHeader>
                   <h3 className="text-lg font-semibold">
-                    {metricOptions.find((m) => m.key === selectedMetric)?.label}{" "}
-                    추이
+                    {dict.analytics[selectedMetric] as string}
                   </h3>
                 </CardHeader>
                 <CardBody>
                   {isLoading || isPending ? (
                     <div className="h-96 flex items-center justify-center text-default-500">
-                      데이터를 불러오는 중...
+                      {dict.common.loading}
                     </div>
                   ) : chartOptions ? (
-                    <EChart option={chartOptions} style={{ height: "400px" }} />
+                    <EChart
+                      option={chartOptions}
+                      aspectRatio={16 / 9}
+                      className="w-full"
+                    />
                   ) : (
                     <div className="h-96 flex items-center justify-center text-default-500">
-                      데이터가 없습니다.
+                      {dict.common.noData}
                     </div>
                   )}
                 </CardBody>
@@ -327,59 +299,78 @@ const AnalyticsClient = memo(function AnalyticsClient({
       {/* Platform Breakdown */}
       <Card>
         <CardHeader>
-          <h3 className="text-lg font-semibold">플랫폼별 성과</h3>
+          <h3 className="text-lg font-semibold">
+            {dict.dashboard.charts.platforms}
+          </h3>
         </CardHeader>
         <CardBody>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {platformData.map((platform) => (
-              <Card key={platform.platform} className="border">
-                <CardBody>
-                  <h4 className="font-medium mb-3">{platform.platform}</h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-default-500">노출수:</span>
-                      <span className="font-medium">
-                        {platform.metrics.totalImpressions.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-default-500">클릭수:</span>
-                      <span className="font-medium">
-                        {platform.metrics.totalClicks.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-default-500">CTR:</span>
-                      <span className="font-medium">
-                        {platform.metrics.ctr.toFixed(2)}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-default-500">비용:</span>
-                      <span className="font-medium">
-                        ₩{platform.metrics.totalCost.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-default-500">ROAS:</span>
-                      <span className="font-medium">
-                        {platform.metrics.roas.toFixed(2)}x
-                      </span>
-                    </div>
-                    {platform.trend !== 0 && (
-                      <div className="pt-2 border-t">
-                        <span
-                          className={`text-xs ${platform.trend > 0 ? "text-success" : "text-danger"}`}
-                        >
-                          {platform.trend > 0 ? "▲" : "▼"}{" "}
-                          {Math.abs(platform.trend).toFixed(1)}% 전기 대비
+          <div className="mt-2">
+            <div className="sr-only" role="heading" aria-level={2}>
+              {dict.dashboard.charts.platforms}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {platformData.map((platform) => (
+                <Card key={platform.platform} className="border">
+                  <CardBody>
+                    <h4 className="font-medium mb-3">{platform.platform}</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-default-500">
+                          {dict.analytics.impressions}:
+                        </span>
+                        <span className="font-medium">
+                          {platform.metrics.totalImpressions.toLocaleString()}
                         </span>
                       </div>
-                    )}
-                  </div>
-                </CardBody>
-              </Card>
-            ))}
+                      <div className="flex justify-between">
+                        <span className="text-default-500">
+                          {dict.analytics.clicks}:
+                        </span>
+                        <span className="font-medium">
+                          {platform.metrics.totalClicks.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-default-500">
+                          {dict.analytics.ctr}:
+                        </span>
+                        <span className="font-medium">
+                          {platform.metrics.ctr.toFixed(2)}%
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-default-500">
+                          {dict.analytics.cost}:
+                        </span>
+                        <span className="font-medium">
+                          ₩{platform.metrics.totalCost.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-default-500">
+                          {dict.analytics.roas}:
+                        </span>
+                        <span className="font-medium">
+                          {platform.metrics.roas.toFixed(2)}
+                          {dict.analytics.ui?.multiplierSuffix ?? "x"}
+                        </span>
+                      </div>
+                      {platform.trend !== 0 && (
+                        <div className="pt-2 border-t">
+                          <span
+                            className={`text-xs ${platform.trend > 0 ? "text-success" : "text-danger"}`}
+                          >
+                            {(platform.trend > 0 ? ARROW_UP : ARROW_DOWN) + " "}
+                            {Math.abs(platform.trend).toFixed(1)}%{" "}
+                            {dict.analytics.ui?.vsPreviousPeriod ?? ""}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </CardBody>
+                </Card>
+              ))}
+            </div>
           </div>
         </CardBody>
       </Card>

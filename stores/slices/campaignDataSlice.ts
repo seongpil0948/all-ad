@@ -6,22 +6,13 @@ import { Campaign, CampaignStats } from "@/types/campaign.types";
 
 export interface CampaignDataSlice {
   campaigns: Campaign[];
-  stats: CampaignStats;
-  lastSync: Date | null;
+  stats: CampaignStats | null;
+  filters: Record<string, unknown>;
   setCampaigns: (campaigns: Campaign[]) => void;
   setStats: (stats: CampaignStats) => void;
-  setLastSync: (date: Date | null) => void;
+  setFilters: (filters: Record<string, unknown>) => void;
+  addCampaigns: (campaigns: Campaign[]) => void;
 }
-
-const initialStats: CampaignStats = {
-  totalCampaigns: 0,
-  activeCampaigns: 0,
-  totalBudget: 0,
-  totalSpend: 0,
-  totalClicks: 0,
-  totalImpressions: 0,
-  platforms: 0,
-};
 
 export const createCampaignDataSlice: StateCreator<
   CampaignDataSlice,
@@ -30,9 +21,12 @@ export const createCampaignDataSlice: StateCreator<
   CampaignDataSlice
 > = (set) => ({
   campaigns: [],
-  stats: initialStats,
-  lastSync: null,
+  stats: null,
+  filters: { search: "", isActive: undefined, platform: undefined },
   setCampaigns: (campaigns) => set({ campaigns }),
+  addCampaigns: (campaigns) =>
+    set((state) => ({ campaigns: [...state.campaigns, ...campaigns] })),
   setStats: (stats) => set({ stats }),
-  setLastSync: (lastSync) => set({ lastSync }),
+  setFilters: (filters) =>
+    set((state) => ({ filters: { ...state.filters, ...filters } })),
 });

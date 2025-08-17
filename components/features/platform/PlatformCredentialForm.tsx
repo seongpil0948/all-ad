@@ -23,6 +23,8 @@ interface PlatformCredentialFormProps {
   onSubmit: (values: Record<string, unknown>) => Promise<void>;
 }
 
+export const CREDENTIAL_FORM_ID = "credential-form" as const;
+
 export function PlatformCredentialForm({
   platform,
   initialValues,
@@ -171,7 +173,7 @@ export function PlatformCredentialForm({
   const showSubmitButton = !["google", "facebook", "kakao"].includes(platform);
 
   return (
-    <form className="space-y-4" id="credential-form" onSubmit={handleSubmit}>
+    <form className="space-y-4" id={CREDENTIAL_FORM_ID} onSubmit={handleSubmit}>
       {renderFields()}
       {showSubmitButton && (
         <Button

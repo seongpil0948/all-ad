@@ -147,7 +147,7 @@ export const pageTransition: Variants = {
 // Count up animation for numbers
 export const countAnimation = {
   initial: { opacity: 0 },
-  animate: (_value: number) => ({
+  animate: () => ({
     opacity: 1,
     transition: {
       duration: 1,

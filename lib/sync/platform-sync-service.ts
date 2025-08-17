@@ -358,10 +358,7 @@ class GoogleAdsSyncService extends BasePlatformSyncService {
         );
       },
 
-      async getMetrics(
-        campaignIds: string[],
-        _dateRange: { start: Date; end: Date },
-      ): Promise<
+      async getMetrics(campaignIds: string[]): Promise<
         {
           campaignId: string;
           date: string;
@@ -472,10 +469,7 @@ class MetaAdsSyncService extends BasePlatformSyncService {
         );
       },
 
-      async getMetrics(
-        campaignIds: string[],
-        _dateRange: { start: Date; end: Date },
-      ): Promise<
+      async getMetrics(campaignIds: string[]): Promise<
         {
           campaignId: string;
           date: string;

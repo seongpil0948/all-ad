@@ -15,7 +15,7 @@ const languages = [
 export function LanguageSwitcher() {
   const pathname = usePathname();
   const router = useRouter();
-  const { locale } = useDictionary();
+  const { locale, dictionary: dict } = useDictionary();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleLanguageChange = (keys: any) => {
@@ -32,16 +32,23 @@ export function LanguageSwitcher() {
 
   return (
     <Select
-      aria-label="Select language"
+      aria-label={`${dict.common.select} ${dict.common.language}`}
       className="w-[140px]"
       defaultSelectedKeys={[locale]}
-      startContent={<Globe className="w-4 h-4" />}
+      startContent={<Globe className="w-4 h-4" aria-hidden={true} />}
       onSelectionChange={handleLanguageChange}
+      data-testid="language-switcher"
+      variant="flat"
+      size="sm"
     >
       {languages.map((lang) => (
-        <SelectItem key={lang.code} textValue={lang.name}>
+        <SelectItem
+          key={lang.code}
+          textValue={lang.name}
+          data-testid={`language-option-${lang.code}`}
+        >
           <span className="flex items-center gap-2">
-            <span>{lang.flag}</span>
+            <span aria-hidden={true}>{lang.flag}</span>
             <span>{lang.name}</span>
           </span>
         </SelectItem>

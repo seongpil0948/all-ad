@@ -7,7 +7,7 @@ import {
   ModalBody,
   ModalFooter,
 } from "@heroui/modal";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 import { modalContent } from "@/utils/animations";
 
@@ -42,18 +42,23 @@ export function AnimatedModal({
   hideCloseButton = false,
   backdrop = "blur",
 }: AnimatedModalProps) {
+  const prefersReducedMotion = useReducedMotion();
   return (
     <Modal
       backdrop={backdrop}
       hideCloseButton={hideCloseButton}
       isDismissable={isDismissable}
       isOpen={isOpen}
-      motionProps={{
-        variants: {
-          enter: modalContent.animate,
-          exit: modalContent.exit,
-        },
-      }}
+      motionProps={
+        prefersReducedMotion
+          ? undefined
+          : {
+              variants: {
+                enter: modalContent.animate,
+                exit: modalContent.exit,
+              },
+            }
+      }
       placement={placement}
       size={size}
       onOpenChange={onOpenChange}
@@ -63,34 +68,48 @@ export function AnimatedModal({
           <>
             {title && (
               <ModalHeader>
-                <motion.div
-                  animate={{ opacity: 1, x: 0 }}
-                  initial={{ opacity: 0, x: -20 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  {title}
-                </motion.div>
+                {prefersReducedMotion ? (
+                  <div>{title}</div>
+                ) : (
+                  <motion.div
+                    animate={{ opacity: 1, x: 0 }}
+                    initial={{ opacity: 0, x: -20 }}
+                    transition={{ delay: 0.1 }}
+                  >
+                    {title}
+                  </motion.div>
+                )}
               </ModalHeader>
             )}
             <ModalBody>
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                initial={{ opacity: 0, y: 10 }}
-                transition={{ delay: 0.2 }}
-              >
-                {children}
-              </motion.div>
+              {prefersReducedMotion ? (
+                <div>{children}</div>
+              ) : (
+                <motion.div
+                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  {children}
+                </motion.div>
+              )}
             </ModalBody>
             {footer && (
               <ModalFooter>
-                <motion.div
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex gap-2"
-                  initial={{ opacity: 0, y: 10 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  {typeof footer === "function" ? footer(onClose) : footer}
-                </motion.div>
+                {prefersReducedMotion ? (
+                  <div className="flex gap-2">
+                    {typeof footer === "function" ? footer(onClose) : footer}
+                  </div>
+                ) : (
+                  <motion.div
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex gap-2"
+                    initial={{ opacity: 0, y: 10 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    {typeof footer === "function" ? footer(onClose) : footer}
+                  </motion.div>
+                )}
               </ModalFooter>
             )}
           </>

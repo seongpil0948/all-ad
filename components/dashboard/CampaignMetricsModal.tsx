@@ -16,6 +16,7 @@ import { Divider } from "@heroui/divider";
 import { Campaign, CampaignMetrics } from "@/types/campaign.types";
 import { PlatformBadge } from "@/components/common/PlatformBadge";
 import log from "@/utils/logger";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface CampaignMetricsModalProps {
   isOpen: boolean;
@@ -28,16 +29,10 @@ export function CampaignMetricsModal({
   onClose,
   campaign,
 }: CampaignMetricsModalProps) {
+  const { dictionary } = useDictionary();
   const [metrics, setMetrics] = useState<CampaignMetrics[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Fetch metrics when modal opens
-  useEffect(() => {
-    if (isOpen && campaign) {
-      fetchMetrics();
-    }
-  }, [isOpen, campaign]);
 
   const fetchMetrics = useCallback(async () => {
     if (!campaign) return;
@@ -78,6 +73,13 @@ export function CampaignMetricsModal({
       setIsLoading(false);
     }
   }, [campaign]);
+
+  // Fetch metrics when modal opens
+  useEffect(() => {
+    if (isOpen && campaign) {
+      fetchMetrics();
+    }
+  }, [isOpen, campaign, fetchMetrics]);
 
   // Calculate aggregated metrics
   const aggregatedMetrics = metrics.reduce(
@@ -122,9 +124,9 @@ export function CampaignMetricsModal({
 
   return (
     <Modal
-      backdrop="opaque"
+      backdrop={"opaque"}
       isOpen={isOpen}
-      scrollBehavior="inside"
+      scrollBehavior={"inside"}
       size="2xl"
       onClose={onClose}
     >
@@ -132,7 +134,7 @@ export function CampaignMetricsModal({
         <ModalHeader className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             {campaign && <PlatformBadge platform={campaign.platform} />}
-            <span>Campaign Metrics</span>
+            <span>{dictionary.campaignMetricsModal.title}</span>
           </div>
           {campaign && (
             <p className="text-sm text-default-500 font-normal">
@@ -159,7 +161,7 @@ export function CampaignMetricsModal({
             <Card className="bg-warning-50 border-warning-200">
               <CardBody>
                 <p className="text-warning-700">
-                  No metrics data available for this campaign
+                  {dictionary.campaignMetricsModal.noData}
                 </p>
               </CardBody>
             </Card>
@@ -171,29 +173,37 @@ export function CampaignMetricsModal({
               <Card>
                 <CardBody>
                   <h3 className="text-lg font-semibold mb-4">
-                    Last 30 Days Summary
+                    {dictionary.campaignMetricsModal.summaryTitle}
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
-                      <p className="text-sm text-default-500">Impressions</p>
+                      <p className="text-sm text-default-500">
+                        {dictionary.campaignMetricsModal.impressions}
+                      </p>
                       <p className="text-xl font-bold">
                         {formatNumber(aggregatedMetrics.impressions)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-default-500">Clicks</p>
+                      <p className="text-sm text-default-500">
+                        {dictionary.campaignMetricsModal.clicks}
+                      </p>
                       <p className="text-xl font-bold">
                         {formatNumber(aggregatedMetrics.clicks)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-default-500">Cost</p>
+                      <p className="text-sm text-default-500">
+                        {dictionary.campaignMetricsModal.cost}
+                      </p>
                       <p className="text-xl font-bold">
                         {formatCurrency(aggregatedMetrics.cost)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-default-500">Conversions</p>
+                      <p className="text-sm text-default-500">
+                        {dictionary.campaignMetricsModal.conversions}
+                      </p>
                       <p className="text-xl font-bold">
                         {formatNumber(aggregatedMetrics.conversions)}
                       </p>
@@ -204,21 +214,28 @@ export function CampaignMetricsModal({
 
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div>
-                      <p className="text-sm text-default-500">CTR</p>
+                      <p className="text-sm text-default-500">
+                        {dictionary.campaignMetricsModal.ctr}
+                      </p>
                       <p className="text-lg font-semibold">
                         {formatPercentage(ctr)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-default-500">CPC</p>
+                      <p className="text-sm text-default-500">
+                        {dictionary.campaignMetricsModal.cpc}
+                      </p>
                       <p className="text-lg font-semibold">
                         {formatCurrency(cpc)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-default-500">ROAS</p>
+                      <p className="text-sm text-default-500">
+                        {dictionary.campaignMetricsModal.roas}
+                      </p>
                       <p className="text-lg font-semibold">
-                        {roas.toFixed(2)}x
+                        {roas.toFixed(2)}
+                        {dictionary.analytics.ui?.multiplierSuffix ?? "x"}
                       </p>
                     </div>
                   </div>
@@ -229,7 +246,7 @@ export function CampaignMetricsModal({
               <Card>
                 <CardBody>
                   <h3 className="text-lg font-semibold mb-4">
-                    Recent Daily Performance
+                    {dictionary.campaignMetricsModal.dailyPerformanceTitle}
                   </h3>
                   <div className="space-y-2 max-h-60 overflow-y-auto">
                     {metrics
@@ -245,10 +262,12 @@ export function CampaignMetricsModal({
                           </div>
                           <div className="flex gap-4 text-sm">
                             <span>
-                              {formatNumber(metric.impressions || 0)} imp
+                              {formatNumber(metric.impressions || 0)}{" "}
+                              {dictionary.campaignMetricsModal.impressionsUnit}
                             </span>
                             <span>
-                              {formatNumber(metric.clicks || 0)} clicks
+                              {formatNumber(metric.clicks || 0)}{" "}
+                              {dictionary.campaignMetricsModal.clicksUnit}
                             </span>
                             <span>{formatCurrency(metric.cost || 0)}</span>
                           </div>
@@ -262,7 +281,7 @@ export function CampaignMetricsModal({
         </ModalBody>
         <ModalFooter>
           <Button color="primary" onPress={onClose}>
-            Close
+            {dictionary.campaignMetricsModal.closeButton}
           </Button>
         </ModalFooter>
       </ModalContent>

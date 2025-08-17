@@ -1,6 +1,6 @@
 import { GoogleAdsApi } from "google-ads-api";
 
-import { getAllAdOAuthConfig } from "@/lib/oauth/platform-configs";
+import { getOAuthConfig } from "@/lib/oauth/platform-configs";
 import log from "@/utils/logger";
 
 /**
@@ -12,7 +12,7 @@ export async function getGoogleAdsCustomerId(
   refreshToken: string,
 ): Promise<string | null> {
   try {
-    const config = await getAllAdOAuthConfig("google");
+    const config = await getOAuthConfig("google");
 
     if (!config) {
       throw new Error("Google OAuth configuration not found");

@@ -3,6 +3,10 @@ import { Card, CardBody } from "@heroui/card";
 
 import { getProfileData, updateProfileAction } from "./actions";
 import { ProfileForm } from "./ProfileForm";
+import { Container } from "@/components/layouts/Container";
+import { getDictionary, type Locale } from "@/app/[lang]/dictionaries";
+
+const CONTAINER_MAX_2XL = "2xl" as const;
 
 export default async function ProfilePage({
   params,
@@ -10,6 +14,7 @@ export default async function ProfilePage({
   params: Promise<{ lang: string }>;
 }) {
   const { lang } = await params;
+  const dict = await getDictionary(lang as Locale);
   let data;
 
   try {
@@ -22,20 +27,20 @@ export default async function ProfilePage({
 
   if (!profile) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <h1 className="text-3xl font-bold mb-8">프로필 설정</h1>
+      <Container className="py-8" max={CONTAINER_MAX_2XL}>
+        <h1 className="text-3xl font-bold mb-8">{dict.profile.title}</h1>
         <Card>
           <CardBody className="p-8">
-            <p>프로필을 찾을 수 없습니다.</p>
+            <p>{dict.profile.notFound}</p>
           </CardBody>
         </Card>
-      </div>
+      </Container>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <h1 className="text-3xl font-bold mb-8">프로필 설정</h1>
+    <Container className="py-8" max={CONTAINER_MAX_2XL}>
+      <h1 className="text-3xl font-bold mb-8">{dict.profile.title}</h1>
 
       <Card>
         <CardBody className="p-8">
@@ -46,6 +51,6 @@ export default async function ProfilePage({
           />
         </CardBody>
       </Card>
-    </div>
+    </Container>
   );
 }

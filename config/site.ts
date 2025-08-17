@@ -17,6 +17,7 @@ export const PAGE_PATH = {
 export const siteConfig: SiteConfig = {
   name: "A.ll + Ad",
   description: "All in one advertising solution - 모든 광고를 하나로",
+  tagline: "All your ads in one place.",
   navItems: [
     {
       label: "홈",

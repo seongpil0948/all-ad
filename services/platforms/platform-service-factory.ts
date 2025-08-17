@@ -9,6 +9,9 @@ import { GoogleAdsOAuthPlatformService } from "./google-ads-oauth-platform.servi
 import { AmazonPlatformService } from "./amazon-platform.service";
 import { FacebookPlatformService } from "./facebook-platform.service";
 import { TikTokPlatformService } from "./tiktok-platform.service";
+import { KakaoPlatformService } from "./kakao-platform.service";
+import { NaverPlatformService } from "./naver-platform.service";
+import { CoupangPlatformService } from "./coupang-platform.service";
 
 import { PlatformConfigError } from "@/types/platform-errors.types";
 import { PlatformType } from "@/types";
@@ -37,6 +40,9 @@ export class PlatformServiceFactory
     this.services.set("facebook", () => new FacebookPlatformService());
     this.services.set("amazon", () => new AmazonPlatformService());
     this.services.set("tiktok", () => new TikTokPlatformService());
+    this.services.set("kakao", () => new KakaoPlatformService());
+    this.services.set("naver", () => new NaverPlatformService());
+    this.services.set("coupang", () => new CoupangPlatformService());
 
     // Register integration services (for future use)
     // this.integrationServices.set("google", () => new GoogleAdsIntegrationService());

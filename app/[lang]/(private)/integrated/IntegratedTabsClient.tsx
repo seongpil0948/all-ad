@@ -6,18 +6,28 @@ import { FaChartBar, FaKey, FaUsers } from "react-icons/fa";
 import { useShallow } from "zustand/shallow";
 
 import { Json } from "@/types/supabase.types";
-import { CampaignDashboard } from "@/components/dashboard/CampaignDashboard";
+import { CampaignDashboardClient } from "@/components/dashboard/CampaignDashboardClient";
 import { MultiAccountPlatformManager } from "@/components/features/platform/MultiAccountPlatformManager";
 import { TeamManagement } from "@/components/team/TeamManagement";
 import { usePlatformStore, useTeamStore, useAuthStore } from "@/stores";
 import { CredentialValues } from "@/types/credentials.types";
-import { PlatformType } from "@/types";
+import { PlatformType, Campaign, CampaignStats } from "@/types";
 import { Database } from "@/types/supabase.types";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 type PlatformCredentialRow =
   Database["public"]["Tables"]["platform_credentials"]["Row"];
 
-export default function IntegratedTabsClient() {
+interface IntegratedTabsClientProps {
+  initialCampaigns: Campaign[];
+  initialStats: CampaignStats;
+}
+
+export default function IntegratedTabsClient({
+  initialCampaigns,
+  initialStats,
+}: IntegratedTabsClientProps) {
+  const { dictionary: dict } = useDictionary();
   const {
     credentials,
     addCredential,
@@ -60,7 +70,7 @@ export default function IntegratedTabsClient() {
 
   return (
     <Tabs
-      aria-label="대시보드 탭"
+      aria-label={dict.dashboard.tabs.aria}
       classNames={{
         tabList:
           "gap-6 w-full relative rounded-none p-0 border-b border-divider",
@@ -76,13 +86,16 @@ export default function IntegratedTabsClient() {
         title={
           <div className="flex items-center space-x-2">
             <FaChartBar />
-            <span>캠페인 관리</span>
+            <span>{dict.dashboard.tabs.campaigns}</span>
           </div>
         }
       >
         <Card className="mt-6">
           <CardBody>
-            <CampaignDashboard />
+            <CampaignDashboardClient
+              initialCampaigns={initialCampaigns}
+              initialStats={initialStats}
+            />
           </CardBody>
         </Card>
       </Tab>
@@ -92,7 +105,7 @@ export default function IntegratedTabsClient() {
         title={
           <div className="flex items-center space-x-2">
             <FaKey />
-            <span>플랫폼 연동</span>
+            <span>{dict.dashboard.tabs.platforms}</span>
           </div>
         }
       >
@@ -107,7 +120,7 @@ export default function IntegratedTabsClient() {
             onSave={async (platform: PlatformType, creds: CredentialValues) => {
               await addCredential(platform, creds);
             }}
-            onToggle={async (credentialId: string, _isActive: boolean) => {
+            onToggle={async (credentialId: string) => {
               await toggleCredentialStatus(credentialId);
             }}
           />
@@ -119,7 +132,7 @@ export default function IntegratedTabsClient() {
         title={
           <div className="flex items-center space-x-2">
             <FaUsers />
-            <span>팀 관리</span>
+            <span>{dict.dashboard.tabs.team}</span>
           </div>
         }
       >

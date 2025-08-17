@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/utils/supabase/server";
 import { createServiceClient } from "@/utils/supabase/service";
-import { getAllAdOAuthConfig } from "@/lib/oauth/platform-configs";
+import { getOAuthConfig } from "@/lib/oauth/platform-configs";
 import { OAUTH_CONFIGS } from "@/lib/auth/oauth-handlers";
 import { PlatformType } from "@/types";
 import log from "@/utils/logger";
@@ -45,6 +45,7 @@ const PLATFORM_OVERRIDES: Record<PlatformType, OAuthConfigOverride> = {
     additionalParams: {},
   },
   tiktok: {
+    scopes: ["ads.management", "reporting"],
     additionalParams: {},
   },
 };
@@ -66,10 +67,9 @@ export async function handleOAuthInitiation(
       error: authError,
     } = await supabase.auth.getUser();
 
-    if (authError || !user) {
-      const baseUrl =
-        process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
+    if (authError || !user) {
       return NextResponse.redirect(`${baseUrl}/${locale}/login`);
     }
 
@@ -182,7 +182,7 @@ async function buildOAuthUrl(
 
   // For Google, use All-AD's OAuth config
   if (platform === "google") {
-    const oauthConfig = await getAllAdOAuthConfig("google");
+    const oauthConfig = await getOAuthConfig("google");
 
     if (!oauthConfig) {
       throw new Error("Google OAuth config not found");
@@ -246,6 +246,8 @@ function getClientId(platform: PlatformType): string | undefined {
       return process.env.NAVER_CLIENT_ID;
     case "coupang":
       return process.env.COUPANG_CLIENT_ID;
+    case "tiktok":
+      return process.env.TIKTOK_APP_ID;
     default:
       return undefined;
   }
@@ -254,7 +256,15 @@ function getClientId(platform: PlatformType): string | undefined {
 function getRedirectUri(platform: PlatformType): string {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-  return `${baseUrl}/api/auth/callback/${platform}-ads`;
+  // Use unified OAuth callback for most platforms
+  switch (platform) {
+    case "kakao":
+    case "naver":
+    case "tiktok":
+      return `${baseUrl}/api/auth/oauth/${platform}/callback`;
+    default:
+      return `${baseUrl}/api/auth/callback/${platform}-ads`;
+  }
 }
 
 export { PLATFORM_OVERRIDES };

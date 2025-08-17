@@ -1,4 +1,5 @@
 import type { Campaign, CampaignMetrics, PlatformCredential } from "@/types";
+import type { Json } from "@/types/supabase.types";
 
 export interface TikTokAuthResponse {
   access_token: string;
@@ -33,6 +34,21 @@ export interface TikTokMetrics {
   conversions: string;
   conversion_rate: string;
   cost_per_conversion: string;
+}
+
+export interface TikTokCredentialData {
+  tiktok_advertiser_id?: string;
+  advertiser_ids?: string[];
+  account_info?: {
+    advertiser_id: string;
+    advertiser_name: string;
+  };
+}
+
+export interface TikTokFailedItem {
+  campaign_id: string;
+  error_code: number;
+  error_message: string;
 }
 
 export interface TikTokApiResponse<T> {
@@ -70,10 +86,10 @@ export class TikTokAdsApi {
   constructor(credential: PlatformCredential) {
     this.accessToken = credential.access_token || "";
     // Get advertiser ID from data field
+    const data = credential.data as TikTokCredentialData | undefined;
+
     this.advertiserId =
-      (credential.data as any)?.tiktok_advertiser_id ||
-      credential.account_id ||
-      "";
+      data?.tiktok_advertiser_id || credential.account_id || "";
   }
 
   private async request<T>(
@@ -222,7 +238,7 @@ export class TikTokAdsApi {
   ): Promise<boolean> {
     const response = await this.request<{
       success_count: number;
-      fail_list: any[];
+      fail_list: TikTokFailedItem[];
     }>("/campaign/update/status/", {
       method: "POST",
       body: JSON.stringify({
@@ -241,7 +257,7 @@ export class TikTokAdsApi {
   ): Promise<boolean> {
     const response = await this.request<{
       success_count: number;
-      fail_list: any[];
+      fail_list: TikTokFailedItem[];
     }>("/campaign/update/", {
       method: "POST",
       body: JSON.stringify({
@@ -266,7 +282,7 @@ export class TikTokAdsApi {
       budget: tiktokCampaign.budget,
       platform: "tiktok",
       platform_credential_id: platformCredentialId,
-      raw_data: tiktokCampaign as any,
+      raw_data: { ...tiktokCampaign } as { [key: string]: Json | undefined },
     };
   }
 
@@ -279,7 +295,7 @@ export class TikTokAdsApi {
       ctr: parseFloat(metrics.ctr) || 0,
       cpc: parseFloat(metrics.cpc) || 0,
       cpm: parseFloat(metrics.cpm) || 0,
-      raw_data: metrics as any,
+      raw_data: { ...metrics } as { [key: string]: Json | undefined },
     };
   }
 }

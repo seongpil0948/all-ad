@@ -3,11 +3,11 @@ import crypto from "crypto";
 import log from "@/utils/logger";
 import { getRedisClient } from "@/lib/redis";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const adsSdk = require("facebook-nodejs-business-sdk");
+import * as adsSdk from "facebook-nodejs-business-sdk";
+// The official SDK has no types; allow a localized any just for this destructure
 
 const { AdAccount, Campaign, Business, AdsInsights, FacebookAdsApi, User } =
-  adsSdk;
+  adsSdk as any;
 
 export interface MetaAdsCredentials {
   accessToken: string;

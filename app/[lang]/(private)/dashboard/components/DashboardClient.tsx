@@ -1,6 +1,6 @@
 "use client";
 
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense } from "react";
 import { CircularProgress } from "@heroui/progress";
 import { Tabs, Tab } from "@heroui/tabs";
 import { Card, CardBody } from "@heroui/card";
@@ -18,11 +18,15 @@ import {
   TeamMemberWithProfile,
 } from "@/types";
 import { Campaign as AppCampaign, CampaignStats } from "@/types/campaign.types";
+import { useDictionary } from "@/hooks/use-dictionary";
+import { useDashboardUIStore } from "@/stores";
+import type { DashboardTabKey } from "@/stores/useDashboardUIStore";
+import { AutoGrid } from "@/components/common/AutoGrid";
 
 // Lazy load heavy components
 const CampaignDashboard = lazy(() =>
-  import("@/components/dashboard/CampaignDashboard").then((module) => ({
-    default: module.CampaignDashboard,
+  import("@/components/dashboard/CampaignDashboardClient").then((module) => ({
+    default: module.CampaignDashboardClient,
   })),
 );
 
@@ -64,9 +68,9 @@ interface DashboardClientProps {
   onToggle: (id: string, isActive: boolean) => Promise<void>;
 }
 
-const LoadingFallback = () => (
+const LoadingFallback = ({ label }: { label: string }) => (
   <div className="flex items-center justify-center min-h-[400px]">
-    <CircularProgress aria-label="Loading..." color="primary" size="lg" />
+    <CircularProgress aria-label={label} color="primary" size="lg" />
   </div>
 );
 
@@ -78,13 +82,15 @@ export function DashboardClient({
   onSave,
   onToggle,
 }: DashboardClientProps) {
-  const [selectedTab, setSelectedTab] = useState("campaigns");
+  const selectedTab = useDashboardUIStore((s) => s.selectedTab);
+  const setSelectedTab = useDashboardUIStore((s) => s.setSelectedTab);
   const { stats, credentials } = dashboardData;
+  const { dictionary } = useDictionary();
 
   return (
     <IntegratedDataProvider initialData={dashboardData}>
       {/* Overview Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <AutoGrid minItemWidth={240} className="mb-8">
         <Card>
           <CardBody>
             <div className="flex items-center gap-3">
@@ -92,7 +98,9 @@ export function DashboardClient({
                 <FaChartBar className="text-primary-500 w-6 h-6" />
               </div>
               <div>
-                <p className="text-small text-default-500">전체 캠페인</p>
+                <p className="text-small text-default-500">
+                  {dictionary.dashboard.overview.totalCampaigns}
+                </p>
                 <p className="text-2xl font-bold">{stats.totalCampaigns}</p>
               </div>
             </div>
@@ -106,7 +114,9 @@ export function DashboardClient({
                 <FaChartBar className="text-success-500 w-6 h-6" />
               </div>
               <div>
-                <p className="text-small text-default-500">활성 캠페인</p>
+                <p className="text-small text-default-500">
+                  {dictionary.dashboard.overview.activeCampaigns}
+                </p>
                 <p className="text-2xl font-bold">{stats.activeCampaigns}</p>
               </div>
             </div>
@@ -120,7 +130,9 @@ export function DashboardClient({
                 <FaKey className="text-warning-500 w-6 h-6" />
               </div>
               <div>
-                <p className="text-small text-default-500">연동 플랫폼</p>
+                <p className="text-small text-default-500">
+                  {dictionary.dashboard.overview.connectedPlatforms}
+                </p>
                 <p className="text-2xl font-bold">{stats.connectedPlatforms}</p>
               </div>
             </div>
@@ -134,7 +146,9 @@ export function DashboardClient({
                 <FaUsers className="text-secondary-500 w-6 h-6" />
               </div>
               <div>
-                <p className="text-small text-default-500">총 예산</p>
+                <p className="text-small text-default-500">
+                  {dictionary.dashboard.overview.totalBudget}
+                </p>
                 <p className="text-2xl font-bold">
                   ₩{stats.totalBudget.toLocaleString()}
                 </p>
@@ -142,11 +156,11 @@ export function DashboardClient({
             </div>
           </CardBody>
         </Card>
-      </div>
+      </AutoGrid>
 
       {/* Tabs */}
       <Tabs
-        aria-label="대시보드 탭"
+        aria-label={dictionary.dashboard.tabs.aria}
         classNames={{
           tabList:
             "gap-6 w-full relative rounded-none p-0 border-b border-divider",
@@ -157,21 +171,36 @@ export function DashboardClient({
         color="primary"
         selectedKey={selectedTab}
         variant="underlined"
-        onSelectionChange={(key) => setSelectedTab(key as string)}
+        onSelectionChange={(key) =>
+          setSelectedTab(String(key) as DashboardTabKey)
+        }
       >
         <Tab
           key="campaigns"
           title={
             <div className="flex items-center space-x-2">
               <FaChartBar />
-              <span>캠페인 관리</span>
+              <span>{dictionary.dashboard.tabs.campaigns}</span>
             </div>
           }
         >
           <Card className="mt-6">
             <CardBody>
-              <Suspense fallback={<LoadingFallback />}>
-                <CampaignDashboard />
+              <Suspense
+                fallback={<LoadingFallback label={dictionary.common.loading} />}
+              >
+                <CampaignDashboard
+                  initialCampaigns={dashboardData.campaigns}
+                  initialStats={{
+                    totalCampaigns: dashboardData.stats.totalCampaigns,
+                    activeCampaigns: dashboardData.stats.activeCampaigns,
+                    totalBudget: dashboardData.stats.totalBudget,
+                    totalSpend: dashboardData.stats.totalSpend,
+                    totalImpressions: dashboardData.stats.totalImpressions,
+                    totalClicks: dashboardData.stats.totalClicks,
+                    platforms: dashboardData.stats.platforms,
+                  }}
+                />
               </Suspense>
             </CardBody>
           </Card>
@@ -182,12 +211,14 @@ export function DashboardClient({
           title={
             <div className="flex items-center space-x-2">
               <FaKey />
-              <span>플랫폼 연동</span>
+              <span>{dictionary.dashboard.tabs.platforms}</span>
             </div>
           }
         >
           <div className="mt-6">
-            <Suspense fallback={<LoadingFallback />}>
+            <Suspense
+              fallback={<LoadingFallback label={dictionary.common.loading} />}
+            >
               <MultiAccountPlatformManager
                 credentials={credentials}
                 teamId={teamId}
@@ -205,13 +236,15 @@ export function DashboardClient({
           title={
             <div className="flex items-center space-x-2">
               <FaUsers />
-              <span>팀 관리</span>
+              <span>{dictionary.dashboard.tabs.team}</span>
             </div>
           }
         >
           <Card className="mt-6">
             <CardBody>
-              <Suspense fallback={<LoadingFallback />}>
+              <Suspense
+                fallback={<LoadingFallback label={dictionary.common.loading} />}
+              >
                 <TeamManagement />
               </Suspense>
             </CardBody>

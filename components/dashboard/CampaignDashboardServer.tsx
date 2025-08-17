@@ -20,25 +20,33 @@ interface CampaignDashboardServerProps {
 async function CampaignStats({ teamId }: { teamId: string }) {
   const stats = await getCampaignStats(teamId);
 
+  const GAP = "gap-4" as const;
+  const LABELS = {
+    total: "총 캠페인",
+    active: "활성 캠페인",
+    budget: "총 예산",
+    platforms: "연동 플랫폼",
+  } as const;
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <AutoGrid minItemWidth={240} gap={GAP}>
       <div className="stat-card">
-        <h3>총 캠페인</h3>
+        <h3>{LABELS.total}</h3>
         <p>{stats.totalCampaigns}</p>
       </div>
       <div className="stat-card">
-        <h3>활성 캠페인</h3>
+        <h3>{LABELS.active}</h3>
         <p>{stats.activeCampaigns}</p>
       </div>
       <div className="stat-card">
-        <h3>총 예산</h3>
-        <p>{stats.totalBudget.toLocaleString()}원</p>
+        <h3>{LABELS.budget}</h3>
+        <p>{stats.totalBudget.toLocaleString()}</p>
       </div>
       <div className="stat-card">
-        <h3>연동 플랫폼</h3>
-        <p>{stats.platforms}개</p>
+        <h3>{LABELS.platforms}</h3>
+        <p>{stats.platforms}</p>
       </div>
-    </div>
+    </AutoGrid>
   );
 }
 
@@ -81,3 +89,4 @@ export async function CampaignDashboardServer({
     </div>
   );
 }
+import { AutoGrid } from "@/components/common/AutoGrid";

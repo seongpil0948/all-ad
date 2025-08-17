@@ -7,6 +7,7 @@ import {
   TableCell,
 } from "@heroui/table";
 import { Skeleton } from "@heroui/skeleton";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface TableSkeletonProps {
   rows?: number;
@@ -19,6 +20,7 @@ export function TableSkeleton({
   columns = 5,
   showActions = true,
 }: TableSkeletonProps) {
+  const { dictionary: dict } = useDictionary();
   const columnHeaders = Array.from({ length: columns }, (_, i) => ({
     key: `col${i}`,
     label: `Column ${i + 1}`,
@@ -31,7 +33,7 @@ export function TableSkeleton({
   const rowData = Array.from({ length: rows }, (_, i) => ({ id: i }));
 
   return (
-    <Table aria-label="Loading table">
+    <Table aria-label={dict.common.loading}>
       <TableHeader columns={columnHeaders}>
         {(column) => (
           <TableColumn key={column.key}>

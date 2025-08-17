@@ -85,18 +85,22 @@ export function PlatformSetupGuide({
             {quickLinks && quickLinks.length > 0 && (
               <>
                 <div className="flex flex-wrap gap-2">
-                  {quickLinks.map((link, index) => (
-                    <Link
-                      key={index}
-                      href={link.url}
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      <Chip color="primary" variant="flat">
-                        {link.label}
-                      </Chip>
-                    </Link>
-                  ))}
+                  {quickLinks.map((link, index) => {
+                    const REL_EXTERNAL = "noopener noreferrer" as const;
+                    const TARGET_BLANK = "_blank" as const;
+                    return (
+                      <Link
+                        key={index}
+                        href={link.url}
+                        rel={REL_EXTERNAL}
+                        target={TARGET_BLANK}
+                      >
+                        <Chip color="primary" variant="flat">
+                          {link.label}
+                        </Chip>
+                      </Link>
+                    );
+                  })}
                 </div>
                 <Divider />
               </>

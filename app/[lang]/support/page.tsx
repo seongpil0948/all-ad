@@ -3,47 +3,55 @@ import { Link } from "@heroui/link";
 import { FaEnvelope, FaPhone, FaQuestionCircle, FaBook } from "react-icons/fa";
 
 import { title, subtitle } from "@/components/primitives";
+import { Container } from "@/components/layouts/Container";
+import { getDictionary, type Locale } from "@/app/[lang]/dictionaries";
 
-export default function SupportPage() {
+export default async function SupportPage({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}) {
+  const { lang } = await params;
+  const dict = await getDictionary(lang as Locale);
   const supportOptions = [
     {
       icon: <FaBook className="w-8 h-8" />,
-      title: "문서",
-      description: "사용 가이드와 API 문서를 확인하세요",
+      title: dict.support.cards.docs.title,
+      description: dict.support.cards.docs.description,
       link: "/docs",
-      linkText: "문서 보기",
+      linkText: dict.support.cards.docs.linkText,
     },
     {
       icon: <FaQuestionCircle className="w-8 h-8" />,
-      title: "FAQ",
-      description: "자주 묻는 질문과 답변을 확인하세요",
+      title: dict.support.cards.faq.title,
+      description: dict.support.cards.faq.description,
       link: "/faq",
-      linkText: "FAQ 보기",
+      linkText: dict.support.cards.faq.linkText,
     },
     {
       icon: <FaEnvelope className="w-8 h-8" />,
-      title: "이메일 지원",
-      description: "support@sivera.co.kr로 문의해주세요",
+      title: dict.support.cards.email.title,
+      description: dict.support.cards.email.description,
       link: "mailto:support@sivera.co.kr",
-      linkText: "이메일 보내기",
+      linkText: dict.support.cards.email.linkText,
       isExternal: true,
     },
     {
       icon: <FaPhone className="w-8 h-8" />,
-      title: "전화 지원",
-      description: "평일 09:00-18:00 운영",
+      title: dict.support.cards.phone.title,
+      description: dict.support.cards.phone.description,
       link: "tel:02-1234-5678",
-      linkText: "02-1234-5678",
+      linkText: dict.support.cards.phone.linkText,
       isExternal: true,
     },
   ];
 
   return (
-    <div className="container mx-auto px-6 py-20">
+    <Container className="py-20">
       <div className="text-center mb-12">
-        <h1 className={title({ size: "lg" })}>고객 지원</h1>
+        <h1 className={title({ size: "lg" })}>{dict.support.title}</h1>
         <p className={subtitle({ class: "mt-4 max-w-2xl mx-auto" })}>
-          궁금한 점이 있으신가요? 다양한 방법으로 도움을 받으실 수 있습니다.
+          {dict.support.subtitle}
         </p>
       </div>
 
@@ -75,16 +83,18 @@ export default function SupportPage() {
       <div className="mt-16 text-center">
         <Card className="max-w-2xl mx-auto">
           <CardBody className="text-center py-8">
-            <h3 className="text-xl font-semibold mb-2">엔터프라이즈 고객</h3>
+            <h3 className="text-xl font-semibold mb-2">
+              {dict.support.enterprise.title}
+            </h3>
             <p className="text-default-500 mb-4">
-              대규모 배포나 맞춤형 솔루션이 필요하신가요?
+              {dict.support.enterprise.description}
             </p>
             <Link href="/contact" size="lg">
-              영업팀 문의하기
+              {dict.support.enterprise.cta}
             </Link>
           </CardBody>
         </Card>
       </div>
-    </div>
+    </Container>
   );
 }

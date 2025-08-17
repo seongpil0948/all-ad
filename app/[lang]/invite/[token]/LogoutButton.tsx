@@ -3,12 +3,14 @@
 import { Button } from "@heroui/button";
 
 import { clientLogout } from "@/app/[lang]/(auth)/login/client-actions";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface LogoutButtonProps {
   inviteEmail: string;
 }
 
 export default function LogoutButton({ inviteEmail }: LogoutButtonProps) {
+  const { dictionary: dict } = useDictionary();
   const handleLogout = async () => {
     await clientLogout();
     // Redirect to login with the invite email pre-filled
@@ -17,7 +19,7 @@ export default function LogoutButton({ inviteEmail }: LogoutButtonProps) {
 
   return (
     <Button color="primary" size="sm" onPress={handleLogout}>
-      Log out and sign in with correct email
+      {dict.invite.logoutWithCorrectEmail}
     </Button>
   );
 }

@@ -1,7 +1,7 @@
 import { GoogleAdsApi, Customer } from "google-ads-api";
 
 import { createClient } from "@/utils/supabase/server";
-import { getAllAdOAuthConfig } from "@/lib/oauth/platform-configs";
+import { getOAuthConfig } from "@/lib/oauth/platform-configs";
 import log from "@/utils/logger";
 
 interface GoogleAdsOAuthCredentials {
@@ -29,7 +29,7 @@ export class GoogleAdsOAuthClient {
   private async initializeClient() {
     if (this.client) return;
 
-    const config = await getAllAdOAuthConfig("google");
+    const config = await getOAuthConfig("google");
 
     if (!config) {
       throw new Error("Google OAuth configuration not found");
@@ -108,7 +108,7 @@ export class GoogleAdsOAuthClient {
 
   // Refresh access token using refresh token
   private async refreshAccessToken(refreshToken: string): Promise<TokenData> {
-    const config = await getAllAdOAuthConfig("google");
+    const config = await getOAuthConfig("google");
 
     if (!config) {
       throw new Error("Google OAuth configuration not found");

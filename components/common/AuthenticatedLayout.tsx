@@ -9,6 +9,7 @@ import { ErrorState } from "./ErrorState";
 import { useAuth } from "@/hooks/use-auth";
 import { UserRole } from "@/types";
 import { createClient } from "@/utils/supabase/client";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface AuthenticatedLayoutProps {
   children: React.ReactNode;
@@ -19,6 +20,7 @@ export function AuthenticatedLayout({
   children,
   requiredRole,
 }: AuthenticatedLayoutProps) {
+  const { dictionary: dict } = useDictionary();
   const { user, loading } = useAuth();
   const router = useRouter();
   const [userRole, setUserRole] = useState<UserRole | null>(null);
@@ -84,15 +86,19 @@ export function AuthenticatedLayout({
     if (userRoleLevel < requiredRoleLevel) {
       return (
         <ErrorState
-          message={`이 페이지에 접근하려면 ${requiredRole} 권한이 필요합니다.`}
-          title="접근 권한이 없습니다"
+          message={
+            dict.errors.forbiddenRole
+              ? dict.errors.forbiddenRole.replace("{{role}}", requiredRole)
+              : dict.errors.forbidden
+          }
+          title={dict.errors.forbidden}
         />
       );
     }
   }
 
   return (
-    <div aria-label="Main content" role="main">
+    <div aria-label={dict.common.mainContent} role="main">
       {children}
     </div>
   );

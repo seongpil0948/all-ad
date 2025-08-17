@@ -2,12 +2,20 @@ import { TeamDataProvider } from "./TeamDataProvider";
 
 import { TeamManagement } from "@/components/team/TeamManagement";
 import { PageHeader } from "@/components/common";
+import { Container } from "@/components/layouts/Container";
 import { createClient } from "@/utils/supabase/server";
 import log from "@/utils/logger";
 import { Team, UserRole, TeamMemberWithProfile } from "@/types";
 import { Database } from "@/types/supabase.types";
+import { getDictionary, type Locale } from "@/app/[lang]/dictionaries";
 
-export default async function TeamPage() {
+export default async function TeamPage({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}) {
+  const { lang } = await params;
+  const dict = await getDictionary(lang as Locale);
   const supabase = await createClient();
 
   // Get initial data on server side
@@ -17,9 +25,12 @@ export default async function TeamPage() {
 
   if (!user) {
     return (
-      <div className="container mx-auto p-6">
-        <PageHeader pageSubtitle="로그인이 필요합니다." pageTitle="팀 관리" />
-      </div>
+      <Container className="py-6">
+        <PageHeader
+          pageSubtitle={dict.dashboard.loginRequired}
+          pageTitle={dict.team.title}
+        />
+      </Container>
     );
   }
 
@@ -101,10 +112,10 @@ export default async function TeamPage() {
   }
 
   return (
-    <div className="container mx-auto p-6">
+    <Container className="py-6">
       <PageHeader
-        pageSubtitle="팀원을 관리하고 권한을 설정하세요."
-        pageTitle="팀 관리"
+        pageSubtitle={dict.team.subtitle}
+        pageTitle={dict.team.title}
       />
       <TeamDataProvider
         initialTeam={currentTeam}
@@ -113,6 +124,6 @@ export default async function TeamPage() {
       >
         <TeamManagement />
       </TeamDataProvider>
-    </div>
+    </Container>
   );
 }

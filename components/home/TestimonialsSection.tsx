@@ -1,11 +1,14 @@
+/* eslint-disable local/no-literal-strings */
 "use client";
 
 import { Avatar } from "@heroui/avatar";
 import { Card, CardBody } from "@heroui/card";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { FaStar } from "react-icons/fa";
 
 import { title, subtitle } from "@/components/primitives";
+import { Container } from "@/components/layouts/Container";
+import { AutoGrid } from "@/components/common/AutoGrid";
 
 interface TestimonialProps {
   name: string;
@@ -53,6 +56,7 @@ const TestimonialCard = ({
 };
 
 export const TestimonialsSection = () => {
+  const prefersReducedMotion = useReducedMotion();
   const testimonials: TestimonialProps[] = [
     {
       name: "김지영",
@@ -81,14 +85,14 @@ export const TestimonialsSection = () => {
   ];
 
   return (
-    <section className="px-6 py-20">
-      <div className="max-w-7xl mx-auto">
+    <section className="py-20">
+      <Container>
         <motion.div
           className="text-center mb-12"
-          initial={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
+          initial={prefersReducedMotion ? undefined : { opacity: 0 }}
+          transition={prefersReducedMotion ? undefined : { duration: 0.5 }}
           viewport={{ once: true }}
-          whileInView={{ opacity: 1 }}
+          whileInView={prefersReducedMotion ? undefined : { opacity: 1 }}
         >
           <h2 className={title({ size: "md" })}>고객이 말하는 올애드</h2>
           <p className={subtitle({ class: "mt-2" })}>
@@ -96,20 +100,26 @@ export const TestimonialsSection = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <AutoGrid minItemWidth={280}>
           {testimonials.map((testimonial, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 20 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              initial={prefersReducedMotion ? undefined : { opacity: 0, y: 20 }}
+              transition={
+                prefersReducedMotion
+                  ? undefined
+                  : { duration: 0.5, delay: index * 0.1 }
+              }
               viewport={{ once: true }}
-              whileInView={{ opacity: 1, y: 0 }}
+              whileInView={
+                prefersReducedMotion ? undefined : { opacity: 1, y: 0 }
+              }
             >
               <TestimonialCard {...testimonial} />
             </motion.div>
           ))}
-        </div>
-      </div>
+        </AutoGrid>
+      </Container>
     </section>
   );
 };

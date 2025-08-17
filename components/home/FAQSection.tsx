@@ -1,3 +1,4 @@
+/* eslint-disable local/no-literal-strings */
 import { FAQAccordion } from "./FAQAccordion";
 
 import { title, subtitle } from "@/components/primitives";

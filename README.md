@@ -98,37 +98,74 @@ all-ad/
 ### 필수 요구사항
 
 - Node.js 18.0.0 이상
+- pnpm 8.0.0 이상
+- Docker 또는 호환 컨테이너 런타임 (로컬 개발용)
+  - Docker Desktop (macOS, Windows, Linux)
+  - Rancher Desktop (macOS, Windows, Linux)
+  - Podman (macOS, Windows, Linux)
+  - OrbStack (macOS)
 - pnpm 8.0.0 이상 (권장)
 - Git
 
-### 환경 변수 설정
+### 로컬 개발 환경 설정
 
-`.env.local` 파일을 생성하고 다음 환경 변수를 설정하세요:
+#### 1. Supabase 로컬 환경 시작
+
+```bash
+# Supabase CLI 설치 (이미 package.json에 포함됨)
+pnpm install
+
+# Supabase 로컬 스택 시작
+npx supabase start
+
+# 로컬 Supabase 정보 확인
+npx supabase status
+```
+
+로컬 Supabase가 시작되면 다음 URL에서 접근 가능합니다:
+
+- Studio Dashboard: http://localhost:54323
+- API: http://localhost:54321
+- Database: localhost:54322
+
+#### 2. 환경 변수 설정
+
+로컬 개발용 `.env.local` 파일을 생성하세요:
+
+```bash
+# 예제 파일 복사
+cp .env.local.example .env.local
+```
+
+`.env.local` 파일을 편집하고 다음 값들을 설정하세요:
 
 ```env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+# Supabase Local Development
+NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<supabase status 명령으로 확인>
+SUPABASE_SERVICE_ROLE_KEY=<supabase status 명령으로 확인>
 
-# 플랫폼별 API 키 (선택사항) - 2024.12 업데이트
+# 플랫폼별 API 키 (선택사항)
 # Google Ads (OAuth 2.0)
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 
-# Meta (Facebook) Ads - 환경변수명 변경됨
+# Meta (Facebook) Ads
 META_APP_ID=your_meta_app_id
 META_APP_SECRET=your_meta_app_secret
 META_BUSINESS_ID=your_meta_business_id
 
-# Amazon Ads
-AMAZON_CLIENT_ID=your_amazon_client_id
-AMAZON_CLIENT_SECRET=your_amazon_client_secret
-
-# Redis (캐싱 및 토큰 관리)
-REDIS_URL=your_redis_url
-
 # ... 기타 플랫폼 키
+```
+
+#### 3. 데이터베이스 마이그레이션
+
+```bash
+# 로컬 데이터베이스에 마이그레이션 적용
+npx supabase db reset
+
+# 새 마이그레이션 생성 (필요시)
+npx supabase migration new <migration_name>
 ```
 
 ### 설치 및 실행
@@ -180,17 +217,43 @@ pnpm lint
 pnpm format
 
 # 테스트
-pnpm test:fast
+pnpm test:unit
 ```
 
-### 테스트 실행
+### 테스트
+
+프로젝트는 다양한 레벨의 테스트를 포함합니다:
+
+#### 데이터베이스 테스트 (pgTAP)
 
 ```bash
-# 테스트용 환경 변수 설정
-cp .env.test.example .env.test
-# .env.test 파일을 열어 TEST_USER_ID와 TEST_USER_PASSWORD 설정
+# 로컬 Supabase가 실행 중이어야 함
+npx supabase test db
+```
 
-# Playwright 테스트 실행
+RLS 정책과 데이터베이스 구조를 테스트합니다.
+
+#### 단위 테스트
+
+```bash
+# 단위 테스트 실행
+pnpm test:unit
+```
+
+#### 통합 테스트
+
+```bash
+# 통합 테스트 실행
+pnpm test:integration
+```
+
+#### E2E 테스트
+
+```bash
+# Playwright 설치 (최초 1회)
+pnpm exec playwright install
+
+# E2E 테스트 실행
 pnpm exec playwright test
 
 # UI 모드로 테스트 실행

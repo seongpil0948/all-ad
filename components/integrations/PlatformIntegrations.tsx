@@ -87,10 +87,29 @@ export function PlatformIntegrations() {
     useState<PlatformCredential | null>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
 
+  const fetchRefreshStatus = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/auth/refresh");
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch refresh status");
+      }
+
+      const data = await response.json();
+
+      setRefreshStatus(data);
+    } catch (error) {
+      log.error("Failed to fetch refresh status", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   // Effect 1: Load initial data - separate concern
   useEffect(() => {
     fetchRefreshStatus();
-  }, []);
+  }, [fetchRefreshStatus]);
 
   // Effect 2: Handle URL params for OAuth success/error - separate concern
   useEffect(() => {
@@ -145,26 +164,9 @@ export function PlatformIntegrations() {
       );
       window.history.replaceState({}, "", window.location.pathname);
     }
-  }, []);
+  }, [dict, fetchRefreshStatus]);
 
-  const fetchRefreshStatus = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch("/api/auth/refresh");
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch refresh status");
-      }
-
-      const data = await response.json();
-
-      setRefreshStatus(data);
-    } catch (error) {
-      log.error("Failed to fetch refresh status", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  // fetchRefreshStatus moved above for declaration order
 
   const handleConnectPlatform = useCallback(async (platform: PlatformType) => {
     if (!isPlatformOAuthSupported(platform)) {

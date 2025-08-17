@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { createClient } from "@/utils/supabase/server";
 import {
@@ -120,6 +120,7 @@ export async function savePlatformCredentials(
   }
 
   revalidatePath("/settings");
+  revalidateTag(`team:${team.id}:credentials`);
 }
 
 export async function deletePlatformCredentials(platform: PlatformType) {
@@ -147,6 +148,7 @@ export async function deletePlatformCredentials(platform: PlatformType) {
   }
 
   revalidatePath("/settings");
+  revalidateTag(`team:${team.id}:credentials`);
 }
 
 export async function togglePlatformCredentials(
@@ -182,6 +184,7 @@ export async function togglePlatformCredentials(
   }
 
   revalidatePath("/settings");
+  revalidateTag(`team:${team.id}:credentials`);
 }
 
 // Multi-account support actions
@@ -216,6 +219,7 @@ export async function deletePlatformCredentialById(credentialId: string) {
 
   revalidatePath("/settings");
   revalidatePath("/dashboard");
+  revalidateTag(`team:${team.id}:credentials`);
 }
 
 export async function togglePlatformCredentialById(
@@ -252,6 +256,7 @@ export async function togglePlatformCredentialById(
 
   revalidatePath("/settings");
   revalidatePath("/dashboard");
+  revalidateTag(`team:${team.id}:credentials`);
 }
 
 export async function getTeamCredentials() {

@@ -49,6 +49,7 @@ export const ThemeSwitch: FC<ThemeSwitchProps> = ({
           className,
           classNames?.base,
         ),
+        "data-testid": "theme-switch",
       })}
     >
       <VisuallyHidden>
@@ -74,9 +75,9 @@ export const ThemeSwitch: FC<ThemeSwitchProps> = ({
         })}
       >
         {!isSelected || isSSR ? (
-          <MdLightMode size={22} />
+          <MdLightMode size={22} aria-hidden={true} />
         ) : (
-          <MdDarkMode size={22} />
+          <MdDarkMode size={22} aria-hidden={true} />
         )}
       </div>
     </Component>

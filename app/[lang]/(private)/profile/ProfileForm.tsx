@@ -12,6 +12,7 @@ import { updateAvatarAction } from "./actions";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { Profile } from "@/types";
 import { toast } from "@/utils/toast";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface ProfileFormProps {
   user: User;
@@ -23,10 +24,11 @@ interface ProfileFormProps {
 
 const SubmitButton = memo(() => {
   const { pending } = useFormStatus();
+  const { dictionary: dict } = useDictionary();
 
   return (
     <Button color="primary" isLoading={pending} type="submit">
-      저장
+      {dict.common.save}
     </Button>
   );
 });
@@ -38,6 +40,7 @@ export function ProfileForm({
   profile,
   updateProfileAction,
 }: ProfileFormProps) {
+  const { dictionary: dict } = useDictionary();
   const [, startTransition] = useTransition();
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || "",
@@ -68,16 +71,16 @@ export function ProfileForm({
 
         if (result.success) {
           toast.success({
-            title: "프로필 사진이 업데이트되었습니다.",
+            title: dict.profile.toast.avatarUpdated,
           });
         } else {
           toast.error({
-            title: "아바타 업데이트 중 오류가 발생했습니다.",
+            title: dict.profile.toast.avatarUpdateError,
           });
         }
       });
     },
-    [startTransition],
+    [startTransition, dict],
   );
 
   const handleAvatarDelete = useCallback(async () => {
@@ -86,15 +89,15 @@ export function ProfileForm({
 
       if (result.success) {
         toast.success({
-          title: "프로필 사진이 삭제되었습니다.",
+          title: dict.profile.toast.avatarDeleted,
         });
       } else {
         toast.error({
-          title: "아바타 삭제 중 오류가 발생했습니다.",
+          title: dict.profile.toast.avatarDeleteError,
         });
       }
     });
-  }, [startTransition]);
+  }, [startTransition, dict]);
 
   const handleNameChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -113,7 +116,7 @@ export function ProfileForm({
           onUploadComplete={handleAvatarUpload}
         />
         <p className="text-sm text-default-500 mt-4">
-          클릭하여 프로필 사진을 업로드하세요
+          {dict.profile.uploadPrompt}
         </p>
       </div>
 
@@ -122,17 +125,17 @@ export function ProfileForm({
       <form action={handleSubmit}>
         <div className="space-y-6">
           <Input
-            label="이름"
+            label={dict.profile.nameLabel}
             name="full_name"
-            placeholder="이름을 입력하세요"
+            placeholder={dict.profile.namePlaceholder}
             value={formData.full_name}
             onChange={handleNameChange}
           />
 
           <Input
             isReadOnly
-            description="이메일은 변경할 수 없습니다"
-            label="이메일"
+            description={dict.profile.emailReadonly}
+            label={dict.profile.emailLabel}
             type="email"
             value={formData.email}
           />

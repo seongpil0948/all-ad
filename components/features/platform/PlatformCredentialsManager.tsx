@@ -12,7 +12,10 @@ import {
 } from "@heroui/modal";
 import { useDisclosure } from "@heroui/modal";
 
-import { PlatformCredentialForm } from "./PlatformCredentialForm";
+import {
+  PlatformCredentialForm,
+  CREDENTIAL_FORM_ID,
+} from "./PlatformCredentialForm";
 import { CoupangManualCampaignManager } from "./coupang/CoupangManualCampaignManager";
 import { PlatformCredentialItem } from "./PlatformCredentialItem";
 
@@ -58,21 +61,9 @@ function PlatformCredentialsManagerComponent({
         config.supportsOAuth &&
         ["google", "facebook", "kakao", "amazon"].includes(platform)
       ) {
-        // Redirect to OAuth flow
-        const oauthRoutes = {
-          google: "/api/auth/google-ads",
-          facebook: "/api/auth/facebook-ads",
-          kakao: "/api/auth/kakao-ads",
-          amazon: "/api/auth/amazon-ads",
-        };
-
-        const route = oauthRoutes[platform as keyof typeof oauthRoutes];
-
-        if (route) {
-          window.location.href = route;
-
-          return;
-        }
+        // Redirect to our new start route
+        window.location.href = `/api/auth/start?platform=${platform}`;
+        return;
       }
 
       // For API key platforms (Naver, Coupang), show the form
@@ -208,7 +199,7 @@ function PlatformCredentialsManagerComponent({
                 </Button>
                 <Button
                   color="primary"
-                  form="credential-form"
+                  form={CREDENTIAL_FORM_ID}
                   isLoading={isLoading}
                   type="submit"
                 >

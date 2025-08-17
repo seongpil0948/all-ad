@@ -44,10 +44,10 @@ export async function updateProfile(userId: string, updates: Partial<Profile>) {
 export async function uploadAvatar(userId: string, file: File) {
   const supabase = createClient();
 
-  // Generate unique file name
+  // Generate unique file name with user folder structure
   const fileExt = file.name.split(".").pop();
   const fileName = `${userId}-${Date.now()}.${fileExt}`;
-  const filePath = `${fileName}`;
+  const filePath = `${userId}/${fileName}`; // Include user folder for RLS policy
 
   // Upload file to storage
   const { error: uploadError } = await supabase.storage
@@ -80,11 +80,13 @@ export async function uploadAvatar(userId: string, file: File) {
 export async function deleteAvatar(avatarUrl: string) {
   const supabase = createClient();
 
-  // Extract file path from URL
+  // Extract file path from URL (including user folder)
   const urlParts = avatarUrl.split("/");
   const fileName = urlParts[urlParts.length - 1];
+  const userId = urlParts[urlParts.length - 2]; // Get user folder
+  const filePath = `${userId}/${fileName}`; // Reconstruct full path
 
-  const { error } = await supabase.storage.from("avatars").remove([fileName]);
+  const { error } = await supabase.storage.from("avatars").remove([filePath]);
 
   if (error) {
     log.error("Avatar delete error", error, {

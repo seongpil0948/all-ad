@@ -145,7 +145,7 @@ pnpm format
 # 테스트 실행
 pnpm exec playwright install
 
-pnpm test:fast
+pnpm test:unit
 ```
 
 #### 실시간 개발 도구

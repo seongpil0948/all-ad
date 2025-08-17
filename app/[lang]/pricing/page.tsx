@@ -6,8 +6,16 @@ import { FaCheck, FaStar } from "react-icons/fa";
 import PricingButton from "./PricingButton";
 
 import { title, subtitle } from "@/components/primitives";
+import { Container } from "@/components/layouts/Container";
+import { getDictionary, type Locale } from "@/app/[lang]/dictionaries";
 
-export default function PricingPage() {
+export default async function PricingPage({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}) {
+  const { lang } = await params;
+  const dict = await getDictionary(lang as Locale);
   const plans = [
     {
       name: "Starter",
@@ -62,16 +70,17 @@ export default function PricingPage() {
   ];
 
   return (
-    <div className="container mx-auto px-6 py-20">
+    <Container className="py-20">
       <div className="text-center mb-12">
         <h1 className={title({ size: "lg" })}>
-          비즈니스에 맞는{" "}
-          <span className={title({ color: "violet", size: "lg" })}>플랜</span>을
-          선택하세요
+          {dict.pricing.header.title.pre}{" "}
+          <span className={title({ color: "violet", size: "lg" })}>
+            {dict.pricing.header.title.highlight}
+          </span>
+          {dict.pricing.header.title.post}
         </h1>
         <p className={subtitle({ class: "mt-4 max-w-2xl mx-auto" })}>
-          14일 무료 체험으로 시작하세요. 언제든지 업그레이드하거나 취소할 수
-          있습니다.
+          {dict.pricing.header.subtitle}
         </p>
       </div>
 
@@ -89,7 +98,7 @@ export default function PricingPage() {
                   startContent={<FaStar />}
                   variant="shadow"
                 >
-                  가장 인기
+                  {dict.pricing.badges.mostPopular}
                 </Chip>
               )}
 
@@ -133,11 +142,8 @@ export default function PricingPage() {
       </div>
 
       <div className="mt-16 text-center">
-        <p className="text-default-500">
-          모든 플랜에는 14일 무료 체험이 포함되어 있습니다. 신용카드 정보는
-          필요하지 않습니다.
-        </p>
+        <p className="text-default-500">{dict.pricing.footer.note}</p>
       </div>
-    </div>
+    </Container>
   );
 }

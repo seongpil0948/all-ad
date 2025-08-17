@@ -13,6 +13,7 @@ import { FaSync, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
 import { createClient } from "@/utils/supabase/server";
 import { SectionHeader } from "@/components/common";
+import { getDictionary, type Locale } from "@/app/[lang]/dictionaries";
 
 async function getCronJobs() {
   const supabase = await createClient();
@@ -58,32 +59,44 @@ async function triggerCronJob(jobName: string) {
   return data;
 }
 
-export default async function CronJobsPage() {
+export default async function CronJobsPage({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}) {
+  const { lang } = await params;
+  const locale = (lang as Locale) || "en";
+  const dict = await getDictionary(locale);
   const cronJobs = await getCronJobs();
 
+  const JOB_REFRESH_TOKENS = "refresh-oauth-tokens" as const;
+  const JOB_GOOGLE_SYNC_HOURLY = "google-ads-sync-hourly" as const;
+  const JOB_GOOGLE_SYNC_FULL_DAILY = "google-ads-sync-full-daily" as const;
+  const JOB_CLEANUP_HISTORY = "cleanup-cron-history" as const;
+
   const columns = [
-    { key: "jobname", label: "Job Name" },
-    { key: "schedule", label: "Schedule" },
-    { key: "active", label: "Active" },
-    { key: "last_run", label: "Last Run" },
-    { key: "status", label: "Status" },
-    { key: "duration", label: "Duration" },
-    { key: "actions", label: "Actions" },
+    { key: "jobname", label: dict.admin.cron.table.jobName },
+    { key: "schedule", label: dict.admin.cron.table.schedule },
+    { key: "active", label: dict.common.active },
+    { key: "last_run", label: dict.admin.cron.table.lastRun },
+    { key: "status", label: dict.admin.cron.table.status },
+    { key: "duration", label: dict.admin.cron.table.duration },
+    { key: "actions", label: dict.common.actions },
   ];
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Cron Jobs Management</h1>
-        <p className="text-default-500">Monitor and manage scheduled tasks</p>
+        <h1 className="text-2xl font-bold">{dict.admin.cron.title}</h1>
+        <p className="text-default-500">{dict.admin.cron.subtitle}</p>
       </div>
 
       <Card>
         <CardHeader>
-          <SectionHeader title="Scheduled Jobs" />
+          <SectionHeader title={dict.admin.cron.scheduledJobs} />
         </CardHeader>
         <CardBody>
-          <Table aria-label="Cron jobs table">
+          <Table aria-label={dict.admin.cron.scheduledJobs}>
             <TableHeader columns={columns}>
               {(column) => (
                 <TableColumn key={column.key}>{column.label}</TableColumn>
@@ -110,7 +123,9 @@ export default async function CronJobsPage() {
                               size="sm"
                               variant="flat"
                             >
-                              {item.active ? "Active" : "Inactive"}
+                              {item.active
+                                ? dict.common.active
+                                : dict.common.inactive}
                             </Chip>
                           </TableCell>
                         );
@@ -118,10 +133,8 @@ export default async function CronJobsPage() {
                         return (
                           <TableCell>
                             {item.start_time
-                              ? new Date(item.start_time).toLocaleString(
-                                  "ko-KR",
-                                )
-                              : "Never"}
+                              ? new Date(item.start_time).toLocaleString(locale)
+                              : dict.common.never}
                           </TableCell>
                         );
                       case "status":
@@ -144,10 +157,12 @@ export default async function CronJobsPage() {
                                 }
                                 variant="flat"
                               >
-                                {item.status}
+                                {item.status === "succeeded"
+                                  ? dict.common.success
+                                  : dict.common.failed}
                               </Chip>
                             ) : (
-                              "-"
+                              dict.common.none
                             )}
                           </TableCell>
                         );
@@ -156,7 +171,7 @@ export default async function CronJobsPage() {
                           <TableCell>
                             {item.duration
                               ? `${Math.round(item.duration.seconds || 0)}s`
-                              : "-"}
+                              : dict.common.none}
                           </TableCell>
                         );
                       case "actions":
@@ -172,13 +187,13 @@ export default async function CronJobsPage() {
                                 type="submit"
                                 variant="flat"
                               >
-                                Run Now
+                                {dict.admin.cron.runNow}
                               </Button>
                             </form>
                           </TableCell>
                         );
                       default:
-                        return <TableCell>-</TableCell>;
+                        return <TableCell>{dict.common.none}</TableCell>;
                     }
                   }}
                 </TableRow>
@@ -190,30 +205,34 @@ export default async function CronJobsPage() {
 
       <Card>
         <CardHeader>
-          <SectionHeader title="Migration from Vercel Cron" />
+          <SectionHeader title={dict.admin.cron.migration.title} />
         </CardHeader>
         <CardBody className="space-y-4">
           <div className="prose prose-sm">
-            <h4>Migration Steps Completed:</h4>
+            <h4>{dict.admin.cron.migration.stepsTitle}</h4>
             <ol>
-              <li>Created Supabase Edge Functions for each cron job</li>
-              <li>Set up pg_cron schedules in Supabase</li>
-              <li>Removed Vercel cron configuration</li>
+              <li>{dict.admin.cron.migration.step1}</li>
+              <li>{dict.admin.cron.migration.step2}</li>
+              <li>{dict.admin.cron.migration.step3}</li>
             </ol>
 
-            <h4>Cron Schedule Reference:</h4>
+            <h4>{dict.admin.cron.migration.scheduleTitle}</h4>
             <ul>
               <li>
-                <code>refresh-oauth-tokens</code>: Every hour at minute 0
+                <code>{JOB_REFRESH_TOKENS}</code>:{" "}
+                {dict.admin.cron.migration.schedule1}
               </li>
               <li>
-                <code>google-ads-sync-hourly</code>: Every hour at minute 0
+                <code>{JOB_GOOGLE_SYNC_HOURLY}</code>:{" "}
+                {dict.admin.cron.migration.schedule2}
               </li>
               <li>
-                <code>google-ads-sync-full-daily</code>: Every day at 2:00 AM
+                <code>{JOB_GOOGLE_SYNC_FULL_DAILY}</code>:{" "}
+                {dict.admin.cron.migration.schedule3}
               </li>
               <li>
-                <code>cleanup-cron-history</code>: Every day at 3:00 AM
+                <code>{JOB_CLEANUP_HISTORY}</code>:{" "}
+                {dict.admin.cron.migration.schedule4}
               </li>
             </ul>
           </div>

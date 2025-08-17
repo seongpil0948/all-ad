@@ -1,17 +1,38 @@
 import type {
   Campaign,
   CampaignMetrics,
-  PlatformCredential,
   PlatformType,
   ConnectionTestResult,
   TokenRefreshResult,
 } from "@/types";
 import type { PlatformCredentials } from "./platform-service.interface";
+import type { Json } from "@/types/supabase.types";
 
 import { BasePlatformService } from "./base-platform.service";
 import { TikTokAdsApi } from "./api-clients/tiktok-ads-api";
+import { parsePlatformError } from "./common/error-parser";
 
 import { PlatformError } from "@/types/platform-errors.types";
+import {
+  convertCredentialsFormat,
+  calculateTokenExpiry,
+} from "@/utils/platform-utils";
+
+interface TikTokPlatformCredentials extends PlatformCredentials {
+  id?: string;
+  teamId?: string;
+  accountName?: string;
+}
+
+interface TikTokCampaignTransformed {
+  external_id: string;
+  name: string;
+  status: "active" | "paused";
+  budget: number;
+  platform: PlatformType;
+  platform_credential_id: string;
+  raw_data: unknown;
+}
 
 export class TikTokPlatformService extends BasePlatformService<TikTokAdsApi> {
   platform: PlatformType = "tiktok";
@@ -34,33 +55,11 @@ export class TikTokPlatformService extends BasePlatformService<TikTokAdsApi> {
   }
 
   protected createApiClient(credentials: PlatformCredentials): TikTokAdsApi {
-    // Convert PlatformCredentials to PlatformCredential format expected by API
-    const credential: PlatformCredential = {
-      id: (credentials as any).id || "",
-      team_id: (credentials as any).teamId || "",
-      platform: "tiktok",
-      account_id: credentials.accountId || "",
-      account_name: (credentials as any).accountName || null,
-      access_token: credentials.accessToken || null,
-      refresh_token: credentials.refreshToken || null,
-      expires_at: credentials.expiresAt
-        ? typeof credentials.expiresAt === "string"
-          ? credentials.expiresAt
-          : credentials.expiresAt.toISOString()
-        : null,
-      scope: "ads.management,reporting",
-      is_active: true,
-      credentials: {},
-      data: {
-        ...credentials.additionalData,
-        tiktok_advertiser_id: credentials.accountId,
-      },
-      error_message: null,
-      last_synced_at: null,
-      created_at: new Date().toISOString(),
-      created_by: "",
-      updated_at: new Date().toISOString(),
-    };
+    // Use common utility to convert credentials format
+    const credentialsObj = credentials as Record<string, unknown>;
+    const credential = convertCredentialsFormat(credentialsObj, "tiktok", {
+      tiktok_advertiser_id: credentialsObj.accountId,
+    });
 
     return new TikTokAdsApi(credential);
   }
@@ -109,9 +108,7 @@ export class TikTokPlatformService extends BasePlatformService<TikTokAdsApi> {
         this.credentials!.refreshToken!,
       );
 
-      const newExpiresAt = new Date();
-
-      newExpiresAt.setSeconds(newExpiresAt.getSeconds() + tokenData.expires_in);
+      const newExpiresAt = calculateTokenExpiry(tokenData.expires_in);
 
       return {
         success: true,
@@ -152,19 +149,28 @@ export class TikTokPlatformService extends BasePlatformService<TikTokAdsApi> {
         const response = await this.apiClient.getCampaigns(page);
 
         for (const tiktokCampaign of response.list) {
+          const tiktokCreds = this.credentials as TikTokPlatformCredentials;
           const campaign = TikTokAdsApi.transformCampaign(
             tiktokCampaign,
-            (this.credentials as any)?.id || "default-id",
-          );
+            tiktokCreds?.id || "default-id",
+          ) as TikTokCampaignTransformed;
 
-          campaigns.push({
-            ...campaign,
+          const fullCampaign: Campaign = {
             id: "", // Will be set by database
-            team_id: (this.credentials as any)?.teamId || "",
-            platform_campaign_id: (campaign as any).external_id || "",
+            team_id: tiktokCreds?.teamId || "",
+            platform_campaign_id: campaign.external_id || "",
+            name: campaign.name,
+            status: campaign.status,
+            budget: campaign.budget,
+            platform: campaign.platform,
+            platform_credential_id: campaign.platform_credential_id,
+            is_active: campaign.status === "active",
+            raw_data: campaign.raw_data as Json,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-          } as Campaign);
+          };
+
+          campaigns.push(fullCampaign);
         }
 
         hasMore = page < response.page_info.total_page;
@@ -229,50 +235,8 @@ export class TikTokPlatformService extends BasePlatformService<TikTokAdsApi> {
     }, "updateCampaignBudget");
   }
 
-  protected parsePlatformError(error: any): PlatformError {
-    // Handle TikTok-specific error codes
-    const errorCode = error.code || "UNKNOWN_ERROR";
-    const errorMessage = error.message || "An unknown error occurred";
-
-    // TikTok API error codes
-    const retryableErrors = [
-      40001, // Rate limit
-      50001, // Internal server error
-      50002, // Service unavailable
-    ];
-
-    const authErrors = [
-      40100, // Invalid access token
-      40101, // Access token expired
-      40102, // Invalid refresh token
-    ];
-
-    let platformErrorCode = "UNKNOWN_ERROR";
-    let retryable = false;
-    let userMessage = errorMessage;
-
-    if (authErrors.includes(errorCode)) {
-      platformErrorCode = "AUTH_ERROR";
-      retryable = true;
-      userMessage =
-        "Authentication failed. Please reconnect your TikTok account.";
-    } else if (retryableErrors.includes(errorCode)) {
-      platformErrorCode = errorCode === 40001 ? "RATE_LIMIT" : "API_ERROR";
-      retryable = true;
-      userMessage = "Temporary issue with TikTok. Please try again later.";
-    } else if (error.message?.includes("Network")) {
-      platformErrorCode = "NETWORK_ERROR";
-      retryable = true;
-      userMessage =
-        "Network connection issue. Please check your internet connection.";
-    }
-
-    return new PlatformError(
-      errorMessage,
-      this.platform,
-      platformErrorCode,
-      retryable,
-      userMessage,
-    );
+  protected parsePlatformError(error: unknown): PlatformError {
+    // Use common error parser
+    return parsePlatformError(error, this.platform);
   }
 }

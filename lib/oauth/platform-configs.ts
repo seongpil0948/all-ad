@@ -8,7 +8,7 @@ import { createClient } from "@/utils/supabase/server";
 // Base OAuth configurations (without client credentials)
 const baseOAuthConfigs = {
   google: {
-    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback/google-ads`,
+    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/oauth/google/callback`,
     scope: [
       "https://www.googleapis.com/auth/adwords",
       "https://www.googleapis.com/auth/userinfo.email",
@@ -20,13 +20,13 @@ const baseOAuthConfigs = {
     prompt: "consent select_account",
   },
   facebook: {
-    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback/facebook-ads`,
+    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/oauth/facebook/callback`,
     scope: ["ads_management", "ads_read", "business_management"],
     authorizationUrl: "https://www.facebook.com/v23.0/dialog/oauth",
     tokenUrl: "https://graph.facebook.com/v23.0/oauth/access_token",
   },
   meta: {
-    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback/meta-ads`,
+    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/oauth/meta/callback`,
     scope: [
       "ads_management",
       "ads_read",
@@ -37,19 +37,25 @@ const baseOAuthConfigs = {
     tokenUrl: "https://graph.facebook.com/v23.0/oauth/access_token",
   },
   kakao: {
-    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback/kakao-ads`,
+    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/oauth/kakao/callback`,
     scope: ["moment:read", "moment:write"],
     authorizationUrl: "https://kauth.kakao.com/oauth/authorize",
     tokenUrl: "https://kauth.kakao.com/oauth/token",
   },
+  naver: {
+    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/oauth/naver/callback`,
+    scope: ["ncc.searchad"],
+    authorizationUrl: "https://nid.naver.com/oauth2.0/authorize",
+    tokenUrl: "https://nid.naver.com/oauth2.0/token",
+  },
   amazon: {
-    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback/amazon-ads`,
+    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/oauth/amazon/callback`,
     scope: ["advertising::campaign_management"],
     authorizationUrl: "https://www.amazon.com/ap/oa",
     tokenUrl: "https://api.amazon.com/auth/o2/token",
   },
   tiktok: {
-    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback/tiktok`,
+    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/oauth/tiktok/callback`,
     scope: ["ads.management", "reporting"],
     authorizationUrl: "https://www.tiktok.com/v2/auth/authorize/",
     tokenUrl:
@@ -103,7 +109,7 @@ export async function getOAuthConfigWithCredentials(
 }
 
 // Get OAuth config with Sivera's own credentials (for simplified OAuth)
-export async function getAllAdOAuthConfig(
+export async function getOAuthConfig(
   platform: string,
 ): Promise<OAuthConfig | null> {
   const baseConfig =
@@ -135,6 +141,14 @@ export async function getAllAdOAuthConfig(
     tiktok: {
       clientId: process.env.TIKTOK_APP_ID,
       clientSecret: process.env.TIKTOK_APP_SECRET,
+    },
+    kakao: {
+      clientId: process.env.KAKAO_CLIENT_ID,
+      clientSecret: process.env.KAKAO_CLIENT_SECRET,
+    },
+    naver: {
+      clientId: process.env.NAVER_CLIENT_ID,
+      clientSecret: process.env.NAVER_CLIENT_SECRET,
     },
     // Add more platforms as needed
   };

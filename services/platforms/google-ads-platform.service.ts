@@ -278,21 +278,19 @@ export class GoogleAdsPlatformService implements PlatformService {
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
               metrics: metrics
-                ? [
-                    {
-                      id: `${String(campaign.id || "")}_${new Date().toISOString().split("T")[0]}`,
-                      campaign_id: String(campaign.id || ""),
-                      date: new Date().toISOString().split("T")[0],
-                      impressions: Number(metrics.impressions || 0),
-                      clicks: Number(metrics.clicks || 0),
-                      cost: Number(metrics.cost_micros || 0) / 1000000,
-                      conversions: Number(metrics.conversions || 0),
-                      revenue: Number(metrics.conversions_value || 0),
-                      raw_data: null,
-                      created_at: new Date().toISOString(),
-                    },
-                  ]
-                : [],
+                ? {
+                    id: `${String(campaign.id || "")}_${new Date().toISOString().split("T")[0]}`,
+                    campaign_id: String(campaign.id || ""),
+                    date: new Date().toISOString().split("T")[0],
+                    impressions: Number(metrics.impressions || 0),
+                    clicks: Number(metrics.clicks || 0),
+                    cost: Number(metrics.cost_micros || 0) / 1000000,
+                    conversions: Number(metrics.conversions || 0),
+                    revenue: Number(metrics.conversions_value || 0),
+                    raw_data: {},
+                    created_at: new Date().toISOString(),
+                  }
+                : undefined,
             };
 
             mappedCampaigns.push(mappedCampaign);
@@ -336,21 +334,19 @@ export class GoogleAdsPlatformService implements PlatformService {
         // 메트릭 데이터 포함
         metrics:
           campaign.impressions !== undefined
-            ? [
-                {
-                  id: `${campaign.id}_${new Date().toISOString().split("T")[0]}`,
-                  campaign_id: campaign.id,
-                  date: new Date().toISOString().split("T")[0],
-                  impressions: campaign.impressions,
-                  clicks: campaign.clicks || 0,
-                  cost: (campaign.costMicros || 0) / 1000000,
-                  conversions: 0,
-                  revenue: 0,
-                  raw_data: null,
-                  created_at: new Date().toISOString(),
-                },
-              ]
-            : [],
+            ? {
+                id: `${campaign.id}_${new Date().toISOString().split("T")[0]}`,
+                campaign_id: campaign.id,
+                date: new Date().toISOString().split("T")[0],
+                impressions: campaign.impressions,
+                clicks: campaign.clicks || 0,
+                cost: (campaign.costMicros || 0) / 1000000,
+                conversions: 0,
+                revenue: 0,
+                raw_data: {},
+                created_at: new Date().toISOString(),
+              }
+            : undefined,
       }));
     } catch (error) {
       log.error("Failed to fetch Google Ads campaigns", error as Error);

@@ -16,7 +16,12 @@ import NextLink from "next/link";
 import clsx from "clsx";
 import { useShallow } from "zustand/shallow";
 import { useState } from "react";
-import { motion, useScroll, useMotionValueEvent } from "framer-motion";
+import {
+  motion,
+  useScroll,
+  useMotionValueEvent,
+  useReducedMotion,
+} from "framer-motion";
 
 import { navbarVariants } from "@/utils/animations";
 import { siteConfig } from "@/config/site";
@@ -50,8 +55,10 @@ export const Navbar = () => {
   const [hidden, setHidden] = useState(false);
   const { scrollY } = useScroll();
   const [lastScrollY, setLastScrollY] = useState(0);
+  const prefersReducedMotion = useReducedMotion();
 
   useMotionValueEvent(scrollY, "change", (latest) => {
+    if (prefersReducedMotion) return; // Avoid scroll-driven motion
     const difference = latest - lastScrollY;
 
     if (latest > 100 && difference > 0) {
@@ -64,38 +71,79 @@ export const Navbar = () => {
 
   const UserOrLogin = () =>
     !isInitialized || isLoading ? (
-      <Skeleton className="flex rounded-full w-10 h-10" />
+      <Skeleton
+        className="flex rounded-full w-10 h-10"
+        data-testid="navbar-user-skeleton"
+        aria-label={`${dict.common.loading} ${dict.nav.profile}`}
+      />
     ) : user ? (
       <UserDropdown />
     ) : (
       <>
-        <Button as={NextLink} href="/login" variant="light">
+        <Button
+          as={NextLink}
+          href="/login"
+          variant="light"
+          data-testid="navbar-login-button"
+          aria-label={dict.nav.login}
+        >
           {dict.nav.login}
         </Button>
-        <Button as={NextLink} color="primary" href="/login" variant="flat">
+        <Button
+          as={NextLink}
+          color="primary"
+          href="/login"
+          variant="flat"
+          data-testid="navbar-trial-button"
+          aria-label={dict.nav.freeTrial}
+        >
           {dict.nav.freeTrial}
         </Button>
       </>
     );
 
+  const effectiveHidden = prefersReducedMotion ? false : hidden;
+
   return (
     <motion.div
-      animate={hidden ? "hidden" : "visible"}
+      animate={
+        prefersReducedMotion
+          ? undefined
+          : effectiveHidden
+            ? "hidden"
+            : "visible"
+      }
       className="sticky top-0 z-50"
-      transition={{ duration: 0.3, ease: "easeInOut" }}
-      variants={navbarVariants}
+      transition={
+        prefersReducedMotion ? undefined : { duration: 0.3, ease: "easeInOut" }
+      }
+      variants={prefersReducedMotion ? undefined : navbarVariants}
+      data-testid="navbar"
+      role="banner"
     >
-      <HeroUINavbar maxWidth="xl">
-        <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
-          <NavbarBrand as="li" className="gap-3 max-w-fit">
+      <HeroUINavbar
+        maxWidth={"xl"}
+        isBordered
+        isBlurred
+        data-testid="main-navbar"
+      >
+        <NavbarContent className="basis-1/5 sm:basis-full" justify={"start"}>
+          <NavbarBrand as={"li"} className="gap-3 max-w-fit">
             <NextLink
               className="flex justify-start items-center gap-1"
               href="/"
+              aria-label={dict.nav.home}
+              data-testid="navbar-logo"
             >
-              <p className="font-bold text-inherit text-xl">A.ll + Ad</p>
+              <p className="font-bold text-inherit text-xl">
+                {dict.brand.name}
+              </p>
             </NextLink>
           </NavbarBrand>
-          <ul className="hidden lg:flex gap-4 justify-start ml-8">
+          <ul
+            className="hidden lg:flex gap-4 justify-start ml-8"
+            role="navigation"
+          >
             {siteConfig.navItems.map((item) => (
               <NavbarItem key={item.href}>
                 <NextLink
@@ -105,6 +153,8 @@ export const Navbar = () => {
                   )}
                   color="foreground"
                   href={item.href}
+                  data-testid={`navbar-link-${item.label.toLowerCase().replace(" ", "-")}`}
+                  aria-label={getNavLabel(item.label)}
                 >
                   {getNavLabel(item.label)}
                 </NextLink>
@@ -115,10 +165,17 @@ export const Navbar = () => {
 
         <NavbarContent
           className="hidden sm:flex basis-1/5 sm:basis-full"
-          justify="end"
+          justify={"end"}
         >
           <NavbarItem className="hidden sm:flex gap-3">
-            <Button as={NextLink} color="primary" href="/lab" variant="flat">
+            <Button
+              as={NextLink}
+              color="primary"
+              href="/lab"
+              variant="flat"
+              data-testid="navbar-lab-button"
+              aria-label={dict.nav.lab}
+            >
               {dict.nav.lab}
             </Button>
             <LanguageSwitcher />
@@ -127,8 +184,15 @@ export const Navbar = () => {
           </NavbarItem>
         </NavbarContent>
 
-        <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
-          <Button as={NextLink} color="primary" href="/lab" variant="flat">
+        <NavbarContent className="sm:hidden basis-1 pl-4" justify={"end"}>
+          <Button
+            as={NextLink}
+            color="primary"
+            href="/lab"
+            variant="flat"
+            data-testid="navbar-mobile-lab-button"
+            aria-label={dict.nav.lab}
+          >
             {dict.nav.lab}
           </Button>
           <LanguageSwitcher />
@@ -136,8 +200,8 @@ export const Navbar = () => {
           <UserOrLogin />
         </NavbarContent>
 
-        <NavbarMenu>
-          <div className="mx-4 mt-2 flex flex-col gap-2">
+        <NavbarMenu data-testid="navbar-mobile-menu">
+          <div className="mx-4 mt-2 flex flex-col gap-2" role="navigation">
             {siteConfig.navItems.map((item, index) => (
               <NavbarMenuItem key={`${item}-${index}`}>
                 <Link
@@ -146,6 +210,8 @@ export const Navbar = () => {
                   color="foreground"
                   href={item.href}
                   size="lg"
+                  data-testid={`navbar-mobile-link-${item.label.toLowerCase().replace(" ", "-")}`}
+                  aria-label={`Navigate to ${getNavLabel(item.label)}`}
                 >
                   {getNavLabel(item.label)}
                 </Link>
@@ -159,6 +225,8 @@ export const Navbar = () => {
                   color="primary"
                   href="/login"
                   variant="flat"
+                  data-testid="navbar-mobile-login-button"
+                  aria-label={dict.nav.login}
                 >
                   {dict.nav.login}
                 </Button>

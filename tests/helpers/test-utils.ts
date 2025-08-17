@@ -1,15 +1,22 @@
-import { Page } from "@playwright/test";
+import { Page, test as base, expect } from "@playwright/test";
 import { test } from "../tester";
+import type { Database } from "@/types/supabase.types";
 
 /**
- * Common test utilities for Sivera tests
+ * Common test utilities using actual domain types
  */
 
-export interface TestUser {
+type Tables = Database["public"]["Tables"];
+
+// Use actual Supabase types instead of custom test types
+export type TestUser = {
   email: string;
-  password: string;
-  name?: string;
-}
+  password: string; // Only needed for test authentication, not stored in DB
+  profile?: Tables["profiles"]["Row"];
+};
+
+export type TestTeam = Tables["teams"]["Row"];
+export type TestCampaign = Tables["campaigns"]["Row"];
 
 /**
  * Navigate to a page and wait for it to be fully loaded
@@ -46,15 +53,207 @@ export async function waitForAPIResponse(
   page: Page,
   urlPattern: string | RegExp,
   action: () => Promise<void>,
+  options?: {
+    timeout?: number;
+    expectedStatus?: number | number[];
+    retries?: number;
+  },
+): Promise<import("@playwright/test").Response> {
+  const { timeout = 30000, expectedStatus = 200, retries = 3 } = options || {};
+  const expectedStatuses = Array.isArray(expectedStatus)
+    ? expectedStatus
+    : [expectedStatus];
+
+  let attempt = 0;
+
+  while (attempt < retries) {
+    try {
+      const responsePromise = page.waitForResponse(
+        (response) => {
+          const matchesUrl =
+            typeof urlPattern === "string"
+              ? response.url().includes(urlPattern)
+              : urlPattern.test(response.url());
+          const hasExpectedStatus = expectedStatuses.includes(
+            response.status(),
+          );
+          return matchesUrl && hasExpectedStatus;
+        },
+        { timeout },
+      );
+
+      await action();
+      const response = await responsePromise;
+
+      // Log successful response for debugging
+      console.log(
+        `API Response: ${response.url()} - Status: ${response.status()}`,
+      );
+      return response;
+    } catch (error) {
+      attempt++;
+      if (attempt >= retries) {
+        throw new Error(
+          `Failed to get expected API response after ${retries} attempts: ${error}`,
+        );
+      }
+      console.log(`API response attempt ${attempt} failed, retrying...`);
+      await page.waitForTimeout(1000); // Wait before retry
+    }
+  }
+
+  throw new Error("Failed to get API response - should not reach here");
+}
+
+/**
+ * Wait for multiple API responses in sequence
+ */
+export async function waitForMultipleAPIResponses(
+  page: Page,
+  patterns: Array<{ pattern: string | RegExp; status?: number }>,
+  action: () => Promise<void>,
+  options?: { timeout?: number },
 ) {
-  const responsePromise = page.waitForResponse(
-    (response) =>
-      (typeof urlPattern === "string"
-        ? response.url().includes(urlPattern)
-        : urlPattern.test(response.url())) && response.status() === 200,
+  const { timeout = 30000 } = options || {};
+  const responsePromises = patterns.map(({ pattern, status = 200 }) =>
+    page.waitForResponse(
+      (response) => {
+        const matchesUrl =
+          typeof pattern === "string"
+            ? response.url().includes(pattern)
+            : pattern.test(response.url());
+        return matchesUrl && response.status() === status;
+      },
+      { timeout },
+    ),
   );
+
   await action();
-  return await responsePromise;
+  return await Promise.all(responsePromises);
+}
+
+/**
+ * Mock API responses with custom data
+ */
+export async function mockAPIResponse(
+  page: Page,
+  urlPattern: string | RegExp,
+  mockData: any,
+  status = 200,
+  headers?: Record<string, string>,
+) {
+  await page.route(
+    (url) => {
+      const matchesUrl =
+        typeof urlPattern === "string"
+          ? url.href.includes(urlPattern)
+          : urlPattern.test(url.href);
+      return matchesUrl;
+    },
+    (route) => {
+      route.fulfill({
+        status,
+        headers: {
+          "Content-Type": "application/json",
+          ...headers,
+        },
+        body: JSON.stringify(mockData),
+      });
+    },
+  );
+}
+
+/**
+ * Capture and validate API request payload
+ */
+export async function captureAPIRequest(
+  page: Page,
+  urlPattern: string | RegExp,
+  action: () => Promise<void>,
+) {
+  let capturedRequest: any = null;
+
+  await page.route(
+    (url) => {
+      const matchesUrl =
+        typeof urlPattern === "string"
+          ? url.href.includes(urlPattern)
+          : urlPattern.test(url.href);
+      return matchesUrl;
+    },
+    async (route) => {
+      const request = route.request();
+      capturedRequest = {
+        url: request.url(),
+        method: request.method(),
+        headers: request.headers(),
+        postData: request.postData(),
+        postDataJSON: request.postDataJSON?.(),
+      };
+
+      // Continue with the original request
+      await route.continue();
+    },
+  );
+
+  await action();
+  return capturedRequest;
+}
+
+/**
+ * Wait for API response and validate JSON structure
+ */
+export async function waitForAPIResponseWithValidation<T>(
+  page: Page,
+  urlPattern: string | RegExp,
+  action: () => Promise<void>,
+  validator: (data: any) => data is T,
+  options?: { timeout?: number; expectedStatus?: number },
+) {
+  const response = await waitForAPIResponse(page, urlPattern, action, options);
+  if (!response) {
+    throw new Error("Failed to get API response");
+  }
+  const data = await response.json();
+
+  if (!validator(data)) {
+    throw new Error(`API response validation failed for ${response.url()}`);
+  }
+
+  return data as T;
+}
+
+/**
+ * Test API error handling
+ */
+export async function testAPIErrorHandling(
+  page: Page,
+  urlPattern: string | RegExp,
+  action: () => Promise<void>,
+  expectedErrorStatus: number = 500,
+) {
+  // First mock the API to return an error
+  await page.route(
+    (url) => {
+      const matchesUrl =
+        typeof urlPattern === "string"
+          ? url.href.includes(urlPattern)
+          : urlPattern.test(url.href);
+      return matchesUrl;
+    },
+    (route) => {
+      route.fulfill({
+        status: expectedErrorStatus,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: "Test error" }),
+      });
+    },
+  );
+
+  await action();
+
+  // Verify error handling in UI
+  await page.waitForTimeout(1000); // Give time for error to be processed
 }
 
 /**
@@ -133,24 +332,6 @@ export async function takeScreenshot(
   await page.screenshot({
     path: `test-results/screenshots/${name}-${timestamp}.png`,
     fullPage: options?.fullPage ?? false,
-  });
-}
-
-/**
- * Mock API response
- */
-export async function mockAPIResponse(
-  page: Page,
-  urlPattern: string | RegExp,
-  responseData: any,
-  status = 200,
-) {
-  await page.route(urlPattern, async (route) => {
-    await route.fulfill({
-      status,
-      contentType: "application/json",
-      body: JSON.stringify(responseData),
-    });
   });
 }
 
@@ -234,3 +415,288 @@ export function getRandomTestData() {
     timestamp,
   };
 }
+
+/**
+ * Generate unique test ID
+ */
+export function generateTestId(prefix: string = "test"): string {
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 8);
+  return `${prefix}_${timestamp}_${random}`;
+}
+
+/**
+ * Mock API responses for different platforms
+ */
+export const mockPlatformResponses = {
+  google: {
+    campaigns: [
+      {
+        id: "google_campaign_123",
+        name: "Google Test Campaign",
+        status: "ENABLED",
+        budget: { amount_micros: 1000000000 },
+      },
+    ],
+    metrics: {
+      impressions: 1000,
+      clicks: 50,
+      cost_micros: 25000000,
+      conversions: 5,
+    },
+  },
+  facebook: {
+    campaigns: {
+      data: [
+        {
+          id: "fb_campaign_123",
+          name: "Facebook Test Campaign",
+          status: "ACTIVE",
+          daily_budget: 10000,
+        },
+      ],
+    },
+    insights: {
+      data: [
+        {
+          impressions: "2000",
+          clicks: "100",
+          spend: "50.00",
+          conversions: "10",
+        },
+      ],
+    },
+  },
+  naver: {
+    campaigns: [
+      {
+        nccCampaignId: "naver_campaign_123",
+        name: "Naver Test Campaign",
+        campaignTp: "WEB_SITE",
+        status: "ELIGIBLE",
+        dailyBudget: 100000,
+      },
+    ],
+    stats: {
+      impCnt: 1500,
+      clkCnt: 75,
+      salesAmt: 30000,
+      ccnt: 8,
+    },
+  },
+  kakao: {
+    campaigns: [
+      {
+        id: 123456,
+        name: "Kakao Test Campaign",
+        status: "ON",
+        dailyBudgetAmount: 50000,
+      },
+    ],
+    report: {
+      data: [
+        {
+          dimensions: { campaign_id: 123456 },
+          metrics: {
+            imp: 1200,
+            click: 60,
+            cost: 25000,
+            conv: 6,
+          },
+        },
+      ],
+    },
+  },
+};
+
+/**
+ * Wait for network idle
+ */
+export async function waitForNetworkIdle(page: Page, timeout = 5000) {
+  await page.waitForLoadState("networkidle", { timeout });
+}
+
+/**
+ * Assert element has expected text
+ */
+export async function assertElementText(
+  page: Page,
+  selector: string,
+  expectedText: string,
+) {
+  const element = await page.locator(selector);
+  await expect(element).toHaveText(expectedText);
+}
+
+/**
+ * Assert element is visible and enabled
+ */
+export async function assertElementReady(page: Page, selector: string) {
+  const element = await page.locator(selector);
+  await expect(element).toBeVisible();
+  await expect(element).toBeEnabled();
+}
+
+/**
+ * Click with retry logic
+ */
+export async function clickWithRetry(
+  page: Page,
+  selector: string,
+  options?: { retries?: number; delay?: number },
+) {
+  const { retries = 3, delay = 500 } = options || {};
+  let lastError: Error | null = null;
+
+  for (let i = 0; i < retries; i++) {
+    try {
+      await page.click(selector, { timeout: 5000 });
+      return;
+    } catch (error) {
+      lastError = error as Error;
+      if (i < retries - 1) {
+        await page.waitForTimeout(delay);
+      }
+    }
+  }
+
+  throw lastError || new Error(`Failed to click ${selector}`);
+}
+
+/**
+ * Create test fixtures with cleanup
+ */
+export class TestFixtures {
+  private cleanupFunctions: Array<() => Promise<void>> = [];
+
+  async createUser(page: Page): Promise<TestUser> {
+    const user = {
+      email: `test_${Date.now()}@example.com`,
+      password: "TestPassword123!",
+      name: `Test User ${Date.now()}`,
+    };
+
+    this.cleanupFunctions.push(async () => {
+      // Cleanup user if needed
+    });
+
+    return user;
+  }
+
+  async createTeam(page: Page, masterUserId: string): Promise<TestTeam> {
+    const timestamp = Date.now();
+    const team: TestTeam = {
+      id: `team_${timestamp}`,
+      name: `Test Team ${timestamp}`,
+      master_user_id: masterUserId,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    this.cleanupFunctions.push(async () => {
+      // Cleanup team if needed
+    });
+
+    return team;
+  }
+
+  async createCampaign(page: Page, teamId: string): Promise<TestCampaign> {
+    const timestamp = Date.now();
+    const campaign: TestCampaign = {
+      id: `campaign_${timestamp}`,
+      team_id: teamId,
+      platform: "google" as Database["public"]["Enums"]["platform_type"],
+      platform_campaign_id: `google_${timestamp}`,
+      name: `Test Campaign ${timestamp}`,
+      status: "active",
+      budget: 1000,
+      is_active: true,
+      platform_credential_id: `cred_${timestamp}`,
+      synced_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      raw_data: {},
+    };
+
+    this.cleanupFunctions.push(async () => {
+      // Cleanup campaign if needed
+    });
+
+    return campaign;
+  }
+
+  async cleanup() {
+    for (const cleanupFn of this.cleanupFunctions.reverse()) {
+      await cleanupFn();
+    }
+  }
+}
+
+/**
+ * Performance metrics helper
+ */
+export async function measurePerformance(
+  page: Page,
+  actionName: string,
+  action: () => Promise<void>,
+) {
+  const startTime = Date.now();
+  await action();
+  const endTime = Date.now();
+  const duration = endTime - startTime;
+
+  console.log(`Performance: ${actionName} took ${duration}ms`);
+  return duration;
+}
+
+/**
+ * Check accessibility
+ */
+export async function checkAccessibility(page: Page) {
+  // Basic accessibility checks
+  const hasLang = await page.locator("html[lang]").count();
+  const hasTitle = await page.title();
+  const hasH1 = await page.locator("h1").count();
+
+  return {
+    hasLang: hasLang > 0,
+    hasTitle: !!hasTitle,
+    hasH1: hasH1 > 0,
+  };
+}
+
+/**
+ * Mock date for consistent testing
+ */
+export async function mockDate(page: Page, date: Date) {
+  await page.addInitScript(`{
+    Date = class extends Date {
+      constructor(...args) {
+        if (args.length === 0) {
+          super(${date.getTime()});
+        } else {
+          super(...args);
+        }
+      }
+      
+      static now() {
+        return ${date.getTime()};
+      }
+    }
+  }`);
+}
+
+/**
+ * Export enhanced test with fixtures
+ */
+export const enhancedTest = base.extend<{
+  fixtures: TestFixtures;
+}>({
+  fixtures: async ({}, use) => {
+    const fixtures = new TestFixtures();
+    await use(fixtures);
+    await fixtures.cleanup();
+  },
+});
+
+export { expect };

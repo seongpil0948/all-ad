@@ -20,21 +20,17 @@ import {
   ModalFooter,
   useDisclosure,
 } from "@heroui/modal";
-import { addToast } from "@heroui/toast";
-import { useAsyncList } from "@react-stately/data";
 import { useShallow } from "zustand/shallow";
 import { FaFilter, FaDollarSign, FaPowerOff, FaCheck } from "react-icons/fa";
 
-import { useCampaignStore } from "@/stores";
-import { Campaign } from "@/types/campaign.types";
+import { Campaign, CampaignStats } from "@/types/campaign.types";
 import { PlatformType } from "@/types";
-import log from "@/utils/logger";
-import { useFilterUrlSync } from "@/hooks/useUrlSync";
+import { useCampaignStore } from "@/stores/useCampaignStore";
 import {
   StatCard,
   PlatformBadge,
   TableActions,
-  InfiniteScrollTable,
+  VirtualScrollTable,
   InfiniteScrollTableColumn,
 } from "@/components/common";
 import {
@@ -44,19 +40,9 @@ import {
 import { getPlatformConfig } from "@/utils/platform-config";
 import { useDictionary } from "@/hooks/use-dictionary";
 
-const ITEMS_PER_PAGE = 20;
-
 interface CampaignDashboardClientProps {
   initialCampaigns: Campaign[];
-  initialStats: {
-    totalCampaigns: number;
-    activeCampaigns: number;
-    totalBudget: number;
-    totalSpend: number;
-    totalImpressions: number;
-    totalClicks: number;
-    platforms: number;
-  };
+  initialStats: CampaignStats;
 }
 
 export function CampaignDashboardClient({
@@ -66,26 +52,27 @@ export function CampaignDashboardClient({
   const [isPending, startTransition] = useTransition();
   const { dictionary: dict } = useDictionary();
 
-  // Use useShallow to optimize re-renders
   const {
-    campaigns = initialCampaigns,
-    isLoading,
-    stats = initialStats,
+    campaigns,
+    stats,
     filters,
-    // fetchCampaigns,
-    updateCampaignBudget,
-    updateCampaignStatus,
-    setFilters,
+    isLoading,
+    applyFilters,
+    updateBudget,
+    toggleStatus,
+    setCampaigns,
+    setStats,
   } = useCampaignStore(
     useShallow((state) => ({
       campaigns: state.campaigns,
-      isLoading: state.isLoading,
       stats: state.stats,
       filters: state.filters,
-      // fetchCampaigns: state.fetchCampaigns,
-      updateCampaignBudget: state.updateCampaignBudget,
-      updateCampaignStatus: state.updateCampaignStatus,
-      setFilters: state.setFilters,
+      isLoading: state.isLoading,
+      applyFilters: state.applyFilters,
+      updateBudget: state.updateBudget,
+      toggleStatus: state.toggleStatus,
+      setCampaigns: state.setCampaigns,
+      setStats: state.setStats,
     })),
   );
 
@@ -95,23 +82,24 @@ export function CampaignDashboardClient({
   );
   const [budgetInput, setBudgetInput] = useState("");
   const [filterInput, setFilterInput] = useState("");
-  const [hasMore, setHasMore] = useState(true);
 
-  // Effect 1: URL synchronization - separate concern
-  useFilterUrlSync(filters as Record<string, unknown>, setFilters);
-
-  // Effect 2: Filter input synchronization - separate concern
+  // Initialize store with server-side props
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
+    setCampaigns(initialCampaigns);
+    setStats(initialStats);
+  }, [initialCampaigns, initialStats, setCampaigns, setStats]);
+
+  // Debounce search input
+  useEffect(() => {
+    const handler = setTimeout(() => {
       startTransition(() => {
-        setFilters({ search: filterInput });
+        applyFilters({ search: filterInput });
       });
     }, 300);
+    return () => clearTimeout(handler);
+  }, [filterInput, applyFilters]);
 
-    return () => clearTimeout(timeoutId);
-  }, [filterInput, setFilters]);
-
-  // Effect 3: Modal state management - separate concern
+  // Reset modal state on close
   useEffect(() => {
     if (!isOpen) {
       setSelectedCampaign(null);
@@ -119,58 +107,18 @@ export function CampaignDashboardClient({
     }
   }, [isOpen]);
 
-  // Filtered campaigns calculation - memoized
-  const filteredCampaigns = useMemo(() => {
-    return campaigns.filter((campaign) => {
-      const matchesSearch =
-        !filters.search ||
-        campaign.name.toLowerCase().includes(filters.search.toLowerCase());
-      const matchesPlatform =
-        !filters.platform || campaign.platform === filters.platform;
-      const matchesStatus =
-        filters.isActive === undefined ||
-        campaign.isActive === filters.isActive;
+  const columns: InfiniteScrollTableColumn<Campaign>[] = useMemo(
+    () => [
+      { key: "name", label: dict.campaigns.table.name },
+      { key: "platform", label: dict.campaigns.table.platform },
+      { key: "status", label: dict.campaigns.table.status },
+      { key: "budget", label: dict.campaigns.table.budget },
+      { key: "metrics", label: dict.campaigns.table.metrics },
+      { key: "actions", label: dict.campaigns.table.actions },
+    ],
+    [dict],
+  );
 
-      return matchesSearch && matchesPlatform && matchesStatus;
-    });
-  }, [campaigns, filters]);
-
-  // Async list for infinite scrolling
-  const list = useAsyncList<Campaign>({
-    async load({ cursor }) {
-      const start = cursor ? parseInt(cursor) : 0;
-      const items = filteredCampaigns.slice(start, start + ITEMS_PER_PAGE);
-      const nextCursor =
-        start + ITEMS_PER_PAGE < filteredCampaigns.length
-          ? String(start + ITEMS_PER_PAGE)
-          : undefined;
-
-      setHasMore(!!nextCursor);
-
-      return {
-        items,
-        cursor: nextCursor,
-      };
-    },
-    getKey: (item) => item.id,
-  });
-
-  // Reload list when filters change
-  useEffect(() => {
-    list.reload();
-  }, [filteredCampaigns]);
-
-  // Table columns configuration
-  const columns: InfiniteScrollTableColumn<Campaign>[] = [
-    { key: "name", label: dict.campaigns.table.name },
-    { key: "platform", label: dict.campaigns.table.platform },
-    { key: "status", label: dict.campaigns.table.status },
-    { key: "budget", label: dict.campaigns.table.budget },
-    { key: "metrics", label: dict.campaigns.table.metrics },
-    { key: "actions", label: dict.campaigns.table.actions },
-  ];
-
-  // Optimized callbacks with useCallback
   const handleBudgetEdit = useCallback(
     (campaign: Campaign) => {
       setSelectedCampaign(campaign);
@@ -182,78 +130,16 @@ export function CampaignDashboardClient({
 
   const handleBudgetUpdate = useCallback(async () => {
     if (!selectedCampaign) return;
-
     const newBudget = parseFloat(budgetInput);
-
-    if (isNaN(newBudget) || newBudget < 0) {
-      addToast({
-        title: dict.common.error,
-        description: dict.campaigns.toast.invalidBudget,
-        color: "danger",
-      });
-
-      return;
-    }
-
-    try {
-      startTransition(() => {
-        updateCampaignBudget(selectedCampaign.id, newBudget);
-      });
-
-      log.info("Campaign budget updated", {
-        campaignId: selectedCampaign.id,
-        newBudget,
-      });
-      addToast({
-        title: dict.common.success,
-        description: dict.campaigns.toast.budgetUpdateSuccess,
-        color: "success",
-      });
-      onOpenChange();
-    } catch (error) {
-      log.error("Failed to update budget", error);
-      addToast({
-        title: dict.common.error,
-        description: dict.campaigns.toast.budgetUpdateError,
-        color: "danger",
-      });
-    }
-  }, [selectedCampaign, budgetInput, updateCampaignBudget, onOpenChange]);
+    await updateBudget(selectedCampaign.id, newBudget);
+    onOpenChange();
+  }, [selectedCampaign, budgetInput, updateBudget, onOpenChange]);
 
   const handleStatusToggle = useCallback(
     async (campaign: Campaign) => {
-      try {
-        startTransition(() => {
-          updateCampaignStatus(
-            campaign.id,
-            !campaign.isActive ? "ENABLED" : "PAUSED",
-          );
-        });
-
-        log.info("Campaign status toggled", {
-          campaignId: campaign.id,
-          newStatus: !campaign.isActive,
-        });
-        addToast({
-          title: dict.common.success,
-          description: dict.campaigns.toast.statusChangeSuccess.replace(
-            "{{status}}",
-            !campaign.isActive
-              ? dict.campaigns.statusModal.activate + "d"
-              : dict.campaigns.statusModal.deactivate + "d",
-          ),
-          color: "success",
-        });
-      } catch (error) {
-        log.error("Failed to toggle campaign status", error);
-        addToast({
-          title: dict.common.error,
-          description: dict.campaigns.toast.statusChangeError,
-          color: "danger",
-        });
-      }
+      await toggleStatus(campaign.id, campaign.is_active ?? false);
     },
-    [updateCampaignStatus],
+    [toggleStatus],
   );
 
   const renderCell = useCallback(
@@ -264,7 +150,7 @@ export function CampaignDashboardClient({
             <div className="flex flex-col">
               <p className="text-bold text-sm">{campaign.name}</p>
               <p className="text-tiny text-default-400">
-                {campaign.platformCampaignId}
+                {campaign.platform_campaign_id}
               </p>
             </div>
           );
@@ -273,11 +159,11 @@ export function CampaignDashboardClient({
         case "status":
           return (
             <Chip
-              color={campaign.isActive ? "success" : "default"}
+              color={campaign.is_active ? "success" : "default"}
               size="sm"
               variant="flat"
             >
-              {campaign.isActive
+              {campaign.is_active
                 ? dict.campaigns.status.active
                 : dict.campaigns.status.paused}
             </Chip>
@@ -316,12 +202,12 @@ export function CampaignDashboardClient({
                   onPress: () => handleBudgetEdit(campaign),
                 },
                 {
-                  icon: campaign.isActive ? <FaPowerOff /> : <FaCheck />,
-                  label: campaign.isActive
+                  icon: campaign.is_active ? <FaPowerOff /> : <FaCheck />,
+                  label: campaign.is_active
                     ? dict.campaigns.actionLabels.deactivate
                     : dict.campaigns.actionLabels.activate,
                   onPress: () => handleStatusToggle(campaign),
-                  color: campaign.isActive ? "danger" : "success",
+                  color: campaign.is_active ? "danger" : "success",
                 },
               ]}
             />
@@ -330,16 +216,14 @@ export function CampaignDashboardClient({
           return null;
       }
     },
-    [handleBudgetEdit, handleStatusToggle],
+    [handleBudgetEdit, handleStatusToggle, dict],
   );
 
-  // Platform campaign counts - memoized
   const campaignCounts = useMemo(
     () =>
       campaigns.reduce(
         (acc, campaign) => {
           acc[campaign.platform] = (acc[campaign.platform] || 0) + 1;
-
           return acc;
         },
         {} as Record<string, number>,
@@ -347,22 +231,10 @@ export function CampaignDashboardClient({
     [campaigns],
   );
 
-  // Use stats from store
-  const totalStats = useMemo(
-    () => ({
-      totalBudget: stats?.totalBudget || 0,
-      totalSpend: stats?.totalSpend || 0,
-      totalImpressions: stats?.totalImpressions || 0,
-      totalClicks: stats?.totalClicks || 0,
-    }),
-    [stats],
-  );
-
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {isLoading ? (
+        {isPending || !stats ? (
           <>
             <MetricCardSkeleton />
             <MetricCardSkeleton />
@@ -373,29 +245,27 @@ export function CampaignDashboardClient({
           <>
             <StatCard
               label={dict.campaigns.metrics.totalBudgetLabel}
-              value={`${totalStats.totalBudget.toLocaleString()}${dict.campaigns.metrics.won}`}
+              value={`${stats.totalBudget.toLocaleString()}${dict.campaigns.metrics.won}`}
             />
             <StatCard
               label={dict.campaigns.metrics.totalSpendLabel}
-              value={`${totalStats.totalSpend.toLocaleString()}${dict.campaigns.metrics.won}`}
+              value={`${stats.totalSpend.toLocaleString()}${dict.campaigns.metrics.won}`}
             />
             <StatCard
               label={dict.campaigns.metrics.totalImpressionsLabel}
-              value={totalStats.totalImpressions.toLocaleString()}
+              value={stats.totalImpressions.toLocaleString()}
             />
             <StatCard
               label={dict.campaigns.metrics.totalClicksLabel}
-              value={totalStats.totalClicks.toLocaleString()}
+              value={stats.totalClicks.toLocaleString()}
             />
           </>
         )}
       </div>
 
-      {/* Platform Tabs with Campaigns */}
       <Card>
         <CardBody>
           <div className="flex flex-col gap-4">
-            {/* Filter Input */}
             <div className="flex gap-4 items-center">
               <Input
                 className="max-w-xs"
@@ -409,7 +279,7 @@ export function CampaignDashboardClient({
                   color={filters.isActive === true ? "success" : "default"}
                   size="sm"
                   variant={filters.isActive === true ? "flat" : "light"}
-                  onPress={() => setFilters({ isActive: true })}
+                  onPress={() => applyFilters({ isActive: true })}
                 >
                   {dict.campaigns.filters.active}
                 </Button>
@@ -417,7 +287,7 @@ export function CampaignDashboardClient({
                   color={filters.isActive === false ? "danger" : "default"}
                   size="sm"
                   variant={filters.isActive === false ? "flat" : "light"}
-                  onPress={() => setFilters({ isActive: false })}
+                  onPress={() => applyFilters({ isActive: false })}
                 >
                   {dict.campaigns.filters.paused}
                 </Button>
@@ -425,7 +295,7 @@ export function CampaignDashboardClient({
                   size="sm"
                   variant="light"
                   onPress={() =>
-                    setFilters({ isActive: undefined, search: "" })
+                    applyFilters({ isActive: undefined, search: "" })
                   }
                 >
                   {dict.common.reset}
@@ -433,11 +303,10 @@ export function CampaignDashboardClient({
               </div>
             </div>
 
-            {/* Platform Tabs */}
             <Tabs
               aria-label={dict.campaigns.table.platform}
               onSelectionChange={(key) =>
-                setFilters({
+                applyFilters({
                   platform: key === "all" ? undefined : (key as PlatformType),
                 })
               }
@@ -454,21 +323,17 @@ export function CampaignDashboardClient({
                 {isLoading ? (
                   <TableSkeleton columns={6} rows={5} />
                 ) : (
-                  <InfiniteScrollTable
+                  <VirtualScrollTable
                     aria-label={dict.campaigns.title}
                     columns={columns}
                     emptyContent={dict.campaigns.table.noCampaigns}
-                    hasMore={hasMore}
-                    isLoading={list.isLoading || isPending}
-                    items={list}
+                    items={campaigns}
                     renderCell={renderCell}
-                    onLoadMore={() => list.loadMore()}
                   />
                 )}
               </Tab>
               {Object.entries(campaignCounts).map(([platform, count]) => {
                 const config = getPlatformConfig(platform as PlatformType);
-
                 return (
                   <Tab
                     key={platform}
@@ -482,15 +347,12 @@ export function CampaignDashboardClient({
                     {isLoading ? (
                       <TableSkeleton columns={6} rows={5} />
                     ) : (
-                      <InfiniteScrollTable
+                      <VirtualScrollTable
                         aria-label={`${config.name} 캠페인 목록`}
                         columns={columns}
                         emptyContent={`${config.name} 캠페인이 없습니다`}
-                        hasMore={hasMore}
-                        isLoading={list.isLoading || isPending}
-                        items={list}
+                        items={campaigns.filter((c) => c.platform === platform)}
                         renderCell={renderCell}
-                        onLoadMore={() => list.loadMore()}
                       />
                     )}
                   </Tab>
@@ -501,7 +363,6 @@ export function CampaignDashboardClient({
         </CardBody>
       </Card>
 
-      {/* Budget Edit Modal */}
       <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
         <ModalContent>
           {(onClose) => (

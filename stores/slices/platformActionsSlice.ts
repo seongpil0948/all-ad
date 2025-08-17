@@ -10,6 +10,7 @@ import { PlatformCredential, PlatformType } from "@/types";
 import { Json } from "@/types/supabase.types";
 import { createClient } from "@/utils/supabase/client";
 import log from "@/utils/logger";
+import { revalidateCampaigns } from "@/app/[lang]/(private)/dashboard/actions";
 
 export interface PlatformActionsSlice {
   fetchCredentials: () => Promise<void>;
@@ -261,10 +262,7 @@ export const createPlatformActionsSlice: StateCreator<
         syncProgress: { ...state.syncProgress, [platform]: 100 },
       }));
 
-      // Refresh campaigns after successful sync
-      const { useCampaignStore } = await import("../useCampaignStore");
-
-      await useCampaignStore.getState().fetchCampaigns();
+      await revalidateCampaigns();
 
       // Reset progress after 2 seconds
       setTimeout(() => {

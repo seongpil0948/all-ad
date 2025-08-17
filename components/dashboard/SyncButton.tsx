@@ -1,15 +1,15 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { Button } from "@heroui/button";
 import { Tooltip } from "@heroui/tooltip";
 import { FaSync } from "react-icons/fa";
 import { addToast } from "@heroui/toast";
 
-import { usePlatformSync, useMultiPlatformSync } from "@/hooks/useCampaigns";
 import { usePlatformStore } from "@/stores";
 import { PlatformType } from "@/types";
 import log from "@/utils/logger";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface SyncButtonProps {
   size?: "sm" | "md" | "lg";
@@ -35,7 +35,8 @@ export function SyncButton({
   platforms,
 }: SyncButtonProps) {
   const credentials = usePlatformStore((state) => state.credentials);
-  const { sync, isSyncing: isSingleSyncing } = usePlatformSync();
+  const { dictionary: dict } = useDictionary();
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // 활성 플랫폼 필터링
   const activePlatforms = credentials
@@ -45,16 +46,11 @@ export function SyncButton({
   // 동기화할 플랫폼 결정
   const targetPlatforms = platforms || activePlatforms;
 
-  const { syncAll, isSyncing: isMultiSyncing } =
-    useMultiPlatformSync(targetPlatforms);
-
-  const isSyncing = isSingleSyncing || isMultiSyncing;
-
   const handleSync = useCallback(async () => {
     if (targetPlatforms.length === 0) {
       addToast({
-        title: "오류",
-        description: "동기화할 활성 플랫폼이 없습니다",
+        title: dict.common.error,
+        description: dict.dashboard.sync.noActivePlatforms,
         color: "danger",
       });
 
@@ -62,28 +58,38 @@ export function SyncButton({
     }
 
     try {
-      if (targetPlatforms.length === 1) {
-        // 단일 플랫폼 동기화
-        await sync({ platform: targetPlatforms[0] });
-      } else {
-        // 다중 플랫폼 동기화
-        await syncAll();
-      }
+      setIsSyncing(true);
+      // Fire sync for all target platforms in parallel
+      await Promise.all(
+        targetPlatforms.map((p) =>
+          fetch(`/api/sync/${p}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+          }).then((r) => {
+            if (!r.ok) throw new Error(`Failed to sync ${p}`);
+          }),
+        ),
+      );
 
       addToast({
-        title: "성공",
-        description: `${targetPlatforms.length}개 플랫폼 동기화가 완료되었습니다`,
+        title: dict.common.success,
+        description: (dict.dashboard.sync.syncPlatforms as string).replace(
+          "{{count}}",
+          String(targetPlatforms.length),
+        ),
         color: "success",
       });
     } catch (error) {
       log.error(`Sync error: ${JSON.stringify(error)}`);
       addToast({
-        title: "오류",
-        description: "동기화 중 오류가 발생했습니다",
+        title: dict.common.error,
+        description: dict.dashboard.sync.errorDescription,
         color: "danger",
       });
+    } finally {
+      setIsSyncing(false);
     }
-  }, [targetPlatforms, sync, syncAll]);
+  }, [targetPlatforms, dict]);
 
   const buttonContent = (
     <Button
@@ -92,22 +98,36 @@ export function SyncButton({
       isDisabled={targetPlatforms.length === 0}
       isLoading={isSyncing}
       size={size}
-      startContent={!isSyncing && <FaSync />}
+      startContent={!isSyncing && <FaSync aria-hidden={true} />}
       variant={variant}
       onPress={handleSync}
+      data-testid="sync-button"
+      aria-label={
+        isSyncing
+          ? dict.dashboard.sync.syncing
+          : (dict.dashboard.sync.syncPlatforms as string).replace(
+              "{{count}}",
+              String(targetPlatforms.length),
+            )
+      }
     >
       {showLabel &&
         (isSyncing
-          ? "동기화 중..."
-          : targetPlatforms.length === 1
-            ? `${targetPlatforms[0]} 동기화`
-            : `${targetPlatforms.length}개 플랫폼 동기화`)}
+          ? dict.dashboard.sync.syncing
+          : (dict.dashboard.sync.syncPlatforms as string).replace(
+              "{{count}}",
+              String(targetPlatforms.length),
+            ))}
     </Button>
   );
 
   if (targetPlatforms.length === 0) {
     return (
-      <Tooltip content="활성화된 플랫폼이 없습니다" placement="bottom">
+      <Tooltip
+        content={dict.dashboard.sync.noActivePlatforms}
+        placement={"bottom"}
+        data-testid="sync-button-tooltip-disabled"
+      >
         {buttonContent}
       </Tooltip>
     );
@@ -115,8 +135,12 @@ export function SyncButton({
 
   return (
     <Tooltip
-      content={`${targetPlatforms.join(", ")} 플랫폼 동기화`}
-      placement="bottom"
+      content={(dict.dashboard.sync.syncPlatforms as string).replace(
+        "{{count}}",
+        String(targetPlatforms.length),
+      )}
+      placement={"bottom"}
+      data-testid="sync-button-tooltip"
     >
       {buttonContent}
     </Tooltip>

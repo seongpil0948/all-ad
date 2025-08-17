@@ -1,4 +1,7 @@
+/* eslint-disable local/no-literal-strings */
 import { FaChartLine, FaUsers, FaBullseye, FaClock } from "react-icons/fa";
+import { Container } from "@/components/layouts/Container";
+import { AutoGrid } from "@/components/common/AutoGrid";
 
 interface StatItemProps {
   icon: React.ReactNode;
@@ -50,14 +53,14 @@ export const StatsSection = () => {
   ];
 
   return (
-    <section className="px-6 py-20 bg-linear-to-br from-primary/5 to-secondary/5">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+    <section className="py-20 bg-linear-to-br from-primary/5 to-secondary/5">
+      <Container>
+        <AutoGrid minItemWidth={220} gap="gap-8 lg:gap-12">
           {stats.map((stat, index) => (
             <StatItem key={index} {...stat} />
           ))}
-        </div>
-      </div>
+        </AutoGrid>
+      </Container>
     </section>
   );
 };
