@@ -8,7 +8,7 @@ import { createClient } from "@/utils/supabase/server";
 // Base OAuth configurations (without client credentials)
 const baseOAuthConfigs = {
   google: {
-    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback/google-ads`,
+    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/oauth/google/callback`,
     scope: [
       "https://www.googleapis.com/auth/adwords",
       "https://www.googleapis.com/auth/userinfo.email",
@@ -20,13 +20,13 @@ const baseOAuthConfigs = {
     prompt: "consent select_account",
   },
   facebook: {
-    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback/facebook-ads`,
+    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/oauth/facebook/callback`,
     scope: ["ads_management", "ads_read", "business_management"],
     authorizationUrl: "https://www.facebook.com/v23.0/dialog/oauth",
     tokenUrl: "https://graph.facebook.com/v23.0/oauth/access_token",
   },
   meta: {
-    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback/meta-ads`,
+    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/oauth/meta/callback`,
     scope: [
       "ads_management",
       "ads_read",
@@ -49,7 +49,7 @@ const baseOAuthConfigs = {
     tokenUrl: "https://nid.naver.com/oauth2.0/token",
   },
   amazon: {
-    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback/amazon-ads`,
+    redirectUri: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/oauth/amazon/callback`,
     scope: ["advertising::campaign_management"],
     authorizationUrl: "https://www.amazon.com/ap/oa",
     tokenUrl: "https://api.amazon.com/auth/o2/token",

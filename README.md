@@ -217,7 +217,7 @@ pnpm lint
 pnpm format
 
 # 테스트
-pnpm test:fast
+pnpm test:unit
 ```
 
 ### 테스트

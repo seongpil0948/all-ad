@@ -162,7 +162,6 @@ const PLATFORM_ERROR_MAPPINGS: Record<
 export function parsePlatformError(
   error: unknown,
   platform: PlatformType,
-  _operation?: string,
 ): PlatformError {
   // Extract error information
   const errorObj = error as

@@ -9,10 +9,12 @@ import { Form } from "@heroui/form";
 import { FaEnvelope, FaArrowLeft } from "react-icons/fa";
 
 import { resetPassword, type ForgotPasswordState } from "./actions";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 import { ErrorMessage } from "@/components/common/ErrorMessage";
 
 export function ForgotPasswordForm() {
+  const { dictionary: dict } = useDictionary();
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
 
@@ -20,8 +22,7 @@ export function ForgotPasswordForm() {
     errors:
       error === "session_expired"
         ? {
-            general:
-              "세션이 만료되었습니다. 비밀번호 재설정을 다시 요청해주세요.",
+            general: dict.auth.forgotPassword.errors.sessionExpired,
           }
         : {},
   };
@@ -34,9 +35,9 @@ export function ForgotPasswordForm() {
           isRequired
           errorMessage={state.errors?.email}
           isInvalid={!!state.errors?.email}
-          label="이메일"
+          label={dict.auth.forgotPassword.email}
           name="email"
-          placeholder="your@email.com"
+          placeholder={dict.auth.forgotPassword.emailPlaceholder}
           startContent={<FaEnvelope className="text-default-400" />}
           type="email"
           variant="bordered"
@@ -50,7 +51,7 @@ export function ForgotPasswordForm() {
         )}
 
         <Button fullWidth color="primary" type="submit">
-          재설정 링크 보내기
+          {dict.auth.forgotPassword.submit}
         </Button>
 
         <Link
@@ -60,7 +61,7 @@ export function ForgotPasswordForm() {
           size="sm"
         >
           <FaArrowLeft size={12} />
-          로그인으로 돌아가기
+          {dict.auth.forgotPassword.backToLogin}
         </Link>
       </div>
     </Form>

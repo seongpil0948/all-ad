@@ -580,7 +580,7 @@ export function TeamManagement() {
             hasMore={hasMoreMembers}
             isLoading={membersList.isLoading || isPending}
             items={membersList}
-            maxHeight="400px"
+            maxHeight={400}
             renderCell={renderMemberCell}
             onLoadMore={() => membersList.loadMore()}
           />
@@ -607,7 +607,7 @@ export function TeamManagement() {
               hasMore={hasMoreInvitations}
               isLoading={invitationsList.isLoading || isPending}
               items={invitationsList}
-              maxHeight="300px"
+              maxHeight={300}
               renderCell={renderInvitationCell}
               onLoadMore={() => invitationsList.loadMore()}
             />
@@ -623,7 +623,9 @@ export function TeamManagement() {
             <div className="space-y-4">
               <Input
                 label={dict.team.inviteModal.emailLabel}
-                placeholder="team@example.com"
+                placeholder={
+                  dict.team.inviteModal.emailPlaceholder || "team@example.com"
+                }
                 type="email"
                 value={inviteEmail}
                 onChange={(e) => {

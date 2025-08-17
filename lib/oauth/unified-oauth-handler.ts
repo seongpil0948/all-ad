@@ -190,7 +190,7 @@ export async function handleUnifiedOAuthCallback(
       // Store token in platform_credentials table
       await storeTokenData({
         teamId,
-        _userId: userId,
+        userId,
         platform: params.platform,
         tokenData,
       });
@@ -238,18 +238,18 @@ export async function handleUnifiedOAuthCallback(
  */
 async function storeTokenData({
   teamId,
-  _userId,
   platform,
   tokenData,
+  userId,
 }: {
   teamId: string;
-  _userId: string;
   platform: PlatformType;
   tokenData: {
     access_token: string;
     refresh_token?: string;
     expires_in?: number;
   };
+  userId: string;
 }) {
   const { createClient } = await import("@/utils/supabase/server");
   const supabase = await createClient();
@@ -346,6 +346,7 @@ async function storeTokenData({
         expires_at: expiresAt,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        user_id: userId, // Store user ID for tracking
       });
 
     if (insertError) {

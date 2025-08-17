@@ -16,6 +16,7 @@ import {
 } from "react-icons/fa";
 
 import { useDictionary } from "@/hooks/use-dictionary";
+import { Container } from "@/components/layouts/Container";
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -69,47 +70,80 @@ export const Footer = () => {
   ];
 
   return (
-    <footer className="bg-default-50 pt-16 pb-8">
-      <div className="max-w-7xl mx-auto px-6">
+    <footer
+      className="bg-default-50 pt-16 pb-8"
+      data-testid="footer"
+      role="contentinfo"
+      aria-label={dict.footer.company}
+    >
+      <Container>
         {/* Main footer content */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 mb-12">
           {/* Company info */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2" data-testid="footer-company-info">
             <h3 className="text-xl font-bold mb-4">
               {dict.footer.companyInfo.name}
             </h3>
             <p className="text-default-600 mb-4">
               {dict.footer.companyInfo.tagline}
             </p>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-default-600">
-                <FaEnvelope className="w-4 h-4" />
-                <span className="text-sm">{dict.footer.companyInfo.email}</span>
+            <div
+              className="space-y-2"
+              role="list"
+              aria-label={dict.footer.contact}
+            >
+              <div
+                className="flex items-center gap-2 text-default-600"
+                role="listitem"
+              >
+                <FaEnvelope className="w-4 h-4" aria-hidden={true} />
+                <a
+                  href={`mailto:${dict.footer.companyInfo.email}`}
+                  className="text-sm hover:text-primary"
+                  aria-label={`${dict.footer.contact}: ${dict.footer.companyInfo.email}`}
+                  data-testid="footer-email-link"
+                >
+                  {dict.footer.companyInfo.email}
+                </a>
               </div>
-              <div className="flex items-center gap-2 text-default-600">
-                <FaPhone className="w-4 h-4" />
-                <span className="text-sm">{dict.footer.companyInfo.phone}</span>
+              <div
+                className="flex items-center gap-2 text-default-600"
+                role="listitem"
+              >
+                <FaPhone className="w-4 h-4" aria-hidden={true} />
+                <a
+                  href={`tel:${dict.footer.companyInfo.phone}`}
+                  className="text-sm hover:text-primary"
+                  aria-label={`${dict.footer.contact}: ${dict.footer.companyInfo.phone}`}
+                  data-testid="footer-phone-link"
+                >
+                  {dict.footer.companyInfo.phone}
+                </a>
               </div>
-              <div className="flex items-center gap-2 text-default-600">
-                <FaMapMarkerAlt className="w-4 h-4" />
-                <span className="text-sm">
+              <div
+                className="flex items-center gap-2 text-default-600"
+                role="listitem"
+              >
+                <FaMapMarkerAlt className="w-4 h-4" aria-hidden={true} />
+                <address className="text-sm not-italic">
                   {dict.footer.companyInfo.address}
-                </span>
+                </address>
               </div>
             </div>
           </div>
 
           {/* Links sections */}
           {Object.entries(footerLinks).map(([key, section]) => (
-            <div key={key}>
+            <div key={key} data-testid={`footer-section-${key}`}>
               <h4 className="font-semibold mb-4">{section.title}</h4>
-              <ul className="space-y-2">
+              <ul className="space-y-2" role="list" aria-label={section.title}>
                 {section.links.map((link) => (
-                  <li key={link.label}>
+                  <li key={link.label} role="listitem">
                     <Link
                       as={NextLink}
                       className="text-sm text-default-600 hover:text-primary"
                       href={link.href}
+                      data-testid={`footer-link-${link.label.toLowerCase().replace(/\s+/g, "-")}`}
                     >
                       {link.label}
                     </Link>
@@ -121,7 +155,10 @@ export const Footer = () => {
         </div>
 
         {/* Newsletter section */}
-        <div className="bg-default-100 rounded-xl p-6 mb-8">
+        <div
+          className="bg-default-100 rounded-xl p-6 mb-8"
+          data-testid="footer-newsletter"
+        >
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
               <h4 className="font-semibold mb-1">
@@ -131,17 +168,30 @@ export const Footer = () => {
                 {dict.footer.newsletter.subtitle}
               </p>
             </div>
-            <div className="flex gap-2 w-full md:w-auto">
+            <form
+              className="flex gap-2 w-full md:w-auto"
+              data-testid="newsletter-form"
+            >
               <Input
                 className="flex-1 md:w-64"
                 placeholder={dict.footer.newsletter.placeholder}
                 type="email"
                 variant="flat"
+                name="email"
+                aria-label={dict.footer.newsletter.placeholder}
+                data-testid="newsletter-email-input"
+                required
               />
-              <Button color="primary" variant="solid">
+              <Button
+                color="primary"
+                variant="solid"
+                type="submit"
+                data-testid="newsletter-subscribe-button"
+                aria-label={dict.footer.newsletter.subscribe}
+              >
                 {dict.footer.newsletter.subscribe}
               </Button>
-            </div>
+            </form>
           </div>
         </div>
 
@@ -156,7 +206,11 @@ export const Footer = () => {
           </p>
 
           {/* Social links */}
-          <div className="flex gap-3">
+          <div
+            className="flex gap-3"
+            role="list"
+            aria-label={dict.footer.resources}
+          >
             {socialLinks.map((social) => (
               <Button
                 key={social.label}
@@ -166,13 +220,15 @@ export const Footer = () => {
                 href={social.href}
                 size="sm"
                 variant="light"
+                role="listitem"
+                data-testid={`footer-social-${social.label.toLowerCase()}`}
               >
-                {social.icon}
+                <span aria-hidden={true}>{social.icon}</span>
               </Button>
             ))}
           </div>
         </div>
-      </div>
+      </Container>
     </footer>
   );
 };

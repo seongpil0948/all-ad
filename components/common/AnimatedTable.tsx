@@ -1,18 +1,20 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Table, TableBody } from "@heroui/table";
+import type { ComponentProps } from "react";
 
 import { staggerContainer, staggerItem } from "@/utils/animations";
 
+type HeroUITableProps = ComponentProps<typeof Table>;
+
 interface AnimatedTableProps {
-  children: React.ReactNode;
+  children: HeroUITableProps["children"];
   ariaLabel: string;
 }
 
 export function AnimatedTable({ children, ariaLabel }: AnimatedTableProps) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return <Table aria-label={ariaLabel}>{children as any}</Table>;
+  return <Table aria-label={ariaLabel}>{children}</Table>;
 }
 
 interface AnimatedTableBodyProps {
@@ -20,15 +22,20 @@ interface AnimatedTableBodyProps {
 }
 
 export function AnimatedTableBody({ children }: AnimatedTableBodyProps) {
+  const prefersReducedMotion = useReducedMotion();
   return (
     <TableBody>
-      <motion.div
-        animate="animate"
-        initial="initial"
-        variants={staggerContainer}
-      >
-        {children}
-      </motion.div>
+      {prefersReducedMotion ? (
+        <div>{children}</div>
+      ) : (
+        <motion.div
+          animate={"animate"}
+          initial={"initial"}
+          variants={staggerContainer}
+        >
+          {children}
+        </motion.div>
+      )}
     </TableBody>
   );
 }
@@ -44,16 +51,21 @@ export function AnimatedTableRow({
   className,
   key,
 }: AnimatedTableRowProps) {
+  const prefersReducedMotion = useReducedMotion();
   return (
     <motion.tr
       key={key}
       className={className}
       variants={staggerItem}
-      whileHover={{
-        backgroundColor: "rgba(0, 0, 0, 0.02)",
-        scale: 1.01,
-        transition: { duration: 0.2 },
-      }}
+      whileHover={
+        prefersReducedMotion
+          ? { backgroundColor: "rgba(0, 0, 0, 0.02)" }
+          : {
+              backgroundColor: "rgba(0, 0, 0, 0.02)",
+              scale: 1.01,
+              transition: { duration: 0.2 },
+            }
+      }
     >
       {children}
     </motion.tr>

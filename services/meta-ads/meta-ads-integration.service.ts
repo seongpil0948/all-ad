@@ -3,7 +3,6 @@ import crypto from "crypto";
 import log from "@/utils/logger";
 import { getRedisClient } from "@/lib/redis";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const adsSdk = require("facebook-nodejs-business-sdk");
 
 const { AdAccount, Campaign, Business, AdsInsights, FacebookAdsApi, User } =

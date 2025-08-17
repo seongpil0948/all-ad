@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 
 import { EChart } from "./echart";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface PlatformPerformanceChartProps {
   data: AggregatedMetrics;
@@ -149,6 +150,7 @@ export function PlatformPerformanceChart({
   error,
   dateRange = "LAST_30_DAYS",
 }: PlatformPerformanceChartProps) {
+  const { dictionary: dict } = useDictionary();
   const { theme } = useTheme();
   const [selectedTab, setSelectedTab] = useState<string>("overview");
   const [selectedMetric, setSelectedMetric] = useState<string>("impressions");
@@ -508,7 +510,7 @@ export function PlatformPerformanceChart({
     return (
       <Card className={className}>
         <CardBody className="text-center py-8">
-          <div className="text-red-500 mb-2">오류가 발생했습니다</div>
+          <div className="text-red-500 mb-2">{dict.common.error}</div>
           <div className="text-small text-gray-500">{error}</div>
           {onRefresh && (
             <Button
@@ -518,7 +520,7 @@ export function PlatformPerformanceChart({
               variant="light"
               onClick={onRefresh}
             >
-              다시 시도
+              {dict.common.retry}
             </Button>
           )}
         </CardBody>
@@ -538,7 +540,7 @@ export function PlatformPerformanceChart({
               />
               <div>
                 <h3 className="text-lg font-semibold">
-                  {title || `${platformName} 성과 분석`}
+                  {title || platformName}
                 </h3>
                 {subtitle && (
                   <p className="text-small text-gray-500">{subtitle}</p>
@@ -599,10 +601,22 @@ export function PlatformPerformanceChart({
             selectedKey={selectedTab}
             onSelectionChange={(key) => setSelectedTab(key as string)}
           >
-            <Tab key="overview" title="개요" />
-            <Tab key="trends" title="트렌드" />
-            <Tab key="breakdown" title="상세 분석" />
-            <Tab key="insights" title="인사이트" />
+            <Tab
+              key="overview"
+              title={dict.analytics.ui?.tabs?.overview ?? "Overview"}
+            />
+            <Tab
+              key="trends"
+              title={dict.analytics.ui?.tabs?.trends ?? "Trends"}
+            />
+            <Tab
+              key="breakdown"
+              title={dict.analytics.ui?.tabs?.breakdown ?? "Breakdown"}
+            />
+            <Tab
+              key="insights"
+              title={dict.analytics.ui?.tabs?.insights ?? "Insights"}
+            />
           </Tabs>
 
           {/* 컨트롤 패널 */}
@@ -610,7 +624,7 @@ export function PlatformPerformanceChart({
             <div className="flex flex-wrap items-center gap-4 mb-6">
               <Select
                 className="max-w-xs"
-                label="메트릭 선택"
+                label={dict.analytics.ui?.selectMetric ?? dict.common.select}
                 size="sm"
                 value={selectedMetric}
                 onChange={(e) => setSelectedMetric(e.target.value)}
@@ -622,7 +636,7 @@ export function PlatformPerformanceChart({
 
               <Select
                 className="max-w-xs"
-                label="차트 타입"
+                label={dict.adsPerformanceDashboard?.chartType ?? "Chart Type"}
                 size="sm"
                 value={selectedChartType}
                 onChange={(e) =>
@@ -639,12 +653,12 @@ export function PlatformPerformanceChart({
                 size="sm"
                 onValueChange={setIsAnimated}
               >
-                애니메이션
+                {dict.analytics.ui?.animation ?? "Animation"}
               </Switch>
 
               <div className="flex items-center gap-2 ml-auto">
                 {onRefresh && (
-                  <Tooltip content="새로고침">
+                  <Tooltip content={dict.common.refresh}>
                     <Button
                       isIconOnly
                       isLoading={loading}
@@ -658,7 +672,7 @@ export function PlatformPerformanceChart({
                 )}
 
                 {onExport && (
-                  <Tooltip content="내보내기">
+                  <Tooltip content={dict.common.export}>
                     <Button
                       isIconOnly
                       size="sm"
@@ -680,7 +694,7 @@ export function PlatformPerformanceChart({
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2" />
                   <div className="text-small text-gray-500">
-                    데이터 로딩 중...
+                    {dict.common.loading}
                   </div>
                 </div>
               </div>
@@ -725,7 +739,8 @@ export function PlatformPerformanceChart({
                 ) : (
                   <div className="text-center py-8">
                     <div className="text-gray-500">
-                      충분한 데이터가 없어 인사이트를 생성할 수 없습니다.
+                      {dict.analytics.ui?.noInsights ??
+                        "Not enough data to generate insights."}
                     </div>
                   </div>
                 )}
@@ -735,10 +750,10 @@ export function PlatformPerformanceChart({
                 {/* 상세 메트릭 테이블 */}
                 <div>
                   <h4 className="text-medium font-semibold mb-4">
-                    상세 메트릭
+                    {dict.analytics.ui?.detailedMetrics ?? "Detailed Metrics"}
                   </h4>
                   <Table
-                    aria-label="Detailed Metrics Table"
+                    aria-label={dict.dashboard.charts.performance}
                     classNames={{
                       wrapper: "overflow-x-auto",
                       table: "w-full text-small",
@@ -754,7 +769,7 @@ export function PlatformPerformanceChart({
                       )}
                     </TableHeader>
                     <TableBody
-                      emptyContent="데이터가 없습니다"
+                      emptyContent={dict.common.noData}
                       items={metricsCards}
                     >
                       {(item) => (

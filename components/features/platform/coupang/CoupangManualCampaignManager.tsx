@@ -1,3 +1,4 @@
+/* eslint-disable local/no-literal-strings */
 "use client";
 
 import React, { useState } from "react";

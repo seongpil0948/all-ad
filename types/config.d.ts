@@ -3,6 +3,7 @@
 export interface SiteConfig {
   name: string;
   description: string;
+  tagline?: string;
   navItems: Array<{
     label: string;
     href: string;

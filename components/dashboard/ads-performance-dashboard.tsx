@@ -44,6 +44,7 @@ import {
 
 import { MultiPlatformChart } from "@/components/charts/multi-platform-chart";
 import { PlatformPerformanceChart } from "@/components/charts/platform-performance-chart";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface AdsPerformanceDashboardProps {
   initialData?: MultiPlatformMetrics;
@@ -105,6 +106,14 @@ export function AdsPerformanceDashboard({
   theme = "auto",
   className,
 }: AdsPerformanceDashboardProps) {
+  const { dictionary } = useDictionary();
+  const SELECTION_MULTIPLE = "multiple" as const;
+  const ID = {
+    exportFormat: "export-format",
+    exportDataType: "export-data-type",
+    refreshIntervalInput: "refresh-interval-input",
+    themeSelectLabel: "theme-select-label",
+  } as const;
   // State
   const [data, setData] = useState<MultiPlatformMetrics | null>(
     initialData || null,
@@ -290,9 +299,11 @@ export function AdsPerformanceDashboard({
       {/* 헤더 */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-2xl font-bold">광고 성과 대시보드</h1>
+          <h1 className="text-2xl font-bold">
+            {dictionary.adsPerformanceDashboard.title}
+          </h1>
           <p className="text-gray-600">
-            모든 광고 플랫폼의 성과를 한눈에 확인하세요
+            {dictionary.adsPerformanceDashboard.subtitle}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -302,7 +313,7 @@ export function AdsPerformanceDashboard({
               size="sm"
               onValueChange={setAutoRefresh}
             >
-              실시간 업데이트
+              {dictionary.adsPerformanceDashboard.realtimeUpdate}
             </Switch>
           )}
           <Button
@@ -311,7 +322,7 @@ export function AdsPerformanceDashboard({
             variant="light"
             onClick={() => setShowFilters(!showFilters)}
           >
-            필터
+            {dictionary.adsPerformanceDashboard.filter}
           </Button>
           <Button
             size="sm"
@@ -319,7 +330,7 @@ export function AdsPerformanceDashboard({
             variant="light"
             onClick={onExportOpen}
           >
-            내보내기
+            {dictionary.adsPerformanceDashboard.export}
           </Button>
           <Button
             size="sm"
@@ -327,7 +338,7 @@ export function AdsPerformanceDashboard({
             variant="light"
             onClick={onSettingsOpen}
           >
-            설정
+            {dictionary.adsPerformanceDashboard.settings}
           </Button>
           <Button
             isLoading={loading}
@@ -336,7 +347,7 @@ export function AdsPerformanceDashboard({
             variant="light"
             onClick={() => loadData()}
           >
-            새로고침
+            {dictionary.adsPerformanceDashboard.refresh}
           </Button>
         </div>
       </div>
@@ -350,13 +361,13 @@ export function AdsPerformanceDashboard({
             />
             <span className="text-small text-gray-600">
               {loading
-                ? "업데이트 중..."
-                : `마지막 업데이트: ${lastUpdated.toLocaleTimeString()}`}
+                ? dictionary.adsPerformanceDashboard.updating
+                : `${dictionary.adsPerformanceDashboard.lastUpdate.replace("{{time}}", lastUpdated.toLocaleTimeString())}`}
             </span>
           </div>
           {autoRefresh && (
             <Badge color="success" variant="flat">
-              실시간
+              {dictionary.adsPerformanceDashboard.realtime}
             </Badge>
           )}
         </div>
@@ -379,12 +390,14 @@ export function AdsPerformanceDashboard({
       {showFilters && (
         <Card>
           <CardHeader>
-            <h3 className="text-lg font-semibold">필터 및 옵션</h3>
+            <h3 className="text-lg font-semibold">
+              {dictionary.adsPerformanceDashboard.filtersAndOptions}
+            </h3>
           </CardHeader>
           <CardBody>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Select
-                label="기간"
+                label={dictionary.adsPerformanceDashboard.period}
                 value={filters.dateRange}
                 onChange={(e) =>
                   handleFiltersChange({
@@ -398,9 +411,9 @@ export function AdsPerformanceDashboard({
               </Select>
 
               <Select
-                label="계정"
+                label={dictionary.adsPerformanceDashboard.account}
                 selectedKeys={filters.accounts}
-                selectionMode="multiple"
+                selectionMode={SELECTION_MULTIPLE}
                 onSelectionChange={(keys) =>
                   handleFiltersChange({
                     accounts: Array.from(keys) as string[],
@@ -415,7 +428,7 @@ export function AdsPerformanceDashboard({
               </Select>
 
               <Select
-                label="그룹화"
+                label={dictionary.adsPerformanceDashboard.groupBy}
                 value={filters.groupBy}
                 onChange={(e) =>
                   handleFiltersChange({
@@ -423,23 +436,39 @@ export function AdsPerformanceDashboard({
                   })
                 }
               >
-                <SelectItem key="platform">플랫폼별</SelectItem>
-                <SelectItem key="account">계정별</SelectItem>
-                <SelectItem key="campaign">캠페인별</SelectItem>
-                <SelectItem key="date">날짜별</SelectItem>
+                <SelectItem key="platform">
+                  {dictionary.adsPerformanceDashboard.byPlatform}
+                </SelectItem>
+                <SelectItem key="account">
+                  {dictionary.adsPerformanceDashboard.byAccount}
+                </SelectItem>
+                <SelectItem key="campaign">
+                  {dictionary.adsPerformanceDashboard.byCampaign}
+                </SelectItem>
+                <SelectItem key="date">
+                  {dictionary.adsPerformanceDashboard.byDate}
+                </SelectItem>
               </Select>
 
               <Select
-                label="차트 타입"
+                label={dictionary.adsPerformanceDashboard.chartType}
                 value={selectedChartType}
                 onChange={(e) =>
                   setSelectedChartType(e.target.value as ChartType)
                 }
               >
-                <SelectItem key="bar">막대 차트</SelectItem>
-                <SelectItem key="line">선 차트</SelectItem>
-                <SelectItem key="area">영역 차트</SelectItem>
-                <SelectItem key="pie">원형 차트</SelectItem>
+                <SelectItem key="bar">
+                  {dictionary.adsPerformanceDashboard.barChart}
+                </SelectItem>
+                <SelectItem key="line">
+                  {dictionary.adsPerformanceDashboard.lineChart}
+                </SelectItem>
+                <SelectItem key="area">
+                  {dictionary.adsPerformanceDashboard.areaChart}
+                </SelectItem>
+                <SelectItem key="pie">
+                  {dictionary.adsPerformanceDashboard.pieChart}
+                </SelectItem>
               </Select>
             </div>
           </CardBody>
@@ -451,7 +480,9 @@ export function AdsPerformanceDashboard({
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">알림</h3>
+              <h3 className="text-lg font-semibold">
+                {dictionary.adsPerformanceDashboard.notifications}
+              </h3>
               <div className="flex items-center gap-2">
                 <Badge color="danger" variant="flat">
                   {alertStats.critical}
@@ -460,7 +491,8 @@ export function AdsPerformanceDashboard({
                   {alertStats.warning}
                 </Badge>
                 <Badge color="primary" variant="flat">
-                  {alertStats.unacknowledged} 미확인
+                  {alertStats.unacknowledged}{" "}
+                  {dictionary.adsPerformanceDashboard.unacknowledged}
                 </Badge>
               </div>
             </div>
@@ -500,7 +532,7 @@ export function AdsPerformanceDashboard({
                         variant="light"
                         onClick={() => onAlertAcknowledge(alert.id)}
                       >
-                        확인
+                        {dictionary.adsPerformanceDashboard.acknowledge}
                       </Button>
                     )}
                   </div>
@@ -520,7 +552,9 @@ export function AdsPerformanceDashboard({
               <div className="text-2xl font-bold">
                 ₩{performanceSummary.totalSpend.toLocaleString()}
               </div>
-              <div className="text-small text-gray-500">총 광고비</div>
+              <div className="text-small text-gray-500">
+                {dictionary.adsPerformanceDashboard.totalSpend}
+              </div>
             </CardBody>
           </Card>
           <Card>
@@ -529,7 +563,9 @@ export function AdsPerformanceDashboard({
               <div className="text-2xl font-bold">
                 {performanceSummary.totalImpressions.toLocaleString()}
               </div>
-              <div className="text-small text-gray-500">총 노출수</div>
+              <div className="text-small text-gray-500">
+                {dictionary.adsPerformanceDashboard.totalImpressions}
+              </div>
             </CardBody>
           </Card>
           <Card>
@@ -538,7 +574,9 @@ export function AdsPerformanceDashboard({
               <div className="text-2xl font-bold">
                 {performanceSummary.totalConversions.toLocaleString()}
               </div>
-              <div className="text-small text-gray-500">총 전환수</div>
+              <div className="text-small text-gray-500">
+                {dictionary.adsPerformanceDashboard.totalConversions}
+              </div>
             </CardBody>
           </Card>
           <Card>
@@ -547,7 +585,9 @@ export function AdsPerformanceDashboard({
               <div className="text-2xl font-bold">
                 {performanceSummary.averageRoas.toFixed(2)}
               </div>
-              <div className="text-small text-gray-500">평균 ROAS</div>
+              <div className="text-small text-gray-500">
+                {dictionary.adsPerformanceDashboard.averageRoas}
+              </div>
               <div className="mt-2">
                 <Chip
                   color={
@@ -560,10 +600,10 @@ export function AdsPerformanceDashboard({
                   size="sm"
                 >
                   {performanceSummary.efficiency === "excellent"
-                    ? "우수"
+                    ? dictionary.adsPerformanceDashboard.excellent
                     : performanceSummary.efficiency === "good"
-                      ? "양호"
-                      : "개선필요"}
+                      ? dictionary.adsPerformanceDashboard.good
+                      : dictionary.adsPerformanceDashboard.needsImprovement}
                 </Chip>
               </div>
             </CardBody>
@@ -578,10 +618,22 @@ export function AdsPerformanceDashboard({
             selectedKey={selectedTab}
             onSelectionChange={(key) => setSelectedTab(key as string)}
           >
-            <Tab key="overview" title="전체 개요" />
-            <Tab key="platforms" title="플랫폼별" />
-            <Tab key="trends" title="트렌드 분석" />
-            <Tab key="performance" title="성과 분석" />
+            <Tab
+              key="overview"
+              title={dictionary.adsPerformanceDashboard.overview}
+            />
+            <Tab
+              key="platforms"
+              title={dictionary.adsPerformanceDashboard.byPlatformTab}
+            />
+            <Tab
+              key="trends"
+              title={dictionary.adsPerformanceDashboard.trendAnalysis}
+            />
+            <Tab
+              key="performance"
+              title={dictionary.adsPerformanceDashboard.performanceAnalysis}
+            />
           </Tabs>
         </CardHeader>
         <CardBody>
@@ -589,11 +641,11 @@ export function AdsPerformanceDashboard({
             <div className="text-center py-8">
               <XCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
               <div className="text-lg font-semibold mb-2">
-                오류가 발생했습니다
+                {dictionary.adsPerformanceDashboard.errorOccurred}
               </div>
               <div className="text-gray-600 mb-4">{error}</div>
               <Button color="primary" onClick={() => loadData()}>
-                다시 시도
+                {dictionary.adsPerformanceDashboard.retry}
               </Button>
             </div>
           )}
@@ -613,7 +665,9 @@ export function AdsPerformanceDashboard({
           {selectedTab === "platforms" && (
             <div className="space-y-6">
               <div className="flex items-center gap-2">
-                <span className="text-small text-gray-500">플랫폼 선택:</span>
+                <span className="text-small text-gray-500">
+                  {dictionary.adsPerformanceDashboard.platformSelect}
+                </span>
                 {platforms.map((platform) => (
                   <Button
                     key={platform}
@@ -642,7 +696,7 @@ export function AdsPerformanceDashboard({
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4" />
                   <div className="text-gray-500">
-                    플랫폼 데이터를 불러오는 중...
+                    {dictionary.adsPerformanceDashboard.loadingPlatformData}
                   </div>
                 </div>
               )}
@@ -652,9 +706,11 @@ export function AdsPerformanceDashboard({
           {selectedTab === "trends" && (
             <div className="text-center py-8">
               <LineChart className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-              <div className="text-lg font-semibold mb-2">트렌드 분석</div>
+              <div className="text-lg font-semibold mb-2">
+                {dictionary.adsPerformanceDashboard.trendAnalysisTitle}
+              </div>
               <div className="text-gray-600">
-                시계열 데이터를 분석하여 트렌드를 표시합니다.
+                {dictionary.adsPerformanceDashboard.trendAnalysisSubtitle}
               </div>
             </div>
           )}
@@ -662,9 +718,11 @@ export function AdsPerformanceDashboard({
           {selectedTab === "performance" && (
             <div className="text-center py-8">
               <BarChart3 className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-              <div className="text-lg font-semibold mb-2">성과 분석</div>
+              <div className="text-lg font-semibold mb-2">
+                {dictionary.adsPerformanceDashboard.performanceAnalysisTitle}
+              </div>
               <div className="text-gray-600">
-                상세한 성과 분석 및 최적화 제안을 표시합니다.
+                {dictionary.adsPerformanceDashboard.performanceAnalysisSubtitle}
               </div>
             </div>
           )}
@@ -674,53 +732,57 @@ export function AdsPerformanceDashboard({
       {/* 내보내기 모달 */}
       <Modal isOpen={isExportOpen} onClose={onExportClose}>
         <ModalContent>
-          <ModalHeader>데이터 내보내기</ModalHeader>
+          <ModalHeader>
+            {dictionary.adsPerformanceDashboard.exportData}
+          </ModalHeader>
           <ModalBody>
             <div className="space-y-4">
               <div>
                 <label
                   className="block text-sm font-medium mb-2"
-                  htmlFor="export-format"
+                  htmlFor={ID.exportFormat}
                 >
-                  내보내기 형식
+                  {dictionary.adsPerformanceDashboard.exportFormat}
                 </label>
-                <div className="grid grid-cols-2 gap-2" id="export-format">
+                <div className="grid grid-cols-2 gap-2" id={ID.exportFormat}>
                   <Button variant="light" onClick={() => handleExport("csv")}>
-                    CSV
+                    {dictionary.adsPerformanceDashboard.csv}
                   </Button>
                   <Button variant="light" onClick={() => handleExport("xlsx")}>
-                    Excel
+                    {dictionary.adsPerformanceDashboard.excel}
                   </Button>
                   <Button variant="light" onClick={() => handleExport("json")}>
-                    JSON
+                    {dictionary.adsPerformanceDashboard.json}
                   </Button>
                   <Button variant="light" onClick={() => handleExport("pdf")}>
-                    PDF
+                    {dictionary.adsPerformanceDashboard.pdf}
                   </Button>
                 </div>
               </div>
               <div>
                 <label
                   className="block text-sm font-medium mb-2"
-                  htmlFor="export-data-type"
+                  htmlFor={ID.exportDataType}
                 >
-                  포함할 데이터
+                  {dictionary.adsPerformanceDashboard.dataToInclude}
                 </label>
-                <div className="space-y-2" id="export-data-type">
+                <div className="space-y-2" id={ID.exportDataType}>
                   <Switch defaultSelected id="summary-export">
-                    요약 데이터
+                    {dictionary.adsPerformanceDashboard.summaryData}
                   </Switch>
                   <Switch defaultSelected id="detailed-export">
-                    상세 데이터
+                    {dictionary.adsPerformanceDashboard.detailedData}
                   </Switch>
-                  <Switch id="charts-export">차트 이미지</Switch>
+                  <Switch id="charts-export">
+                    {dictionary.adsPerformanceDashboard.chartImages}
+                  </Switch>
                 </div>
               </div>
             </div>
           </ModalBody>
           <ModalFooter>
             <Button variant="light" onClick={onExportClose}>
-              취소
+              {dictionary.adsPerformanceDashboard.cancel}
             </Button>
           </ModalFooter>
         </ModalContent>
@@ -729,7 +791,9 @@ export function AdsPerformanceDashboard({
       {/* 설정 모달 */}
       <Modal isOpen={isSettingsOpen} onClose={onSettingsClose}>
         <ModalContent>
-          <ModalHeader>대시보드 설정</ModalHeader>
+          <ModalHeader>
+            {dictionary.adsPerformanceDashboard.dashboardSettings}
+          </ModalHeader>
           <ModalBody>
             <div className="space-y-4">
               <div>
@@ -738,15 +802,15 @@ export function AdsPerformanceDashboard({
                   isSelected={autoRefresh}
                   onValueChange={setAutoRefresh}
                 >
-                  자동 새로고침
+                  {dictionary.adsPerformanceDashboard.autoRefresh}
                 </Switch>
               </div>
               <div>
                 <Input
-                  id="refresh-interval-input"
-                  label="새로고침 간격 (초)"
-                  max="300"
-                  min="10"
+                  id={ID.refreshIntervalInput}
+                  label={dictionary.adsPerformanceDashboard.refreshInterval}
+                  max={300}
+                  min={10}
                   type="number"
                   value={realtimeInterval.toString()}
                   onChange={() => {
@@ -756,24 +820,30 @@ export function AdsPerformanceDashboard({
               </div>
               <div>
                 <Select
-                  aria-labelledby="theme-select-label"
+                  aria-labelledby={ID.themeSelectLabel}
                   id="theme-select"
-                  label="테마"
+                  label={dictionary.adsPerformanceDashboard.theme}
                   value={theme}
                 >
-                  <SelectItem key="light">라이트</SelectItem>
-                  <SelectItem key="dark">다크</SelectItem>
-                  <SelectItem key="auto">자동</SelectItem>
+                  <SelectItem key="light">
+                    {dictionary.adsPerformanceDashboard.light}
+                  </SelectItem>
+                  <SelectItem key="dark">
+                    {dictionary.adsPerformanceDashboard.dark}
+                  </SelectItem>
+                  <SelectItem key="auto">
+                    {dictionary.adsPerformanceDashboard.auto}
+                  </SelectItem>
                 </Select>
               </div>
             </div>
           </ModalBody>
           <ModalFooter>
             <Button variant="light" onClick={onSettingsClose}>
-              취소
+              {dictionary.adsPerformanceDashboard.cancel}
             </Button>
             <Button color="primary" onClick={onSettingsClose}>
-              저장
+              {dictionary.adsPerformanceDashboard.save}
             </Button>
           </ModalFooter>
         </ModalContent>

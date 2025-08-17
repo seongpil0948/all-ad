@@ -5,6 +5,20 @@
 -- =====================================================
 
 -- =====================================================
+-- EXTENSIONS
+-- =====================================================
+
+-- UUID and crypto helpers
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- Scheduling and HTTP
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+CREATE EXTENSION IF NOT EXISTS pg_net;
+
+-- Allow access to cron schema for superuser
+GRANT USAGE ON SCHEMA cron TO postgres;
+
+-- =====================================================
 -- TYPE DEFINITIONS
 -- =====================================================
 
@@ -194,6 +208,17 @@ CREATE TABLE public.oauth_states (
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
+-- 활동(감사) 로그 테이블 (크론 및 시스템 이벤트 기록)
+CREATE TABLE IF NOT EXISTS public.activity_logs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  action TEXT NOT NULL,
+  entity_type TEXT NOT NULL,
+  entity_id TEXT NOT NULL,
+  performed_by UUID,
+  details JSONB DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- =====================================================
 -- INDEXES (성능 최적화를 위한 추가 인덱스 포함)
 -- =====================================================
@@ -233,6 +258,11 @@ CREATE INDEX idx_oauth_states_created_at ON public.oauth_states(created_at);
 -- RLS 성능 최적화를 위한 추가 인덱스
 CREATE INDEX idx_teams_master_user_id ON public.teams(master_user_id);
 CREATE INDEX idx_platform_credentials_created_by ON public.platform_credentials(created_by);
+
+-- 활동 로그 인덱스
+CREATE INDEX IF NOT EXISTS idx_activity_logs_entity ON public.activity_logs(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_activity_logs_performed_by ON public.activity_logs(performed_by);
+CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON public.activity_logs(created_at DESC);
 
 -- =====================================================
 -- FUNCTIONS
@@ -542,40 +572,180 @@ $$;
 -- 크론 작업 상태 가져오기 함수 (로컬 환경용 - 단순화된 버전)
 CREATE OR REPLACE FUNCTION public.get_cron_job_status()
 RETURNS TABLE(
-  jobname text,
-  status text,
-  message text
+  job_id BIGINT,
+  job_name TEXT,
+  schedule TEXT,
+  active BOOLEAN,
+  last_run_status TEXT,
+  last_run_time TIMESTAMPTZ,
+  run_count BIGINT,
+  success_count BIGINT,
+  failure_count BIGINT
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  -- 로컬 환경에서는 단순화된 상태 반환
   RETURN QUERY
   SELECT 
-    'refresh-oauth-tokens'::text as jobname,
-    'simulated'::text as status,
-    'Local environment - cron jobs are simulated'::text as message
-  UNION ALL
-  SELECT 
-    'google-ads-sync-hourly'::text as jobname,
-    'simulated'::text as status,
-    'Local environment - cron jobs are simulated'::text as message;
+    j.jobid,
+    j.jobname,
+    j.schedule,
+    j.active,
+    COALESCE(
+      (SELECT status 
+       FROM cron.job_run_details jrd 
+       WHERE jrd.jobid = j.jobid 
+       ORDER BY start_time DESC 
+       LIMIT 1), 
+      'never_run'
+    ) as last_run_status,
+    (SELECT MAX(start_time) 
+     FROM cron.job_run_details jrd 
+     WHERE jrd.jobid = j.jobid) as last_run_time,
+    (SELECT COUNT(*) 
+     FROM cron.job_run_details jrd 
+     WHERE jrd.jobid = j.jobid) as run_count,
+    (SELECT COUNT(*) 
+     FROM cron.job_run_details jrd 
+     WHERE jrd.jobid = j.jobid AND status = 'succeeded') as success_count,
+    (SELECT COUNT(*) 
+     FROM cron.job_run_details jrd 
+     WHERE jrd.jobid = j.jobid AND status = 'failed') as failure_count
+  FROM cron.job j
+  WHERE j.jobname IN (
+    'refresh-oauth-tokens', 
+    'google-ads-sync-hourly', 
+    'google-ads-sync-full-daily',
+    'cleanup-cron-history'
+  )
+  ORDER BY j.jobid;
 END;
 $$;
 
 -- Edge Function 호출 함수 (로컬 환경용 - 단순화된 버전)
 CREATE OR REPLACE FUNCTION public.call_edge_function(function_name text, payload jsonb DEFAULT '{}')
-RETURNS bigint
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  result jsonb;
+  service_url text;
+  service_role_key text;
+BEGIN
+  -- Prefer config values if present, fallback to local dev defaults
+  service_url := COALESCE(current_setting('app.supabase_url', true), 'http://127.0.0.1:54321');
+  service_role_key := COALESCE(current_setting('app.service_role_key', true),
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
+  );
+
+  SELECT net.http_post(
+    url := service_url || '/functions/v1/' || function_name,
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || service_role_key
+    ),
+    body := COALESCE(payload, '{}'::jsonb),
+    timeout_milliseconds := 60000
+  )::jsonb INTO result;
+
+  RETURN result;
+END;
+$$;
+
+-- 최근 크론 실행 내역
+CREATE OR REPLACE FUNCTION public.get_recent_cron_activity(limit_count INTEGER DEFAULT 10)
+RETURNS TABLE(
+  job_name TEXT,
+  status TEXT,
+  started_at TIMESTAMPTZ,
+  ended_at TIMESTAMPTZ,
+  duration INTERVAL,
+  return_message TEXT
+)
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  -- 로컬 환경에서는 단순히 로그만 남기고 더미 ID 반환
-  RAISE NOTICE 'Local environment: Edge function % called with payload %', function_name, payload;
-  RETURN 1;
+  RETURN QUERY
+  SELECT 
+    j.jobname,
+    jrd.status,
+    jrd.start_time,
+    jrd.end_time,
+    jrd.end_time - jrd.start_time as duration,
+    jrd.return_message
+  FROM cron.job_run_details jrd
+  JOIN cron.job j ON j.jobid = jrd.jobid
+  ORDER BY jrd.start_time DESC
+  LIMIT limit_count;
+END;
+$$;
+
+-- 특정 잡 헬스체크
+CREATE OR REPLACE FUNCTION public.check_cron_job_health(job_name_param TEXT)
+RETURNS TABLE(
+  job_name TEXT,
+  is_healthy BOOLEAN,
+  health_message TEXT,
+  last_success TIMESTAMPTZ,
+  recent_failures INTEGER,
+  next_run TIMESTAMPTZ
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_job_id BIGINT;
+  v_last_status TEXT;
+  v_last_run TIMESTAMPTZ;
+  v_failure_count INTEGER;
+BEGIN
+  SELECT jobid INTO v_job_id FROM cron.job WHERE jobname = job_name_param;
+
+  IF v_job_id IS NULL THEN
+    RETURN QUERY SELECT job_name_param, FALSE, 'Job not found', NULL::timestamptz, 0, NULL::timestamptz;
+    RETURN;
+  END IF;
+
+  SELECT status, start_time
+  INTO v_last_status, v_last_run
+  FROM cron.job_run_details
+  WHERE jobid = v_job_id
+  ORDER BY start_time DESC
+  LIMIT 1;
+
+  SELECT COUNT(*) INTO v_failure_count
+  FROM cron.job_run_details
+  WHERE jobid = v_job_id
+    AND status = 'failed'
+    AND start_time > NOW() - INTERVAL '24 hours';
+
+  RETURN QUERY
+  SELECT 
+    job_name_param,
+    CASE 
+      WHEN v_last_status IS NULL THEN FALSE
+      WHEN v_last_status = 'failed' AND v_failure_count > 3 THEN FALSE
+      WHEN v_last_run < NOW() - INTERVAL '2 hours' AND job_name_param LIKE '%hourly%' THEN FALSE
+      WHEN v_last_run < NOW() - INTERVAL '25 hours' AND job_name_param LIKE '%daily%' THEN FALSE
+      ELSE TRUE
+    END,
+    CASE 
+      WHEN v_last_status IS NULL THEN 'Never run'
+      WHEN v_last_status = 'failed' AND v_failure_count > 3 THEN 'Multiple failures in last 24 hours'
+      WHEN v_last_run < NOW() - INTERVAL '2 hours' AND job_name_param LIKE '%hourly%' THEN 'Missed recent run'
+      WHEN v_last_run < NOW() - INTERVAL '25 hours' AND job_name_param LIKE '%daily%' THEN 'Missed daily run'
+      ELSE 'Healthy'
+    END,
+    (SELECT MAX(start_time) FROM cron.job_run_details WHERE jobid = v_job_id AND status = 'succeeded'),
+    v_failure_count,
+    (SELECT cron.next_run(schedule)::timestamptz FROM cron.job WHERE jobid = v_job_id);
 END;
 $$;
 
@@ -960,3 +1130,81 @@ COMMENT ON COLUMN platform_credentials.error_message IS 'Error message from last
 -- =====================================================
 
 SELECT 'Unified schema with RLS performance optimizations applied successfully!' as message;
+
+-- =====================================================
+-- CRON JOB DEFINITIONS (schedules)
+-- =====================================================
+
+-- 1) Test job (every minute) - development visibility
+SELECT cron.schedule(
+  'test-cron-job',
+  '* * * * *',
+  $$
+  INSERT INTO public.activity_logs (
+    action, entity_type, entity_id, performed_by, details, created_at
+  ) VALUES (
+    'cron_test', 'system', 'test-cron', '00000000-0000-0000-0000-000000000000'::uuid,
+    jsonb_build_object('message', 'Test cron job executed', 'timestamp', now()),
+    NOW()
+  );
+  $$
+);
+
+-- 2) Refresh OAuth tokens - hourly
+SELECT cron.schedule(
+  'refresh-oauth-tokens',
+  '0 * * * *',
+  $$
+  INSERT INTO public.activity_logs (
+    action, entity_type, entity_id, performed_by, details, created_at
+  ) VALUES (
+    'refresh_tokens', 'system', 'oauth-refresh', '00000000-0000-0000-0000-000000000000'::uuid,
+    jsonb_build_object(
+      'message', 'OAuth token refresh triggered',
+      'timestamp', now(),
+      'credentials_count', (SELECT COUNT(*) FROM public.platform_credentials WHERE is_active = true)
+    ),
+    NOW()
+  );
+  $$
+);
+
+-- 3) Google Ads incremental sync - hourly at :30
+SELECT cron.schedule(
+  'google-ads-sync-hourly',
+  '30 * * * *',
+  $$
+  INSERT INTO public.activity_logs (
+    action, entity_type, entity_id, performed_by, details, created_at
+  ) VALUES (
+    'sync_google_ads', 'system', 'google-ads-sync', '00000000-0000-0000-0000-000000000000'::uuid,
+    jsonb_build_object('message', 'Google Ads hourly sync triggered', 'timestamp', now(), 'type', 'incremental'),
+    NOW()
+  );
+  $$
+);
+
+-- 4) Google Ads full sync - daily 02:00
+SELECT cron.schedule(
+  'google-ads-sync-full-daily',
+  '0 2 * * *',
+  $$
+  INSERT INTO public.activity_logs (
+    action, entity_type, entity_id, performed_by, details, created_at
+  ) VALUES (
+    'sync_google_ads_full', 'system', 'google-ads-sync-full', '00000000-0000-0000-0000-000000000000'::uuid,
+    jsonb_build_object('message', 'Google Ads full sync triggered', 'timestamp', now(), 'type', 'full', 'days', 30),
+    NOW()
+  );
+  $$
+);
+
+-- 5) Cleanup old cron run details - weekly Sun 03:00
+SELECT cron.schedule(
+  'cleanup-cron-history',
+  '0 3 * * 0',
+  $$
+  DELETE FROM cron.job_run_details 
+  WHERE start_time < NOW() - INTERVAL '30 days';
+  $$
+);

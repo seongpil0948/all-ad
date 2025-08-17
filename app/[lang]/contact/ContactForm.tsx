@@ -6,8 +6,10 @@ import { Button } from "@heroui/button";
 import { Form } from "@heroui/form";
 import { FaUser, FaEnvelope, FaBuilding, FaPhone } from "react-icons/fa";
 import { motion } from "framer-motion";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 export default function ContactForm() {
+  const { dictionary: dict } = useDictionary();
   return (
     <motion.div
       animate={{ opacity: 1, y: 0 }}
@@ -16,24 +18,24 @@ export default function ContactForm() {
     >
       <Card>
         <CardHeader className="flex flex-col gap-1 px-6 pt-6">
-          <h2 className="text-xl font-semibold">문의 양식</h2>
+          <h2 className="text-xl font-semibold">{dict.contact.form.title}</h2>
         </CardHeader>
         <CardBody className="px-6 py-4">
           <Form className="flex flex-col gap-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
                 isRequired
-                label="이름"
+                label={dict.contact.form.nameLabel}
                 name="name"
-                placeholder="홍길동"
+                placeholder={dict.contact.form.namePlaceholder}
                 startContent={<FaUser className="text-default-400" />}
                 variant="bordered"
               />
               <Input
                 isRequired
-                label="회사명"
+                label={dict.contact.form.companyLabel}
                 name="company"
-                placeholder="회사명을 입력하세요"
+                placeholder={dict.contact.form.companyPlaceholder}
                 startContent={<FaBuilding className="text-default-400" />}
                 variant="bordered"
               />
@@ -42,17 +44,17 @@ export default function ContactForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
                 isRequired
-                label="이메일"
+                label={dict.contact.form.emailLabel}
                 name="email"
-                placeholder="your@company.com"
+                placeholder={dict.contact.form.emailPlaceholder}
                 startContent={<FaEnvelope className="text-default-400" />}
                 type="email"
                 variant="bordered"
               />
               <Input
-                label="전화번호"
+                label={dict.contact.form.phoneLabel}
                 name="phone"
-                placeholder="010-1234-5678"
+                placeholder={dict.contact.form.phonePlaceholder}
                 startContent={<FaPhone className="text-default-400" />}
                 type="tel"
                 variant="bordered"
@@ -61,15 +63,15 @@ export default function ContactForm() {
 
             <Textarea
               isRequired
-              label="문의 내용"
+              label={dict.contact.form.messageLabel}
               minRows={4}
               name="message"
-              placeholder="어떤 도움이 필요하신지 자세히 알려주세요"
+              placeholder={dict.contact.form.messagePlaceholder}
               variant="bordered"
             />
 
             <Button className="mt-2" color="primary" type="submit">
-              문의하기
+              {dict.contact.form.submit}
             </Button>
           </Form>
         </CardBody>

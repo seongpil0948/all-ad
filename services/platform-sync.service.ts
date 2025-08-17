@@ -24,10 +24,7 @@ export class PlatformSyncService {
     private databaseService: PlatformDatabaseService,
     private log: Logger,
   ) {}
-  async syncAllPlatforms(
-    teamId: string,
-    _userId: string,
-  ): Promise<{
+  async syncAllPlatforms(teamId: string): Promise<{
     success: boolean;
     results: Record<PlatformType, { success: boolean; error?: string }>;
   }> {

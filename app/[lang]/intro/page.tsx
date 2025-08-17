@@ -101,12 +101,18 @@ export default async function Home({
             <p className="text-xl text-white/90 mb-8">
               {dict.home.hero.subCta}
             </p>
-            <CTAButton
-              action="start-trial"
-              className="bg-white text-primary font-semibold"
-              path="/login"
-              text={dict.pricing.cta.startFreeTrial}
-            />
+            {(() => {
+              const ACTION_START_TRIAL = "start-trial" as const;
+              const PATH_LOGIN = "/login" as const;
+              return (
+                <CTAButton
+                  action={ACTION_START_TRIAL}
+                  className="bg-white text-primary font-semibold"
+                  path={PATH_LOGIN}
+                  text={dict.pricing.cta.startFreeTrial}
+                />
+              );
+            })()}
           </div>
         </div>
       </section>

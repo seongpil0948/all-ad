@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### 작업 전후 (필수!) 작업
 
 - 작업전 테스트 코드를 먼저 생성 또는 수정하여 목적을 확실히 해야해
-- 작업 후 (pnpm typecheck && pnpm format && pnpm lint && pnpm test:fast) 를 통해 문제가 없음을 증명해야해
+- 작업 후 (pnpm typecheck && pnpm format && pnpm lint && pnpm test:unit) 를 통해 문제가 없음을 증명해야해
 - 만약 작업후 테스트코드가 잘못된거라면 수정하고 아니면 어플리케이션 코드를 수정해야해
 - 작업 후 미사용 코드나 잘못된 코드가 없는지 확인후 리팩토링작업이 이루어져야해 즉 모든 코드는 참조되고 사용되고 있어야만 해
 
@@ -32,11 +32,35 @@ Next.js 15 multi-tenant advertising platform integrating multiple ad platforms (
 - 플랫폼별 여러 계정 연동 지원 필요
 - 작업 전 STRUCTURE.md 확인하여 중복 방지
 - 작업 후: `pnpm format`, `pnpm lint`, `pnpm build` 검증
-- Playwright 테스트 코드 최신화 필수
+- Playwright 테스트 코드 최신화 필수, 선택자는 무조건 `data-testid` 사용
 - 이메일 기반 로그인/회원가입 시스템 구현됨
 - 재사용 가능 코드는 `components` 또는 `utils`에 저장
 - 아이콘: react-icons 사용
 - 로깅: `import log from "@/utils/logger"` 사용 (console.log 금지)
+
+### Internationalization (i18n)
+
+- **Client Components**: Use the `useDictionary` hook to access the dictionary.
+
+  ```typescript
+  import { useDictionary } from "@/hooks/use-dictionary";
+
+  const { dictionary } = useDictionary();
+  // ...
+  <h1>{dictionary.some.text}</h1>
+  ```
+
+- **Server Components**: Use the `getDictionary` function to get the dictionary.
+
+  ```typescript
+  import { getDictionary } from "@/app/[lang]/dictionaries";
+
+  const dictionary = await getDictionary(locale);
+  // ...
+  <h1>{dictionary.some.text}</h1>
+  ```
+
+-
 
 ### 기술 스택
 
@@ -84,14 +108,132 @@ npm run gen:type:supabase       # Generate types from Supabase
 npx supabase test db           # Database tests (pgTAP)
 pnpm test:unit                 # Unit tests
 pnpm test:integration          # Integration tests
-pnpm test:fast                 # Fast smoke tests
+pnpm test:unit                 # Fast smoke tests
 pnpm test:e2e                  # E2E tests
 
-# Supabase Management
-npx supabase status            # Check local Supabase status
-npx supabase migration new     # Create new migration
-npx supabase db push           # Push migrations to remote
+# Sharding (for faster CI execution)
+pnpm test:shard:1              # Run shard 1 of 4
+pnpm test:shard:2              # Run shard 2 of 4
+pnpm test:shard:3              # Run shard 3 of 4
+pnpm test:shard:4              # Run shard 4 of 4
+pnpm test:merge-reports        # Merge sharded reports
+
+## Testing Guidelines (Updated 2025)
+
+### Testing Philosophy
+- **Domain-Driven Testing**: Use actual Supabase types (`Tables["campaigns"]["Row"]`) instead of custom test types
+- **Accessibility First**: All UI tests must validate ARIA attributes and screen reader compatibility
+- **Real Component Testing**: Test actual components, not mock HTML structures
+- **Independent Tests**: Each test uses unique IDs and runs in isolation
+- **Sharding Support**: Tests can be split across multiple workers for faster execution
+
+### Test Structure
 ```
+
+tests/
+├── unit/ # Pure function tests, utility testing
+├── components/ # UI component tests with ARIA validation
+├── scenarios/ # End-to-end user journey tests
+├── fixtures/ # Test data using actual domain types
+└── helpers/ # Shared test utilities and mocks
+
+````
+
+### Component Testing Standards
+- **HeroUI Components**: All tests must validate HeroUI accessibility features
+- **ARIA Requirements**: Test `role`, `aria-label`, `aria-expanded`, etc.
+- **Keyboard Navigation**: Tab order, Enter/Space activation, focus management
+- **Screen Reader Support**: Proper labeling, grouping, and semantic markup
+- **Responsive Behavior**: Mobile and desktop viewport testing
+
+### Component Testing Approaches
+
+**1. Playwright Component Testing (mount fixture)**
+For isolated component testing with real components:
+```typescript
+import { test, expect } from "@playwright/experimental-ct-react";
+import { UserDropdown } from "@/components/user-dropdown";
+
+test("should render and be accessible", async ({ mount }) => {
+  const component = await mount(<UserDropdown />);
+
+  // Test visibility and accessibility
+  const button = component.locator("button");
+  await expect(button).toBeVisible();
+
+  // Test interaction
+  await button.click();
+  const menu = component.locator('[role="menu"]');
+  await expect(menu).toBeVisible();
+});
+```
+
+**2. E2E Testing (page navigation)**
+For full page integration testing:
+```typescript
+test("should work in dashboard context", async ({ page }) => {
+  await page.goto("/dashboard");
+  const component = page.locator('[data-testid="user-dropdown"]');
+  await expect(component).toBeVisible({ timeout: 10000 });
+
+  // Test accessibility
+  const hasAriaAttributes = await component.evaluate((el) => ({
+    hasAriaHaspopup: el.hasAttribute('aria-haspopup'),
+    isInteractive: el.tagName === 'BUTTON' || el.getAttribute('role') === 'button'
+  }));
+  expect(hasAriaAttributes.isInteractive).toBe(true);
+});
+```
+
+### Commands
+- Component tests: `pnpm test:component`
+- E2E tests: `pnpm test:e2e`
+- All tests: `pnpm test:all`
+
+### Data Factory Pattern
+
+Use `TestDataFactory` with actual Supabase types:
+
+```typescript
+// ✅ Correct: Use actual domain types
+const campaign = testDataFactory.generateCampaign(teamId, {
+  platform: "google" as Database["public"]["Enums"]["platform_type"],
+  name: "Test Campaign"
+});
+
+// ❌ Incorrect: Custom test types
+interface TestCampaign { ... }
+```
+
+### Test Selectors
+
+- **Required**: Always use `data-testid` attributes
+- **Format**: `data-testid="component-action"` (kebab-case)
+- **Examples**: `data-testid="user-dropdown"`, `data-testid="campaign-status-toggle"`
+
+### Accessibility Testing Checklist
+
+- [ ] All interactive elements have proper ARIA labels
+- [ ] Focus management works correctly
+- [ ] Keyboard navigation follows expected patterns
+- [ ] Screen reader announcements are descriptive
+- [ ] Color contrast meets WCAG standards
+- [ ] Images have alt text or are marked decorative
+
+### Mock Data Guidelines
+
+- Use `testDataFactory` for consistent test data generation
+- Platform responses should match actual API structures
+- Timestamps and IDs must be unique per test run
+- Mock only external APIs, not internal application logic
+
+# Supabase Management
+
+npx supabase status # Check local Supabase status
+npx supabase migration new # Create new migration
+npx supabase db push # Push migrations to remote
+
+````
 
 ## Architecture Patterns
 

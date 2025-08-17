@@ -1,208 +1,99 @@
 // Campaign actions slice
 
 import { StateCreator } from "zustand";
+import { addToast } from "@heroui/toast";
 
-import { CampaignDataSlice } from "./campaignDataSlice";
-import { LoadingSlice } from "./loadingSlice";
-import { ErrorSlice } from "./errorSlice";
-import { CampaignFilterSlice } from "./campaignFilterSlice";
+import { CampaignStoreState } from "../useCampaignStore";
+import {
+  getCampaigns,
+  updateCampaignBudget,
+  updateCampaignStatus,
+} from "@/app/[lang]/(private)/dashboard/actions";
+import log from "@/utils/logger";
 
-import { PlatformType } from "@/types";
-// Campaign actions slice - uses API endpoints for server-side operations
+const ITEMS_PER_PAGE = 20;
 
 export interface CampaignActionsSlice {
-  fetchCampaigns: () => Promise<void>;
-  syncCampaigns: (platform?: PlatformType) => Promise<void>;
-  updateCampaignStatus: (
-    campaignId: string,
-    status: "ENABLED" | "PAUSED",
-  ) => Promise<void>;
-  updateCampaignBudget: (campaignId: string, budget: number) => Promise<void>;
+  fetchCampaigns: (page?: number) => Promise<void>;
+  applyFilters: (newFilters: Record<string, unknown>) => Promise<void>;
+  updateBudget: (campaignId: string, newBudget: number) => Promise<void>;
+  toggleStatus: (campaignId: string, currentStatus: boolean) => Promise<void>;
 }
 
 export const createCampaignActionsSlice: StateCreator<
-  CampaignDataSlice &
-    LoadingSlice &
-    ErrorSlice &
-    CampaignFilterSlice &
-    CampaignActionsSlice,
+  CampaignStoreState,
   [],
   [],
   CampaignActionsSlice
 > = (set, get) => ({
-  fetchCampaigns: async () => {
-    set({ isLoading: true, error: null });
-
+  fetchCampaigns: async (page = 1) => {
+    const { setIsLoading, setCampaigns, addCampaigns, filters } = get();
+    setIsLoading(true);
     try {
-      const filters = get().filters;
-      const params = new URLSearchParams();
-
-      if (filters.platform) {
-        params.append("platform", filters.platform);
-      }
-      if (filters.status !== undefined) {
-        params.append("status", filters.status);
-      }
-
-      const response = await fetch(`/api/campaigns?${params.toString()}`);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-
-        throw new Error(errorData.error || "Failed to fetch campaigns");
-      }
-
-      const { campaigns, stats } = await response.json();
-
-      set({
-        campaigns,
-        stats,
-        isLoading: false,
-        error: null,
+      const { campaigns: newCampaigns } = await getCampaigns({
+        filters,
+        page,
+        limit: ITEMS_PER_PAGE,
       });
+      if (page === 1) {
+        setCampaigns(newCampaigns);
+      } else {
+        addCampaigns(newCampaigns);
+      }
     } catch (error) {
-      set({
-        isLoading: false,
-        error:
-          error instanceof Error ? error.message : "Failed to fetch campaigns",
+      log.error("Failed to fetch campaigns", error);
+      addToast({
+        title: "Error",
+        description: "Failed to load campaigns",
+        color: "danger",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  },
+
+  applyFilters: async (newFilters) => {
+    const { setFilters, fetchCampaigns } = get();
+    setFilters(newFilters);
+    await fetchCampaigns(1); // Reset to page 1 on filter change
+  },
+
+  updateBudget: async (campaignId, newBudget) => {
+    const { fetchCampaigns } = get();
+    try {
+      await updateCampaignBudget(campaignId, newBudget);
+      addToast({
+        title: "Success",
+        description: "Budget updated successfully",
+        color: "success",
+      });
+      await fetchCampaigns(1); // Refresh data
+    } catch (error) {
+      log.error("Failed to update budget", error);
+      addToast({
+        title: "Error",
+        description: "Failed to update budget",
+        color: "danger",
       });
     }
   },
 
-  syncCampaigns: async (platform?: PlatformType) => {
-    set({ isLoading: true, error: null });
-
+  toggleStatus: async (campaignId, currentStatus) => {
+    const { fetchCampaigns } = get();
     try {
-      const response = await fetch("/api/sync", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ platform }),
+      await updateCampaignStatus(campaignId, !currentStatus);
+      addToast({
+        title: "Success",
+        description: "Campaign status changed",
+        color: "success",
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-
-        throw new Error(errorData.error || "Failed to sync campaigns");
-      }
-
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.message || "Sync failed");
-      }
-
-      set({ lastSync: new Date() });
-
-      // Refresh campaigns after sync
-      await get().fetchCampaigns();
+      await fetchCampaigns(1); // Refresh data
     } catch (error) {
-      set({
-        isLoading: false,
-        error:
-          error instanceof Error ? error.message : "Failed to sync campaigns",
-      });
-    }
-  },
-
-  updateCampaignStatus: async (
-    campaignId: string,
-    status: "ENABLED" | "PAUSED",
-  ) => {
-    set({ isLoading: true, error: null });
-
-    try {
-      const campaign = get().campaigns.find((c) => c.id === campaignId);
-
-      if (!campaign) {
-        throw new Error("Campaign not found");
-      }
-
-      const response = await fetch(
-        `/api/campaigns/${campaign.platform}/${campaignId}/status`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ status }),
-        },
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-
-        throw new Error(errorData.error || "Failed to update campaign status");
-      }
-
-      const isActive = status === "ENABLED";
-
-      // Update local state
-      const updatedCampaigns = get().campaigns.map((c) =>
-        c.id === campaignId ? { ...c, isActive } : c,
-      );
-
-      set({
-        campaigns: updatedCampaigns,
-        isLoading: false,
-        error: null,
-      });
-    } catch (error) {
-      set({
-        isLoading: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to update campaign status",
-      });
-    }
-  },
-
-  updateCampaignBudget: async (campaignId: string, budget: number) => {
-    set({ isLoading: true, error: null });
-
-    try {
-      const campaign = get().campaigns.find((c) => c.id === campaignId);
-
-      if (!campaign) {
-        throw new Error("Campaign not found");
-      }
-
-      const response = await fetch(
-        `/api/campaigns/${campaign.platform}/${campaign.platformCampaignId}/budget`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ budget }),
-        },
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-
-        throw new Error(errorData.error || "Failed to update campaign budget");
-      }
-
-      // Update local state
-      const updatedCampaigns = get().campaigns.map((c) =>
-        c.id === campaignId ? { ...c, budget } : c,
-      );
-
-      set({
-        campaigns: updatedCampaigns,
-        isLoading: false,
-        error: null,
-      });
-    } catch (error) {
-      set({
-        isLoading: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to update campaign budget",
+      log.error("Failed to toggle campaign status", error);
+      addToast({
+        title: "Error",
+        description: "Failed to change status",
+        color: "danger",
       });
     }
   },

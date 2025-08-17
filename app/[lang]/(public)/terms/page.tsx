@@ -1,6 +1,8 @@
 import { Metadata } from "next";
 
 import TermsOfServiceContent from "./TermsOfServiceContent";
+import { Container } from "@/components/layouts/Container";
+const CONTAINER_MAX_4XL = "4xl" as const;
 
 export const metadata: Metadata = {
   title: "이용약관 | Sivera",
@@ -12,9 +14,9 @@ export const metadata: Metadata = {
 export default function TermsOfServicePage() {
   return (
     <main className="min-h-screen bg-linear-to-b from-default-50 to-default-100">
-      <div className="container mx-auto px-4 py-12 max-w-4xl">
+      <Container className="py-12" max={CONTAINER_MAX_4XL}>
         <TermsOfServiceContent />
-      </div>
+      </Container>
     </main>
   );
 }

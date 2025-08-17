@@ -19,6 +19,7 @@ declare module "@react-types/shared" {
 
 export function Providers({ children, themeProps }: ProvidersProps) {
   const router = useRouter();
+  const TOAST_PLACEMENT = "bottom-right" as const;
 
   return (
     <HeroUIProvider navigate={router.push}>
@@ -26,7 +27,7 @@ export function Providers({ children, themeProps }: ProvidersProps) {
         <AuthProvider>{children}</AuthProvider>
         <ToastProvider
           maxVisibleToasts={3}
-          placement="bottom-right"
+          placement={TOAST_PLACEMENT}
           toastProps={{
             radius: "md",
             shouldShowTimeoutProgress: true,

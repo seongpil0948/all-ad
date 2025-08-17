@@ -34,7 +34,6 @@ export class DataSyncService {
 
         const result = await platformSyncService.syncAllPlatforms(
           teamInfo.teamId,
-          user.id,
         );
 
         if (!result.success) {

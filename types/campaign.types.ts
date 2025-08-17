@@ -1,7 +1,7 @@
 // Campaign related types
-import { CampaignStatus, BudgetType, DateRange } from "./base.types";
-
+import { CampaignStatus, DateRange } from "./base.types";
 import { PlatformType } from "@/types";
+import { Json } from "./supabase.types";
 
 // Platform credentials interface
 export interface PlatformCredentials {
@@ -24,29 +24,18 @@ export interface PlatformCredentials {
 // Application layer campaign interface
 export interface Campaign {
   id: string;
-  team_id?: string;
+  team_id: string;
   platform: PlatformType;
   platform_campaign_id: string;
-  platform_credential_id?: string;
+  platform_credential_id?: string | null;
   name: string;
-  status?: string;
-  is_active: boolean;
-  budget?: number;
-  raw_data?: Record<string, unknown>;
-  synced_at?: string;
-  created_at?: string;
-  updated_at?: string;
-
-  // Legacy fields for compatibility
-  teamId?: string;
-  platformCampaignId?: string;
-  accountId?: string;
-  budgetType?: BudgetType;
-  startDate?: string;
-  endDate?: string;
-  isActive?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
+  status?: string | null;
+  is_active: boolean | null;
+  budget?: number | null;
+  raw_data?: Json | null;
+  created_at: string;
+  updated_at: string;
+  synced_at?: string | null;
   metrics?: CampaignMetrics;
 }
 
@@ -104,6 +93,14 @@ export interface CampaignSummary {
   averageCpc: number;
   roas: number;
 }
+
+// Campaign with metrics interface
+export interface CampaignWithMetrics extends Campaign {
+  metrics?: CampaignMetrics;
+}
+
+// Single campaign metric (alias for CampaignMetrics)
+export type CampaignMetric = CampaignMetrics;
 
 // Campaign update request
 export interface CampaignUpdateRequest {

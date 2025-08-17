@@ -12,6 +12,8 @@ import {
 import { SiNaver, SiKakao } from "react-icons/si";
 
 import { PageHeader } from "@/components/common/PageHeader";
+import { Container } from "@/components/layouts/Container";
+import { AutoGrid } from "@/components/common/AutoGrid";
 import { useDictionary } from "@/hooks/use-dictionary";
 
 const PLATFORMS = [
@@ -44,15 +46,15 @@ export function PlatformsSection() {
   const { dictionary: dict } = useDictionary();
 
   return (
-    <section className="px-6 py-20 bg-default-50">
-      <div className="max-w-7xl mx-auto">
+    <section className="py-20 bg-default-50">
+      <Container>
         <PageHeader
           centered
           pageSubtitle={dict.home.platforms.subtitle}
           pageTitle={dict.home.platforms.title}
         />
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
+        <AutoGrid minItemWidth={200} className="mt-12">
           {PLATFORMS.map((platform, index) => {
             const Icon = iconMap[platform.icon];
 
@@ -71,8 +73,8 @@ export function PlatformsSection() {
               </Card>
             );
           })}
-        </div>
-      </div>
+        </AutoGrid>
+      </Container>
     </section>
   );
 }

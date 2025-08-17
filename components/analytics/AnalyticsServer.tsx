@@ -12,6 +12,8 @@ import {
   MetricCardSkeleton,
   ChartSkeleton,
 } from "@/components/common/skeletons";
+import { AutoGrid } from "@/components/common/AutoGrid";
+import { getDictionary, type Locale } from "@/app/[lang]/dictionaries";
 
 interface AnalyticsServerProps {
   teamId: string;
@@ -19,58 +21,74 @@ interface AnalyticsServerProps {
     start: Date;
     end: Date;
   };
+  locale: Locale;
 }
 
 // Summary component with its own suspense boundary
 async function AnalyticsSummarySection({
   teamId,
   dateRange,
+  dictionary,
 }: {
   teamId: string;
   dateRange: { start: Date; end: Date };
+  dictionary: Awaited<ReturnType<typeof getDictionary>>;
 }) {
   const summary = await getAnalyticsSummary(teamId, dateRange);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+    <AutoGrid minItemWidth={220} gap={"gap-4" as const}>
       <div className="stat-card">
-        <h3 className="text-sm text-default-500">총 노출수</h3>
+        <h3 className="text-sm text-default-500">
+          {dictionary.analytics.totalImpressions}
+        </h3>
         <p className="text-2xl font-bold">
           {summary.totalImpressions.toLocaleString()}
         </p>
       </div>
       <div className="stat-card">
-        <h3 className="text-sm text-default-500">총 클릭수</h3>
+        <h3 className="text-sm text-default-500">
+          {dictionary.analytics.totalClicks}
+        </h3>
         <p className="text-2xl font-bold">
           {summary.totalClicks.toLocaleString()}
         </p>
         <p className="text-xs text-default-400">
-          CTR {summary.ctr.toFixed(2)}%
+          {dictionary.analytics.ctr} {summary.ctr.toFixed(2)}%
         </p>
       </div>
       <div className="stat-card">
-        <h3 className="text-sm text-default-500">총 비용</h3>
+        <h3 className="text-sm text-default-500">
+          {dictionary.analytics.totalCost}
+        </h3>
         <p className="text-2xl font-bold">
           ₩{summary.totalCost.toLocaleString()}
         </p>
         <p className="text-xs text-default-400">
-          CPC ₩{summary.cpc.toFixed(0)}
+          {dictionary.analytics.cpc} ₩{summary.cpc.toFixed(0)}
         </p>
       </div>
       <div className="stat-card">
-        <h3 className="text-sm text-default-500">전환수</h3>
+        <h3 className="text-sm text-default-500">
+          {dictionary.analytics.totalConversions}
+        </h3>
         <p className="text-2xl font-bold">
           {summary.totalConversions.toLocaleString()}
         </p>
       </div>
       <div className="stat-card">
-        <h3 className="text-sm text-default-500">ROAS</h3>
-        <p className="text-2xl font-bold">{summary.roas.toFixed(2)}x</p>
+        <h3 className="text-sm text-default-500">
+          {dictionary.analytics.roas}
+        </h3>
+        <p className="text-2xl font-bold">
+          {summary.roas.toFixed(2)}
+          {dictionary.analytics.ui?.multiplierSuffix ?? "x"}
+        </p>
         <p className="text-xs text-default-400">
-          ROI {summary.roi.toFixed(1)}%
+          {dictionary.analytics.roi} {summary.roi.toFixed(1)}%
         </p>
       </div>
-    </div>
+    </AutoGrid>
   );
 }
 
@@ -78,38 +96,43 @@ async function AnalyticsSummarySection({
 async function PlatformAnalyticsSection({
   teamId,
   dateRange,
+  dictionary,
 }: {
   teamId: string;
   dateRange: { start: Date; end: Date };
+  dictionary: Awaited<ReturnType<typeof getDictionary>>;
 }) {
   const platformData = await getPlatformAnalytics(teamId, dateRange);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <AutoGrid minItemWidth={260} gap={"gap-4" as const}>
       {platformData.map((platform) => (
         <div key={platform.platform} className="platform-card">
           <h4 className="font-medium mb-2">{platform.platform}</h4>
           <div className="space-y-1 text-sm">
             <div className="flex justify-between">
-              <span>노출수:</span>
+              <span>{dictionary.analytics.impressions}:</span>
               <span>{platform.metrics.totalImpressions.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
-              <span>클릭수:</span>
+              <span>{dictionary.analytics.clicks}:</span>
               <span>{platform.metrics.totalClicks.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
-              <span>비용:</span>
+              <span>{dictionary.analytics.cost}:</span>
               <span>₩{platform.metrics.totalCost.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
-              <span>ROAS:</span>
-              <span>{platform.metrics.roas.toFixed(2)}x</span>
+              <span>{dictionary.analytics.roas}:</span>
+              <span>
+                {platform.metrics.roas.toFixed(2)}
+                {dictionary.analytics.ui?.multiplierSuffix ?? "x"}
+              </span>
             </div>
           </div>
         </div>
       ))}
-    </div>
+    </AutoGrid>
   );
 }
 
@@ -147,9 +170,11 @@ async function TimeSeriesSection({
 export async function AnalyticsServer({
   teamId,
   dateRange,
+  locale,
 }: AnalyticsServerProps) {
   // Preload all data in parallel
   preloadAnalyticsData(teamId, dateRange);
+  const dictionary = await getDictionary(locale);
 
   // Fetch initial data for client component
   const [summary, platformData] = await Promise.all([
@@ -162,29 +187,37 @@ export async function AnalyticsServer({
       {/* Summary section streams independently */}
       <Suspense
         fallback={
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <AutoGrid minItemWidth={220} gap={"gap-4" as const}>
             <MetricCardSkeleton />
             <MetricCardSkeleton />
             <MetricCardSkeleton />
             <MetricCardSkeleton />
             <MetricCardSkeleton />
-          </div>
+          </AutoGrid>
         }
       >
-        <AnalyticsSummarySection dateRange={dateRange} teamId={teamId} />
+        <AnalyticsSummarySection
+          dateRange={dateRange}
+          teamId={teamId}
+          dictionary={dictionary}
+        />
       </Suspense>
 
       {/* Platform analytics streams independently */}
       <Suspense
         fallback={
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <AutoGrid minItemWidth={300} gap={"gap-4" as const}>
             <ChartSkeleton />
             <ChartSkeleton />
             <ChartSkeleton />
-          </div>
+          </AutoGrid>
         }
       >
-        <PlatformAnalyticsSection dateRange={dateRange} teamId={teamId} />
+        <PlatformAnalyticsSection
+          dateRange={dateRange}
+          teamId={teamId}
+          dictionary={dictionary}
+        />
       </Suspense>
 
       {/* Time series data for charts */}

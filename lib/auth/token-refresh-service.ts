@@ -28,7 +28,7 @@ export class TokenRefreshService {
   }
 
   // Start the token refresh service (disabled for now)
-  start(_intervalMinutes = 30): void {
+  start(): void {
     // Disabled automatic token refresh to avoid request context issues
     // Token refresh should be triggered manually via API endpoints
     log.info("Token refresh service is disabled - use manual refresh via API");
@@ -306,7 +306,7 @@ export const tokenRefreshService = TokenRefreshService.getInstance();
 export function initializeTokenRefreshService(): void {
   const intervalMinutes = process.env.NODE_ENV === "production" ? 30 : 5; // 5 minutes in dev, 30 in prod
 
-  tokenRefreshService.start(intervalMinutes);
+  tokenRefreshService.start();
 
   log.info(
     `Token refresh service initialized (interval: ${intervalMinutes} minutes)`,

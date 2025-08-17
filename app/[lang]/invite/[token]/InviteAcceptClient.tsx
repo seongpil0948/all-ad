@@ -42,7 +42,7 @@ export default function InviteAcceptClient({
   const handleAccept = async () => {
     if (isPreview) {
       // If preview mode, redirect to signup with invitation email and token
-      const signupUrl = `/signup?email=${encodeURIComponent(invitation.email)}&inviteToken=${token}&returnUrl=${encodeURIComponent(`/invite/${token}`)}`;
+      const signupUrl = `/login?mode=signup&email=${encodeURIComponent(invitation.email)}&inviteToken=${token}&returnUrl=${encodeURIComponent(`/invite/${token}`)}`;
 
       router.push(signupUrl);
 

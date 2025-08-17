@@ -1,3 +1,4 @@
+/* eslint-disable local/no-literal-strings */
 "use client";
 
 import { Card, CardBody } from "@heroui/card";

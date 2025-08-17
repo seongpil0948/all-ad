@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { User } from "@supabase/supabase-js";
 
 import { createClient } from "@/utils/supabase/server";
@@ -9,10 +9,10 @@ import {
   Team,
   PlatformCredential,
   UserRole,
+  CampaignMetrics,
   TeamMemberWithProfile,
 } from "@/types";
 import { Campaign as AppCampaign } from "@/types/campaign.types";
-import { transformDbCampaignToApp } from "@/utils/campaign-transformer";
 
 interface IntegratedData {
   user: User;
@@ -24,6 +24,10 @@ interface IntegratedData {
     totalCampaigns: number;
     activeCampaigns: number;
     totalBudget: number;
+    totalSpend: number;
+    totalClicks: number;
+    totalImpressions: number;
+    platforms: number;
     connectedPlatforms: number;
   };
   userRole: UserRole;
@@ -112,7 +116,7 @@ export async function getIntegratedData(): Promise<IntegratedData> {
     // Get campaigns
     const { data: campaigns, error: campaignsError } = await supabase
       .from("campaigns")
-      .select("*")
+      .select("*, campaign_metrics(*)")
       .eq("team_id", teamId)
       .order("created_at", { ascending: false });
 
@@ -165,23 +169,53 @@ export async function getIntegratedData(): Promise<IntegratedData> {
     }
 
     // Calculate statistics
+    const totalSpend =
+      campaigns?.reduce((sum, c) => {
+        const campaignSpend = (c.campaign_metrics || []).reduce(
+          (metricSum: number, m: CampaignMetrics) => metricSum + (m.cost || 0),
+          0,
+        );
+        return sum + campaignSpend;
+      }, 0) || 0;
+
+    const totalClicks =
+      campaigns?.reduce((sum, c) => {
+        const campaignClicks = (c.campaign_metrics || []).reduce(
+          (metricSum: number, m: CampaignMetrics) =>
+            metricSum + (m.clicks || 0),
+          0,
+        );
+        return sum + campaignClicks;
+      }, 0) || 0;
+
+    const totalImpressions =
+      campaigns?.reduce((sum, c) => {
+        const campaignImpressions = (c.campaign_metrics || []).reduce(
+          (metricSum: number, m: CampaignMetrics) =>
+            metricSum + (m.impressions || 0),
+          0,
+        );
+        return sum + campaignImpressions;
+      }, 0) || 0;
+
     const stats = {
       totalCampaigns: campaigns?.length || 0,
       activeCampaigns: campaigns?.filter((c) => c.is_active).length || 0,
       totalBudget: campaigns?.reduce((sum, c) => sum + (c.budget || 0), 0) || 0,
+      totalSpend,
+      totalClicks,
+      totalImpressions,
+      platforms: new Set(campaigns?.map((c) => c.platform) || []).size,
       connectedPlatforms: credentials?.filter((c) => c.is_active).length || 0,
     };
 
-    // Transform campaigns to app layer
-    const appCampaigns = (campaigns || []).map((campaign) =>
-      transformDbCampaignToApp(campaign),
-    );
+    // Remove the unused extendedStats
 
     return {
       user,
       team: fullTeam,
       credentials: credentials || [],
-      campaigns: appCampaigns,
+      campaigns: campaigns || [],
       teamMembers: teamMembersWithProfiles || [],
       stats,
       userRole: userRole,
@@ -284,6 +318,9 @@ export async function syncAllPlatformsAction() {
 
     revalidatePath("/integrated");
     revalidatePath("/dashboard");
+    // Invalidate team-scoped cached data for dashboard
+    revalidateTag(`team:${teamId}:campaigns`);
+    revalidateTag(`team:${teamId}:dashboard`);
   } catch (error) {
     log.error("Failed to sync all platforms", error as Error, {
       module: "integrated/actions",

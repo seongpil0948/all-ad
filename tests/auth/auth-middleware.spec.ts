@@ -46,7 +46,7 @@ test.describe("Authentication Middleware Tests", () => {
     });
 
     test("should allow access to signup page", async ({ page }) => {
-      await page.goto("/ko/signup");
+      await page.goto("/ko/login?mode=signup");
       await expect(page).toHaveURL(/.*signup/);
     });
 

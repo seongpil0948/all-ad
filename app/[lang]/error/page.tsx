@@ -1,4 +1,5 @@
+import { ErrorState } from "@/components/common/ErrorState";
+
 export default function ErrorPage() {
-  return <p>Sorry, something went wrong</p>;
+  return <ErrorState />;
 }
-// test comment

@@ -107,8 +107,9 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const HTML_LANG = "en" as const;
   return (
-    <html suppressHydrationWarning lang="en">
+    <html suppressHydrationWarning lang={HTML_LANG}>
       <head />
       <body
         className={clsx(

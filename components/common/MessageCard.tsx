@@ -7,8 +7,10 @@ import {
   FaExclamationCircle,
   FaInfoCircle,
 } from "react-icons/fa";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 export function MessageCard({ message, type, onClose }: MessageCardProps) {
+  const { dictionary: dict } = useDictionary();
   const config = {
     success: {
       bgColor: "bg-success-50",
@@ -39,19 +41,31 @@ export function MessageCard({ message, type, onClose }: MessageCardProps) {
   const { bgColor, borderColor, textColor, icon: Icon } = config[type];
 
   return (
-    <Card className={`${bgColor} ${borderColor} border`}>
+    <Card
+      className={`${bgColor} ${borderColor} border`}
+      data-testid="message-card"
+      role="alert"
+      aria-live={"polite"}
+    >
       <CardBody>
         <div className="flex items-center gap-3">
-          <Icon className={`${textColor} w-5 h-5 shrink-0`} />
-          <p className={textColor}>{message}</p>
+          <Icon
+            className={`${textColor} w-5 h-5 shrink-0`}
+            aria-hidden={true}
+            data-testid={`message-icon-${type}`}
+          />
+          <p className={textColor} data-testid="message-text">
+            {message}
+          </p>
           {onClose && (
             <Button
               isIconOnly
-              aria-label="Close message"
+              aria-label={dict.common.close}
               className={`ml-auto ${textColor}`}
               size="sm"
               variant="light"
               onPress={onClose}
+              data-testid="message-close-button"
             >
               ✕
             </Button>

@@ -1,8 +1,9 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 export const AnimatedBackground = () => {
+  const prefersReducedMotion = useReducedMotion();
   return (
     <div
       className="absolute inset-0 -z-10 overflow-hidden"
@@ -13,40 +14,52 @@ export const AnimatedBackground = () => {
 
       {/* Animated circles */}
       <motion.div
-        animate={{
-          x: [0, 100, 0],
-          y: [0, -50, 0],
-        }}
+        animate={
+          prefersReducedMotion
+            ? undefined
+            : {
+                x: [0, 100, 0],
+                y: [0, -50, 0],
+              }
+        }
         className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl"
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
+        transition={
+          prefersReducedMotion
+            ? undefined
+            : { duration: 20, repeat: Infinity, ease: "easeInOut" }
+        }
+        aria-hidden={true}
       />
       <motion.div
-        animate={{
-          x: [0, -100, 0],
-          y: [0, 50, 0],
-        }}
+        animate={
+          prefersReducedMotion
+            ? undefined
+            : {
+                x: [0, -100, 0],
+                y: [0, 50, 0],
+              }
+        }
         className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/20 rounded-full blur-3xl"
-        transition={{
-          duration: 25,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
+        transition={
+          prefersReducedMotion
+            ? undefined
+            : { duration: 25, repeat: Infinity, ease: "easeInOut" }
+        }
+        aria-hidden={true}
       />
       <motion.div
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.3, 0.6, 0.3],
-        }}
+        animate={
+          prefersReducedMotion
+            ? undefined
+            : { scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }
+        }
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-warning/10 rounded-full blur-3xl"
-        transition={{
-          duration: 15,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
+        transition={
+          prefersReducedMotion
+            ? undefined
+            : { duration: 15, repeat: Infinity, ease: "easeInOut" }
+        }
+        aria-hidden={true}
       />
 
       {/* Grid pattern */}

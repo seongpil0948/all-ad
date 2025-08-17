@@ -3,7 +3,7 @@
 import React from "react";
 import { Card, CardBody } from "@heroui/card";
 import { FaInbox } from "react-icons/fa";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 import { fadeInUp, staggerContainer, staggerItem } from "@/utils/animations";
 import { useDictionary } from "@/hooks/use-dictionary";
@@ -23,34 +23,44 @@ export function EmptyState({
 }: EmptyStateProps) {
   const { dictionary: dict } = useDictionary();
   const defaultMessage = message || dict.common.noData;
+  const prefersReducedMotion = useReducedMotion();
 
   return (
     <motion.div
-      animate="animate"
+      animate={"animate"}
       className="w-full"
-      initial="initial"
+      initial={"initial"}
       variants={fadeInUp}
+      data-testid="empty-state"
+      role="region"
+      aria-label={defaultMessage}
     >
       <Card className="w-full">
         <CardBody className="flex flex-col items-center justify-center py-12">
           <motion.div
-            animate="animate"
+            animate={"animate"}
             className="flex flex-col items-center"
-            initial="initial"
+            initial={"initial"}
             variants={staggerContainer}
           >
             <motion.div
-              animate={{
-                y: [0, -10, 0],
-                transition: {
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                  ease: "easeInOut",
-                },
-              }}
+              animate={
+                prefersReducedMotion
+                  ? undefined
+                  : {
+                      y: [0, -10, 0],
+                      transition: {
+                        duration: 2,
+                        repeat: Infinity,
+                        repeatType: "reverse",
+                        ease: "easeInOut",
+                      },
+                    }
+              }
               className="text-default-300 mb-4"
               variants={staggerItem}
+              role="presentation"
+              aria-hidden={true}
             >
               {icon}
             </motion.div>

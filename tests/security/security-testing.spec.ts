@@ -468,7 +468,7 @@ test.describe("Security Testing", () => {
     test("should enforce password complexity requirements", async ({
       page,
     }) => {
-      await page.goto("/ko/signup");
+      await page.goto("/ko/login?mode=signup");
 
       if (page.url().includes("login")) {
         // Try to navigate to signup

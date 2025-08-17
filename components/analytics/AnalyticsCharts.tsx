@@ -5,26 +5,20 @@ import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Skeleton } from "@heroui/skeleton";
 
 import { EChart } from "@/components/charts/echart";
+import { AutoGrid } from "@/components/common/AutoGrid";
 import { CHART_OPTIONS, KEY_METRICS } from "@/constants/analytics";
 import { ChartSkeleton } from "@/components/common/skeletons";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 // Memoized chart components
 const ChartCard = memo(
-  ({
-    title,
-    option,
-    height = "300px",
-  }: {
-    title: string;
-    option: Record<string, unknown>;
-    height?: string;
-  }) => (
+  ({ title, option }: { title: string; option: Record<string, unknown> }) => (
     <Card>
       <CardHeader>
         <h3 className="text-lg font-semibold">{title}</h3>
       </CardHeader>
       <CardBody>
-        <EChart option={option} style={{ height }} />
+        <EChart option={option} aspectRatio={16 / 9} className="w-full" />
       </CardBody>
     </Card>
   ),
@@ -32,23 +26,26 @@ const ChartCard = memo(
 
 ChartCard.displayName = "ChartCard";
 
-const MetricsCard = memo(() => (
-  <Card>
-    <CardHeader>
-      <h3 className="text-lg font-semibold">주요 지표</h3>
-    </CardHeader>
-    <CardBody>
-      <div className="space-y-4">
-        {KEY_METRICS.map((metric, index) => (
-          <div key={index} className="flex justify-between">
-            <span className="text-default-600">{metric.label}</span>
-            <span className="font-semibold">{metric.value}</span>
-          </div>
-        ))}
-      </div>
-    </CardBody>
-  </Card>
-));
+const MetricsCard = memo(() => {
+  const { dictionary: dict } = useDictionary();
+  return (
+    <Card>
+      <CardHeader>
+        <h3 className="text-lg font-semibold">{dict.analytics.metricsTitle}</h3>
+      </CardHeader>
+      <CardBody>
+        <div className="space-y-4">
+          {KEY_METRICS.map((metric, index) => (
+            <div key={index} className="flex justify-between">
+              <span className="text-default-600">{metric.label}</span>
+              <span className="font-semibold">{metric.value}</span>
+            </div>
+          ))}
+        </div>
+      </CardBody>
+    </Card>
+  );
+});
 
 MetricsCard.displayName = "MetricsCard";
 
@@ -75,6 +72,7 @@ const MetricsSkeleton = memo(() => (
 MetricsSkeleton.displayName = "MetricsSkeleton";
 
 export function AnalyticsCharts() {
+  const { dictionary: dict } = useDictionary();
   const [isPending, startTransition] = useTransition();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -92,26 +90,36 @@ export function AnalyticsCharts() {
   // Memoize chart configurations
   const chartConfigs = useMemo(
     () => [
-      { title: "월별 추이", option: CHART_OPTIONS.LINE_CHART },
-      { title: "채널별 성과", option: CHART_OPTIONS.BAR_CHART },
-      { title: "예산 분배", option: CHART_OPTIONS.PIE_CHART },
+      {
+        title: dict.analytics.charts.monthlyTrend,
+        option: CHART_OPTIONS.LINE_CHART,
+      },
+      {
+        title: dict.analytics.charts.byChannel,
+        option: CHART_OPTIONS.BAR_CHART,
+      },
+      {
+        title: dict.analytics.charts.budgetShare,
+        option: CHART_OPTIONS.PIE_CHART,
+      },
     ],
-    [],
+    [dict],
   );
 
+  const GRID_GAP = "gap-6" as const;
   if (isLoading || isPending) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <AutoGrid minItemWidth={320} gap={GRID_GAP}>
         <ChartSkeleton height="h-80" />
         <ChartSkeleton height="h-80" />
         <ChartSkeleton height="h-80" />
         <MetricsSkeleton />
-      </div>
+      </AutoGrid>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <AutoGrid minItemWidth={320} gap={GRID_GAP}>
       {chartConfigs.map((config) => (
         <ChartCard
           key={config.title}
@@ -120,6 +128,6 @@ export function AnalyticsCharts() {
         />
       ))}
       <MetricsCard />
-    </div>
+    </AutoGrid>
   );
 }

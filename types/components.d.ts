@@ -70,7 +70,9 @@ export interface PageHeaderProps {
   pageTitle: string;
   pageSubtitle?: string;
   highlight?: string;
+  actions?: React.ReactNode;
   centered?: boolean;
+  className?: string;
   className?: string;
   children?: React.ReactNode;
 }

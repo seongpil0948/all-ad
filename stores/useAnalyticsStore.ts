@@ -11,9 +11,14 @@ import {
 } from "./slices/analyticsActionsSlice";
 import { createLoadingSlice, LoadingSlice } from "./slices/loadingSlice";
 import { createErrorSlice, ErrorSlice } from "./slices/errorSlice";
+import {
+  createAnalyticsUiSlice,
+  AnalyticsUiSlice,
+} from "./slices/analyticsUiSlice";
 
 export type AnalyticsState = AnalyticsDataSlice &
   AnalyticsActionsSlice &
+  AnalyticsUiSlice &
   LoadingSlice &
   ErrorSlice;
 
@@ -24,6 +29,7 @@ export const useAnalyticsStore = create<AnalyticsState>()(
         // Slice states
         ...createAnalyticsDataSlice(set, get, api),
         ...createAnalyticsActionsSlice(set, get, api),
+        ...createAnalyticsUiSlice(set, get, api),
         ...createLoadingSlice(set, get, api),
         ...createErrorSlice(set, get, api),
       }),
@@ -31,6 +37,8 @@ export const useAnalyticsStore = create<AnalyticsState>()(
         name: "analytics-store",
         partialize: (state) => ({
           dateRange: state.dateRange,
+          selectedMetric: state.selectedMetric,
+          selectedChartType: state.selectedChartType,
         }),
       },
     ),

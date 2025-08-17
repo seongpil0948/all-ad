@@ -1,8 +1,9 @@
 import { ImageResponse } from "next/og";
+import { getDictionary, type Locale } from "@/app/[lang]/dictionaries";
 
 export const runtime = "edge";
 
-export const alt = "Dashboard - A.ll + Ad";
+export const alt = "A.ll + Ad";
 export const size = {
   width: 1200,
   height: 630,
@@ -10,7 +11,13 @@ export const size = {
 
 export const contentType = "image/png";
 
-export default async function Image() {
+export default async function Image({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}) {
+  const { lang } = await params;
+  const dict = await getDictionary(lang as Locale);
   return new ImageResponse(
     (
       <div
@@ -30,15 +37,15 @@ export default async function Image() {
         <div
           style={{ fontSize: "48px", fontWeight: "bold", marginBottom: "20px" }}
         >
-          📊 Dashboard
+          📊 {dict.nav.dashboard}
         </div>
         <div
           style={{ fontSize: "72px", fontWeight: "bold", marginBottom: "20px" }}
         >
-          A.ll + Ad
+          {dict.brand.name}
         </div>
         <div style={{ fontSize: "28px", opacity: 0.8, textAlign: "center" }}>
-          통합 광고 관리 대시보드
+          {dict.home.features.dashboard.description}
         </div>
       </div>
     ),

@@ -13,8 +13,8 @@ import {
   CampaignMetrics,
   PlatformType,
   FacebookCredentials,
-  Json,
 } from "@/types";
+import { Json } from "@/types/supabase.types";
 import log from "@/utils/logger";
 import { formatDateToYYYYMMDD } from "@/utils/date-formatter";
 

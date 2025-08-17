@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     );
 
     // Trigger sync for all platforms
-    const syncResult = await syncService.syncAllPlatforms(teamId, user.id);
+    const syncResult = await syncService.syncAllPlatforms(teamId);
 
     // Transform results to match expected format
     const results = Object.entries(syncResult.results).reduce(
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Get sync status and history
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     // Get current user and team
     const supabase = await createClient();

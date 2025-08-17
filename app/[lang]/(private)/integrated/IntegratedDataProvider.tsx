@@ -4,12 +4,7 @@ import { useEffect } from "react";
 import { User } from "@supabase/supabase-js";
 import { useShallow } from "zustand/shallow";
 
-import {
-  useCampaignStore,
-  usePlatformStore,
-  useTeamStore,
-  useAuthStore,
-} from "@/stores";
+import { usePlatformStore, useTeamStore, useAuthStore } from "@/stores";
 import {
   UserRole,
   Team,
@@ -42,12 +37,6 @@ export function IntegratedDataProvider({
   children,
   initialData,
 }: IntegratedDataProviderProps) {
-  const { setCampaigns, setStats } = useCampaignStore(
-    useShallow((state) => ({
-      setCampaigns: state.setCampaigns,
-      setStats: state.setStats,
-    })),
-  );
   const setCredentials = usePlatformStore(
     useShallow((state) => state.setCredentials),
   );
@@ -56,17 +45,9 @@ export function IntegratedDataProvider({
   );
 
   useEffect(() => {
-    // Set initial data to stores (user data is already handled by auth context)
-    setCampaigns(initialData.campaigns);
-    setStats({
-      totalCampaigns: initialData.stats.totalCampaigns,
-      activeCampaigns: initialData.stats.activeCampaigns,
-      totalBudget: initialData.stats.totalBudget,
-      totalSpend: 0,
-      totalImpressions: 0,
-      totalClicks: 0,
-      platforms: initialData.stats.connectedPlatforms,
-    });
+    // Set initial data to stores only once on mount.
+    // The data is fetched on the server and is fresh on each page load.
+    // Subsequent client-side updates are handled by store actions.
     setCredentials(initialData.credentials);
     setInitialData({
       currentTeam: initialData.team,
@@ -76,7 +57,7 @@ export function IntegratedDataProvider({
 
     // Set user data to auth store
     useAuthStore.setState({ user: initialData.user });
-  }, [initialData, setCampaigns, setStats, setCredentials, setInitialData]);
+  }, []);
 
   return <>{children}</>;
 }

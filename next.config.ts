@@ -1,22 +1,27 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Enable incremental Partial Prerendering (PPR)
+  // experimental: {
+  //   ppr: "incremental",
+  // },
   // reactStrictMode: false,
   cleanDistDir: true,
 
-  // Suppress Supabase realtime-js critical dependency warnings
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.ignoreWarnings = [
-        {
-          module: /@supabase\/realtime-js/,
-          message:
-            /Critical dependency: the request of a dependency is an expression/,
-        },
-      ];
-    }
-
-    return config;
+  // Turbopack configuration
+  // Note: Turbopack doesn't use webpack() config. Removing it avoids the
+  // "Webpack is configured while Turbopack is not" warning during dev.
+  // Add specific rules/aliases here only if you need non-default behavior.
+  turbopack: {
+    // Ensure default and custom extensions are resolved in order
+    resolveExtensions: [".mdx", ".tsx", ".ts", ".jsx", ".js", ".mjs", ".json"],
+    // Add selected webpack-compatible loaders
+    // rules: {
+    //   "*.svg": {
+    //     loaders: ["@svgr/webpack"],
+    //     as: "*.js",
+    //   },
+    // },
   },
 
   // Security headers

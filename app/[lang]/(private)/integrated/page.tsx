@@ -6,6 +6,11 @@ import { getIntegratedData, syncAllPlatformsAction } from "./actions";
 import { IntegratedDataProvider } from "./IntegratedDataProvider";
 
 import { SyncButton } from "@/components/dashboard/SyncButton";
+import IntegratedTabsClient from "./IntegratedTabsClient";
+import { Container } from "@/components/layouts/Container";
+import { PageHeader } from "@/components/common/PageHeader";
+import { AutoGrid } from "@/components/common/AutoGrid";
+import { getDictionary, type Locale } from "@/app/[lang]/dictionaries";
 
 export default async function IntegratedDashboard({
   params,
@@ -13,6 +18,7 @@ export default async function IntegratedDashboard({
   params: Promise<{ lang: string }>;
 }) {
   const { lang } = await params;
+  const dict = await getDictionary(lang as Locale);
   let data;
 
   try {
@@ -21,20 +27,22 @@ export default async function IntegratedDashboard({
     redirect(`/${lang}/login`);
   }
 
-  const { stats } = data;
+  const { stats, campaigns } = data;
 
   return (
     <IntegratedDataProvider initialData={data}>
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">통합 대시보드</h1>
-          <form action={syncAllPlatformsAction}>
-            <SyncButton showLabel />
-          </form>
-        </div>
+      <Container className="py-8">
+        <PageHeader
+          pageTitle={dict.dashboard.title}
+          actions={
+            <form action={syncAllPlatformsAction}>
+              <SyncButton showLabel />
+            </form>
+          }
+        />
 
         {/* Overview Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <AutoGrid minItemWidth={240} className="mb-8">
           <Card>
             <CardBody>
               <div className="flex items-center gap-3">
@@ -42,7 +50,9 @@ export default async function IntegratedDashboard({
                   <FaChartBar className="text-primary-500 w-6 h-6" />
                 </div>
                 <div>
-                  <p className="text-small text-default-500">전체 캠페인</p>
+                  <p className="text-small text-default-500">
+                    {dict.dashboard.overview.totalCampaigns}
+                  </p>
                   <p className="text-2xl font-bold">{stats.totalCampaigns}</p>
                 </div>
               </div>
@@ -56,7 +66,9 @@ export default async function IntegratedDashboard({
                   <FaHome className="text-success-500 w-6 h-6" />
                 </div>
                 <div>
-                  <p className="text-small text-default-500">활성 캠페인</p>
+                  <p className="text-small text-default-500">
+                    {dict.dashboard.overview.activeCampaigns}
+                  </p>
                   <p className="text-2xl font-bold">{stats.activeCampaigns}</p>
                 </div>
               </div>
@@ -70,7 +82,9 @@ export default async function IntegratedDashboard({
                   <FaKey className="text-warning-500 w-6 h-6" />
                 </div>
                 <div>
-                  <p className="text-small text-default-500">연동 플랫폼</p>
+                  <p className="text-small text-default-500">
+                    {dict.dashboard.overview.connectedPlatforms}
+                  </p>
                   <p className="text-2xl font-bold">
                     {stats.connectedPlatforms}
                   </p>
@@ -86,7 +100,9 @@ export default async function IntegratedDashboard({
                   <FaUsers className="text-secondary-500 w-6 h-6" />
                 </div>
                 <div>
-                  <p className="text-small text-default-500">총 예산</p>
+                  <p className="text-small text-default-500">
+                    {dict.dashboard.overview.totalBudget}
+                  </p>
                   <p className="text-2xl font-bold">
                     ₩{stats.totalBudget.toLocaleString()}
                   </p>
@@ -94,19 +110,13 @@ export default async function IntegratedDashboard({
               </div>
             </CardBody>
           </Card>
-        </div>
+        </AutoGrid>
 
-        <IntegratedTabs />
-      </div>
+        <IntegratedTabsClient
+          initialCampaigns={campaigns}
+          initialStats={stats}
+        />
+      </Container>
     </IntegratedDataProvider>
   );
-}
-
-// Client component for tabs (need interactivity)
-async function IntegratedTabs() {
-  const { default: IntegratedTabsClient } = await import(
-    "./IntegratedTabsClient"
-  );
-
-  return <IntegratedTabsClient />;
 }

@@ -1,9 +1,10 @@
 packages:
-  - "."
+  - .
 
 onlyBuiltDependencies:
   - "@heroui/shared-utils"
   - "@tailwindcss/oxide"
+  - esbuild
   - msgpackr-extract
   - protobufjs
   - sharp

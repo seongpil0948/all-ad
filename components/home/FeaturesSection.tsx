@@ -4,6 +4,8 @@ import { Card, CardBody, CardHeader } from "@heroui/card";
 import { FaChartLine, FaRocket, FaShieldAlt, FaDatabase } from "react-icons/fa";
 
 import { PageHeader } from "@/components/common/PageHeader";
+import { Container } from "@/components/layouts/Container";
+import { AutoGrid } from "@/components/common/AutoGrid";
 import { useDictionary } from "@/hooks/use-dictionary";
 
 const iconMap = {
@@ -42,15 +44,15 @@ export function FeaturesSection() {
   ];
 
   return (
-    <section className="px-6 py-20">
-      <div className="max-w-7xl mx-auto">
+    <section className="py-20">
+      <Container>
         <PageHeader
           centered
           pageSubtitle={dict.home.features.subtitle}
           pageTitle={dict.home.features.title}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
+        <AutoGrid minItemWidth={260} className="mt-12">
           {features.map((feature, index) => {
             const Icon = iconMap[feature.icon];
 
@@ -73,8 +75,8 @@ export function FeaturesSection() {
               </Card>
             );
           })}
-        </div>
-      </div>
+        </AutoGrid>
+      </Container>
     </section>
   );
 }

@@ -1,6 +1,8 @@
 import { Metadata } from "next";
 
 import PrivacyPolicyContent from "./PrivacyPolicyContent";
+import { Container } from "@/components/layouts/Container";
+const CONTAINER_MAX_4XL = "4xl" as const;
 
 export const metadata: Metadata = {
   title: "개인정보 처리방침 | Sivera",
@@ -12,9 +14,9 @@ export const metadata: Metadata = {
 export default function PrivacyPolicyPage() {
   return (
     <main className="min-h-screen bg-linear-to-b from-default-50 to-default-100">
-      <div className="container mx-auto px-4 py-12 max-w-4xl">
+      <Container className="py-12" max={CONTAINER_MAX_4XL}>
         <PrivacyPolicyContent />
-      </div>
+      </Container>
     </main>
   );
 }

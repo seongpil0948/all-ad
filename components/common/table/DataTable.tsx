@@ -19,6 +19,8 @@ export interface DataTableColumn {
   sortable?: boolean;
   align?: "start" | "center" | "end";
   width?: number;
+  className?: string;
+  hideBelow?: "sm" | "md" | "lg";
 }
 
 export interface DataTableProps<T> {
@@ -34,6 +36,7 @@ export interface DataTableProps<T> {
   selectedKeys?: Selection;
   onSelectionChange?: (keys: Selection) => void;
   "aria-label": string;
+  "data-testid"?: string;
   classNames?: {
     wrapper?: string;
     table?: string;
@@ -43,6 +46,10 @@ export interface DataTableProps<T> {
     th?: string;
     td?: string;
   };
+  striped?: boolean;
+  density?: "compact" | "normal" | "comfortable";
+  stickyHeader?: boolean;
+  onRowClick?: (item: T) => void;
 }
 
 export function DataTable<T extends Record<string, unknown>>({
@@ -59,6 +66,10 @@ export function DataTable<T extends Record<string, unknown>>({
   onSelectionChange,
   "aria-label": ariaLabel,
   classNames,
+  striped = false,
+  density = "normal",
+  stickyHeader = false,
+  onRowClick,
 }: DataTableProps<T>) {
   // Memoize columns to prevent re-renders
   const memoizedColumns = useMemo(() => columns, [columns]);
@@ -86,9 +97,37 @@ export function DataTable<T extends Record<string, unknown>>({
     return (
       <TableBody emptyContent={emptyMessage}>
         {data.map((item) => (
-          <TableRow key={String(item[keyField])}>
+          <TableRow
+            key={String(item[keyField])}
+            data-testid={`table-row-${String(item[keyField])}`}
+            className={`${striped ? "odd:bg-default-50" : ""} ${
+              density === "compact"
+                ? "[&>td]:py-1 [&>td]:px-2"
+                : density === "comfortable"
+                  ? "[&>td]:py-4 [&>td]:px-4"
+                  : ""
+            } ${onRowClick ? "cursor-pointer hover:bg-default-100" : ""}`}
+            onClick={() => onRowClick?.(item as T)}
+          >
             {(columnKey) => (
-              <TableCell>{renderCell(item, columnKey as string)}</TableCell>
+              <TableCell
+                className={`${(() => {
+                  const col = columns.find(
+                    (c) => c.key === (columnKey as string),
+                  );
+                  if (!col) return "";
+                  return col.hideBelow === "sm"
+                    ? "hidden sm:table-cell"
+                    : col.hideBelow === "md"
+                      ? "hidden md:table-cell"
+                      : col.hideBelow === "lg"
+                        ? "hidden lg:table-cell"
+                        : "";
+                })()}`}
+                data-testid={`table-cell-${String(item[keyField])}-${columnKey as string}`}
+              >
+                {renderCell(item as T, columnKey as string)}
+              </TableCell>
             )}
           </TableRow>
         ))}
@@ -110,9 +149,15 @@ export function DataTable<T extends Record<string, unknown>>({
   return (
     <Table
       aria-label={ariaLabel}
-      classNames={classNames}
+      classNames={{
+        ...classNames,
+        thead: `${classNames?.thead || ""} ${
+          stickyHeader ? "sticky top-0 z-10 bg-background" : ""
+        }`,
+      }}
       sortDescriptor={sortDescriptor}
       onSortChange={onSortChange}
+      data-testid="data-table"
       {...selectionProps}
     >
       <TableHeader columns={memoizedColumns}>
@@ -122,6 +167,16 @@ export function DataTable<T extends Record<string, unknown>>({
             align={column.align}
             allowsSorting={column.sortable}
             width={column.width}
+            className={`${column.className || ""} ${
+              column.hideBelow === "sm"
+                ? "hidden sm:table-cell"
+                : column.hideBelow === "md"
+                  ? "hidden md:table-cell"
+                  : column.hideBelow === "lg"
+                    ? "hidden lg:table-cell"
+                    : ""
+            }`}
+            data-testid={`table-header-${column.key}`}
           >
             {column.label}
           </TableColumn>

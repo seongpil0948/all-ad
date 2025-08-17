@@ -52,6 +52,13 @@
     "pending": "Pending",
     "completed": "Completed",
     "failed": "Failed",
+    "never": "Never",
+    "skipToContent": "Skip to main content",
+    "mainContent": "Main content",
+    "loadingMore": "Loading more items",
+    "loadedMore": "Loaded {{count}} more items",
+    "endOfList": "End of list",
+    "infiniteTable": "Infinite scroll table",
     "retry": "Retry",
     "copy": "Copy",
     "copied": "Copied",
@@ -70,6 +77,33 @@
     "dark": "Dark",
     "system": "System"
   },
+  "admin": {
+    "cron": {
+      "title": "Cron Jobs Management",
+      "subtitle": "Monitor and manage scheduled tasks",
+      "scheduledJobs": "Scheduled Jobs",
+      "runNow": "Run Now",
+      "table": {
+        "jobName": "Job Name",
+        "schedule": "Schedule",
+        "lastRun": "Last Run",
+        "status": "Status",
+        "duration": "Duration"
+      },
+      "migration": {
+        "title": "Migration from Vercel Cron",
+        "stepsTitle": "Migration Steps Completed:",
+        "step1": "Created Supabase Edge Functions for each cron job",
+        "step2": "Set up pg_cron schedules in Supabase",
+        "step3": "Removed Vercel cron configuration",
+        "scheduleTitle": "Cron Schedule Reference:",
+        "schedule1": "Every hour at minute 0",
+        "schedule2": "Every hour at minute 0",
+        "schedule3": "Every day at 2:00 AM",
+        "schedule4": "Every day at 3:00 AM"
+      }
+    }
+  },
   "nav": {
     "home": "Home",
     "demo": "Demo",
@@ -87,6 +121,9 @@
     "dashboard": "Dashboard",
     "campaigns": "Campaign Management",
     "reports": "Reports"
+  },
+  "brand": {
+    "name": "A.ll + Ad"
   },
   "auth": {
     "login": {
@@ -143,17 +180,21 @@
       "backToLogin": "Back to login",
       "errors": {
         "invalidEmail": "Please enter a valid email address.",
-        "general": "Error sending reset link. Please try again."
+        "general": "Error sending reset link. Please try again.",
+        "sessionExpired": "Your session has expired. Please request password reset again."
       },
       "success": "Password reset link sent! Please check your email."
     },
     "resetPassword": {
       "title": "Set New Password",
+      "subtitle": "Please enter a secure new password",
       "newPassword": "New Password",
       "newPasswordPlaceholder": "At least 6 characters",
       "confirmPassword": "Confirm Password",
       "confirmPasswordPlaceholder": "Re-enter your password",
       "submit": "Reset Password",
+      "checkingSession": "Checking session...",
+      "invalidSession": "Invalid or expired session. Please request password reset again.",
       "errors": {
         "passwordMin": "Password must be at least 6 characters.",
         "passwordMatch": "Passwords do not match.",
@@ -161,6 +202,22 @@
         "invalidToken": "Invalid or expired reset link."
       },
       "success": "Password reset successfully! You can now login with your new password."
+    },
+    "codeError": {
+      "title": "Authentication Error",
+      "description": "The verification code is invalid or has expired.",
+      "reasonsTitle": "Possible reasons:",
+      "reasons": {
+        "expired": "The verification link has expired (expires after 1 hour)",
+        "used": "The verification link has already been used",
+        "invalid": "You clicked an invalid link"
+      },
+      "solutionTitle": "What you can do:",
+      "actions": {
+        "resetPassword": "Request password reset again",
+        "backToLogin": "Back to login"
+      },
+      "footerHelp": "If the problem persists, please contact support."
     }
   },
   "dashboard": {
@@ -168,6 +225,18 @@
     "subtitle": "Manage campaigns across all advertising platforms at a glance.",
     "noData": "No data",
     "loginRequired": "Login required.",
+    "tabs": {
+      "campaigns": "Campaigns",
+      "platforms": "Integrations",
+      "team": "Team",
+      "aria": "Dashboard tabs"
+    },
+    "overview": {
+      "totalCampaigns": "Total Campaigns",
+      "activeCampaigns": "Active Campaigns",
+      "connectedPlatforms": "Connected Platforms",
+      "totalBudget": "Total Budget"
+    },
     "sync": {
       "button": "Sync",
       "syncing": "Syncing...",
@@ -199,6 +268,21 @@
       "platform": "Platform",
       "campaign": "Campaign",
       "status": "Status"
+    }
+  },
+  "profile": {
+    "title": "Profile Settings",
+    "notFound": "Profile not found.",
+    "nameLabel": "Name",
+    "namePlaceholder": "Enter your name",
+    "emailLabel": "Email",
+    "emailReadonly": "Email cannot be changed",
+    "uploadPrompt": "Click to upload your profile photo",
+    "toast": {
+      "avatarUpdated": "Profile photo has been updated.",
+      "avatarUpdateError": "An error occurred while updating the avatar.",
+      "avatarDeleted": "Profile photo has been deleted.",
+      "avatarDeleteError": "An error occurred while deleting the avatar."
     }
   },
   "campaigns": {
@@ -318,6 +402,12 @@
       "coupangAds": {
         "name": "Coupang Ads",
         "description": "Connect your Coupang Ads account"
+      }
+    },
+    "test": {
+      "googleOAuth": {
+        "title": "Google OAuth Test",
+        "connectionDetails": "Connection Details:"
       }
     },
     "connectedAccount": "Connected Account",
@@ -460,6 +550,20 @@
       "startFreeTrial": "Start Free Trial",
       "contactSales": "Contact Sales",
       "currentPlan": "Current Plan"
+    },
+    "header": {
+      "title": {
+        "pre": "Choose the",
+        "highlight": "right plan",
+        "post": "for you"
+      },
+      "subtitle": "Simple, transparent pricing. No hidden fees."
+    },
+    "badges": {
+      "mostPopular": "Most Popular"
+    },
+    "footer": {
+      "note": "All plans include a 14-day free trial. No credit card required."
     }
   },
   "home": {
@@ -526,6 +630,26 @@
       "sectionTitle": "Get Started Now",
       "sectionSubtitle": "Experience all features with a 14-day free trial",
       "sectionButton": "Start Free Trial"
+    }
+  },
+  "contact": {
+    "page": {
+      "title": "Contact Sales",
+      "subtitle": "Tell us about your needs and our team will reach out."
+    },
+    "form": {
+      "title": "Contact Form",
+      "nameLabel": "Name",
+      "namePlaceholder": "John Doe",
+      "companyLabel": "Company",
+      "companyPlaceholder": "Enter your company name",
+      "emailLabel": "Email",
+      "emailPlaceholder": "your@company.com",
+      "phoneLabel": "Phone",
+      "phonePlaceholder": "010-1234-5678",
+      "messageLabel": "Message",
+      "messagePlaceholder": "Describe how we can help",
+      "submit": "Submit"
     }
   },
   "settings": {
@@ -643,6 +767,7 @@
     "inviteModal": {
       "title": "Enter the email of the team member to invite.",
       "emailLabel": "Email",
+      "emailPlaceholder": "team@example.com",
       "roleLabel": "Role",
       "cancel": "Cancel",
       "send": "Invite"
@@ -742,9 +867,11 @@
     "network": "Network error. Please check your connection.",
     "unauthorized": "Unauthorized access. Please login.",
     "forbidden": "You don't have permission to access this resource.",
+    "forbiddenRole": "You need {{role}} permission to access this page.",
     "notFound": "Page not found.",
     "serverError": "Server error. Please try again later.",
-    "validation": "Please check your input and try again."
+    "validation": "Please check your input and try again.",
+    "somethingWentWrong": "Something went wrong!"
   },
   "success": {
     "saved": "Saved successfully!",
@@ -752,5 +879,263 @@
     "deleted": "Deleted successfully!",
     "copied": "Copied to clipboard!",
     "sent": "Sent successfully!"
+  },
+  "analytics": {
+    "totalImpressions": "Total Impressions",
+    "totalClicks": "Total Clicks",
+    "totalCost": "Total Cost",
+    "totalConversions": "Total Conversions",
+    "roas": "ROAS",
+    "impressions": "Impressions",
+    "clicks": "Clicks",
+    "cost": "Cost",
+    "conversions": "Conversions",
+    "revenue": "Revenue",
+    "metricsTitle": "Key Metrics",
+    "charts": {
+      "monthlyTrend": "Monthly Trend",
+      "byChannel": "By Channel",
+      "budgetShare": "Budget Share"
+    },
+    "ctr": "CTR",
+    "cpc": "CPC",
+    "roi": "ROI",
+    "ui": {
+      "selectMetric": "Select metric",
+      "animation": "Animation",
+      "dataLabels": "Data labels",
+      "platformComparisonTitle": "Platform comparison",
+      "lastUpdated": "Last updated:",
+      "vsPreviousPeriod": "vs previous period",
+      "noInsights": "Not enough data to generate insights.",
+      "detailedMetrics": "Detailed Metrics",
+      "tabs": {
+        "overview": "Overview",
+        "trends": "Trends",
+        "breakdown": "Breakdown",
+        "insights": "Insights"
+      },
+      "multiplierSuffix": "x"
+    }
+  },
+  "consent": {
+    "title": "Advertising account permissions",
+    "description": "Permissions required for All-AD to access your ad accounts. Only the selected platforms will be granted access.",
+    "selectAll": "Select all platforms",
+    "required": "Required",
+    "requestedPermissions": "The following permissions will be requested:",
+    "noticeTitle": "Important notes",
+    "bullets": {
+      "revokeAnytime": "You can revoke these permissions at any time in Settings.",
+      "scopeOnly": "All-AD only accesses data within the granted scope.",
+      "encrypted": "All data is encrypted and protected securely.",
+      "privacy": "Data is processed in accordance with our Privacy Policy."
+    },
+    "buttons": {
+      "connectSelected": "Connect {{count}} platforms",
+      "selectPrompt": "Please select platforms"
+    },
+    "legal": {
+      "agreePrefix": "By continuing, you agree to our",
+      "agreeSuffix": "."
+    },
+    "platforms": {
+      "google_ads": {
+        "name": "Google Ads",
+        "permissions": [
+          "Read campaign data",
+          "Toggle campaign status (ON/OFF)",
+          "Generate performance reports",
+          "View ad account information"
+        ]
+      },
+      "meta_ads": {
+        "name": "Meta Ads",
+        "permissions": [
+          "Read ad account data",
+          "Change campaign status",
+          "Access insights and analytics data",
+          "Access Business Manager information"
+        ]
+      },
+      "tiktok_ads": {
+        "name": "TikTok Ads",
+        "permissions": [
+          "Read ad account data",
+          "Manage campaigns",
+          "Access Business Center information",
+          "Read report data"
+        ]
+      }
+    }
+  },
+  "campaignMetricsModal": {
+    "title": "Campaign Metrics",
+    "noData": "No metrics data available for this campaign",
+    "summaryTitle": "Last 30 Days Summary",
+    "impressions": "Impressions",
+    "clicks": "Clicks",
+    "cost": "Cost",
+    "conversions": "Conversions",
+    "ctr": "CTR",
+    "cpc": "CPC",
+    "roas": "ROAS",
+    "dailyPerformanceTitle": "Recent Daily Performance",
+    "impressionsUnit": "imp",
+    "clicksUnit": "clicks",
+    "closeButton": "Close"
+  },
+  "adsPerformanceDashboard": {
+    "title": "Ads Performance Dashboard",
+    "subtitle": "Monitor the performance of all your ad platforms at a glance",
+    "realtimeUpdate": "Real-time Update",
+    "filter": "Filter",
+    "export": "Export",
+    "settings": "Settings",
+    "refresh": "Refresh",
+    "updating": "Updating...",
+    "lastUpdate": "Last updated: {{time}}",
+    "realtime": "Real-time",
+    "filtersAndOptions": "Filters and Options",
+    "period": "Period",
+    "account": "Account",
+    "groupBy": "Group By",
+    "chartType": "Chart Type",
+    "byPlatform": "By Platform",
+    "byAccount": "By Account",
+    "byCampaign": "By Campaign",
+    "byDate": "By Date",
+    "barChart": "Bar Chart",
+    "lineChart": "Line Chart",
+    "areaChart": "Area Chart",
+    "pieChart": "Pie Chart",
+    "notifications": "Notifications",
+    "unacknowledged": "Unacknowledged",
+    "acknowledge": "Acknowledge",
+    "totalSpend": "Total Spend",
+    "totalImpressions": "Total Impressions",
+    "totalConversions": "Total Conversions",
+    "averageRoas": "Average ROAS",
+    "excellent": "Excellent",
+    "good": "Good",
+    "needsImprovement": "Needs Improvement",
+    "overview": "Overview",
+    "byPlatformTab": "By Platform",
+    "trendAnalysis": "Trend Analysis",
+    "performanceAnalysis": "Performance Analysis",
+    "errorOccurred": "An error occurred",
+    "retry": "Retry",
+    "platformSelect": "Select Platform:",
+    "loadingPlatformData": "Loading platform data...",
+    "trendAnalysisTitle": "Trend Analysis",
+    "trendAnalysisSubtitle": "Analyze time-series data to display trends.",
+    "performanceAnalysisTitle": "Performance Analysis",
+    "performanceAnalysisSubtitle": "Display detailed performance analysis and optimization suggestions.",
+    "exportData": "Export Data",
+    "exportFormat": "Export Format",
+    "csv": "CSV",
+    "excel": "Excel",
+    "json": "JSON",
+    "pdf": "PDF",
+    "dataToInclude": "Data to Include",
+    "summaryData": "Summary Data",
+    "detailedData": "Detailed Data",
+    "chartImages": "Chart Images",
+    "cancel": "Cancel",
+    "dashboardSettings": "Dashboard Settings",
+    "autoRefresh": "Auto Refresh",
+    "refreshInterval": "Refresh Interval (seconds)",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "auto": "Auto",
+    "save": "Save"
+  },
+  "demo": {
+    "title": "Demo",
+    "subtitle": "This is a demo page to showcase the dashboard.",
+    "summary": {
+      "totalSpend": "Total Spend",
+      "totalRevenue": "Total Revenue",
+      "roas": "ROAS"
+    },
+    "platforms": {
+      "title": "Platform Performance",
+      "spend": "Spend",
+      "revenue": "Revenue"
+    },
+    "cta": {
+      "message": "Ready to see the full picture?",
+      "tryAllFeatures": "Try all features"
+    }
+  },
+  "invite": {
+    "logoutWithCorrectEmail": "Logout and sign in with the correct email",
+    "alreadyUsed": {
+      "title": "Invitation Already Used",
+      "sentToPrefix": "This invitation was sent to",
+      "acceptedSuffix": "and has already been accepted.",
+      "loggedInAsPrefix": "You are currently logged in as",
+      "instructions": "Please log out and sign in with the correct email address to access the team.",
+      "statusPrefix": "This invitation has already been"
+    },
+    "expired": {
+      "title": "Invitation Expired",
+      "message": "This invitation has expired. Please ask the team owner to send a new one."
+    },
+    "accountExists": {
+      "title": "Account Exists",
+      "prefix": "An account with the email",
+      "suffix": "already exists.",
+      "description": "Please log in to accept the invitation. If you have forgotten your password, you can reset it."
+    },
+    "actions": {
+      "login": "Login",
+      "resetPassword": "Reset Password"
+    },
+    "mismatch": {
+      "title": "Email Mismatch",
+      "sentToPrefix": "This invitation was sent to",
+      "loggedInAsPrefix": "You are logged in as",
+      "optionsTitle": "Please choose one of the following options:",
+      "option1Title": "Logout and accept invitation:",
+      "option1Desc": "Log out of your current account and then accept the invitation with the correct email.",
+      "option2Title": "Accept invitation with current account:",
+      "option2Desc": "Accept the invitation with your current account. The invitation will be linked to this account.",
+      "warning": "This will transfer the invitation to your current account."
+    },
+    "unknownTeam": "Unknown Team",
+    "someone": "Someone"
+  },
+  "support": {
+    "title": "Support",
+    "subtitle": "We are here to help. Choose one of the options below to get in touch.",
+    "cards": {
+      "docs": {
+        "title": "Documentation",
+        "description": "Browse our comprehensive documentation to find answers to your questions.",
+        "linkText": "Go to docs"
+      },
+      "faq": {
+        "title": "FAQ",
+        "description": "Find answers to frequently asked questions.",
+        "linkText": "Go to FAQ"
+      },
+      "email": {
+        "title": "Email",
+        "description": "Send us an email and we will get back to you as soon as possible.",
+        "linkText": "Send email"
+      },
+      "phone": {
+        "title": "Phone",
+        "description": "Call us for immediate assistance.",
+        "linkText": "Call us"
+      }
+    },
+    "enterprise": {
+      "title": "Enterprise Support",
+      "description": "For enterprise customers, we offer dedicated support.",
+      "cta": "Contact us"
+    }
   }
 }

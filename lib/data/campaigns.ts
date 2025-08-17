@@ -37,7 +37,7 @@ export const getCampaignStats = cache(
     const stats = campaigns.reduce(
       (acc, campaign) => {
         acc.totalCampaigns++;
-        if (campaign.isActive) acc.activeCampaigns++;
+        if (campaign.is_active) acc.activeCampaigns++;
         acc.totalBudget += campaign.budget || 0;
 
         // Aggregate metrics from campaign

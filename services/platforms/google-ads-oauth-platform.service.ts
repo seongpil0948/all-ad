@@ -172,11 +172,7 @@ export class GoogleAdsOAuthPlatformService extends BasePlatformService<GoogleAds
     }, "fetchCampaigns");
   }
 
-  async fetchCampaignMetrics(
-    campaignId: string,
-    _startDate: Date,
-    _endDate: Date,
-  ): Promise<CampaignMetrics[]> {
+  async fetchCampaignMetrics(campaignId: string): Promise<CampaignMetrics[]> {
     return this.executeWithErrorHandling(async () => {
       if (!this.service) {
         await this.initializeService();
@@ -242,7 +238,7 @@ export class GoogleAdsOAuthPlatformService extends BasePlatformService<GoogleAds
     }, "updateCampaignBudget");
   }
 
-  async createCampaign(_campaign: Partial<Campaign>): Promise<Campaign> {
+  async createCampaign(): Promise<Campaign> {
     throw new Error("Campaign creation not implemented for Google Ads OAuth");
   }
 

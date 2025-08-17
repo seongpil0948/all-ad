@@ -12,8 +12,10 @@ import { updatePassword, type ResetPasswordState } from "./actions";
 import { createClient } from "@/utils/supabase/client";
 import log from "@/utils/logger";
 import { ErrorMessage } from "@/components/common/ErrorMessage";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 export function ResetPasswordForm() {
+  const { dictionary: dict } = useDictionary();
   const router = useRouter();
   const [isValidSession, setIsValidSession] = useState<boolean | null>(null);
   const [sessionChecked, setSessionChecked] = useState(false);
@@ -81,7 +83,9 @@ export function ResetPasswordForm() {
       <div className="flex justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2" />
-          <p className="text-sm text-default-500">세션을 확인하는 중...</p>
+          <p className="text-sm text-default-500">
+            {dict.auth.resetPassword.checkingSession}
+          </p>
         </div>
       </div>
     );
@@ -92,7 +96,7 @@ export function ResetPasswordForm() {
     return (
       <div className="text-center">
         <p className="text-danger text-sm">
-          유효하지 않은 세션입니다. 비밀번호 재설정을 다시 요청해주세요.
+          {dict.auth.resetPassword.invalidSession}
         </p>
       </div>
     );
@@ -105,9 +109,9 @@ export function ResetPasswordForm() {
           isRequired
           errorMessage={state.errors?.password}
           isInvalid={!!state.errors?.password}
-          label="새 비밀번호"
+          label={dict.auth.resetPassword.newPassword}
           name="password"
-          placeholder="최소 6자 이상"
+          placeholder={dict.auth.resetPassword.newPasswordPlaceholder}
           startContent={<FaLock className="text-default-400" />}
           type="password"
           variant="bordered"
@@ -117,9 +121,9 @@ export function ResetPasswordForm() {
           isRequired
           errorMessage={state.errors?.confirmPassword}
           isInvalid={!!state.errors?.confirmPassword}
-          label="비밀번호 확인"
+          label={dict.auth.resetPassword.confirmPassword}
           name="confirmPassword"
-          placeholder="비밀번호를 다시 입력하세요"
+          placeholder={dict.auth.resetPassword.confirmPasswordPlaceholder}
           startContent={<FaLock className="text-default-400" />}
           type="password"
           variant="bordered"
@@ -133,7 +137,7 @@ export function ResetPasswordForm() {
         )}
 
         <Button fullWidth color="primary" type="submit">
-          비밀번호 변경
+          {dict.auth.resetPassword.submit}
         </Button>
       </div>
     </Form>

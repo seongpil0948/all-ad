@@ -3,16 +3,21 @@ import { StateCreator } from "zustand";
 import { AnalyticsDataSlice } from "./analyticsDataSlice";
 import { LoadingSlice } from "./loadingSlice";
 import { ErrorSlice } from "./errorSlice";
+import { AnalyticsUiSlice } from "./analyticsUiSlice";
 
 import log from "@/utils/logger";
 
 export interface AnalyticsActionsSlice {
-  fetchAnalytics: (dateRange: { start: Date; end: Date }) => Promise<void>;
+  fetchAnalytics: (dateRange: { start: string; end: string }) => Promise<void>;
   exportData: (format: "csv" | "excel" | "pdf") => Promise<void>;
 }
 
 export const createAnalyticsActionsSlice: StateCreator<
-  AnalyticsDataSlice & LoadingSlice & ErrorSlice & AnalyticsActionsSlice,
+  AnalyticsDataSlice &
+    LoadingSlice &
+    ErrorSlice &
+    AnalyticsActionsSlice &
+    AnalyticsUiSlice,
   [],
   [],
   AnalyticsActionsSlice
@@ -22,8 +27,8 @@ export const createAnalyticsActionsSlice: StateCreator<
 
     try {
       const params = new URLSearchParams({
-        start: dateRange.start.toISOString(),
-        end: dateRange.end.toISOString(),
+        start: new Date(dateRange.start).toISOString(),
+        end: new Date(dateRange.end).toISOString(),
       });
 
       const response = await fetch(`/api/analytics?${params.toString()}`);
@@ -40,7 +45,6 @@ export const createAnalyticsActionsSlice: StateCreator<
         summary,
         platformData,
         timeSeriesData,
-        dateRange,
         isLoading: false,
         error: null,
       });
@@ -58,7 +62,8 @@ export const createAnalyticsActionsSlice: StateCreator<
     set({ isLoading: true, error: null });
 
     try {
-      const { dateRange, summary, platformData } = get();
+      const { summary, platformData } = get();
+      const dateRange = get().dateRange;
 
       const response = await fetch("/api/analytics/export", {
         method: "POST",
@@ -67,7 +72,10 @@ export const createAnalyticsActionsSlice: StateCreator<
         },
         body: JSON.stringify({
           format,
-          dateRange,
+          dateRange: {
+            start: new Date(dateRange.start).toISOString(),
+            end: new Date(dateRange.end).toISOString(),
+          },
           summary,
           platformData,
         }),

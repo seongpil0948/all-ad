@@ -7,6 +7,7 @@ import LogoutButton from "./LogoutButton";
 
 import { createClient } from "@/utils/supabase/server";
 import log from "@/utils/logger";
+import { getDictionary, type Locale } from "@/app/[lang]/dictionaries";
 
 interface InvitePageProps {
   params: Promise<{
@@ -82,6 +83,7 @@ export const revalidate = 0;
 
 export default async function InvitePage({ params }: InvitePageProps) {
   const { token } = await params;
+  const dict = await getDictionary("en" as Locale);
   const supabase = await createClient();
 
   // Check if user is logged in
@@ -117,19 +119,19 @@ export default async function InvitePage({ params }: InvitePageProps) {
           <div className="flex min-h-screen items-center justify-center p-4">
             <div className="text-center max-w-md mx-auto">
               <h1 className="text-2xl font-bold mb-4">
-                Invitation Already Used
+                {dict.invite.alreadyUsed.title}
               </h1>
               <p className="text-default-500 mb-4">
-                This invitation was sent to <strong>{invitation.email}</strong>{" "}
-                and has already been accepted.
+                {dict.invite.alreadyUsed.sentToPrefix}{" "}
+                <strong>{invitation.email}</strong>{" "}
+                {dict.invite.alreadyUsed.acceptedSuffix}
               </p>
               <p className="text-default-500 mb-4">
-                You are currently logged in as{" "}
+                {dict.invite.alreadyUsed.loggedInAsPrefix}{" "}
                 <strong>{userProfile?.email}</strong>.
               </p>
               <p className="text-default-500 mb-6">
-                Please log out and sign in with the correct email address to
-                access this team.
+                {dict.invite.alreadyUsed.instructions}
               </p>
               <LogoutButton inviteEmail={invitation.email} />
             </div>
@@ -141,9 +143,11 @@ export default async function InvitePage({ params }: InvitePageProps) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Invitation Already Used</h1>
+          <h1 className="text-2xl font-bold mb-4">
+            {dict.invite.alreadyUsed.title}
+          </h1>
           <div className="text-default-500">
-            This invitation has already been {invitation.status}.
+            {dict.invite.alreadyUsed.statusPrefix} {invitation.status}.
           </div>
         </div>
       </div>
@@ -155,10 +159,10 @@ export default async function InvitePage({ params }: InvitePageProps) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Invitation Expired</h1>
-          <div className="text-default-500">
-            This invitation has expired. Please request a new invitation.
-          </div>
+          <h1 className="text-2xl font-bold mb-4">
+            {dict.invite.expired.title}
+          </h1>
+          <div className="text-default-500">{dict.invite.expired.message}</div>
         </div>
       </div>
     );
@@ -178,14 +182,16 @@ export default async function InvitePage({ params }: InvitePageProps) {
       return (
         <div className="flex min-h-screen items-center justify-center p-4">
           <div className="text-center max-w-md mx-auto">
-            <h1 className="text-2xl font-bold mb-4">Account Already Exists</h1>
+            <h1 className="text-2xl font-bold mb-4">
+              {dict.invite.accountExists.title}
+            </h1>
             <p className="text-default-500 mb-4">
-              An account with email <strong>{invitation.email}</strong> already
-              exists.
+              {dict.invite.accountExists.prefix}{" "}
+              <strong>{invitation.email}</strong>{" "}
+              {dict.invite.accountExists.suffix}
             </p>
             <p className="text-default-500 mb-6">
-              Please log in with your existing account or reset your password if
-              you forgot it.
+              {dict.invite.accountExists.description}
             </p>
             <div className="flex flex-col gap-3">
               <Button
@@ -195,7 +201,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
                   (window.location.href = `/login?email=${encodeURIComponent(invitation.email)}`)
                 }
               >
-                Log In
+                {dict.invite.actions.login}
               </Button>
               <Button
                 className="w-full"
@@ -205,7 +211,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
                   (window.location.href = `/forgot-password?email=${encodeURIComponent(invitation.email)}`)
                 }
               >
-                Reset Password
+                {dict.invite.actions.resetPassword}
               </Button>
             </div>
           </div>
@@ -270,21 +276,25 @@ export default async function InvitePage({ params }: InvitePageProps) {
     return (
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="text-center max-w-md mx-auto">
-          <h1 className="text-2xl font-bold mb-4">Email Mismatch</h1>
+          <h1 className="text-2xl font-bold mb-4">
+            {dict.invite.mismatch.title}
+          </h1>
           <div className="text-default-500 mb-2">
-            This invitation was sent to <strong>{invitation.email}</strong>
+            {dict.invite.mismatch.sentToPrefix}{" "}
+            <strong>{invitation.email}</strong>
           </div>
           <div className="text-default-500 mb-4">
-            You are currently logged in as <strong>{userProfile?.email}</strong>
+            {dict.invite.mismatch.loggedInAsPrefix}{" "}
+            <strong>{userProfile?.email}</strong>
           </div>
           <div className="text-default-500 mb-6">
-            You have a few options to proceed:
+            {dict.invite.mismatch.optionsTitle}
           </div>
           <div className="space-y-3">
             <div className="bg-default-100 p-4 rounded-lg">
               <div className="text-sm text-default-600 mb-2">
-                <strong>Option 1:</strong> Log out and sign in with the invited
-                email address
+                <strong>{dict.invite.mismatch.option1Title}</strong>{" "}
+                {dict.invite.mismatch.option1Desc}
               </div>
               <div className="flex gap-2">
                 <LogoutButton inviteEmail={invitation.email} />
@@ -292,18 +302,18 @@ export default async function InvitePage({ params }: InvitePageProps) {
             </div>
             <div className="bg-default-100 p-4 rounded-lg">
               <div className="text-sm text-default-600 mb-2">
-                <strong>Option 2:</strong> Accept with current account (less
-                secure)
+                <strong>{dict.invite.mismatch.option2Title}</strong>{" "}
+                {dict.invite.mismatch.option2Desc}
               </div>
               <div className="text-xs text-warning mb-2">
-                Warning: This will add your current account to the team even
-                though the invitation was sent to a different email.
+                {dict.invite.mismatch.warning}
               </div>
               <InviteAcceptClient
                 invitation={{
                   ...invitation,
-                  teamName: invitation.teams?.name || "Unknown Team",
-                  inviterName: invitation.profiles?.email || "Someone",
+                  teamName: invitation.teams?.name || dict.invite.unknownTeam,
+                  inviterName:
+                    invitation.profiles?.email || dict.invite.someone,
                 }}
                 token={token}
               />
@@ -318,18 +328,18 @@ export default async function InvitePage({ params }: InvitePageProps) {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center">
-          <div className="text-center">Loading...</div>
+          <div className="text-center">{dict.common.loading}</div>
         </div>
       }
     >
       <InviteAcceptClient
         invitation={{
           ...invitation,
-          teamName: invitation.teams?.name || "Unknown Team",
+          teamName: invitation.teams?.name || dict.invite.unknownTeam,
           inviterName:
             invitation.profiles?.full_name ||
             invitation.profiles?.email ||
-            "Someone",
+            dict.invite.someone,
         }}
         token={token}
       />

@@ -1,7 +1,14 @@
 import { GoogleAdsSimpleConnect } from "@/components/integrations/google-ads/GoogleAdsSimpleConnect";
 import { createClient } from "@/utils/supabase/server";
+import { getDictionary, type Locale } from "@/app/[lang]/dictionaries";
 
-export default async function TestGoogleOAuthPage() {
+export default async function TestGoogleOAuthPage({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}) {
+  const { lang } = await params;
+  const dict = await getDictionary(lang as Locale);
   const supabase = await createClient();
 
   // Get current user's team
@@ -50,7 +57,9 @@ export default async function TestGoogleOAuthPage() {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-8">Google OAuth Test</h1>
+      <h1 className="text-2xl font-bold mb-8">
+        {dict.integrations.test.googleOAuth.title}
+      </h1>
 
       <div className="max-w-2xl mx-auto">
         <GoogleAdsSimpleConnect
@@ -61,7 +70,9 @@ export default async function TestGoogleOAuthPage() {
 
         {isConnected && (
           <div className="mt-8 p-4 bg-default-100 rounded-lg">
-            <h2 className="font-semibold mb-2">Connection Details:</h2>
+            <h2 className="font-semibold mb-2">
+              {dict.integrations.test.googleOAuth.connectionDetails}
+            </h2>
             <pre className="text-xs">
               {JSON.stringify(credential?.data, null, 2)}
             </pre>

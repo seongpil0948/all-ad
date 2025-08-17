@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { siteConfig } from "@/config/site";
 
 export const runtime = "edge";
 
@@ -9,6 +10,7 @@ export const size = {
 export const contentType = "image/png";
 
 export default function AppleIcon() {
+  const INITIAL = (siteConfig.name?.[0] ?? "A") as string;
   return new ImageResponse(
     (
       <div
@@ -26,7 +28,7 @@ export default function AppleIcon() {
           boxShadow: "0 8px 16px rgba(0,0,0,0.3)",
         }}
       >
-        A
+        {INITIAL}
       </div>
     ),
     {
