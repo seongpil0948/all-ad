@@ -2,9 +2,14 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Enable incremental Partial Prerendering (PPR)
-  // experimental: {
-  //   ppr: "incremental",
-  // },
+  experimental: {
+    ppr: "incremental",
+    allowedRevalidateHeaderKeys: ["Cache-Control", "X-Next-Revalidate"],
+    fetchCacheKeyPrefix: "severa",
+    imgOptConcurrency: 10,
+    dynamicOnHover: true,
+    optimizeServerReact: true,
+  },
   // reactStrictMode: false,
   cleanDistDir: true,
 

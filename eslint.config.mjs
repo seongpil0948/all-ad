@@ -12,7 +12,7 @@ const compat = new FlatCompat({
   recommendedConfig: js.configs.recommended,
 });
 
-export default [
+const config = [
   {
     ignores: [
       "**/node_modules/**",
@@ -47,6 +47,13 @@ export default [
       "no-console": ["warn", { allow: ["warn", "error"] }],
     },
   }),
+  // Suppress triple-slash reference lint error in auto-generated next-env.d.ts
+  {
+    files: ["next-env.d.ts"],
+    rules: {
+      "@typescript-eslint/triple-slash-reference": "off",
+    },
+  },
   // Relax rules for declaration files under types/
   {
     files: ["types/**/*.d.ts"],
@@ -107,3 +114,5 @@ export default [
     },
   },
 ];
+
+export default config;

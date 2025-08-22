@@ -5,17 +5,40 @@ import { getPlatformServiceFactory } from "@/services/platforms/platform-service
 import { createClient } from "@/utils/supabase/server";
 import log from "@/utils/logger";
 
-interface RouteParams {
-  platform: PlatformType;
+// Route params provided by Next.js are plain strings; we'll validate/narrow platform at runtime.
+interface RouteParamsRaw {
+  platform: string;
   campaignId: string;
 }
 
+function isPlatformType(value: string): value is PlatformType {
+  return [
+    "facebook",
+    "google",
+    "kakao",
+    "naver",
+    "coupang",
+    "amazon",
+    "tiktok",
+  ].includes(value as PlatformType);
+}
+
+export const runtime = "nodejs"; // Ensure Node runtime for Supabase libraries using Node APIs
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<RouteParams> },
+  { params }: { params: Promise<RouteParamsRaw> },
 ) {
   try {
-    const { platform, campaignId } = await params;
+    const { platform: rawPlatform, campaignId } = await params;
+
+    if (!isPlatformType(rawPlatform)) {
+      return NextResponse.json(
+        { error: "Unsupported platform" },
+        { status: 400 },
+      );
+    }
+    const platform: PlatformType = rawPlatform;
 
     // Get user and team info
     const supabase = await createClient();
