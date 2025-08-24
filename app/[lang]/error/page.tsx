@@ -8,18 +8,24 @@ export default async function ErrorPage({
   searchParams,
   params,
 }: {
-  searchParams?: { message?: string };
+  // Project currently types these as Promise (see login page). Keep consistent to satisfy generated PageProps.
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
   params: Promise<{ lang: string }>;
 }) {
   const { lang } = await params;
   const dict = await getDictionary(lang as Locale);
 
-  const code = searchParams?.message;
+  let code: string | string[] | undefined;
+  if (searchParams) {
+    const resolved = await searchParams;
+    code = resolved?.message;
+  }
 
   // Map known error codes to title/message.
   // Reuse existing dictionary entries to avoid duplication.
   const mapped = (() => {
-    switch (code) {
+    const normalized = Array.isArray(code) ? code[0] : code;
+    switch (normalized) {
       case "no_team":
         return {
           title: dict.errors.general,
