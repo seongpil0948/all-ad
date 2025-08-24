@@ -209,19 +209,24 @@ export function TeamManagement() {
     [dict],
   );
 
-  // Effect 3: Reload members list when data changes - separate concern
+  // Effect 3: Reload members list when data changes.
+  // NOTE: Including the async list object itself as dependency caused an infinite
+  // re-render loop in some environments (its identity may change after reload()).
+  // We only depend on the length (structural change) to trigger reload.
   useEffect(() => {
     startTransition(() => {
       membersList.reload();
     });
-  }, [teamMembers?.length, membersList]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [teamMembers?.length]);
 
-  // Effect 4: Reload invitations list when data changes - separate concern
+  // Effect 4: Reload invitations list when data changes (same infinite loop fix as above)
   useEffect(() => {
     startTransition(() => {
       invitationsList.reload();
     });
-  }, [teamInvitations?.length, invitationsList]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [teamInvitations?.length]);
 
   const handleInvite = useCallback(async () => {
     if (!inviteEmail) {
