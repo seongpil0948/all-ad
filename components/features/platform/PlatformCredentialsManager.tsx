@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, memo, useCallback } from "react";
+import { useState, memo, useCallback, useMemo } from "react";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Button } from "@heroui/button";
 import {
@@ -52,25 +52,25 @@ function PlatformCredentialsManagerComponent({
   );
   const [isLoading, setIsLoading] = useState(false);
 
+  // Define which platforms currently use OAuth flow (subset of PLATFORM_TYPES)
+  const OAUTH_PLATFORMS = useMemo<readonly PlatformType[]>(
+    () => ["google", "facebook", "kakao", "tiktok"],
+    [],
+  );
+
   const handleAddOrEdit = useCallback(
     (platform: PlatformType) => {
       const config = platformConfig[platform];
 
-      // For OAuth platforms with Sivera credentials, redirect directly
-      if (
-        config.supportsOAuth &&
-        ["google", "facebook", "kakao", "amazon"].includes(platform)
-      ) {
-        // Redirect to our new start route
+      if (config.supportsOAuth && OAUTH_PLATFORMS.includes(platform)) {
         window.location.href = `/api/auth/start?platform=${platform}`;
         return;
       }
 
-      // For API key platforms (Naver, Coupang), show the form
       setSelectedPlatform(platform);
       onOpen();
     },
-    [onOpen],
+    [onOpen, OAUTH_PLATFORMS],
   );
 
   const handleSave = useCallback(

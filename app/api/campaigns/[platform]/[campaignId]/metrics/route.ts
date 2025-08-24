@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { PlatformType } from "@/types";
+import { isPlatformType } from "@/utils/platform";
 import { getPlatformServiceFactory } from "@/services/platforms/platform-service-factory";
 import { createClient } from "@/utils/supabase/server";
 import log from "@/utils/logger";
@@ -9,18 +10,6 @@ import log from "@/utils/logger";
 interface RouteParamsRaw {
   platform: string;
   campaignId: string;
-}
-
-function isPlatformType(value: string): value is PlatformType {
-  return [
-    "facebook",
-    "google",
-    "kakao",
-    "naver",
-    "coupang",
-    "amazon",
-    "tiktok",
-  ].includes(value as PlatformType);
 }
 
 export const runtime = "nodejs"; // Ensure Node runtime for Supabase libraries using Node APIs

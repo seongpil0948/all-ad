@@ -8,7 +8,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -23,10 +23,10 @@ export type Database = {
     Functions: {
       graphql: {
         Args: {
+          extensions?: Json
           operationName?: string
           query?: string
           variables?: Json
-          extensions?: Json
         }
         Returns: Json
       }
@@ -40,6 +40,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string
+          entity_type: string
+          id: string
+          performed_by: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          performed_by?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          performed_by?: string | null
+        }
+        Relationships: []
+      }
       campaign_metrics: {
         Row: {
           campaign_id: string
@@ -568,7 +598,18 @@ export type Database = {
       }
       call_edge_function: {
         Args: { function_name: string; payload?: Json }
-        Returns: number
+        Returns: Json
+      }
+      check_cron_job_health: {
+        Args: { job_name_param: string }
+        Returns: {
+          health_message: string
+          is_healthy: boolean
+          job_name: string
+          last_success: string
+          next_run: string
+          recent_failures: number
+        }[]
       }
       check_team_member_limit: {
         Args: { team_id_param: string }
@@ -583,43 +624,42 @@ export type Database = {
         Returns: string
       }
       ensure_user_has_team: {
-        Args: { user_id_param: string }
-        Returns: string
-      }
-      ensure_user_team: {
-        Args: { user_id: string }
+        Args: Record<PropertyKey, never> | { user_id_param: string }
         Returns: string
       }
       get_cron_job_status: {
         Args: Record<PropertyKey, never>
         Returns: {
-          jobid: number
-          jobname: string
-          schedule: string
-          command: string
           active: boolean
-          last_run: string
-          last_status: string
-          last_duration: unknown
+          failure_count: number
+          job_id: number
+          job_name: string
+          last_run_status: string
+          last_run_time: string
+          run_count: number
+          schedule: string
+          success_count: number
         }[]
       }
       get_invitation_by_token: {
         Args: { invitation_token: string }
         Returns: Json
       }
+      get_recent_cron_activity: {
+        Args: { limit_count?: number }
+        Returns: {
+          duration: unknown
+          ended_at: string
+          job_name: string
+          return_message: string
+          started_at: string
+          status: string
+        }[]
+      }
       user_teams: {
         Args: { user_id: string }
         Returns: {
           team_id: string
-        }[]
-      }
-      validate_token_migration: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          platform: string
-          total_count: number
-          migrated_count: number
-          missing_tokens: number
         }[]
       }
     }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Switch } from "@heroui/switch";
@@ -271,10 +271,20 @@ export function MultiAccountPlatformManager({
   }, [credentials]);
 
   // Reload lists when credentials change
+  // Reload lists & token status only when the credentials array identity changes,
+  // not on every render (platformLists is stable via useMemo but its reference changes only when deps change).
+  // Prevent infinite reload loops: reload lists & check tokens only when credentials reference changes.
+  const prevCredentialsRef = useRef<PlatformCredential[] | null>(null);
+
   useEffect(() => {
+    // If same array reference as previous render, skip (avoids re-running due to list internal state updates).
+    if (prevCredentialsRef.current === credentials) return;
+
+    // Reload each platform list to reflect updated credentials dataset.
     Object.values(platformLists).forEach((list) => list.reload());
     checkTokensStatus();
-  }, [credentials.length, platformLists, checkTokensStatus]);
+    prevCredentialsRef.current = credentials;
+  }, [credentials, checkTokensStatus, platformLists]);
 
   const handleAddAccount = async (platform: PlatformType) => {
     const config = platformConfig[platform];

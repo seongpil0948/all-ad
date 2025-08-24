@@ -107,6 +107,11 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const method = request.method;
 
+  // Fast path: allow PWA manifest & other static asset requests through without session mutation logic.
+  if (pathname === "/manifest.webmanifest" || pathname === "/manifest.json") {
+    return NextResponse.next();
+  }
+
   // Check if this path should skip locale redirect
   const skipLocale = shouldSkipLocaleRedirect(pathname);
 
