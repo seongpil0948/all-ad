@@ -30,16 +30,16 @@ export const metadata: Metadata = {
     "kakao ads",
     "coupang ads",
   ],
-  authors: [{ name: "A.ll + Ad Team" }],
-  creator: "A.ll + Ad",
-  publisher: "A.ll + Ad",
+  authors: [{ name: "Sivera Team" }],
+  creator: "Sivera",
+  publisher: "Sivera",
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "https://alladvertising.com",
+    process.env.NEXT_PUBLIC_SITE_URL || "https://sivera.app",
   ),
   alternates: {
     canonical: "/",
@@ -70,7 +70,7 @@ export const metadata: Metadata = {
     title: siteConfig.name,
     description: siteConfig.description,
     images: ["/og-image.png"],
-    creator: "@alladvertising",
+    creator: "@sivera",
   },
   robots: {
     index: true,

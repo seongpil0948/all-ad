@@ -123,7 +123,7 @@
     "reports": "Reports"
   },
   "brand": {
-    "name": "A.ll + Ad"
+    "name": "Sivera"
   },
   "auth": {
     "login": {
@@ -833,7 +833,7 @@
       "tagline": "Setting new standards for ad management.",
       "copyright": "© {{year}} {{company}}. All rights reserved.",
       "address": "#402, 322, Byeollae 3-ro, Namyangju-si, Gyeonggi-do, Republic of Korea",
-      "email": "siveraofficial@gmail.com",
+      "email": "sivera@sivera.app",
       "phone": "+82.010.7727.7428"
     }
   },
@@ -920,14 +920,14 @@
   },
   "consent": {
     "title": "Advertising account permissions",
-    "description": "Permissions required for All-AD to access your ad accounts. Only the selected platforms will be granted access.",
+    "description": "Permissions required for Sivera to access your ad accounts. Only the selected platforms will be granted access.",
     "selectAll": "Select all platforms",
     "required": "Required",
     "requestedPermissions": "The following permissions will be requested:",
     "noticeTitle": "Important notes",
     "bullets": {
       "revokeAnytime": "You can revoke these permissions at any time in Settings.",
-      "scopeOnly": "All-AD only accesses data within the granted scope.",
+      "scopeOnly": "Sivera only accesses data within the granted scope.",
       "encrypted": "All data is encrypted and protected securely.",
       "privacy": "Data is processed in accordance with our Privacy Policy."
     },

@@ -704,10 +704,10 @@ export default function PrivacyPolicyContent() {
                     <FiMail className="w-4 h-4" />
                     <Link
                       color="primary"
-                      href="mailto:allofadvertisements@gmail.com"
+                      href="mailto:sivera@sivera.app"
                       underline="hover"
                     >
-                      allofadvertisements@gmail.com
+                      sivera@sivera.app
                     </Link>
                   </div>
                 </div>
@@ -731,10 +731,10 @@ export default function PrivacyPolicyContent() {
                     <FiMail className="w-4 h-4" />
                     <Link
                       color="secondary"
-                      href="mailto:allofadvertisements@gmail.com"
+                      href="mailto:sivera@sivera.app"
                       underline="hover"
                     >
-                      allofadvertisements@gmail.com
+                      sivera@sivera.app
                     </Link>
                   </div>
                 </div>

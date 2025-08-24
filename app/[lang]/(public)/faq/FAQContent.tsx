@@ -77,7 +77,7 @@ const faqData: FAQCategory[] = [
         id: "9",
         question: "Q9: 계정 연동 시 오류가 발생하면 어떻게 해야 하나요?",
         answer:
-          "A9: '광고 계정 연동/관리' 페이지에서 해당 계정의 오류 상태를 확인하고, 안내되는 오류 메시지 및 해결 가이드를 참고해 주세요. 대부분 API 접근 권한 만료 또는 변경 등의 문제이며, 재인증 절차를 통해 해결될 수 있습니다. 해결이 어려운 경우 고객 지원팀(allofadvertisements@gmail.com)에 문의해주시면 신속하게 도와드리겠습니다.",
+          "A9: '광고 계정 연동/관리' 페이지에서 해당 계정의 오류 상태를 확인하고, 안내되는 오류 메시지 및 해결 가이드를 참고해 주세요. 대부분 API 접근 권한 만료 또는 변경 등의 문제이며, 재인증 절차를 통해 해결될 수 있습니다. 해결이 어려운 경우 고객 지원팀(sivera@sivera.app)에 문의해주시면 신속하게 도와드리겠습니다.",
       },
     ],
   },
@@ -165,7 +165,7 @@ const faqData: FAQCategory[] = [
         id: "20",
         question: "Q20: 서비스 이용 중 문제가 발생하면 어디에 문의해야 하나요?",
         answer:
-          "A20: 서비스 내 '고객 지원' 페이지의 문의하기 양식을 이용하시거나, allofadvertisements@gmail.com 으로 문의해주시면 최대한 빠르게 답변드리겠습니다.",
+          "A20: 서비스 내 '고객 지원' 페이지의 문의하기 양식을 이용하시거나, sivera@sivera.app 으로 문의해주시면 최대한 빠르게 답변드리겠습니다.",
       },
       {
         id: "21",
@@ -214,16 +214,16 @@ export default function FAQContent() {
                   }
                 >
                   <div className="px-2 pb-2 whitespace-pre-wrap">
-                    {item.answer.includes("allofadvertisements@gmail.com") ? (
+                    {item.answer.includes("sivera@sivera.app") ? (
                       <span>
-                        {item.answer.split("allofadvertisements@gmail.com")[0]}
+                        {item.answer.split("sivera@sivera.app")[0]}
                         <a
                           className="text-primary hover:underline"
-                          href="mailto:allofadvertisements@gmail.com"
+                          href="mailto:sivera@sivera.app"
                         >
-                          allofadvertisements@gmail.com
+                          sivera@sivera.app
                         </a>
-                        {item.answer.split("allofadvertisements@gmail.com")[1]}
+                        {item.answer.split("sivera@sivera.app")[1]}
                       </span>
                     ) : (
                       item.answer

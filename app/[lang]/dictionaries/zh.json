@@ -123,7 +123,7 @@
     "reports": "报告"
   },
   "brand": {
-    "name": "A.ll + Ad"
+    "name": "Sivera"
   },
   "auth": {
     "login": {
@@ -833,7 +833,7 @@
       "tagline": "为广告管理设定新标准。",
       "copyright": "© {{year}} {{company}}。保留所有权利。",
       "address": "大韩民国京畿道南杨州市别内3路322号402室",
-      "email": "siveraofficial@gmail.com",
+      "email": "sivera@sivera.app",
       "phone": "+82.010.7727.7428"
     }
   },
@@ -920,14 +920,14 @@
   },
   "consent": {
     "title": "广告账户访问权限",
-    "description": "All-AD 访问广告账户所需的权限。仅对所选平台授予访问权限。",
+    "description": "Sivera 访问广告账户所需的权限。仅对所选平台授予访问权限。",
     "selectAll": "选择所有平台",
     "required": "必需",
     "requestedPermissions": "将请求以下权限：",
     "noticeTitle": "重要说明",
     "bullets": {
       "revokeAnytime": "您可随时在设置中撤销这些权限。",
-      "scopeOnly": "All-AD 仅在授权范围内访问数据。",
+      "scopeOnly": "Sivera 仅在授权范围内访问数据。",
       "encrypted": "所有数据均已加密并安全保护。",
       "privacy": "数据将按照隐私政策进行处理。"
     },
