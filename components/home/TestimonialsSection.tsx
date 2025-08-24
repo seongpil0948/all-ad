@@ -94,7 +94,7 @@ export const TestimonialsSection = () => {
           viewport={{ once: true }}
           whileInView={prefersReducedMotion ? undefined : { opacity: 1 }}
         >
-          <h2 className={title({ size: "md" })}>고객이 말하는 올애드</h2>
+          <h2 className={title({ size: "md" })}>고객이 말하는 Sivera</h2>
           <p className={subtitle({ class: "mt-2" })}>
             실제 사용자들의 생생한 후기를 확인하세요
           </p>

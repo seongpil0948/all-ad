@@ -2,8 +2,8 @@ import { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "A.ll + Ad - 모든 광고를 하나로",
-    short_name: "A.ll + Ad",
+    name: "Sivera - 모든 광고를 하나로",
+    short_name: "Sivera",
     description:
       "All-in-one advertising platform integrating multiple ad platforms",
     start_url: "/",
@@ -32,7 +32,7 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: "ko-KR",
     orientation: "portrait-primary",
     scope: "/",
-    id: "alladvertising",
+    id: "sivera",
     shortcuts: [
       {
         name: "Dashboard",

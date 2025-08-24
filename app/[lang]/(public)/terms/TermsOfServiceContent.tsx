@@ -958,10 +958,10 @@ export default function TermsOfServiceContent() {
             <FiMail className="text-primary" />
             <Link
               color="primary"
-              href="mailto:allofadvertisements@gmail.com"
+              href="mailto:sivera@sivera.app"
               underline="hover"
             >
-              allofadvertisements@gmail.com
+              sivera@sivera.app
             </Link>
           </div>
         </div>

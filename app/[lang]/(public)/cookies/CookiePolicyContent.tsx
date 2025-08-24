@@ -433,9 +433,7 @@ export default function CookiePolicyContent() {
                 <FiMail className="w-5 h-5 text-primary" />
                 <p className="font-semibold">이메일</p>
               </div>
-              <p className="text-primary-700 ml-7">
-                allofadvertisements@gmail.com
-              </p>
+              <p className="text-primary-700 ml-7">sivera@sivera.app</p>
             </div>
           </CardBody>
         </Card>

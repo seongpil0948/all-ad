@@ -220,8 +220,8 @@ export default function RefundPolicyContent() {
               <p className="font-semibold mb-2">3. 청약철회 방법</p>
               <p className="text-default-600">
                 회원은 청약철회를 하고자 하는 경우, 서비스 내 고객센터 또는
-                지정된 연락처(allofadvertisements@gmail.com 등)를 통해
-                서면(전자문서 포함)으로 청약철회 의사를 표시해야 합니다.
+                지정된 연락처(sivera@sivera.app 등)를 통해 서면(전자문서
+                포함)으로 청약철회 의사를 표시해야 합니다.
               </p>
             </div>
 
@@ -370,8 +370,8 @@ export default function RefundPolicyContent() {
               <li className="text-default-700">
                 제3조에 따른 청약철회(제한 사유에 해당하지 않는 경우) 또는 제5조
                 제5항 및 제6항에 따른 환불을 받고자 하는 회원은 서비스 내
-                고객센터 또는 지정된 연락처(allofadvertisements@gmail.com 등)를
-                통해 환불 요청 사유 및 필요한 정보를 제공해야 합니다.
+                고객센터 또는 지정된 연락처(sivera@sivera.app 등)를 통해 환불
+                요청 사유 및 필요한 정보를 제공해야 합니다.
               </li>
               <li className="text-default-700">
                 회사는 회원의 환불 요청을 접수한 후, 환불 사유 및 조건을
@@ -448,10 +448,10 @@ export default function RefundPolicyContent() {
                 <FiMail className="text-primary" />
                 <Link
                   color="primary"
-                  href="mailto:allofadvertisements@gmail.com"
+                  href="mailto:sivera@sivera.app"
                   underline="hover"
                 >
-                  allofadvertisements@gmail.com
+                  sivera@sivera.app
                 </Link>
               </div>
               <div className="flex items-center gap-2">

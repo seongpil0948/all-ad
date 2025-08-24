@@ -6,14 +6,14 @@ import { title, subtitle } from "@/components/primitives";
 export const FAQSection = () => {
   const faqs = [
     {
-      question: "올애드는 어떤 광고 플랫폼을 지원하나요?",
+      question: "Sivera는 어떤 광고 플랫폼을 지원하나요?",
       answer:
         "Google Ads, Facebook Ads, Instagram Ads, YouTube Ads, Naver Ads, Kakao Ads, TikTok Ads, Amazon Ads 등 국내외 주요 광고 플랫폼을 모두 지원합니다. 지속적으로 새로운 플랫폼을 추가하고 있습니다.",
     },
     {
       question: "기존 광고 캠페인을 그대로 이전할 수 있나요?",
       answer:
-        "네, 가능합니다. 올애드는 기존 광고 플랫폼과 API 연동을 통해 현재 운영 중인 캠페인을 그대로 가져올 수 있습니다. 데이터 손실 없이 안전하게 이전됩니다.",
+        "네, 가능합니다. Sivera는 기존 광고 플랫폼과 API 연동을 통해 현재 운영 중인 캠페인을 그대로 가져올 수 있습니다. 데이터 손실 없이 안전하게 이전됩니다.",
     },
     {
       question: "최소 계약 기간이 있나요?",
